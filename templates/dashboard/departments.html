@@ -1,0 +1,83 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}استكشاف المواد | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="departments-wrapper reveal-up">
+    <header class="section-header mb-12 text-center">
+        <h1 class="page-title mb-4">استكشف رحلتك التعليمية</h1>
+        <p class="text-muted max-w-600 mx-auto">تصفح المواد الدراسية والدورات التدريبية المتاحة حسب التخصص والموضوع.</p>
+    </header>
+
+    <div class="departments-grid">
+        {% for subject in subjects %}
+        <div class="dept-card">
+            <div class="dept-icon-wrapper">
+                <i data-lucide="book-open"></i>
+            </div>
+            <div class="dept-content">
+                <h3 class="dept-name">{{ subject.name }}</h3>
+                <p class="dept-desc">{{ subject.description|truncatewords:15|default:"استكشف دروس ومحتويات هذه المادة." }}</p>
+                <div class="dept-meta">
+                    <span><i data-lucide="layers"></i> {{ subject.courses.count }} دورات</span>
+                </div>
+                <div class="dept-actions mt-6">
+                    <a href="/landing/?subject={{ subject.slug }}" class="btn btn-primary w-full">استكشاف المادة <i data-lucide="arrow-left"></i></a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state full-width p-20 text-center">
+            <i data-lucide="search-x" class="mb-4 opacity-20" style="width: 80px; height: 80px;"></i>
+            <p>لا توجد أقسام متاحة حالياً.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .departments-wrapper { padding: 3rem 0; }
+    .max-w-600 { max-width: 600px; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+
+    .departments-grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); 
+        gap: 2rem; 
+    }
+
+    .dept-card { 
+        background: var(--bg-surface); 
+        border: 1px solid var(--border-light); 
+        border-radius: 30px; 
+        padding: 2.5rem; 
+        transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        overflow: hidden;
+    }
+    .dept-card:hover { transform: translateY(-10px); border-color: var(--brand-gold); box-shadow: var(--shadow-glow); }
+    
+    .dept-icon-wrapper { 
+        width: 70px; height: 70px; background: rgba(var(--brand-gold-rgb), 0.1); 
+        color: var(--brand-gold); border-radius: 20px; 
+        display: flex; align-items: center; justify-content: center; 
+        font-size: 2rem; margin-bottom: 2rem;
+        transition: 0.3s;
+    }
+    .dept-card:hover .dept-icon-wrapper { background: var(--brand-gold); color: #000; transform: rotate(-10deg); }
+
+    .dept-name { font-size: 1.5rem; font-weight: 900; color: var(--text-primary); margin-bottom: 1rem; }
+    .dept-desc { color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 1.5rem; }
+    
+    .dept-meta { display: flex; gap: 1rem; font-size: 0.85rem; color: var(--brand-gold); font-weight: 700; }
+    .dept-meta i { width: 16px; }
+
+    .full-width { grid-column: 1 / -1; }
+
+    @media (max-width: 768px) {
+        .departments-grid { grid-template-columns: 1fr; }
+        .dept-card { padding: 2rem; }
+    }
+</style>
+{% endblock %}

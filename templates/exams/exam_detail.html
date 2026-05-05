@@ -1,0 +1,103 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}معلومات الامتحان | {{ exam.title }}{% endblock %}
+
+{% block content %}
+<div class="exam-container reveal-up">
+    <div class="premium-card glass-card text-center mb-10" style="padding: 4rem 2rem !important; border-radius: 40px !important;">
+        <div class="exam-icon-wrapper mb-6">
+            <i data-lucide="award" class="gold-glow"></i>
+        </div>
+        <h1 class="exam-title mb-4">{{ exam.title }}</h1>
+        <p class="exam-subtitle opacity-70 mb-8">استعد لتقييم مستواك في هذه الوحدة. تذكر أن التركيز هو مفتاح النجاح.</p>
+        
+        <div class="exam-stats-row flex-center gap-10 mb-10">
+            <div class="stat-box">
+                <i data-lucide="help-circle"></i>
+                <div class="stat-info">
+                    <strong>{{ exam.question_count }}</strong>
+                    <span>سؤال</span>
+                </div>
+            </div>
+            <div class="stat-box">
+                <i data-lucide="clock"></i>
+                <div class="stat-info">
+                    <strong>{{ exam.duration_minutes }}</strong>
+                    <span>دقيقة</span>
+                </div>
+            </div>
+            <div class="stat-box">
+                <i data-lucide="target"></i>
+                <div class="stat-info">
+                    <strong>{{ exam.pass_percentage|default:50 }}%</strong>
+                    <span>درجة النجاح</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-zone">
+            <a href="{% url 'exams:start_exam' exam.id %}" class="btn-auth-massive" style="max-width: 300px; margin: 0 auto; background: linear-gradient(135deg, var(--brand-gold-light), var(--brand-gold)); color: #000;">
+                <span>بدء الامتحان الآن</span>
+                <i data-lucide="rocket"></i>
+            </a>
+            <p class="mt-6 opacity-50" style="font-size: 0.9rem;">
+                <i data-lucide="shield-alert" style="width: 14px; vertical-align: middle;"></i>
+                بمجرد البدء، سيبدأ العداد التنازلي ولا يمكن إيقافه.
+            </p>
+        </div>
+    </div>
+
+    <!-- Previous Attempts -->
+    <div class="attempts-section">
+        <h3 class="section-title mb-6">
+            <i data-lucide="history" class="gold"></i>
+            <span>محاولاتي السابقة</span>
+        </h3>
+        <div class="grid-2 gap-6">
+            {% for attempt in recent_attempts %}
+                <div class="premium-card attempt-card flex-between align-center">
+                    <div class="attempt-left">
+                        <span class="attempt-date">{{ attempt.created_at|date:"d M, Y | H:i" }}</span>
+                        <h4 class="attempt-status">{{ attempt.get_status_display }}</h4>
+                    </div>
+                    <div class="attempt-score">
+                        <div class="score-circle {% if attempt.accuracy >= 50 %}pass{% else %}fail{% endif %}">
+                            {{ attempt.score }}/{{ attempt.max_score }}
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="empty-dashboard-state" style="grid-column: span 2;">
+                    <i data-lucide="clipboard-list" style="opacity: 0.3;"></i>
+                    <p>لم تقم بأي محاولة سابقة لهذا الامتحان.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .exam-icon-wrapper i { font-size: 4rem; color: var(--brand-gold); filter: drop-shadow(0 0 20px var(--brand-gold-glow)); }
+    .exam-title { font-size: 2.8rem; font-weight: 900; color: #fff; }
+    
+    .stat-box { display: flex; align-items: center; gap: 1rem; text-align: right; }
+    .stat-box i { width: 30px; height: 30px; color: var(--brand-gold); }
+    .stat-info strong { display: block; font-size: 1.5rem; color: #fff; }
+    .stat-info span { font-size: 0.85rem; color: var(--text-muted); }
+
+    .score-circle { width: 60px; height: 60px; border-radius: 50%; border: 3px solid var(--border-light); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; }
+    .score-circle.pass { border-color: var(--success); color: var(--success); }
+    .score-circle.fail { border-color: var(--danger); color: var(--danger); }
+
+    .attempt-card { padding: 1.5rem 2rem !important; transition: all 0.3s; }
+    .attempt-card:hover { transform: translateX(-5px); border-color: var(--brand-gold-glow); }
+    .attempt-date { font-size: 0.85rem; color: var(--text-muted); }
+    .attempt-status { color: #fff; margin-top: 0.25rem; }
+
+    @media (max-width: 768px) {
+        .exam-stats-row { flex-direction: column; gap: 2rem; align-items: flex-start; }
+        .exam-title { font-size: 2rem; }
+    }
+</style>
+{% endblock %}

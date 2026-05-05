@@ -1,0 +1,75 @@
+{% extends "dashboard/base.html" %}
+{% block title %}إنشاء محتوى جديد | محترفو التعليم{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumb animate-fade-up">
+    <a href="{% url 'dashboard:admin_dashboard' %}">لوحة الإدارة</a>
+    <span class="breadcrumb-separator">/</span>
+    <span style="color: var(--text-primary);">إنشاء دورة أو محتوى جديد</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="flex-center" style="min-height: 60vh;">
+    <div class="premium-card animate-fade-up" style="width: 100%; max-width: 600px; padding: 3rem 2.5rem;">
+        <div class="text-center mb-8">
+            <span class="badge mb-2">إدارة المحتوى</span>
+            <h1 style="font-size: 2.2rem; color:var(--text-primary); margin-bottom:0.5rem;">إنشاء مكثفة أو منهاج</h1>
+            <p style="color:var(--text-secondary);">
+                حدد النوع والفرع والمادة والأستاذ والسعر. بعد الحفظ ستنتقل مباشرة إلى لوحة الدورة لإضافة الجلسات والأكواد.
+            </p>
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="form-group">
+                    <label class="form-label">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.help_text %}
+                        <small style="display:block; margin-top:0.5rem; color:var(--text-muted); font-size:0.85rem;">{{ field.help_text }}</small>
+                    {% endif %}
+                    {% if field.errors %}
+                        <div style="color:var(--danger); font-size:0.85rem; margin-top:0.5rem; background:var(--danger-bg); padding:0.5rem; border-radius:var(--radius-sm);">
+                            {{ field.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <button class="btn btn-primary w-full mt-6" type="submit" style="padding: 1.2rem; font-size: 1.1rem;">إنشاء وفتح لوحة الدورة</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    /* Premium overrides for auto-generated Django form fields */
+    .premium-card input[type="text"],
+    .premium-card input[type="number"],
+    .premium-card input[type="file"],
+    .premium-card select,
+    .premium-card textarea {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-md);
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 1rem;
+        transition: var(--transition-smooth);
+    }
+    .light-theme .premium-card input,
+    .light-theme .premium-card select,
+    .light-theme .premium-card textarea {
+        background: rgba(255, 255, 255, 0.5);
+    }
+    .premium-card input:focus,
+    .premium-card select:focus,
+    .premium-card textarea:focus {
+        outline: none;
+        border-color: var(--brand-gold);
+        box-shadow: 0 0 0 4px var(--brand-gold-glow);
+        background: rgba(0,0,0,0.4);
+    }
+</style>
+{% endblock %}

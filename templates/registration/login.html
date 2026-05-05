@@ -1,0 +1,73 @@
+{% extends "dashboard/base.html" %}
+{% load static inline_static %}
+
+{% block title %}تسجيل الدخول | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="auth-page-container flex-center">
+    <!-- Login Card -->
+    <div class="auth-card-premium reveal-up">
+        <div class="auth-card-glow"></div>
+        <div class="auth-header text-center mb-10">
+            <div class="auth-logo-box mb-6">
+                <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo" class="auth-logo">
+            </div>
+            <h1 class="auth-main-title">مرحباً بك مجدداً</h1>
+            <p class="auth-subtitle">أدخل بياناتك للمتابعة</p>
+        </div>
+
+        <form method="post" class="auth-form-body">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="alert-premium error mb-6">
+                    <i data-lucide="alert-circle"></i>
+                    <span>{{ form.non_field_errors.0 }}</span>
+                </div>
+            {% endif %}
+
+            <div class="premium-field mb-6">
+                <label>اسم المستخدم أو الهاتف</label>
+                <div class="input-glow-wrapper">
+                    <i data-lucide="user" class="field-icon"></i>
+                    <input type="text" name="username" placeholder="أدخل اسم المستخدم" required value="{{ form.username.value|default:'' }}">
+                </div>
+            </div>
+
+            <div class="premium-field mb-8">
+                <label>كلمة المرور</label>
+                <div class="input-glow-wrapper password-field">
+                    <i data-lucide="lock" class="field-icon"></i>
+                    <input type="password" name="password" id="login-pwd" placeholder="••••••••" required>
+                    <button type="button" class="eye-btn" onclick="togglePass('login-pwd', this)">
+                        <i data-lucide="eye"></i>
+                    </button>
+                </div>
+                <div class="field-actions mt-2">
+                    <a href="#" class="forgot-link">نسيت كلمة المرور؟</a>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-massive btn-glow w-full">
+                <span>دخول آمن</span>
+                <i data-lucide="arrow-left"></i>
+            </button>
+        </form>
+
+        <div class="auth-footer mt-10 text-center">
+            <p>ليس لديك حساب؟ <a href="{% url 'dashboard:register' %}" class="gold-link">أنشئ حساباً جديداً</a></p>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function togglePass(id, btn) {
+        const input = document.getElementById(id);
+        const isPass = input.type === 'password';
+        input.type = isPass ? 'text' : 'password';
+        btn.innerHTML = isPass ? '<i data-lucide="eye-off"></i>' : '<i data-lucide="eye"></i>';
+        lucide.createIcons();
+    }
+</script>
+{% endblock %}

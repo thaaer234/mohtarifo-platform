@@ -1,0 +1,36 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}شروط الخدمة | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="legal-wrapper reveal-up">
+    <div class="max-w-900 mx-auto">
+        <h1 class="page-title mb-8">شروط <span class="gold">الخدمة</span></h1>
+        
+        <div class="premium-card p-10">
+            <div class="legal-section mb-10">
+                <h3 class="mb-4">1. شروط الاستخدام</h3>
+                <p class="text-muted line-relaxed">باستخدامك لمنصة محترفو التعليم، أنت توافق على الالتزام بكافة الشروط والأحكام المذكورة هنا.</p>
+            </div>
+
+            <div class="legal-section mb-10">
+                <h3 class="mb-4">2. حقوق الملكية</h3>
+                <p class="text-muted line-relaxed">كافة المحتويات التعليمية من فيديوهات واختبارات هي ملكية حصرية للمنصة، ويمنع منعاً باتاً تصويرها أو إعادة نشرها تحت طائلة المسؤولية القانونية.</p>
+            </div>
+
+            <div class="legal-section mb-10">
+                <h3 class="mb-4">3. الحسابات والأمان</h3>
+                <p class="text-muted line-relaxed">يلتزم الطالب بالحفاظ على سرية بيانات حسابه، ويتحمل مسؤولية أي نشاط يتم عبر حسابه الخاص.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .legal-wrapper { padding: 4rem 0; }
+    .max-w-900 { max-width: 900px; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .line-relaxed { line-height: 1.8; font-size: 1.05rem; }
+</style>
+{% endblock %}

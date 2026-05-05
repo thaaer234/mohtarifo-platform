@@ -1,0 +1,266 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}{{ lesson.title }} | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="reveal-up">
+    <!-- 1. Header & Navigation -->
+    <header class="flex-between mb-8 flex-wrap gap-4">
+        <div class="flex-center gap-6">
+            <a href="{% url 'dashboard:student_course_detail' lesson.unit.course.id %}" class="flex-center" style="width: 50px; height: 50px; border-radius: 16px; background: var(--bg-surface); border: 1px solid var(--border-light); color: var(--text-primary); transition: 0.3s;" onmouseover="this.style.borderColor='var(--brand-gold)'; this.style.transform='translateX(5px)'; this.style.color='var(--brand-gold)'" onmouseout="this.style.borderColor='var(--border-light)'; this.style.transform='none'; this.style.color='var(--text-primary)'">
+                <i data-lucide="arrow-right"></i>
+            </a>
+            <div>
+                <span class="gold block font-bold mb-1" style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">{{ lesson.unit.course.title }}</span>
+                <h1 style="font-size: 1.8rem; margin-bottom: 0;">{{ lesson.title }}</h1>
+            </div>
+        </div>
+        <div class="flex-center gap-4">
+            <button id="focus-mode-toggle" class="glass-card flex-center gap-3" style="padding: 0.75rem 1.5rem; border-radius: 100px; cursor: pointer; transition: 0.3s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='none'">
+                <i data-lucide="maximize-2" style="width: 18px;"></i>
+                <span class="font-bold">وضع التركيز</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="grid-3" style="grid-template-columns: 1fr 380px;">
+        <!-- 2. Primary Learning Area -->
+        <main>
+            <div class="premium-card" id="video-wrapper" style="padding: 0; background: #000; border-radius: 35px; box-shadow: 0 40px 100px rgba(0,0,0,0.6); position: relative;">
+                <!-- Security Layer -->
+                <div id="video-watermark" class="watermark">
+                    {{ request.user.get_full_name|default:request.user.username }} • ID: {{ request.user.id }}
+                </div>
+                
+                <div style="position: relative; width: 100%; aspect-ratio: 16/9;">
+                    {% if signed_video_url or video_embed_url %}
+                        {% if signed_video_url %}
+                            <video id="lesson-video" controls style="width: 100%; height: 100%; border-radius: 35px 35px 0 0;" controlsList="nodownload" oncontextmenu="return false;">
+                                <source src="{{ signed_video_url }}" type="video/mp4">
+                            </video>
+                        {% else %}
+                            <iframe id="lesson-iframe" src="{{ video_embed_url }}" style="width: 100%; height: 100%; border: none; border-radius: 35px 35px 0 0;" allowfullscreen oncontextmenu="return false;"></iframe>
+                        {% endif %}
+                        
+                        <div id="video-security-overlay" class="flex-center" style="position: absolute; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); display: none; z-index: 150; flex-direction: column; transition: 0.5s;">
+                            <div class="text-center">
+                                <div class="mb-6 reveal-up" style="animation-duration: 0.6s;">
+                                    <img src="/static/dashboard/icons/icon.svg" alt="Logo" style="width: 100px; height: 100px; filter: drop-shadow(0 0 20px rgba(var(--brand-gold-rgb), 0.4));">
+                                </div>
+                                <h3 class="text-white mb-2" style="font-size: 1.5rem; letter-spacing: 1px;">المحتوى محمي</h3>
+                                <p style="color: rgba(255,255,255,0.6); font-weight: 500;">يرجى العودة للصفحة لمتابعة المشاهدة</p>
+                                <div class="mt-8">
+                                    <div class="pulse-ring"></div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="flex-column flex-center h-full text-center p-12">
+                            <i data-lucide="video-off" class="text-muted mb-4" style="width: 48px; height: 48px;"></i>
+                            <p class="text-muted">عذراً، هذا الدرس غير متوفر حالياً.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Playback & Controls Overlay -->
+                <div class="flex-between" style="padding: 1.5rem 2.5rem; background: linear-gradient(to top, #080808, #000); border-radius: 0 0 35px 35px;">
+                    <div class="flex-center gap-6">
+                        <span class="text-muted font-bold" style="font-size: 0.8rem;">السرعة:</span>
+                        <div class="flex-center gap-2" style="background: rgba(255,255,255,0.03); padding: 0.3rem; border-radius: 12px;">
+                            <button onclick="setSpeed(1.0)" class="s-pill active" data-speed="1.0">1x</button>
+                            <button onclick="setSpeed(1.5)" class="s-pill" data-speed="1.5">1.5x</button>
+                            <button onclick="setSpeed(2.0)" class="s-pill" data-speed="2.0">2x</button>
+                        </div>
+                    </div>
+                    <div>
+                        <form method="post" action="{% url 'dashboard:complete_lesson' lesson.id %}" id="complete-form">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary" id="complete-btn">
+                                <i data-lucide="check-circle"></i> تم الإنجاز
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lesson Resources & Info -->
+            <div class="mt-12">
+                <div class="flex-center gap-8 mb-6" style="justify-content: flex-start; padding: 0 1rem;">
+                    <button class="tab-trigger active" data-tab="desc">الوصف</button>
+                    <button class="tab-trigger" data-tab="files">المرفقات</button>
+                    <button class="tab-trigger" data-tab="notes">ملاحظاتك</button>
+                </div>
+                <div class="premium-card" style="padding: 3rem; min-height: 250px;">
+                    <div id="tab-desc" class="tab-pane active">
+                        <div class="prose" style="color: var(--text-secondary); line-height: 1.8;">
+                            {% if lesson.content %}
+                                {{ lesson.content|safe }}
+                            {% else %}
+                                <p class="text-muted">لا يتوفر وصف نصي لهذا الدرس.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div id="tab-files" class="tab-pane text-center py-12">
+                        <i data-lucide="file-x" class="text-muted mb-4" style="width: 48px; height: 48px; opacity: 0.5;"></i>
+                        <p class="text-muted">لا توجد ملفات مرفقة لهذا الدرس.</p>
+                    </div>
+                    <div id="tab-notes" class="tab-pane">
+                        <textarea style="width: 100%; height: 200px; background: var(--bg-base); border: 1px solid var(--border-light); border-radius: 20px; padding: 1.5rem; color: var(--text-primary); font-family: inherit; resize: none;" placeholder="اكتب ملاحظاتك الشخصية هنا..."></textarea>
+                        <button class="btn btn-primary mt-4">حفظ الملاحظات</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 3. Sidebar Course Map -->
+        <aside>
+            <div class="premium-card">
+                <div class="flex-between mb-8">
+                    <h3 style="font-size: 1.2rem; margin-bottom: 0;">خارطة الوحدة</h3>
+                    <span class="badge" style="background: var(--bg-base);">{{ lesson.unit.lessons.count }} دروس</span>
+                </div>
+                <div class="flex-column gap-2" style="max-height: 600px; overflow-y: auto; padding-left: 0.5rem;">
+                    {% for l in lesson.unit.lessons.all %}
+                        <a href="{% url 'dashboard:student_lesson_detail' l.id %}" class="flex-center gap-4 p-4" style="text-decoration: none; border-radius: 20px; background: {% if l.id == lesson.id %}rgba(var(--brand-gold-rgb), 0.08){% else %}var(--bg-surface-elevated){% endif %}; border: 1px solid {% if l.id == lesson.id %}rgba(var(--brand-gold-rgb), 0.2){% else %}transparent{% endif %}; justify-content: flex-start; transition: 0.3s;" onmouseover="this.style.background='rgba(var(--brand-gold-rgb), 0.1)'" onmouseout="this.style.background='{% if l.id == lesson.id %}rgba(var(--brand-gold-rgb), 0.08){% else %}var(--bg-surface-elevated){% endif %}'">
+                            <div class="flex-center" style="width: 12px;">
+                                {% if l.id == lesson.id %}
+                                    <div style="width: 10px; height: 10px; background: var(--brand-gold); border-radius: 50%; box-shadow: 0 0 10px var(--brand-gold);"></div>
+                                {% else %}
+                                    <div style="width: 6px; height: 6px; background: var(--border-light); border-radius: 50%;"></div>
+                                {% endif %}
+                            </div>
+                            <div style="flex: 1;">
+                                <span class="block font-bold" style="font-size: 0.95rem; color: {% if l.id == lesson.id %}var(--brand-gold){% else %}var(--text-primary){% endif %}; margin-bottom: 0.25rem;">{{ l.title }}</span>
+                                <span class="text-muted" style="font-size: 0.75rem;">فيديو - {{ l.duration|default:"12:00" }}</span>
+                            </div>
+                            {% if l.id == lesson.id %}
+                                <div class="gold"><i data-lucide="volume-2" style="width: 18px;"></i></div>
+                            {% endif %}
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="premium-card mt-8" style="background: linear-gradient(135deg, rgba(var(--brand-gold-rgb), 0.1), transparent);">
+                <div class="text-center">
+                    <i data-lucide="zap" class="gold mb-4" style="width: 32px; height: 32px;"></i>
+                    <h4 class="mb-2">اختبار الوحدة</h4>
+                    <p class="text-muted" style="font-size: 0.85rem;">اختبر مستواك بعد مشاهدة الدروس</p>
+                    <button class="btn btn-secondary w-full mt-4">ابدأ الآن</button>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<style>
+    .s-pill { background: none; border: none; color: var(--text-muted); padding: 0.4rem 1rem; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: 0.3s; }
+    .s-pill.active { background: var(--brand-gold); color: #000; }
+    
+    .tab-trigger { background: none; border: none; color: var(--text-muted); font-weight: 800; padding-bottom: 1rem; cursor: pointer; position: relative; transition: 0.3s; border-bottom: 3px solid transparent; }
+    .tab-trigger.active { color: var(--brand-gold); border-bottom-color: var(--brand-gold); }
+    
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; animation: fadeIn 0.4s ease; }
+    
+    body.focus-mode .navbar, body.focus-mode aside, body.focus-mode header .h-left, body.focus-mode .mt-12 { display: none !important; }
+    body.focus-mode .grid-3 { grid-template-columns: 1fr !important; max-width: 1200px; margin: 0 auto; }
+    
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+<script>
+    const LessonProtection = {
+        video: document.getElementById('lesson-video'),
+        watermark: document.getElementById('video-watermark'),
+        curtain: document.getElementById('video-security-overlay'),
+        
+        init() {
+            this.setupInterceptors();
+            this.setupPrivacyTrackers();
+            this.startWatermarkVoyage();
+            this.initProgressSync();
+        },
+
+        setupInterceptors() {
+            const blockEvent = e => {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                e.stopPropagation();
+                return false;
+            };
+
+            // حظر شامل على مستوى النافذة والمستند لكافة أنواع الأحداث
+            const eventsToBlock = ['keydown', 'keyup', 'keypress', 'beforeinput', 'contextmenu', 'copy', 'cut', 'paste'];
+            eventsToBlock.forEach(eventType => {
+                window.addEventListener(eventType, blockEvent, true);
+                document.addEventListener(eventType, blockEvent, true);
+            });
+        },
+
+        setupPrivacyTrackers() {
+            const toggleCurtain = (show) => {
+                if (this.curtain) {
+                    this.curtain.style.display = show ? 'flex' : 'none';
+                }
+                if (show && this.video) {
+                    this.video.pause();
+                }
+            };
+
+            // حجب الشاشة عند محاولة الخروج أو التبديل (Alt+Tab / Fn+Tab / Win+D)
+            window.addEventListener('blur', () => toggleCurtain(true));
+            window.addEventListener('focus', () => toggleCurtain(false));
+            document.addEventListener('visibilitychange', () => toggleCurtain(document.hidden));
+        },
+
+        startWatermarkVoyage() {
+            if (!this.watermark) return;
+            const move = () => {
+                const x = 10 + Math.random() * 80;
+                const y = 10 + Math.random() * 80;
+                this.watermark.style.left = `${x}%`;
+                this.watermark.style.top = `${y}%`;
+            };
+            setInterval(move, 5000);
+            move();
+        },
+
+        initProgressSync() {
+            if (!this.video) return;
+            this.video.currentTime = {{ progress.last_position_seconds|default:0 }};
+            
+            setInterval(() => {
+                if (!this.video.paused) {
+                    const data = new FormData();
+                    data.append('current_time', this.video.currentTime);
+                    data.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+                    fetch("{% url 'dashboard:save_lesson_progress' lesson.id %}", { method: 'POST', body: data });
+                }
+            }, 15000);
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", () => {
+        LessonProtection.init();
+
+        document.querySelectorAll('.tab-trigger').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-trigger, .tab-pane').forEach(el => el.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        document.getElementById('focus-mode-toggle').addEventListener('click', () => {
+            document.body.classList.toggle('focus-mode');
+        });
+    });
+
+    function setSpeed(speed) {
+        if (LessonProtection.video) LessonProtection.video.playbackRate = speed;
+        document.querySelectorAll('.s-pill').forEach(p => p.classList.toggle('active', parseFloat(p.dataset.speed) === speed));
+    }
+</script>
+{% endblock %}

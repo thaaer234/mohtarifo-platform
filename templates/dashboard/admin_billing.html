@@ -1,0 +1,157 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}المركز المالي والأكواد | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="admin-billing-hub reveal-up">
+    <!-- Header -->
+    <header class="hub-header mb-10">
+        <div class="flex-between align-center">
+            <div>
+                <span class="badge mb-2">العمليات المالية</span>
+                <h1 class="page-title">المركز المالي والأكواد</h1>
+            </div>
+            <div class="hub-stats">
+                <div class="mini-stat">
+                    <span class="label">إجمالي الإيرادات</span>
+                    <span class="value">{{ total_revenue|default:0|floatformat:2 }} $</span>
+                </div>
+                <div class="mini-stat">
+                    <span class="label">الاشتراكات النشطة</span>
+                    <span class="value">{{ active_subs_count }}</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="hub-grid">
+        <!-- Main Column: Tables -->
+        <div class="hub-main">
+            <!-- Subscriptions Table -->
+             <section class="premium-card mb-8">
+                <div class="flex-between mb-6">
+                    <h2 class="section-title"><i data-lucide="credit-card"></i> الاشتراكات الأخيرة</h2>
+                    <a href="/admin/billing/subscription/" class="btn-text" target="_blank">المزيد في Admin <i data-lucide="external-link"></i></a>
+                </div>
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>الطالب</th>
+                                <th>الخطة</th>
+                                <th>الحالة</th>
+                                <th>تاريخ البدء</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sub in subscriptions %}
+                            <tr>
+                                <td><strong>{{ sub.user.get_full_name }}</strong><br><small>{{ sub.user.username }}</small></td>
+                                <td>{{ sub.plan.name }}</td>
+                                <td><span class="status-badge {{ sub.status }}">{{ sub.get_status_display }}</span></td>
+                                <td>{{ sub.created_at|date:"Y-m-d" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center p-8">لا توجد اشتراكات حالياً</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+             </section>
+
+             <!-- Payments Table -->
+             <section class="premium-card mb-8">
+                <div class="flex-between mb-6">
+                    <h2 class="section-title"><i data-lucide="dollar-sign"></i> سجل المدفوعات</h2>
+                    <a href="/admin/billing/payment/" class="btn-text" target="_blank">المزيد في Admin <i data-lucide="external-link"></i></a>
+                </div>
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>الطالب</th>
+                                <th>المبلغ</th>
+                                <th>الوسيلة</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in payments %}
+                            <tr>
+                                <td><strong>{{ p.user.get_full_name }}</strong></td>
+                                <td>{{ p.amount_dollars|default:0|floatformat:2 }} {{ p.currency }}</td>
+                                <td>{{ p.provider }}</td>
+                                <td><span class="status-badge {{ p.status }}">{{ p.get_status_display }}</span></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center p-8">لا يوجد سجل مدفوعات</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+             </section>
+        </div>
+
+        <!-- Sidebar Column: Batches Hub -->
+        <aside class="hub-sidebar">
+            <section class="premium-card">
+                <div class="flex-between mb-6">
+                    <h2 class="section-title"><i data-lucide="barcode"></i> دفعات الأكواد</h2>
+                </div>
+                <div class="batch-cards">
+                    {% for batch in batches %}
+                        <div class="batch-mini-card">
+                            <div class="batch-info">
+                                <strong>{{ batch.name }}</strong>
+                                <span>{{ batch.course.title }}</span>
+                                <div class="batch-meta mt-2">
+                                    <span class="tag"> {% firstof batch.institute.name batch.sales_center.name "مستقل" %} </span>
+                                    <span class="tag gold">{{ batch.codes.count }} كود</span>
+                                </div>
+                            </div>
+                            <div class="batch-actions mt-4">
+                                <a href="{% url 'dashboard:admin_print_batch_cards' batch.id %}" class="btn btn-glass btn-sm w-full" target="_blank">
+                                    <i data-lucide="printer"></i> طباعة الكروت
+                                </a>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-center p-8 text-muted">لا توجد دفعات أكواد حالياً</p>
+                    {% endfor %}
+                </div>
+            </section>
+        </aside>
+    </div>
+</div>
+
+<style>
+    .hub-grid { display: grid; grid-template-columns: 1fr 360px; gap: 2rem; }
+    .mini-stat { text-align: left; background: rgba(197, 160, 89, 0.05); padding: 1rem 1.5rem; border-radius: 16px; border-left: 3px solid var(--brand-gold); }
+    .hub-stats { display: flex; gap: 1rem; }
+    .mini-stat .label { display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: 700; margin-bottom: 0.25rem; }
+    .mini-stat .value { font-size: 1.5rem; font-weight: 900; color: var(--brand-gold); }
+
+    .table-responsive { overflow-x: auto; }
+    .admin-table { width: 100%; border-collapse: collapse; text-align: right; }
+    .admin-table th { padding: 1rem; border-bottom: 1px solid var(--border-light); color: var(--text-muted); font-size: 0.85rem; }
+    .admin-table td { padding: 1.25rem 1rem; border-bottom: 1px solid var(--border-light); color: var(--text-primary); }
+
+    .status-badge { padding: 0.25rem 0.75rem; border-radius: 100px; font-size: 0.75rem; font-weight: 700; }
+    .status-badge.active, .status-badge.paid { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+    .status-badge.canceled, .status-badge.failed { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+    .status-badge.pending { background: rgba(197, 160, 89, 0.1); color: var(--brand-gold); }
+
+    .batch-mini-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border-light); border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; }
+    .batch-info strong { display: block; color: var(--text-primary); margin-bottom: 0.2rem; }
+    .batch-info span { font-size: 0.8rem; color: var(--text-muted); }
+    .batch-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .tag { font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 4px; background: var(--bg-base); border: 1px solid var(--border-light); color: var(--text-secondary); }
+    .tag.gold { border-color: var(--brand-gold); color: var(--brand-gold); }
+
+    @media (max-width: 992px) {
+        .hub-grid { grid-template-columns: 1fr; }
+        .hub-header .flex-between { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
+    }
+</style>
+{% endblock %}

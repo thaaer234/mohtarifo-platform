@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="محترفو التعليم">
+  <rect width="512" height="512" rx="112" fill="#8f6f3e"/>
+  <path fill="#fff8ed" d="M116 152c0-24 20-44 44-44h192c24 0 44 20 44 44v236c0 11-9 20-20 20H148c-18 0-32-14-32-32V152Z"/>
+  <path fill="#1a1a1a" d="M156 172c0-12 10-22 22-22h164c8 0 14 6 14 14v184H178c-8 0-15 2-22 5V172Z"/>
+  <path fill="#fff8ed" d="M188 198h136v22H188v-22Zm0 52h136v22H188v-22Zm0 52h88v22h-88v-22Z"/>
+  <path fill="#2e6f62" d="M316 286c26 0 48 21 48 48s-22 48-48 48-48-21-48-48 22-48 48-48Z"/>
+  <path fill="#fff" d="m294 335 15 15 31-37 16 13-45 53-33-32 16-12Z"/>
+</svg>

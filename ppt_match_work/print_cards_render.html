@@ -1,0 +1,613 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قسيمة الشراء - مكثفة الفيزياء - طريقك للـ 400</title>
+    <style>
+        @font-face {
+            font-family: "AlJazeera";
+            src: url("/static/dashboard/img/card_assets/FONT/ArbFONTS-Al-Jazeera-Arabic-Regular.ttf") format("truetype");
+            font-weight: 400;
+        }
+        @font-face {
+            font-family: "AlJazeera";
+            src: url("/static/dashboard/img/card_assets/FONT/ArbFONTS-Al-Jazeera-Arabic-Bold.ttf") format("truetype");
+            font-weight: 700;
+        }
+
+        :root {
+            --slot-w: 204mm;
+            --slot-h: 97mm;
+            --card-w: 791px;
+            --card-h: 374px;
+            --scale: calc(771.0236 / 791);
+            --gold: #8f6f3d;
+            --gold-dark: #5d4524;
+            --ink: #0b0b0b;
+            --soft: #f5f5f5;
+        }
+
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        body {
+            background: #e7e7e7;
+            font-family: "AlJazeera", Tahoma, Arial, sans-serif;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .print-btn {
+            position: fixed;
+            left: 20px;
+            top: 20px;
+            z-index: 50;
+            border: 0;
+            border-radius: 12px;
+            padding: 14px 28px;
+            color: #fff;
+            background: var(--gold);
+            font: 700 16px "AlJazeera", sans-serif;
+            cursor: pointer;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, .25);
+        }
+
+        .page {
+            width: 210mm;
+            height: 297mm;
+            margin: 10mm auto;
+            padding: 3mm;
+            background: #fff;
+            overflow: hidden;
+            page-break-after: always;
+            box-shadow: 0 0 16px rgba(0, 0, 0, .14);
+        }
+
+        .slot {
+            width: var(--slot-w);
+            height: var(--slot-h);
+            position: relative;
+            overflow: hidden;
+            border-bottom: 1px dashed #aaa;
+        }
+        .slot:last-child { border-bottom: 0; }
+
+        .card {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: var(--card-w);
+            height: var(--card-h);
+            overflow: hidden;
+            background: #fff;
+            border: 0;
+            color: var(--ink);
+            transform: scale(var(--scale));
+            transform-origin: top left;
+        }
+
+        .watermark {
+            position: absolute;
+            inset: 0;
+            background-image: url("/static/dashboard/img/card_assets/image1.png");
+            background-size: 640px auto;
+            background-position: 150px 66px;
+            background-repeat: no-repeat;
+            opacity: .045;
+        }
+
+        .side-pattern {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 29px;
+            height: 100%;
+            overflow: hidden;
+            background: #fff;
+            border-left: 0;
+            border-right: 1px solid rgba(0, 0, 0, .2);
+        }
+        .side-pattern::before {
+            content: "";
+            position: absolute;
+            inset: -18px -11px;
+            background-image: url("/static/dashboard/img/card_assets/image3.png");
+            background-size: 76px auto;
+            background-repeat: repeat-y;
+            opacity: .64;
+        }
+
+        .page-num {
+            position: absolute;
+            left: -6px;
+            bottom: -6px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            color: #fff;
+            background: var(--gold);
+            font-size: 22px;
+            line-height: 42px;
+            font-weight: 700;
+            text-align: center;
+            direction: ltr;
+        }
+        .front .page-num {
+            left: auto;
+            right: -6px;
+            bottom: -6px;
+        }
+
+        .front-hero {
+            position: absolute;
+            left: -4px;
+            top: 62px;
+            width: 418px;
+            height: 246px;
+            object-fit: contain;
+        }
+
+        .title-frame {
+            position: absolute;
+            right: 12px;
+            top: 17px;
+            width: 373px;
+            height: 80px;
+            border-radius: 13px;
+            background: linear-gradient(#95763f, #816537);
+            border: 0;
+            box-shadow: inset 0 7px 11px rgba(255, 255, 255, .16), inset 0 -6px 9px rgba(0, 0, 0, .18);
+        }
+        .front-title {
+            position: absolute;
+            right: 20px;
+            top: 18px;
+            width: 357px;
+            height: 76px;
+            color: #fff;
+            font-size: 41px;
+            line-height: 76px;
+            font-weight: 700;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .front-info {
+            position: absolute;
+            right: 27px;
+            top: 116px;
+            width: 330px;
+            font-size: 25px;
+            line-height: 1.98;
+            font-weight: 700;
+            text-align: right;
+        }
+        .front-info .line {
+            position: relative;
+            white-space: nowrap;
+        }
+        .front-info .line::before {
+            content: "❖";
+            color: var(--gold);
+            font-size: 24px;
+            margin-left: 12px;
+        }
+        .front-info strong { color: var(--gold); }
+
+        .coupon-box {
+            position: absolute;
+            right: 12px;
+            top: 206px;
+            width: 367px;
+            height: 102px;
+            border: 1.5px solid #111;
+            border-radius: 18px;
+            background: linear-gradient(90deg, #fafafa, #ededed);
+            box-shadow: inset 0 0 18px rgba(0, 0, 0, .08);
+        }
+        .coupon-qr {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            width: 79px;
+            height: 79px;
+            padding: 4px;
+            border: 1px solid #111;
+            border-radius: 11px;
+            background: #fff;
+        }
+        .coupon-qr img,
+        .platform-qr img { width: 100%; height: 100%; display: block; }
+
+        .coupon-meta {
+            position: absolute;
+            right: 16px;
+            top: 11px;
+            width: 228px;
+            font-size: 15px;
+            line-height: 1.78;
+            font-weight: 700;
+            text-align: right;
+        }
+        .coupon-meta div {
+            position: relative;
+            padding-right: 18px;
+            white-space: nowrap;
+        }
+        .coupon-meta div::before {
+            content: "";
+            position: absolute;
+            right: 0;
+            top: 11px;
+            width: 5px;
+            height: 5px;
+            background: #111;
+        }
+        .coupon-code {
+            position: absolute;
+            right: 35px;
+            top: 67px;
+            width: 172px;
+            color: var(--gold);
+            direction: ltr;
+            font-size: 16.5px;
+            line-height: 1.02;
+            font-weight: 700;
+            text-align: center;
+            letter-spacing: .5px;
+            overflow-wrap: normal;
+            word-break: normal;
+            font-family: Tahoma, Arial, sans-serif;
+        }
+
+        .student-code {
+            position: absolute;
+            left: 244px;
+            right: auto;
+            bottom: 15px;
+            width: 300px;
+            height: 30px;
+            font-size: 20px;
+            line-height: 30px;
+            font-weight: 700;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .student-code .code-value {
+            direction: ltr;
+            unicode-bidi: isolate;
+            display: inline-block;
+            font-family: Tahoma, Arial, sans-serif;
+            font-weight: 700;
+        }
+        .student-code::before,
+        .student-code::after {
+            content: "";
+            position: absolute;
+            top: 13px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--gold);
+        }
+        .student-code::before { right: -8px; }
+        .student-code::after { left: -8px; }
+
+        .back-hero {
+            position: absolute;
+            left: 42px;
+            top: 57px;
+            width: 210px;
+            height: 262px;
+            object-fit: contain;
+        }
+        .vertical-rule {
+            position: absolute;
+            left: 251px;
+            top: 43px;
+            width: 1px;
+            height: 281px;
+            background: var(--gold);
+        }
+        .vertical-rule::before,
+        .vertical-rule::after {
+            content: "";
+            position: absolute;
+            left: -4px;
+            width: 8px;
+            height: 8px;
+            background: var(--gold);
+            transform: rotate(45deg);
+        }
+        .vertical-rule::before { top: 0; }
+        .vertical-rule::after { bottom: 0; }
+
+        .faq-top-line {
+            position: absolute;
+            right: 88px;
+            top: 214px;
+            width: 285px;
+            height: 1px;
+            background: var(--gold);
+        }
+        .faq-top-line::before,
+        .faq-top-line::after {
+            content: "";
+            position: absolute;
+            top: -4px;
+            width: 8px;
+            height: 8px;
+            background: var(--gold);
+            transform: rotate(45deg);
+        }
+        .faq-top-line::before { right: -4px; }
+        .faq-top-line::after { left: -4px; }
+
+        .back-title-frame {
+            position: absolute;
+            right: 42px;
+            top: 25px;
+            width: 450px;
+            height: 61px;
+            border-radius: 10px;
+            background: linear-gradient(#333, #151515);
+            border: 2px solid #2d2d2d;
+            box-shadow: inset 0 6px 9px rgba(255,255,255,.12), inset 0 -7px 10px rgba(0,0,0,.45);
+        }
+        .back-title {
+            position: absolute;
+            right: 54px;
+            top: 27px;
+            width: 426px;
+            height: 56px;
+            color: #fff;
+            font-size: 35px;
+            line-height: 56px;
+            font-weight: 700;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .steps {
+            position: absolute;
+            right: 34px;
+            top: 99px;
+            width: 492px;
+            font-size: 12.7px;
+            line-height: 1.95;
+            font-weight: 700;
+            text-align: right;
+            list-style-position: inside;
+            margin: 0;
+            padding: 0;
+        }
+        .steps li { margin: 0; white-space: nowrap; }
+
+        .platform-card {
+            position: absolute;
+            left: 270px;
+            top: 210px;
+            width: 103px;
+            height: 164px;
+            border-radius: 19px 19px 0 0;
+            background: var(--gold);
+            color: #fff;
+            text-align: center;
+            font-weight: 700;
+            padding-top: 7px;
+        }
+        .platform-qr {
+            width: 86px;
+            height: 86px;
+            margin: 0 auto 9px;
+            padding: 4px;
+            border-radius: 13px;
+            background: #fff;
+            border: 1px solid #ddd;
+        }
+        .platform-name {
+            font-size: 12.5px;
+            line-height: 1.7;
+        }
+
+        .faq {
+            position: absolute;
+            right: 74px;
+            top: 218px;
+            width: 366px;
+            font-size: 10.8px;
+            line-height: 1.9;
+            font-weight: 700;
+            text-align: right;
+        }
+        .faq-title {
+            color: var(--gold);
+            font-size: 17px;
+            margin-bottom: 6px;
+        }
+        .faq p {
+            position: relative;
+            margin: 0 0 3px;
+            padding-right: 17px;
+            white-space: nowrap;
+        }
+        .faq p::before {
+            content: "❖";
+            position: absolute;
+            right: 0;
+            top: 0;
+            color: var(--gold);
+            font-size: 11px;
+        }
+        .help-figure {
+            position: absolute;
+            right: -52px;
+            top: 218px;
+            width: 134px;
+            height: 160px;
+            object-fit: contain;
+            opacity: .9;
+            transform: rotate(-12deg);
+            transform-origin: center;
+        }
+
+        .socials {
+            position: absolute;
+            right: 54px;
+            bottom: 18px;
+            width: 330px;
+            display: grid;
+            grid-template-columns: 1.15fr 1fr 1fr;
+            gap: 10px;
+            direction: ltr;
+            align-items: center;
+            font-size: 10px;
+            font-weight: 400;
+            white-space: nowrap;
+        }
+        .social {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            color: #111;
+        }
+        .social-icon {
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--gold);
+            color: var(--gold);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .instagram-icon {
+            position: relative;
+            font-size: 0;
+        }
+        .instagram-icon::before {
+            content: "";
+            width: 12px;
+            height: 12px;
+            border: 1.6px solid currentColor;
+            border-radius: 4px;
+            display: block;
+        }
+        .instagram-icon::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 4px;
+            height: 4px;
+            border: 1.4px solid currentColor;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 4px -4px 0 -3px currentColor;
+        }
+
+        @media print {
+            @page { size: A4; margin: 3mm; }
+            body { background: #fff; }
+            .no-print { display: none; }
+            .page {
+                width: 204mm;
+                height: 291mm;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+            }
+            .slot {
+                width: 204mm;
+                height: 97mm;
+            }
+        }
+    </style>
+</head>
+<body>
+<button class="print-btn no-print" onclick="window.print()">طباعة البطاقات</button>
+
+
+<section class="page">
+    
+    <div class="slot">
+        <article class="card front">
+            <div class="watermark"></div>
+            <div class="side-pattern"></div>
+            <img class="front-hero" src="/static/dashboard/img/card_assets/image4.svg" alt="">
+
+            <div class="title-frame"></div>
+            <div class="front-title">مكثفة مادة الفيزياء</div>
+
+            <div class="front-info">
+                <div class="line">اسم المدرس : <strong>علي منصور</strong></div>
+                <div class="line">عدد الساعات : <strong>18 ساعة</strong></div>
+            </div>
+
+            <div class="coupon-box">
+                <div class="coupon-qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPoAAAD6AQAAAACgl2eQAAABf0lEQVR4nO1Y0WrFIAxN1PcK/aD6Z2N/Vv+oPg4qGYn2cjdGWS+Dm+yah7TaQwnHqCdBglPL7vw7wAA0Gzz8IQ8FuyWo7ACOiTCovka1JzGAwtSxLTKx/foPp/ZSAGz5x5bljfM0KQvSFMATwLQ/N4Z/AZh2oPW2xZ8Tg1lAEE+3MS7bzJzyTNESpLPCZMU+KHPf2bnNeCVBOgsAvFfmJbL39wflUOZX9GRor3JZE20iKisiRi3L7SwAgnhkR1AkHf2OUGaRl7uOIJ0FADRRvtAOsIgUn1ijH45WDUE6CwCQUobWg1Mi4bSxO5i8XC0C5x+mgv0Wz4jYqx0Ny+0sAODIRLaWnVKG75ysfuzuq7v7W99Cno3TcU4+1AuCipCjJ8RYEd/4xFSxcZwpFeRFAJFUiwRQgXLclATpLADCl1EN1KrtErkC1xKkswfwhGn6QEwsJd/H3f14L6iGLoq4Am9dIX3LbaIXFPvpmJMcm+PGebQX9IONXpCitHevAfgETJ67ajV8G1cAAAAASUVORK5CYII=" alt=""></div>
+                <div class="coupon-meta">
+                    <div>مصدر البيع : مكتبة الأمل</div>
+                    <div>تاريخ صلاحية الكود : 2026/10/31</div>
+                </div>
+                <div class="coupon-code">YAM-ARUM-B0M2</div>
+            </div>
+
+            <div class="student-code">كود الطالب : <span class="code-value">#1016</span></div>
+            <div class="page-num">01</div>
+        </article>
+    </div>
+    
+</section>
+
+<section class="page">
+    
+    <div class="slot">
+        <article class="card back">
+            <div class="watermark"></div>
+            <div class="side-pattern"></div>
+            <img class="back-hero" src="/static/dashboard/img/card_assets/image5.svg" alt="">
+            <div class="vertical-rule"></div>
+
+            <div class="back-title-frame"></div>
+            <div class="back-title">خطوات التسجيل والحضور:</div>
+
+            <ol class="steps">
+                <li>افتح رابط المنصة: اكتب على جوجل (منصة محترفو التعليم) أو امسح الرمز في الأسفل.</li>
+                <li>أنشئ حسابك، اضغط على "إنشاء حساب جديد" وأدخل معلوماتك الشخصية بدقة.</li>
+                <li>ادخل كودك الخاص: اذهب إلى "تفعيل الكود" وأدخل الكود الموضح في وجه البطاقة.</li>
+                <li>ابدأ الحضور أونلاين: ستظهر لك الجلسات مرتبة، بالتوفيق!</li>
+            </ol>
+
+            <div class="platform-card">
+                <div class="platform-qr"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASIAAAEiAQAAAAB1xeIbAAAB5UlEQVR4nO1aQW7EIAwcQ6QeidQH7FPIl/uD8KBKcKxE5MoGqlV72D1suiTLHCwgI8UyzqwxS4zbCOYOEjBYDSMSB4hEoopFV9JUTFud+vb+4CzLirILi8sAxHhdjc/z6zbOwKKS3rCMUEYC3Yqn+vViLB83Ipq78+vsLJdr8vvYlV8nZU1q+WfOQAYjvWfAyXJ6jl/mRVhbKWhKdbOokUdBV+fevb+NXlngK0TLku1/sPbqvTk6K9XChhZskvxEJeVlOvJ+X713GeQ/ZnC45Ola+dN8gMw5PItXx0yL1vcacNkPEX1e9avo2/ujslBVHpZ5lbmPdcTMuTwder9fjbmRDgkuihEJijPIr7opj36jGaxfmgM1+ls7AeEi1Y08CRc5b4147ag5vphWcq4uoxoVoxH7PfXe1WC3XZDe5s9oxH7HnoKCgDcmkX8Os8xgW49n5H3DgyPhWjnDUfS+NdRq636PN94B8wIsXIXYt8ZCk5uqSENz/uHeqhU29VglR62hOXvrPQFWpGaTFgPQ9L6Ifu73qzVn+a1VMBKJ+uhR63PisPTsvTlR7K2KzARpo4kGMfn43rH35lT3VihhTzarDvG4t/rHeyuSPmaYN4LnL+o8c8yhWTT+E9j5DpnBqnjk2eobYOcIquU+8ZoAAAAASUVORK5CYII=" alt=""></div>
+                <div class="platform-name">منصة<br>محترفو التعليم</div>
+            </div>
+
+            <div class="faq-top-line"></div>
+            <div class="faq">
+                <div class="faq-title">أسئلة شائعة:</div>
+                <p>نسيت كلمة المرور؟ تواصل معنا عبر الواتساب على الرقم أدناه.</p>
+                <p>هل يستخدم الكود لأكثر من حساب؟ الكود يربط بجهاز واحد فقط.</p>
+                <p>أحتاج مساعدة تقنية؟ فريقنا جاهز لمساعدتك عبر الواتساب.</p>
+            </div>
+
+            <img class="help-figure" src="/static/dashboard/img/card_assets/image6.svg" alt="">
+            <div class="socials">
+                <div class="social"><span class="social-icon">☎</span><span>+963 983 232 446</span></div>
+                <div class="social"><span class="social-icon">f</span><span>محترفو التعليم</span></div>
+                <div class="social"><span class="social-icon instagram-icon"></span><span>محترفو التعليم</span></div>
+            </div>
+            <div class="page-num">02</div>
+        </article>
+    </div>
+    
+</section>
+
+</body>
+</html>

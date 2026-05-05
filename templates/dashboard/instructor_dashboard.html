@@ -1,0 +1,80 @@
+{% extends "dashboard/base.html" %}
+{% block title %}لوحة المدرس | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="reveal-up">
+    <header class="section-header mb-8">
+        <div>
+            <span class="badge badge-gold mb-2">حساب أستاذ</span>
+            <h1 class="page-title">لوحة الأستاذ: {{ request.user.get_full_name|default:request.user.username }}</h1>
+            <p class="text-muted mb-0">نظرة سريعة على الدورات والطلاب المفعّلين.</p>
+        </div>
+    </header>
+
+    <div class="stats-grid mb-8">
+        <div class="premium-card stat-card">
+            <div class="stat-icon" style="color: var(--success); background: var(--success-bg);"><i data-lucide="users"></i></div>
+            <div class="stat-info">
+                <span class="label">طلابي المفعّلين</span>
+                <span class="value">{{ students_count }}</span>
+            </div>
+        </div>
+        <div class="premium-card stat-card">
+            <div class="stat-icon"><i data-lucide="book-open"></i></div>
+            <div class="stat-info">
+                <span class="label">دوراتي</span>
+                <span class="value">{{ courses_count }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="premium-card">
+        <h2 class="section-title mb-6"><i data-lucide="graduation-cap" class="gold"></i> دوراتي التدريبية</h2>
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>الدورة</th>
+                        <th>المادة</th>
+                        <th>الطلاب</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in courses %}
+                    <tr>
+                        <td><strong>{{ course.title }}</strong></td>
+                        <td>{{ course.subject.name }}</td>
+                        <td><span class="badge badge-gold">{{ course.grants_total }}</span></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center p-8 text-muted">لا توجد دورات مسجلة باسمك بعد.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    @media (max-width: 768px) {
+        .admin-table th, .admin-table td {
+            padding: 0.75rem 0.5rem !important;
+            font-size: 0.8rem !important;
+        }
+        .admin-table-wrapper {
+            margin: 0 -1rem;
+            border-radius: 0;
+            border-left: none;
+            border-right: none;
+        }
+        .page-title {
+            font-size: 1.6rem !important;
+        }
+        .btn-sm {
+            padding: 0.4rem 0.6rem !important;
+        }
+    }
+</style>
+{% endblock %}

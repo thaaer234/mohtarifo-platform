@@ -1,0 +1,58 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}الأسئلة الشائعة | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="reveal-up" style="max-width: 800px; margin: 4rem auto;">
+    <header class="text-center mb-16">
+        <div class="badge badge-gold mb-4">مركز المساعدة</div>
+        <h1 style="font-size: 3rem; margin-bottom: 1rem;">الأسئلة <span class="gold">الشائعة</span></h1>
+        <p class="text-muted" style="font-size: 1.1rem;">كل ما تريد معرفته عن المنصة وكيفية البدء.</p>
+    </header>
+
+    <div class="flex-column gap-4">
+        <div class="premium-card" style="padding: 0; overflow: hidden;">
+            <details class="premium-accordion">
+                <summary class="flex-between" style="padding: 1.75rem 2.5rem; cursor: pointer; list-style: none; transition: 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='none'">
+                    <span style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">كيف يمكنني الاشتراك في الدورة؟</span>
+                    <i data-lucide="plus" class="gold" style="transition: 0.3s;"></i>
+                </summary>
+                <div style="padding: 0 2.5rem 2rem; border-top: 1px solid var(--border-light); padding-top: 1.5rem;">
+                    <p class="text-secondary" style="line-height: 1.8;">يمكنك الاشتراك عبر شراء كود التفعيل من أحد مراكز البيع المعتمدة أو المعاهد، ثم إدخال الكود في لوحة التحكم الخاصة بك.</p>
+                </div>
+            </details>
+        </div>
+
+        <div class="premium-card" style="padding: 0; overflow: hidden;">
+            <details class="premium-accordion">
+                <summary class="flex-between" style="padding: 1.75rem 2.5rem; cursor: pointer; list-style: none; transition: 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='none'">
+                    <span style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">هل يمكنني فتح الحساب من أكثر من جهاز؟</span>
+                    <i data-lucide="plus" class="gold" style="transition: 0.3s;"></i>
+                </summary>
+                <div style="padding: 0 2.5rem 2rem; border-top: 1px solid var(--border-light); padding-top: 1.5rem;">
+                    <p class="text-secondary" style="line-height: 1.8;">لحماية محتواك، يتم ربط الكود بجهاز واحد فقط. في حال أردت تغيير الجهاز، يرجى التواصل مع الدعم الفني لفك الارتباط.</p>
+                </div>
+            </details>
+        </div>
+
+        <div class="premium-card" style="padding: 0; overflow: hidden;">
+            <details class="premium-accordion">
+                <summary class="flex-between" style="padding: 1.75rem 2.5rem; cursor: pointer; list-style: none; transition: 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='none'">
+                    <span style="font-size: 1.1rem; font-weight: 800; color: var(--text-primary);">هل الدروس متاحة للأوفلاين؟</span>
+                    <i data-lucide="plus" class="gold" style="transition: 0.3s;"></i>
+                </summary>
+                <div style="padding: 0 2.5rem 2rem; border-top: 1px solid var(--border-light); padding-top: 1.5rem;">
+                    <p class="text-secondary" style="line-height: 1.8;">الدروس متاحة للمشاهدة المباشرة عبر المنصة لضمان أمان المحتوى وتوفير أحدث التحديثات دائماً.</p>
+                </div>
+            </details>
+        </div>
+    </div>
+</div>
+
+<style>
+    details summary::-webkit-details-marker { display: none; }
+    details[open] summary i { transform: rotate(45deg); }
+    details[open] summary span { color: var(--brand-gold) !important; }
+</style>
+{% endblock %}

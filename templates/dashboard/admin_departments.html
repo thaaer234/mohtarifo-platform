@@ -1,0 +1,169 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}إدارة الأقسام | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="admin-content-wrapper reveal-up">
+    <header class="hub-header mb-10">
+        <div class="flex-between align-center">
+            <div>
+                <span class="badge mb-2">الهيكلية التعليمية</span>
+                <h1 class="page-title">إدارة الأفرع الأكاديمية (الأقسام)</h1>
+            </div>
+            <div class="hub-actions">
+                <button onclick="openCreateModal()" class="btn btn-primary">
+                    <i data-lucide="plus"></i> إضافة فرع جديد
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Create Modal -->
+    <div id="create-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card animate-scale-up">
+            <div class="modal-header">
+                <h2 class="section-title"><i data-lucide="plus-circle"></i> إضافة قسم جديد</h2>
+                <button onclick="closeModals()" class="btn-icon"><i data-lucide="x"></i></button>
+            </div>
+            <form method="post" class="modal-body">
+                {% csrf_token %}
+                <div class="form-grid">
+                    {% for field in department_form %}
+                        <div class="form-group">
+                            <label class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="modal-footer mt-8">
+                    <button type="button" onclick="closeModals()" class="btn btn-glass">إلغاء</button>
+                    <button type="submit" class="btn btn-primary btn-glow">حفظ القسم</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card animate-scale-up">
+            <div class="modal-header">
+                <h2 class="section-title"><i data-lucide="edit-3"></i> تعديل القسم</h2>
+                <button onclick="closeModals()" class="btn-icon"><i data-lucide="x"></i></button>
+            </div>
+            <form id="edit-form" method="post" class="modal-body">
+                {% csrf_token %}
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">اسم الفرع / القسم</label>
+                        <input type="text" name="name" id="edit-name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الترتيب</label>
+                        <input type="number" name="sort_order" id="edit-sort-order" class="form-control" required>
+                    </div>
+                    <div class="form-group flex-align gap-2">
+                        <input type="checkbox" name="is_active" id="edit-active">
+                        <label class="form-label mb-0">نشط</label>
+                    </div>
+                </div>
+                <div class="modal-footer mt-8">
+                    <button type="button" onclick="closeModals()" class="btn btn-glass">إلغاء</button>
+                    <button type="submit" class="btn btn-primary btn-glow">تحديث البيانات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="departments-grid">
+        {% for dept in departments %}
+        <div class="premium-card dept-card">
+            <div class="flex-between align-center">
+                <div class="dept-info">
+                    <span class="sort-order">#{{ dept.sort_order }}</span>
+                    <h3>{{ dept.name }}</h3>
+                    <p class="text-muted small">فرع أكاديمي {% if not dept.is_active %}(غير نشط){% endif %}</p>
+                </div>
+                <div class="dept-actions">
+                    <button onclick="openEditModal('{{ dept.id }}', '{{ dept.name|escapejs }}', '{{ dept.sort_order }}', {{ dept.is_active|yesno:'true,false' }})" class="btn-icon">
+                        <i data-lucide="edit-3"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="premium-card text-center p-12" style="grid-column: 1 / -1;">
+            <p class="text-muted">لا توجد أفرع أكاديمية مضافة حالياً.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .departments-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+    .dept-card { padding: 1.5rem !important; transition: 0.3s; }
+    .dept-card:hover { transform: scale(1.02); border-color: var(--brand-gold); }
+    .sort-order { font-size: 0.7rem; color: var(--brand-gold); font-weight: 900; background: rgba(197, 160, 89, 0.1); padding: 0.1rem 0.4rem; border-radius: 4px; margin-bottom: 0.5rem; display: inline-block; }
+    .dept-info h3 { font-size: 1.2rem; font-weight: 800; color: var(--text-primary); }
+    .btn-icon { color: var(--brand-gold); padding: 0.5rem; border-radius: 10px; transition: 0.3s; border: none; background: none; cursor: pointer; }
+    .btn-icon:hover { background: rgba(197, 160, 89, 0.1); }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 1000; padding: 1.5rem;
+    }
+    .modal-card {
+        background: var(--bg-surface); border: 1px solid var(--border-strong);
+        border-radius: 28px; width: 100%; max-width: 500px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+    }
+    .modal-header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 2rem; }
+    .modal-footer { padding: 1.5rem 2rem; background: rgba(0,0,0,0.1); border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 1rem; }
+    .form-group { margin-bottom: 1.5rem; }
+    .form-label { display: block; font-weight: 700; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem; }
+    .modal-body input, .modal-body textarea, .modal-body select {
+        width: 100%; padding: 0.85rem 1.25rem; background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border-strong); border-radius: 12px; color: var(--text-primary);
+    }
+    .animate-scale-up { animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes scaleUp { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+    .flex-align { display: flex; align-items: center; }
+    .gap-2 { gap: 0.5rem; }
+</style>
+
+<script>
+    function openCreateModal() {
+        document.getElementById('create-modal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function openEditModal(id, name, sortOrder, isActive) {
+        const modal = document.getElementById('edit-modal');
+        const form = document.getElementById('edit-form');
+        form.action = `/admin-dashboard/content/departments/${id}/edit/`;
+        
+        document.getElementById('edit-name').value = name;
+        document.getElementById('edit-sort-order').value = sortOrder;
+        document.getElementById('edit-active').checked = isActive;
+        
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeModals() {
+        document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+        document.body.style.overflow = 'auto';
+    }
+
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal-overlay')) {
+            closeModals();
+        }
+    };
+</script>
+{% endblock %}

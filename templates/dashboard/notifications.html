@@ -1,0 +1,98 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}الإشعارات | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="reveal-up" style="max-width: 900px; margin: 0 auto;">
+    <header class="flex-between mb-12 flex-wrap gap-6">
+        <div class="flex-center gap-6">
+            <div class="flex-center" style="width: 60px; height: 60px; border-radius: 20px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold); box-shadow: 0 0 25px rgba(var(--brand-gold-rgb), 0.1);">
+                <i data-lucide="bell" style="width: 28px; height: 28px;"></i>
+            </div>
+            <div>
+                <h1 style="font-size: 2rem; margin-bottom: 0.25rem;">الإشعارات</h1>
+                <p class="text-muted" style="font-size: 1rem; margin-bottom: 0;">
+                    {% if unread_count > 0 %}
+                        لديك <strong class="gold">{{ unread_count }}</strong> إشعار جديد
+                    {% else %}
+                        جميع الإشعارات مقروءة
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        {% if unread_count > 0 %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="mark_all_read">
+            <button type="submit" class="btn btn-secondary">
+                <i data-lucide="check-check" style="width: 16px;"></i>
+                تعليم الكل كمقروء
+            </button>
+        </form>
+        {% endif %}
+    </header>
+
+    {% if notifications %}
+    <div class="flex-column gap-3">
+        {% for notif in notifications %}
+        <div class="premium-card reveal-up" style="padding: 1.5rem 2rem; animation-delay: {{ forloop.counter0 }}50ms; {% if not notif.read_at %}border-right: 4px solid var(--brand-gold); background: rgba(var(--brand-gold-rgb), 0.03);{% endif %}" onmouseover="this.style.background='var(--bg-surface-elevated)'" onmouseout="this.style.background='{% if not notif.read_at %}rgba(var(--brand-gold-rgb), 0.03){% else %}var(--bg-surface){% endif %}'">
+            <div class="flex-center gap-6" style="justify-content: flex-start; align-items: flex-start;">
+                <div class="flex-center" style="width: 45px; height: 45px; border-radius: 14px; flex-shrink: 0; background: {% if notif.notification_type == 'access' %}rgba(var(--brand-gold-rgb), 0.1){% elif notif.notification_type == 'attendance' %}var(--success-bg){% elif notif.notification_type == 'lesson' %}rgba(59, 130, 246, 0.1){% else %}var(--bg-base){% endif %}; color: {% if notif.notification_type == 'access' %}var(--brand-gold){% elif notif.notification_type == 'attendance' %}var(--success){% elif notif.notification_type == 'lesson' %}#3b82f6{% else %}var(--text-secondary){% endif %};">
+                    {% if notif.notification_type == "access" %}
+                        <i data-lucide="key" style="width: 20px;"></i>
+                    {% elif notif.notification_type == "attendance" %}
+                        <i data-lucide="calendar-check" style="width: 20px;"></i>
+                    {% elif notif.notification_type == "lesson" %}
+                        <i data-lucide="play-circle" style="width: 20px;"></i>
+                    {% else %}
+                        <i data-lucide="info" style="width: 20px;"></i>
+                    {% endif %}
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <h4 style="font-size: 1rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.4rem;">{{ notif.title }}</h4>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 0.75rem;">{{ notif.body }}</p>
+                    <div class="flex-center gap-4" style="justify-content: flex-start;">
+                        <span class="text-muted flex-center gap-2" style="font-size: 0.75rem;">
+                            <i data-lucide="clock" style="width: 12px;"></i>
+                            {{ notif.created_at|timesince }} مضت
+                        </span>
+                        {% if not notif.read_at %}
+                        <span class="badge badge-gold" style="font-size: 0.65rem; padding: 0.2rem 0.6rem;">جديد</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if notif.url %}
+                <a href="{{ notif.url }}" class="flex-center" style="width: 40px; height: 40px; border-radius: 12px; background: var(--bg-base); color: var(--text-muted); transition: 0.3s; align-self: center;" onmouseover="this.style.background='var(--brand-gold)'; this.style.color='#000'" onmouseout="this.style.background='var(--bg-base)'; this.style.color='var(--text-muted)'">
+                    <i data-lucide="arrow-left" style="width: 18px;"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="premium-card text-center" style="padding: 6rem 2rem; border-style: dashed;">
+        <div class="flex-center" style="width: 100px; height: 100px; border-radius: 30px; background: var(--bg-surface-elevated); display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem;">
+            <i data-lucide="bell-off" class="text-muted" style="width: 48px; height: 48px; opacity: 0.3;"></i>
+        </div>
+        <h3 style="font-size: 1.5rem; margin-bottom: 0.75rem;">لا توجد إشعارات</h3>
+        <p class="text-muted">ستظهر هنا الإشعارات المتعلقة بتفعيل الأكواد والحضور والتحديثات</p>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    @media (max-width: 768px) {
+        .premium-card {
+            padding: 1rem 1.25rem !important;
+        }
+        .flex-center.gap-6 {
+            gap: 1rem !important;
+        }
+        h1 {
+            font-size: 1.6rem !important;
+        }
+    }
+</style>
+{% endblock %}

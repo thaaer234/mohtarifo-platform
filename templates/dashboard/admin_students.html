@@ -1,0 +1,186 @@
+{% extends "dashboard/base.html" %}
+{% block title %}إدارة الطلاب | محترفو التعليم{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumb animate-fade-up print-hidden">
+    <a href="{% url 'dashboard:admin_dashboard' %}">لوحة الإدارة</a>
+    <span class="breadcrumb-separator">/</span>
+    <span style="color: var(--text-primary);">الطلاب والأجهزة</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Top Header & Tools (Hidden on Print) -->
+<div class="premium-card mb-8 animate-fade-up print-hidden">
+    <div class="flex-between" style="flex-wrap: wrap; gap: 1.5rem;">
+        <div>
+            <span class="badge mb-2">إدارة متقدمة</span>
+            <h1 style="font-size: 2.2rem; color:var(--text-primary); margin-bottom:0.5rem;">الطلاب والتفعيلات</h1>
+            <p style="color:var(--text-secondary); max-width: 600px;">
+                إدارة شاملة للطلاب، مراقبة النشاط، الأجهزة المرتبطة، وتقارير تفصيلية قابلة للطباعة والتصدير.
+            </p>
+        </div>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <button onclick="window.print()" class="btn btn-secondary">
+                <i data-lucide="printer"></i> طباعة التقرير
+            </button>
+            <a href="{% url 'dashboard:admin_export_students' %}" class="btn btn-glass">
+                <i data-lucide="download"></i> تصدير Excel
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Grid (Visible on Print for Context) -->
+<div class="admin-stats-grid mb-8 animate-fade-up">
+    <div class="admin-stat-card blue">
+        <div class="stat-header">
+            <div class="icon-box"><i data-lucide="users"></i></div>
+        </div>
+        <div class="stat-body">
+            <h2 class="stat-value">{{ stats.total }}</h2>
+            <p class="stat-label">إجمالي الطلاب</p>
+        </div>
+    </div>
+    <div class="admin-stat-card green">
+        <div class="stat-header">
+            <div class="icon-box"><i data-lucide="user-check"></i></div>
+        </div>
+        <div class="stat-body">
+            <h2 class="stat-value">{{ stats.active }}</h2>
+            <p class="stat-label">طلاب نشطون</p>
+        </div>
+    </div>
+    <div class="admin-stat-card gold">
+        <div class="stat-header">
+            <div class="icon-box"><i data-lucide="user-plus"></i></div>
+        </div>
+        <div class="stat-body">
+            <h2 class="stat-value">+{{ stats.new_today }}</h2>
+            <p class="stat-label">تسجيلات اليوم</p>
+        </div>
+    </div>
+    <div class="admin-stat-card purple">
+        <div class="stat-header">
+            <div class="icon-box"><i data-lucide="monitor-smartphone"></i></div>
+        </div>
+        <div class="stat-body">
+            <h2 class="stat-value">{{ stats.devices }}</h2>
+            <p class="stat-label">أجهزة مرتبطة</p>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter Form (Hidden on Print) -->
+<div class="premium-card mb-8 animate-fade-up print-hidden" style="animation-delay: 0.1s;">
+    <form method="GET" class="flex-between" style="gap: 1rem; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 250px; position: relative;">
+            <i data-lucide="search" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); width: 20px;"></i>
+            <input type="text" name="q" value="{{ query }}" placeholder="البحث بالاسم، رقم الهاتف، أو اسم المستخدم..." class="form-input" style="padding-right: 3rem; width: 100%;">
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <select name="status" class="form-select" onchange="this.form.submit()">
+                <option value="all" {% if status_filter == 'all' %}selected{% endif %}>جميع الحالات</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>نشط فقط</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>غير نشط</option>
+            </select>
+            <button type="submit" class="btn btn-primary">بحث</button>
+            {% if query or status_filter != 'all' %}
+                <a href="?" class="btn btn-secondary">إلغاء</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Main Students Table -->
+<div class="animate-fade-up" style="animation-delay: 0.2s;">
+    <div class="admin-table-wrapper mb-8">
+        <table class="admin-table print-table">
+            <thead>
+                <tr>
+                    <th>اسم الطالب / المستخدم</th>
+                    <th>رقم الهاتف</th>
+                    <th>تاريخ الانضمام</th>
+                    <th>المواد</th>
+                    <th>الأجهزة</th>
+                    <th>الحالة</th>
+                    <th class="print-hidden">الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in students %}
+                <tr>
+                    <td>
+                        <strong style="display:block; color:var(--text-primary); margin-bottom:0.2rem;">{{ student.get_full_name|default:student.username }}</strong>
+                        <span style="color:var(--text-muted); font-size: 0.8rem;">{{ student.username }}</span>
+                    </td>
+                    <td><span dir="ltr">{{ student.student_profile.phone|default:"-" }}</span></td>
+                    <td>{{ student.date_joined|date:"Y-m-d" }}</td>
+                    <td><span class="badge" style="background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold);">{{ student.courses_total }}</span></td>
+                    <td><span class="badge" style="background: rgba(168, 85, 247, 0.1); color: #a855f7;">{{ student.devices_total }}</span></td>
+                    <td>
+                        <span class="status-badge {% if student.is_active %}success{% else %}danger{% endif %}">
+                            {% if student.is_active %}نشط{% else %}موقوف{% endif %}
+                        </span>
+                    </td>
+                    <td class="print-hidden">
+                        <a href="{% url 'dashboard:admin_student_detail' student.id %}" class="btn btn-icon" title="إدارة الطالب">
+                            <i data-lucide="external-link"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center p-8">
+                        لا توجد نتائج مطابقة لبحثك.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination (Hidden on Print) -->
+    {% if students.has_other_pages %}
+    <div class="pagination flex-center gap-4 mt-8 print-hidden">
+        {% if students.has_previous %}
+            <a href="?page={{ students.previous_page_number }}&q={{ query }}&status={{ status_filter }}" class="btn btn-secondary"><i data-lucide="chevron-right"></i> السابق</a>
+        {% endif %}
+        
+        <span style="color: var(--text-muted);">صفحة {{ students.number }} من {{ students.paginator.num_pages }}</span>
+        
+        {% if students.has_next %}
+            <a href="?page={{ students.next_page_number }}&q={{ query }}&status={{ status_filter }}" class="btn btn-secondary">التالي <i data-lucide="chevron-left"></i></a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Print Styles -->
+<style>
+    @media print {
+        body { background: white !important; color: black !important; }
+        .print-hidden, .navbar, .admin-sidebar, .mobile-bottom-nav, .ambient-bg { display: none !important; }
+        .main-wrapper { padding: 0 !important; margin: 0 !important; }
+        .admin-main-layout { display: block !important; }
+        
+        .admin-stats-grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 1rem !important; margin-bottom: 2rem !important; page-break-inside: avoid; }
+        .admin-stat-card { background: white !important; border: 1px solid #ccc !important; box-shadow: none !important; color: black !important; padding: 1rem !important; }
+        .stat-value { color: black !important; font-size: 1.5rem !important; }
+        .stat-label { color: #555 !important; }
+        .icon-box { border: 1px solid #ccc !important; }
+
+        .print-table { width: 100% !important; border-collapse: collapse !important; color: black !important; background: white !important; }
+        .print-table th, .print-table td { border: 1px solid #ddd !important; padding: 0.5rem !important; text-align: right !important; color: black !important; }
+        .print-table th { background-color: #f5f5f5 !important; font-weight: bold !important; }
+        .admin-table-wrapper { border: none !important; background: transparent !important; }
+        
+        .badge, .status-badge { border: 1px solid #999 !important; background: transparent !important; color: black !important; padding: 0.2rem 0.5rem !important; }
+        
+        h2, strong, span { color: black !important; }
+        
+        @page { size: landscape; margin: 1cm; }
+    }
+</style>
+
+{% endblock %}

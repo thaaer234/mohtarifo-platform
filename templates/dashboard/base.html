@@ -1,0 +1,267 @@
+{% load static inline_static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{% block title %}Mohtarifo{% endblock %} | محترفو التعليم</title>
+    
+    <!-- Meta Tags for SEO & PWA -->
+    <meta name="description" content="المنصة التعليمية الأقوى للمكثفات والامتحانات لطلاب الشهادة الثانوية في سوريا.">
+    <link rel="manifest" href="{% url 'dashboard:pwa_manifest' %}">
+    <meta name="theme-color" content="#0a0a0a">
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('theme');
+                var cookie = document.cookie.split('; ').find(function (row) { return row.indexOf('theme=') === 0; });
+                var theme = cookie ? cookie.split('=')[1] : (saved || 'light');
+                if (theme === 'dark') document.documentElement.classList.add('dark-theme');
+            } catch (e) {}
+        })();
+    </script>
+    
+    <!-- Design System -->
+    <style>{% inline_static 'css/design.css' %}</style>
+    
+    <!-- Lucide Icons -->
+    <script>{% inline_static 'vendor/lucide.min.js' %}</script>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    <!-- Scroll Progress Bar -->
+    <div id="scroll-progress-container">
+        <div id="scroll-progress-bar"></div>
+    </div>
+
+    <!-- Ambient Background Elements -->
+    <div class="ambient-bg"></div>
+
+    <!-- Premium Floating Navbar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-left">
+                <a href="{% url 'dashboard:landing' %}" class="navbar-brand">
+                    <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Mohtarifo Logo" class="main-logo">
+                </a>
+                
+                {% if user.is_staff %}
+                    <div class="badge badge-gold desktop-only mr-4">
+                        <i data-lucide="shield-check" style="width: 14px;"></i>
+                        <span>لوحة الإدارة</span>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="navbar-center desktop-only">
+                <div class="nav-links">
+                    {% if user.is_staff %}
+                        <a href="{% url 'dashboard:admin_dashboard' %}" class="nav-link {% if 'admin' in request.path %}active{% endif %}">الرئيسية</a>
+                        <a href="{% url 'dashboard:admin_students' %}" class="nav-link">الطلاب</a>
+                        <a href="{% url 'dashboard:admin_billing' %}" class="nav-link">المالية</a>
+                    {% elif user.is_authenticated %}
+                        <a href="{% url 'dashboard:student_dashboard' %}" class="nav-link {% if request.path == '/dashboard/student/' %}active{% endif %}">الرئيسية</a>
+                        <a href="{% url 'dashboard:my_courses' %}" class="nav-link {% if 'my-courses' in request.path %}active{% endif %}">مكتبتي</a>
+                        <a href="{% url 'dashboard:notifications' %}" class="nav-link {% if 'notifications' in request.path %}active{% endif %}">تنبيهات</a>
+                    {% else %}
+                        <a href="{% url 'dashboard:landing' %}" class="nav-link active">الرئيسية</a>
+                        <a href="{% url 'dashboard:about' %}" class="nav-link">عن المنصة</a>
+                        <a href="{% url 'dashboard:contact' %}" class="nav-link">اتصل بنا</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="navbar-right">
+                <div class="auth-actions desktop-only">
+                    {% if user.is_authenticated %}
+                        <div class="flex-center gap-4">
+                            <span class="text-muted font-bold">{% if user.is_staff %}المدير: {% endif %}{{ user.get_full_name|default:user.username }}</span>
+                            <a href="{% url 'dashboard:profile' %}" class="nav-icon-link" title="حسابي">
+                                <i data-lucide="{% if user.is_staff %}settings{% else %}user{% endif %}"></i>
+                            </a>
+                            <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="nav-icon-link" title="خروج"><i data-lucide="log-out"></i></button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'dashboard:login' %}" class="nav-link">دخول</a>
+                        <a href="{% url 'dashboard:register' %}" class="btn btn-primary btn-glow">اشترك الآن</a>
+                    {% endif %}
+                </div>
+                
+                <div class="flex-center gap-2">
+                    <button id="theme-toggle" class="nav-icon-link" aria-label="Toggle Theme">
+                        <i id="theme-icon" data-lucide="moon"></i>
+                    </button>
+                    <button class="mobile-menu-trigger mobile-only" id="menu-toggle" aria-label="Open Menu">
+                        <i data-lucide="menu"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobile-menu">
+        <div class="mobile-menu-header">
+            <span class="navbar-brand">
+                <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Mohtarifo Logo" class="main-logo">
+            </span>
+            <button class="close-menu" id="menu-close"><i data-lucide="x"></i></button>
+        </div>
+        <div class="mobile-nav-links">
+            <a href="{% url 'dashboard:landing' %}" class="mobile-nav-link"><i data-lucide="home"></i> الرئيسية</a>
+            <a href="{% url 'dashboard:about' %}" class="mobile-nav-link"><i data-lucide="info"></i> عن المنصة</a>
+            <a href="{% url 'dashboard:contact' %}" class="mobile-nav-link"><i data-lucide="phone"></i> اتصل بنا</a>
+            <div class="mobile-auth-separator"></div>
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard:student_dashboard' %}" class="mobile-nav-link gold"><i data-lucide="layout"></i> لوحة التحكم</a>
+                <form action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="mobile-nav-link text-danger"><i data-lucide="log-out"></i> خروج</button>
+                </form>
+            {% else %}
+                <a href="{% url 'dashboard:login' %}" class="mobile-nav-link"><i data-lucide="log-in"></i> تسجيل الدخول</a>
+                <a href="{% url 'dashboard:register' %}" class="mobile-nav-link gold"><i data-lucide="user-plus"></i> إنشاء حساب</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Main Content Wrapper -->
+    <main class="container main-content">
+        {% block breadcrumbs %}{% endblock %}
+
+        {% if messages %}
+            <div class="messages-container mb-8">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} reveal-up">
+                        <i data-lucide="{% if message.tags == 'success' %}check-circle{% else %}alert-circle{% endif %}"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav mobile-only">
+        {% if user.is_authenticated %}
+            <a href="{% url 'dashboard:student_dashboard' %}" class="bottom-nav-item {% if '/student/' in request.path %}active{% endif %}">
+                <i data-lucide="home"></i>
+                <span>الرئيسية</span>
+            </a>
+            <a href="{% url 'dashboard:my_courses' %}" class="bottom-nav-item {% if '/my-courses/' in request.path %}active{% endif %}">
+                <i data-lucide="book-open"></i>
+                <span>دوراتي</span>
+            </a>
+            <a href="{% url 'dashboard:notifications' %}" class="bottom-nav-item {% if '/notifications/' in request.path %}active{% endif %}">
+                <i data-lucide="bell"></i>
+                <span>تنبيهات</span>
+            </a>
+            <a href="{% url 'dashboard:profile' %}" class="bottom-nav-item {% if '/profile/' in request.path %}active{% endif %}">
+                <i data-lucide="user"></i>
+                <span>حسابي</span>
+            </a>
+        {% else %}
+            <a href="{% url 'dashboard:landing' %}" class="bottom-nav-item active">
+                <i data-lucide="home"></i>
+                <span>الرئيسية</span>
+            </a>
+            <a href="{% url 'dashboard:about' %}" class="bottom-nav-item">
+                <i data-lucide="info"></i>
+                <span>عن المنصة</span>
+            </a>
+            <a href="{% url 'dashboard:login' %}" class="bottom-nav-item">
+                <i data-lucide="log-in"></i>
+                <span>دخول</span>
+            </a>
+            <a href="{% url 'dashboard:register' %}" class="bottom-nav-item gold">
+                <i data-lucide="user-plus"></i>
+                <span>حساب جديد</span>
+            </a>
+        {% endif %}
+    </nav>
+
+    <!-- Premium Footer -->
+    <footer class="main-footer desktop-only">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand-info">
+                    <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Mohtarifo Logo" class="footer-logo-img mb-6" style="height: 40px;">
+                    <p class="footer-desc">المنصة التعليمية الأولى في سوريا، نرافقك من الدرس الأول حتى التفوق في الامتحان النهائي.</p>
+                    <div class="social-links">
+                        <a href="#" class="social-icon"><i data-lucide="facebook"></i></a>
+                        <a href="#" class="social-icon"><i data-lucide="instagram"></i></a>
+                        <a href="#" class="social-icon"><i data-lucide="youtube"></i></a>
+                        <a href="#" class="social-icon"><i data-lucide="send"></i></a>
+                    </div>
+                </div>
+                <div class="footer-links-group">
+                    <h3 class="footer-title">روابط سريعة</h3>
+                    <a href="{% url 'dashboard:landing' %}">الرئيسية</a>
+                    <a href="{% url 'dashboard:about' %}">عن المنصة</a>
+                    <a href="{% url 'dashboard:instructors_list' %}">نخبة المدرسين</a>
+                </div>
+                <div class="footer-links-group">
+                    <h3 class="footer-title">الدعم والمساعدة</h3>
+                    <a href="{% url 'dashboard:faq' %}">الأسئلة الشائعة</a>
+                    <a href="{% url 'dashboard:contact' %}">اتصل بنا</a>
+                    <a href="{% url 'dashboard:privacy' %}">سياسة الخصوصية</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 محترفو التعليم (Mohtarifo). جميع الحقوق محفوظة.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>{% inline_static 'JS/ui.js' %}</script>
+    {% if request.user.is_authenticated and not request.user.is_staff %}
+    <script>
+        (() => {
+            const pingUrl = "{% url 'dashboard:student_device_ping' %}";
+            const fallbackUrl = "{% url 'dashboard:device_logged_out' %}";
+            let redirecting = false;
+
+            async function checkActiveDevice() {
+                if (redirecting) return;
+                try {
+                    const response = await fetch(pingUrl, {
+                        method: "GET",
+                        credentials: "same-origin",
+                        cache: "no-store",
+                        redirect: "manual",
+                        headers: { "X-Requested-With": "XMLHttpRequest" },
+                    });
+
+                    if (response.status === 401 || response.status === 403) {
+                        redirecting = true;
+                        let redirectUrl = fallbackUrl;
+                        try {
+                            const payload = await response.json();
+                            redirectUrl = payload.redirect_url || redirectUrl;
+                        } catch (_error) {}
+                        window.location.replace(redirectUrl);
+                    }
+                } catch (_error) {
+                    // Network hiccups should not interrupt the student's current page.
+                }
+            }
+
+            window.addEventListener("focus", checkActiveDevice);
+            window.addEventListener("pageshow", checkActiveDevice);
+            document.addEventListener("visibilitychange", () => {
+                if (!document.hidden) checkActiveDevice();
+            });
+            checkActiveDevice();
+            setInterval(checkActiveDevice, 1000);
+        })();
+    </script>
+    {% endif %}
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

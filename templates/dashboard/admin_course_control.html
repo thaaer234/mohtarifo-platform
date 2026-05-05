@@ -1,0 +1,184 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}إدارة {{ course.title }} | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="reveal-up">
+    <!-- Header Section -->
+    <header class="flex-between mb-10 flex-wrap gap-6">
+        <div>
+            <div class="badge badge-gold mb-3">{{ course.subject.name }}</div>
+            <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">{{ course.title }}</h1>
+            <p class="text-muted" style="margin-bottom: 0;">
+                {{ course.get_kind_display }} · {{ course.get_academic_track_display }} · {{ course.get_term_display }}
+                {% if course.price_cents %} · {{ course.price_display }} ل.س{% endif %}
+            </p>
+        </div>
+        <div class="flex-center gap-4">
+            <a href="#upload-lesson" class="btn btn-primary btn-glow">رفع جلسة فيديو</a>
+        </div>
+    </header>
+
+    <!-- Stats Bento Grid -->
+    <div class="stats-grid mb-12" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+        <div class="premium-card stat-card" style="padding: 1.5rem; text-align: center;">
+            <span class="label">الجلسات</span>
+            <span class="value">{{ stats.lessons }}</span>
+            <a href="#upload-lesson" class="btn btn-secondary w-full mt-4" style="font-size: 0.8rem;">رفع فيديو</a>
+        </div>
+        <div class="premium-card stat-card" style="padding: 1.5rem; text-align: center;">
+            <span class="label">الأكواد</span>
+            <span class="value gold">{{ stats.codes }}</span>
+            <a href="{% url 'dashboard:admin_partners' %}" class="btn btn-secondary w-full mt-4" style="font-size: 0.8rem;">بروفايلات البيع</a>
+        </div>
+        <div class="premium-card stat-card" style="padding: 1.5rem; text-align: center;">
+            <span class="label">المباع</span>
+            <span class="value" style="color: var(--success);">{{ stats.sold }}</span>
+            <a href="#batches" class="btn btn-secondary w-full mt-4" style="font-size: 0.8rem;">رصيد الجهات</a>
+        </div>
+        <div class="premium-card stat-card" style="padding: 1.5rem; text-align: center;">
+            <span class="label">المجاني</span>
+            <span class="value text-muted">{{ stats.free }}</span>
+            <a href="{% url 'dashboard:admin_partners' %}" class="btn btn-secondary w-full mt-4" style="font-size: 0.8rem;">المعاهد</a>
+        </div>
+        <div class="premium-card stat-card" style="padding: 1.5rem; text-align: center;">
+            <span class="label">المفعل</span>
+            <span class="value gold-light">{{ stats.activated }}</span>
+            <a href="#activations" class="btn btn-secondary w-full mt-4" style="font-size: 0.8rem;">الأجهزة</a>
+        </div>
+        <div class="premium-card stat-card" style="padding: 1.5rem; text-align: center;">
+            <span class="label">الطلاب</span>
+            <span class="value">{{ stats.students }}</span>
+            <a href="{% url 'dashboard:admin_students' %}" class="btn btn-secondary w-full mt-4" style="font-size: 0.8rem;">كل الطلاب</a>
+        </div>
+    </div>
+
+    <div class="grid-2 mb-12">
+        <!-- Upload Form -->
+        <article class="premium-card" id="upload-lesson" style="padding: 2.5rem;">
+            <div class="badge badge-gold mb-4">الفيديوهات المحمية</div>
+            <h3 style="font-size: 1.5rem; margin-bottom: 2rem;">رفع جلسة من داخل الدورة</h3>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="upload_lesson">
+                
+                <div class="flex-column gap-6">
+                    {% for field in lesson_form %}
+                        <div class="premium-field">
+                            <label>{{ field.label }}</label>
+                            <div class="input-glow-wrapper">
+                                {{ field }}
+                            </div>
+                            {% if field.help_text %}
+                                <small class="text-muted block mt-2">{{ field.help_text }}</small>
+                            {% endif %}
+                            {% for error in field.errors %}
+                                <p class="text-danger mt-2" style="font-size: 0.8rem;">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <button class="btn btn-primary btn-glow w-full mt-6" type="submit">رفع جلسة الفيديو</button>
+            </form>
+        </article>
+
+        <div class="flex-column gap-8">
+            <!-- Distribution Info -->
+            <article class="premium-card" style="padding: 2.5rem;">
+                <div class="badge badge-gold mb-4">التوزيع</div>
+                <h3 style="font-size: 1.4rem; margin-bottom: 1.5rem;">الأكواد تدار من بروفايلات الجهات</h3>
+                <p class="text-muted mb-8" style="line-height: 1.7;">بعد إنشاء الدورة، ادخل على بروفايل مركز البيع أو المعهد، واختر هذه الدورة لتوليد أكوادها أو رفع طلابها.</p>
+                <a class="btn btn-secondary w-full" href="{% url 'dashboard:admin_partners' %}">فتح المعاهد ومراكز البيع</a>
+            </article>
+
+            <!-- Course Content List -->
+            <article class="premium-card" style="padding: 2.5rem;">
+                <div class="badge badge-gold mb-4">الجلسات</div>
+                <h3 style="font-size: 1.4rem; margin-bottom: 1.5rem;">محتوى الدورة</h3>
+                <div class="flex-column gap-3" style="max-height: 400px; overflow-y: auto; padding-left: 0.5rem;">
+                    {% for lesson in lessons %}
+                        <div class="premium-card" style="padding: 1.25rem; background: var(--bg-surface-elevated); border-right: 4px solid var(--brand-gold);">
+                            <strong class="block mb-1" style="font-size: 1rem; color: var(--text-primary);">{{ lesson.title }}</strong>
+                            <span class="text-muted" style="font-size: 0.85rem;">{{ lesson.unit.title }} · {{ lesson.get_lesson_type_display }} · {{ lesson.duration_seconds|default:"-" }} ثانية{% if lesson.video_file %} · 📹{% endif %}</span>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted text-center py-4">لم يتم رفع جلسات بعد.</p>
+                    {% endfor %}
+                </div>
+            </article>
+        </div>
+    </div>
+
+    <div class="grid-2 mb-12">
+        <!-- Sales Centers -->
+        <article class="premium-card" style="padding: 2.5rem;">
+            <div class="badge badge-gold mb-4">مراكز البيع</div>
+            <h3 style="font-size: 1.4rem; margin-bottom: 1.5rem;">توزيع هذه الدورة</h3>
+            <div class="flex-column gap-3">
+                {% for center in centers %}
+                    <a href="{% url 'dashboard:admin_sales_center_profile' center.id %}" class="premium-card flex-between" style="padding: 1.25rem; background: var(--bg-surface-elevated); text-decoration: none; transition: 0.3s;" onmouseover="this.style.background='var(--bg-base)'" onmouseout="this.style.background='var(--bg-surface-elevated)'">
+                        <div>
+                            <strong class="block mb-1" style="color: var(--text-primary);">{{ center.name }}</strong>
+                            <span class="text-muted" style="font-size: 0.85rem;">{{ center.total_codes }} كود · {{ center.activated_codes }} مفعل</span>
+                        </div>
+                        <i data-lucide="chevron-left" class="gold"></i>
+                    </a>
+                {% empty %}
+                    <p class="text-muted text-center py-4">لا توجد أكواد موزعة على مراكز بعد.</p>
+                {% endfor %}
+            </div>
+        </article>
+
+        <!-- Batches -->
+        <article class="premium-card" id="batches" style="padding: 2.5rem;">
+            <div class="badge badge-gold mb-4">دفعات الأكواد</div>
+            <h3 style="font-size: 1.4rem; margin-bottom: 1.5rem;">رصيد الجهات لهذه الدورة</h3>
+            <div class="flex-column gap-3">
+                {% for batch in batches %}
+                    <div class="premium-card" style="padding: 1.5rem; background: var(--bg-surface-elevated);">
+                        <strong class="block mb-3" style="font-size: 1.1rem; color: var(--text-primary);">{{ batch.name }}</strong>
+                        <div class="flex-between flex-wrap gap-4">
+                            <span class="text-muted" style="font-size: 0.85rem;">{{ batch.codes.count }} كود · {{ batch.sold_count }} مباع · {{ batch.redeemed_count }} مفعل</span>
+                            <div class="flex-center gap-2">
+                                <a class="btn btn-secondary" style="padding: 0.4rem 1rem; font-size: 0.75rem;" href="{% url 'dashboard:download_batch_codes' batch.id %}">تنزيل Excel</a>
+                                <a class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.75rem;" href="{% url 'dashboard:admin_print_batch_cards' batch.id %}" target="_blank">طباعة الكروت 🖨️</a>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-muted text-center py-4">لا توجد دفعات لهذه الدورة.</p>
+                {% endfor %}
+            </div>
+        </article>
+    </div>
+
+    <!-- Activations -->
+    <article class="premium-card" id="activations" style="padding: 2.5rem;">
+        <div class="badge badge-gold mb-4">آخر التفعيلات</div>
+        <h3 style="font-size: 1.5rem; margin-bottom: 2rem;">الطلاب والأجهزة</h3>
+        <div class="flex-column gap-3" style="max-height: 500px; overflow-y: auto; padding-left: 0.5rem;">
+            {% for grant in grants %}
+                <div class="premium-card flex-between" style="padding: 1.5rem; background: var(--bg-surface-elevated); border-right: 4px solid var(--success);">
+                    <div>
+                        <strong class="block mb-2" style="font-size: 1.1rem; color: var(--text-primary);">{{ grant.user.get_full_name|default:grant.user.username }}</strong>
+                        <div class="flex-center gap-4 text-muted flex-wrap" style="justify-content: flex-start; font-size: 0.85rem;">
+                            <span class="flex-center gap-1"><i data-lucide="key" style="width: 14px;"></i> {{ grant.access_code.code|default:"-" }}</span>
+                            <span class="flex-center gap-1"><i data-lucide="smartphone" style="width: 14px;"></i> {{ grant.device_fingerprint|slice:":10"|default:"غير محدد" }}</span>
+                            <span class="flex-center gap-1"><i data-lucide="calendar" style="width: 14px;"></i> {{ grant.created_at|date:"Y-m-d H:i" }}</span>
+                        </div>
+                    </div>
+                    <form method="post" style="margin: 0;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="clear_device">
+                        <input type="hidden" name="grant_id" value="{{ grant.id }}">
+                        <button class="btn btn-danger" style="padding: 0.6rem 1.25rem; font-size: 0.8rem;" type="submit">نقل الجهاز</button>
+                    </form>
+                </div>
+            {% empty %}
+                <p class="text-muted text-center py-8">لا توجد تفعيلات بعد.</p>
+            {% endfor %}
+        </div>
+    </article>
+</div>
+{% endblock %}

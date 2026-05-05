@@ -1,0 +1,36 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}سياسة الخصوصية | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="legal-wrapper reveal-up">
+    <div class="max-w-900 mx-auto">
+        <h1 class="page-title mb-8">سياسة <span class="gold">الخصوصية</span></h1>
+        
+        <div class="premium-card p-10">
+            <div class="legal-section mb-10">
+                <h3 class="mb-4">1. جمع المعلومات</h3>
+                <p class="text-muted line-relaxed">نقوم بجمع المعلومات الأساسية لإنشاء حسابك مثل الاسم ورقم الهاتف، وذلك لضمان وصولك إلى المحتوى التعليمي وحماية اشتراكك.</p>
+            </div>
+
+            <div class="legal-section mb-10">
+                <h3 class="mb-4">2. حماية البيانات</h3>
+                <p class="text-muted line-relaxed">نستخدم تقنيات تشفير متطورة لحماية بياناتك الشخصية وسجل تعلمك من أي وصول غير مصرح به.</p>
+            </div>
+
+            <div class="legal-section mb-10">
+                <h3 class="mb-4">3. الكوكيز (Cookies)</h3>
+                <p class="text-muted line-relaxed">نستخدم ملفات تعريف الارتباط لتحسين تجربتك في الموقع وحفظ جلسة تسجيل الدخول الخاصة بك.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .legal-wrapper { padding: 4rem 0; }
+    .max-w-900 { max-width: 900px; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .line-relaxed { line-height: 1.8; font-size: 1.05rem; }
+</style>
+{% endblock %}

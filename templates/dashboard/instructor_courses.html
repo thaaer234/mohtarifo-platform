@@ -1,0 +1,124 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}دورات الأستاذ {{ instructor.get_full_name }} | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="instructor-courses-wrapper reveal-up">
+    <!-- Instructor Profile Header -->
+    <header class="instructor-header-premium mb-16">
+        <div class="container header-grid">
+            <div class="inst-avatar-large">
+                {% if instructor_profile.avatar %}
+                    <img src="{{ instructor_profile.avatar.url }}" alt="{{ instructor.get_full_name }}">
+                {% else %}
+                    <div class="avatar-placeholder">
+                        <i data-lucide="user"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="inst-details">
+                <h1 class="inst-name-title mb-2">{{ instructor.get_full_name|default:instructor.username }}</h1>
+                <p class="inst-specialty-tag">{{ instructor_profile.specialty|default:"مدرس متخصص" }}</p>
+                {% if instructor_profile.bio %}
+                    <p class="inst-bio-text mt-6">{{ instructor_profile.bio }}</p>
+                {% endif %}
+                <div class="inst-stats-row mt-8">
+                    <div class="stat-badge">
+                        <i data-lucide="book-open"></i>
+                        <span>{{ courses.count }} دورة منشورة</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Courses Grid -->
+    <section class="courses-catalog">
+        <div class="container">
+            <div class="section-header-simple mb-12">
+                <h2 class="section-title">الدورات <span class="gold">المتاحة</span></h2>
+                <p class="text-muted">تصفح كافة المكثفات والدروس المقدمة من قبل الأستاذ.</p>
+            </div>
+
+            <div class="grid-3 gap-8">
+                {% for course in courses %}
+                    <article class="course-card-premium reveal-up">
+                        <div class="course-image">
+                            {% if course.cover %}
+                                <img src="{{ course.cover.url }}" alt="{{ course.title }}">
+                            {% else %}
+                                <div class="image-placeholder">
+                                    <i data-lucide="book"></i>
+                                </div>
+                            {% endif %}
+                            <div class="course-badge">{{ course.get_kind_display }}</div>
+                        </div>
+                        <div class="course-body">
+                            <span class="course-subject">{{ course.subject.name }}</span>
+                            <h3 class="course-title">{{ course.title }}</h3>
+                            <div class="course-footer">
+                                <div class="instructor">
+                                    <i data-lucide="user"></i>
+                                    <span>{{ course.instructor.get_full_name|default:course.instructor.username }}</span>
+                                </div>
+                                <a href="{% url 'dashboard:public_course_detail' course.id %}" class="btn-arrow">
+                                    <span>التفاصيل</span>
+                                    <i data-lucide="chevron-left"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </article>
+                {% empty %}
+                    <div class="empty-state full-width text-center p-20">
+                        <i data-lucide="search-x" style="width: 80px; height: 80px; opacity: 0.1; margin-bottom: 2rem;"></i>
+                        <h3>لا يوجد دورات منشورة لهذا المدرس حالياً</h3>
+                        <a href="{% url 'dashboard:instructors_list' %}" class="btn btn-glass mt-6">العودة لقائمة الأساتذة</a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+    .instructor-courses-wrapper { padding-bottom: 6rem; }
+    
+    .instructor-header-premium { 
+        background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(197, 160, 89, 0.05) 100%);
+        border-bottom: 1px solid var(--border-light);
+        padding: 6rem 0;
+        position: relative;
+        overflow: hidden;
+    }
+    .instructor-header-premium::before {
+        content: ''; position: absolute; top: -50%; left: -10%; width: 40%; height: 200%;
+        background: radial-gradient(circle, rgba(197, 160, 89, 0.05) 0%, transparent 70%);
+        transform: rotate(-15deg);
+    }
+
+    .header-grid { display: grid; grid-template-columns: 200px 1fr; gap: 4rem; align-items: center; position: relative; z-index: 2; }
+    
+    .inst-avatar-large { 
+        width: 200px; height: 200px; border-radius: 40px; overflow: hidden; 
+        box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 2px solid var(--brand-gold);
+    }
+    .inst-avatar-large img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-placeholder { width: 100%; height: 100%; background: var(--bg-base); display: flex; align-items: center; justify-content: center; }
+    .avatar-placeholder i { width: 80px; height: 80px; color: var(--text-muted); opacity: 0.2; }
+
+    .inst-name-title { font-size: 3rem; font-weight: 900; color: var(--text-primary); }
+    .inst-specialty-tag { display: inline-block; padding: 0.5rem 1.5rem; background: var(--brand-gold-glow); color: var(--brand-gold); border-radius: 100px; font-weight: 800; font-size: 0.9rem; }
+    .inst-bio-text { font-size: 1.1rem; line-height: 1.8; color: var(--text-muted); max-width: 800px; }
+
+    .stat-badge { display: flex; align-items: center; gap: 0.75rem; color: var(--text-primary); font-weight: 700; }
+    .stat-badge i { color: var(--brand-gold); }
+
+    .full-width { grid-column: 1 / -1; }
+
+    @media (max-width: 992px) {
+        .header-grid { grid-template-columns: 1fr; text-align: center; justify-items: center; gap: 2rem; }
+        .inst-name-title { font-size: 2.2rem; }
+    }
+</style>
+{% endblock %}

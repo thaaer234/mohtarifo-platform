@@ -1,0 +1,102 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}اتصل بنا | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="contact-wrapper reveal-up">
+    <div class="grid-2 gap-16 align-center">
+        <!-- Contact Info -->
+        <div class="contact-info-section">
+            <h1 class="page-title mb-6">تواصل معنا</h1>
+            <p class="text-muted mb-10 line-relaxed">نحن هنا للإجابة على استفساراتك ومساعدتك في رحلتك التعليمية. لا تتردد في مراسلتنا في أي وقت.</p>
+            
+            <div class="contact-methods">
+                <div class="method-card">
+                    <div class="method-icon"><i data-lucide="mail"></i></div>
+                    <div class="method-details">
+                        <label>البريد الإلكتروني</label>
+                        <p>support@mohtarifo.com</p>
+                    </div>
+                </div>
+                <div class="method-card">
+                    <div class="method-icon"><i data-lucide="phone"></i></div>
+                    <div class="method-details">
+                        <label>أرقام التواصل</label>
+                        <p>+963 967 519 747</p>
+                        <p>+963 967 519 748</p>
+                    </div>
+                </div>
+                <div class="method-card">
+                    <div class="method-icon"><i data-lucide="map-pin"></i></div>
+                    <div class="method-details">
+                        <label>المقر الرئيسي</label>
+                        <p>سوريا، دمشق</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="social-links mt-12">
+                <p class="mb-4 font-bold">تابعنا على:</p>
+                <div class="flex gap-4">
+                    <a href="#" class="social-btn"><i data-lucide="facebook"></i></a>
+                    <a href="#" class="social-btn"><i data-lucide="instagram"></i></a>
+                    <a href="#" class="social-btn"><i data-lucide="youtube"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Form -->
+        <div class="contact-form-section">
+            <div class="premium-card p-10">
+                <form method="post" class="modern-form">
+                    {% csrf_token %}
+                    <div class="input-group">
+                        <label>الاسم الكامل</label>
+                        <input type="text" name="name" placeholder="أدخل اسمك هنا" required>
+                    </div>
+                    <div class="input-group">
+                        <label>البريد الإلكتروني</label>
+                        <input type="email" name="email" placeholder="email@example.com" required>
+                    </div>
+                    <div class="input-group">
+                        <label>الموضوع</label>
+                        <input type="text" name="subject" placeholder="كيف يمكننا مساعدتك؟" required>
+                    </div>
+                    <div class="input-group">
+                        <label>الرسالة</label>
+                        <textarea name="message" rows="5" placeholder="اكتب استفسارك هنا..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-glow w-full mt-6">إرسال الرسالة</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .contact-wrapper { padding: 4rem 0; }
+    .line-relaxed { font-size: 1.1rem; line-height: 1.8; }
+    
+    .contact-methods { display: flex; flex-direction: column; gap: 1.5rem; }
+    .method-card { display: flex; align-items: center; gap: 1.5rem; padding: 1.5rem; background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 20px; transition: 0.3s; }
+    .method-card:hover { border-color: var(--brand-gold); transform: translateX(-10px); }
+    .method-icon { width: 50px; height: 50px; background: var(--brand-gold-glow); color: var(--brand-gold); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+    .method-details label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+    .method-details p { font-weight: 700; color: var(--text-primary); }
+
+    .social-btn { width: 45px; height: 45px; background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-muted); transition: 0.3s; }
+    .social-btn:hover { background: var(--brand-gold); color: #000; border-color: var(--brand-gold); transform: translateY(-5px); }
+
+    .input-group { margin-bottom: 1.5rem; }
+    .input-group label { display: block; font-weight: 700; margin-bottom: 0.75rem; color: var(--text-primary); font-size: 0.9rem; }
+    .input-group input, .input-group textarea { width: 100%; padding: 1rem; background: var(--bg-base); border: 1px solid var(--border-light); border-radius: 12px; color: var(--text-primary); font-family: inherit; }
+    .input-group input:focus, .input-group textarea:focus { border-color: var(--brand-gold); box-shadow: var(--shadow-glow); outline: none; }
+
+    @media (max-width: 900px) {
+        .grid-2 { grid-template-columns: 1fr; }
+        .contact-info-section { order: 2; }
+        .contact-form-section { order: 1; margin-bottom: 4rem; }
+    }
+</style>
+{% endblock %}

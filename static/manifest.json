@@ -1,0 +1,22 @@
+{
+  "name": "Mohtarifo LMS",
+  "short_name": "Mohtarifo",
+  "description": "منصة محترفو التعليم - شريكك في النجاح",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#8f6f3e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/dashboard/icons/logo2.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/static/dashboard/icons/logo2.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}

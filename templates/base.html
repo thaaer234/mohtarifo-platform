@@ -1,0 +1,104 @@
+{% load static inline_static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{% block title %}Mohtarifo{% endblock %} | محترفو التعليم</title>
+    
+    <!-- Meta Tags for SEO & PWA -->
+    <meta name="description" content="المنصة التعليمية الأقوى للمكثفات والامتحانات لطلاب الشهادة الثانوية في سوريا.">
+    <link rel="manifest" href="{% url 'dashboard:pwa_manifest' %}">
+    <meta name="theme-color" content="#0a0a0a">
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem('theme');
+                var cookie = document.cookie.split('; ').find(function (row) { return row.indexOf('theme=') === 0; });
+                var theme = cookie ? cookie.split('=')[1] : (saved || 'light');
+                if (theme === 'dark') document.documentElement.classList.add('dark-theme');
+            } catch (e) {}
+        })();
+    </script>
+    
+    <!-- Design System -->
+    <style>{% inline_static 'css/design.css' %}</style>
+    
+    <!-- Lucide Icons -->
+    <script>{% inline_static 'vendor/lucide.min.js' %}</script>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    <!-- Scroll Progress Bar -->
+    <div id="scroll-progress-container">
+        <div id="scroll-progress-bar"></div>
+    </div>
+
+    <!-- Ambient Background Elements -->
+    <div class="ambient-bg"></div>
+
+    <!-- Premium Floating Navbar -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-left">
+                <a href="{% url 'dashboard:landing' %}" class="navbar-brand">
+                    <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Mohtarifo Logo" class="main-logo">
+                </a>
+            </div>
+            
+            <div class="navbar-right">
+                <div class="auth-actions desktop-only">
+                    {% if user.is_authenticated %}
+                        <div class="flex-center gap-4">
+                            <span class="text-muted font-bold">{{ user.get_full_name|default:user.username }}</span>
+                            <a href="{% url 'dashboard:student_dashboard' %}" class="btn btn-secondary">لوحتي</a>
+                            <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="nav-icon-link" title="خروج"><i data-lucide="log-out"></i></button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'dashboard:login' %}" class="nav-link">دخول</a>
+                        <a href="{% url 'dashboard:register' %}" class="btn btn-primary btn-glow">اشترك الآن</a>
+                    {% endif %}
+                </div>
+                
+                <div class="flex-center gap-2">
+                    <button id="theme-toggle" class="nav-icon-link" aria-label="Toggle Theme">
+                        <i id="theme-icon" data-lucide="moon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Wrapper -->
+    <main class="container main-content">
+        {% block breadcrumbs %}{% endblock %}
+
+        {% if messages %}
+            <div class="messages-container mb-8">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} reveal-up">
+                        <i data-lucide="{% if message.tags == 'success' %}check-circle{% else %}alert-circle{% endif %}"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer desktop-only">
+        <div class="container text-center">
+            <p>&copy; 2026 محترفو التعليم (Mohtarifo). جميع الحقوق محفوظة.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>{% inline_static 'JS/ui.js' %}</script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

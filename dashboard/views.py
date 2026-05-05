@@ -1,0 +1,1805 @@
+import secrets
+import base64
+import os
+from io import BytesIO
+import qrcode
+
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.models import User
+from django.core.cache import cache
+from django.core import management
+from django.db import models, transaction
+from django.db.models import Avg, Count
+from django.core import signing
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.core.paginator import Paginator
+from openpyxl import Workbook
+
+from accounts.models import StudentProfile
+from analytics.models import TopicPerformance
+from billing.devices import activate_user_device, device_fingerprint, device_seed, set_device_cookie
+from billing.models import AccessCode, AccessCodeBatch, AccessGrant, Institute, Payment, SalesCenter, Subscription, UserDevice
+from billing.services import create_codes_for_batch, create_codes_from_upload
+from exams.models import Attempt, Exam, Question
+from learning.models import Course, CourseProgress, Lesson, LessonAttendance, LessonProgress, OnlineLessonSession
+
+from .forms import (
+    CourseCodeBatchForm,
+    CourseCreateForm,
+    CourseLessonUploadForm,
+    CourseStudentImportForm,
+    InstituteForm,
+    PartnerBatchForm,
+    PartnerInstituteImportForm,
+    RedeemCodeForm,
+    SalesCenterForm,
+    StudentRegistrationForm,
+)
+from .models import StudentNotification
+
+
+def _is_admin_user(user):
+    return user.is_authenticated and user.is_active and user.is_superuser
+
+
+def _is_active_instructor(user):
+    profile = getattr(user, "instructor_profile", None)
+    return user.is_authenticated and user.is_active and profile is not None and profile.status == "active"
+
+
+admin_required = user_passes_test(_is_admin_user, login_url="dashboard:login")
+instructor_required = user_passes_test(_is_active_instructor, login_url="dashboard:login")
+
+
+def home(request):
+    if not request.user.is_authenticated:
+        return redirect("dashboard:landing")
+    if _is_admin_user(request.user):
+        return admin_dashboard(request)
+    if _is_active_instructor(request.user):
+        return instructor_dashboard(request)
+    return student_dashboard(request)
+
+
+def landing_page(request):
+    instructor_id = request.GET.get("instructor")
+    selected_kind = request.GET.get("kind", "intensive")
+    selected_track = request.GET.get("track", "scientific")
+    
+    courses_query = Course.objects.filter(status="published")
+    
+    instructor_name = None
+    if instructor_id:
+        courses_query = courses_query.filter(instructor_id=instructor_id)
+        instructor = User.objects.filter(id=instructor_id).first()
+        if instructor:
+            instructor_name = instructor.get_full_name() or instructor.username
+    else:
+        courses_query = courses_query.filter(kind=selected_kind, academic_track=selected_track)
+        
+    courses = (
+        courses_query
+        .select_related("subject", "instructor")
+        .annotate(lessons_total=Count("units__lessons", distinct=True))
+        .order_by("subject__name", "title")
+    )
+    
+    if not instructor_id:
+        courses = courses[:6]
+        
+    return render(
+        request,
+        "dashboard/landing.html",
+        {
+            "courses": courses,
+            "selected_kind": selected_kind,
+            "selected_track": selected_track,
+            "catalog_tabs": _catalog_tabs(),
+            "filtered_instructor_name": instructor_name,
+        },
+    )
+
+
+def device_logged_out_page(request):
+    return render(request, "dashboard/device_logged_out.html")
+
+
+def public_course_detail(request, course_id):
+    course = get_object_or_404(
+        Course.objects.filter(status="published")
+        .select_related("subject", "instructor")
+        .prefetch_related("units__lessons"),
+        id=course_id,
+    )
+    first_lesson = (
+        Lesson.objects.filter(unit__course=course, video_url__gt="")
+        .select_related("unit", "unit__course")
+        .order_by("unit__sort_order", "sort_order", "id")
+        .first()
+    )
+    has_access = False
+    if request.user.is_authenticated:
+        has_access = AccessGrant.objects.filter(user=request.user, course=course).exists()
+    return render(
+        request,
+        "dashboard/public_course_detail.html",
+        {
+            "course": course,
+            "first_lesson": first_lesson,
+            "has_access": has_access,
+            "video_embed_url": _video_embed_url(first_lesson.video_url) if first_lesson else "",
+        },
+    )
+
+
+def thaaer_review(request):
+    courses = (
+        Course.objects.filter(status="published")
+        .select_related("subject", "instructor")
+        .annotate(lessons_total=Count("units__lessons", distinct=True))
+        .order_by("subject__name", "title")[:8]
+    )
+    sample_course = courses[0] if courses else None
+    sample_lessons = []
+    if sample_course:
+        sample_lessons = Lesson.objects.filter(unit__course=sample_course).select_related("unit").order_by("unit__sort_order", "sort_order")[:12]
+    context = {
+        "courses": courses,
+        "sample_course": sample_course,
+        "sample_lessons": sample_lessons,
+        "stats": {
+            "courses": Course.objects.count(),
+            "lessons": Lesson.objects.count(),
+            "codes": AccessCode.objects.count(),
+            "batches": AccessCodeBatch.objects.count(),
+            "institutes": Institute.objects.count(),
+            "sales_centers": SalesCenter.objects.count(),
+            "students": User.objects.filter(is_staff=False).count(),
+            "devices": UserDevice.objects.count(),
+        },
+        "screens": [
+            ("الكتالوج العام", "/landing/", "كروت المكثفات قبل تسجيل الدخول."),
+            ("صفحة المكثفة العامة", f"/course/{sample_course.id}/" if sample_course else "/course/<id>/", "معلومات المكثفة، الدروس المقفلة، ومعاينة الفيديو."),
+            ("تسجيل الدخول", "/login/", "دخول الطالب برقم الهاتف وكلمة المرور."),
+            ("إنشاء حساب", "/register/", "اسم الطالب، رقم الهاتف، الفرع، المحافظة."),
+            ("لوحة الطالب", "/student/", "تفعيل كود، عرض المكثفات المفتوحة، الفيديوهات، الإشعارات."),
+            ("صفحة مكثفة الطالب", f"/student/courses/{sample_course.id}/" if sample_course else "/student/courses/<id>/", "جلسات الفيديو المتاحة بعد التفعيل."),
+            ("مشغل الجلسة", "/student/lessons/<id>/", "مشاهدة الفيديو وتسجيل حضور الجلسة."),
+            ("لوحة الإدارة الداخلية", "/admin-dashboard/", "ملخص الطلاب والمكثفات والأكواد."),
+            ("Django Admin", "/admin/", "إدارة المواد، الدروس، المعاهد، مراكز البيع، ودفعات الأكواد."),
+        ],
+    }
+    return render(request, "dashboard/thaaer.html", context)
+
+
+def pwa_manifest(_request):
+    return JsonResponse(
+        {
+            "name": "محترفو التعليم",
+            "short_name": "محترفون",
+            "description": "منصة تعليمية عربية للمكثفات والدروس والامتحانات.",
+            "start_url": "/landing/",
+            "scope": "/",
+            "display": "standalone",
+            "orientation": "portrait-primary",
+            "dir": "rtl",
+            "lang": "ar",
+            "background_color": "#f5f5f5",
+            "theme_color": "#8f6f3e",
+            "categories": ["education", "productivity"],
+            "icons": [
+                {
+                    "src": "/static/dashboard/icons/icon.svg",
+                    "sizes": "any",
+                    "type": "image/svg+xml",
+                    "purpose": "any maskable",
+                },
+                {
+                    "src": "/static/dashboard/icons/icon-192.png",
+                    "sizes": "192x192",
+                    "type": "image/png",
+                    "purpose": "any",
+                },
+                {
+                    "src": "/static/dashboard/icons/icon-512.png",
+                    "sizes": "512x512",
+                    "type": "image/png",
+                    "purpose": "any maskable",
+                },
+            ],
+        }
+    )
+
+
+def service_worker(_request):
+    script = """
+const CACHE_NAME = "mohtarifo-platform-v2";
+const APP_SHELL = [
+  "/landing/",
+  "/login/",
+  "/register/",
+  "/static/dashboard/styles.css",
+  "/static/dashboard/icons/icon.svg",
+  "/static/dashboard/icons/icon-192.png",
+  "/static/dashboard/icons/icon-512.png"
+];
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") {
+    return;
+  }
+
+  const url = new URL(event.request.url);
+  const isSameOrigin = url.origin === self.location.origin;
+  const isSensitiveRoute = isSameOrigin && (
+    url.pathname.startsWith("/student/") ||
+    url.pathname.startsWith("/api/") ||
+    url.pathname === "/device-logged-out/" ||
+    url.pathname === "/login/" ||
+    url.pathname === "/logout/"
+  );
+
+  if (isSensitiveRoute || event.request.mode === "navigate") {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        return response;
+      })
+      .catch(() => caches.match(event.request).then((cached) => cached || caches.match("/landing/")))
+  );
+});
+"""
+    response = HttpResponse(script, content_type="application/javascript")
+    response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return response
+
+
+def _client_ip(request):
+    forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return request.META.get("REMOTE_ADDR", "")
+
+
+def _login_attempt_key(request):
+    username = (request.POST.get("username") or "").strip().lower()
+    return f"login_attempts:{_client_ip(request)}:{username}"
+
+
+def _login_is_rate_limited(request):
+    return int(cache.get(_login_attempt_key(request), 0)) >= settings.LOGIN_RATE_LIMIT_ATTEMPTS
+
+
+def _record_failed_login(request):
+    key = _login_attempt_key(request)
+    try:
+        cache.incr(key)
+    except ValueError:
+        cache.set(key, 1, settings.LOGIN_RATE_LIMIT_TIMEOUT_SECONDS)
+    else:
+        cache.touch(key, settings.LOGIN_RATE_LIMIT_TIMEOUT_SECONDS)
+
+
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard:home")
+
+    form = AuthenticationForm(request, data=request.POST or None)
+    if request.method == "POST" and _login_is_rate_limited(request):
+        messages.error(request, "Too many failed login attempts. Please try again later.")
+        return render(request, "registration/login.html", {"form": form}, status=429)
+
+    if request.method == "POST" and form.is_valid():
+        user = form.get_user()
+        login(request, user)
+        cache.delete(_login_attempt_key(request))
+        response = redirect("dashboard:home")
+        if not user.is_staff:
+            activate_user_device(request, user, response)
+        return response
+    if request.method == "POST":
+        _record_failed_login(request)
+
+    return render(request, "registration/login.html", {"form": form})
+
+
+def register_view(request):
+    if request.user.is_authenticated:
+        return redirect("dashboard:home")
+
+    form = StudentRegistrationForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        user = form.save()
+        StudentProfile.objects.update_or_create(
+            user=user,
+            defaults={
+                "grade": "الثالث الثانوي",
+                "track": form.cleaned_data["track"],
+                "governorate": form.cleaned_data["governorate"],
+                "phone": form.cleaned_data["username"],
+            },
+        )
+        login(request, user)
+        messages.success(request, "تم إنشاء حسابك بنجاح. يمكنك الآن إضافة كود المادة.")
+        response = redirect("dashboard:student_dashboard")
+        activate_user_device(request, user, response)
+        return response
+
+    return render(request, "registration/register.html", {"form": form})
+
+
+@admin_required
+def admin_dashboard(request):
+    courses = (
+        Course.objects.select_related("subject", "instructor")
+        .annotate(
+            lessons_total=Count("units__lessons", distinct=True),
+            codes_total=Count("access_codes", distinct=True),
+            grants_total=Count("access_grants", distinct=True),
+        )
+        .order_by("-published_at", "title")[:12]
+    )
+    recent_batches = AccessCodeBatch.objects.select_related("course", "institute", "sales_center").order_by("-created_at")[:8]
+    sales_centers = SalesCenter.objects.select_related("institute").filter(is_active=True).order_by("name")[:8]
+    context = {
+        "instructor_profile": getattr(request.user, 'instructor_profile', None),
+        "students_count": User.objects.filter(is_staff=False).count(),
+        "courses_count": Course.objects.count(),
+        "lessons_count": Lesson.objects.count(),
+        "questions_count": Question.objects.count(),
+        "exams_count": Exam.objects.count(),
+        "attempts_count": Attempt.objects.count(),
+        "codes_count": AccessCode.objects.count(),
+        "redeemed_codes_count": AccessCode.objects.filter(redeemed_count__gt=0).count(),
+        "sold_codes_count": AccessCode.objects.filter(sale_status="sold").count(),
+        "free_codes_count": AccessCode.objects.filter(is_free_code=True).count(),
+        "institutes_count": Institute.objects.count(),
+        "sales_centers_count": SalesCenter.objects.count(),
+        "active_subscriptions": Subscription.objects.filter(status="active").count(),
+        "paid_payments": Payment.objects.filter(status="paid").count(),
+        "managed_courses": courses,
+        "courses": courses,
+        "recent_batches": recent_batches,
+        "sales_centers": sales_centers,
+    }
+    return render(request, "dashboard/admin_dashboard.html", context)
+
+
+@admin_required
+def admin_course_create(request):
+    form = CourseCreateForm(request.POST or None, request.FILES or None)
+    if request.method == "POST" and form.is_valid():
+        course = form.save()
+        messages.success(request, "تم إنشاء المحتوى. الآن كمل الجلسات والأكواد والتفاصيل من لوحة الدورة.")
+        return redirect("dashboard:admin_course_control", course_id=course.id)
+    return render(request, "dashboard/admin_course_create.html", {"form": form})
+
+
+@admin_required
+def admin_partners(request):
+    institute_form = InstituteForm(prefix="institute")
+    center_form = SalesCenterForm(prefix="center")
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "create_institute":
+            institute_form = InstituteForm(request.POST, prefix="institute")
+            if institute_form.is_valid():
+                institute_form.save()
+                messages.success(request, "تم إنشاء المعهد.")
+                return redirect("dashboard:admin_partners")
+        elif action == "create_center":
+            center_form = SalesCenterForm(request.POST, prefix="center")
+            if center_form.is_valid():
+                center_form.save()
+                messages.success(request, "تم إنشاء مركز البيع.")
+                return redirect("dashboard:admin_partners")
+
+    institutes = (
+        Institute.objects.annotate(
+            centers_total=Count("sales_centers", distinct=True),
+            codes_total=Count("access_codes", distinct=True),
+            activated_total=Count("access_codes__grants", distinct=True),
+        )
+        .order_by("name")
+    )
+    centers = (
+        SalesCenter.objects.select_related("institute")
+        .annotate(codes_total=Count("access_codes", distinct=True), activated_total=Count("access_codes__grants", distinct=True))
+        .order_by("name")
+    )
+    return render(
+        request,
+        "dashboard/admin_partners.html",
+        {
+            "institute_form": institute_form,
+            "center_form": center_form,
+            "institutes": institutes,
+            "centers": centers,
+        },
+    )
+
+
+@admin_required
+def admin_students(request):
+    query = request.GET.get('q', '').strip()
+    status_filter = request.GET.get('status', 'all')
+    
+    students_query = User.objects.filter(is_staff=False).select_related('student_profile')
+    
+    if query:
+        students_query = students_query.filter(
+            models.Q(username__icontains=query) |
+            models.Q(first_name__icontains=query) |
+            models.Q(last_name__icontains=query) |
+            models.Q(student_profile__phone__icontains=query)
+        )
+        
+    if status_filter == 'active':
+        students_query = students_query.filter(is_active=True)
+    elif status_filter == 'inactive':
+        students_query = students_query.filter(is_active=False)
+        
+    students_query = students_query.annotate(
+        courses_total=Count("access_grants", distinct=True), 
+        devices_total=Count("devices", distinct=True)
+    ).order_by("-date_joined")
+    
+    # Pagination
+    paginator = Paginator(students_query, 50)
+    page_number = request.GET.get('page')
+    students = paginator.get_page(page_number)
+    
+    # Stats
+    total_students = User.objects.filter(is_staff=False).count()
+    active_students = User.objects.filter(is_staff=False, is_active=True).count()
+    new_students_today = User.objects.filter(is_staff=False, date_joined__date=timezone.now().date()).count()
+    total_devices = UserDevice.objects.count()
+
+    grants = AccessGrant.objects.select_related("user", "course", "access_code").order_by("-created_at")[:20]
+    devices = UserDevice.objects.select_related("user").order_by("-last_seen_at")[:20]
+
+    return render(
+        request,
+        "dashboard/admin_students.html",
+        {
+            "students": students,
+            "grants": grants,
+            "devices": devices,
+            "query": query,
+            "status_filter": status_filter,
+            "stats": {
+                "total": total_students,
+                "active": active_students,
+                "new_today": new_students_today,
+                "devices": total_devices,
+            }
+        },
+    )
+
+
+@admin_required
+def admin_institute_profile(request, institute_id):
+    institute = get_object_or_404(Institute, id=institute_id)
+    import_form = PartnerInstituteImportForm(prefix="import")
+    edit_form = InstituteForm(instance=institute, prefix="edit")
+    
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "import_institute_students":
+            import_form = PartnerInstituteImportForm(request.POST, request.FILES, prefix="import")
+            if import_form.is_valid():
+                batch = AccessCodeBatch.objects.create(
+                    name=import_form.cleaned_data["batch_name"],
+                    course=import_form.cleaned_data["course"],
+                    institute=institute,
+                    code_prefix=import_form.cleaned_data["code_prefix"],
+                    notes=f"طلاب مجانيون من {institute.name}",
+                )
+                created = create_codes_from_upload(batch, import_form.cleaned_data["file"], free_codes=True)
+                messages.success(request, f"تم رفع {created} طالب وإنشاء أكواد مجانية مرتبطة بالمعهد.")
+                return redirect("dashboard:admin_institute_profile", institute_id=institute.id)
+        
+        elif action == "edit_institute":
+            edit_form = InstituteForm(request.POST, request.FILES, instance=institute, prefix="edit")
+            if edit_form.is_valid():
+                edit_form.save()
+                messages.success(request, "تم تحديث بيانات المعهد والشعار بنجاح.")
+                return redirect("dashboard:admin_institute_profile", institute_id=institute.id)
+
+    batches = (
+        AccessCodeBatch.objects.filter(institute=institute)
+        .select_related("course")
+        .annotate(codes_total=Count("codes", distinct=True), activated_total=Count("codes__grants", distinct=True))
+        .order_by("-created_at")
+    )
+    return render(
+        request,
+        "dashboard/admin_institute_profile.html",
+        {"institute": institute, "import_form": import_form, "edit_form": edit_form, "batches": batches},
+    )
+
+
+@admin_required
+def admin_sales_center_profile(request, center_id):
+    center = get_object_or_404(SalesCenter.objects.select_related("institute"), id=center_id)
+    batch_form = PartnerBatchForm(prefix="batch")
+    edit_form = SalesCenterForm(instance=center, prefix="edit")
+    
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "create_center_codes":
+            batch_form = PartnerBatchForm(request.POST, prefix="batch")
+            if batch_form.is_valid():
+                batch = AccessCodeBatch.objects.create(
+                    name=batch_form.cleaned_data["name"],
+                    course=batch_form.cleaned_data["course"],
+                    sales_center=center,
+                    allocated_count=batch_form.cleaned_data["quantity"],
+                    code_prefix=batch_form.cleaned_data["code_prefix"],
+                    notes=batch_form.cleaned_data["notes"],
+                )
+                created = create_codes_for_batch(batch, batch_form.cleaned_data["quantity"], free_codes=False)
+                messages.success(request, f"تم إنشاء {created} كود لمركز البيع.")
+                return redirect("dashboard:admin_sales_center_profile", center_id=center.id)
+        
+        elif action == "edit_center":
+            edit_form = SalesCenterForm(request.POST, instance=center, prefix="edit")
+            if edit_form.is_valid():
+                edit_form.save()
+                messages.success(request, "تم تحديث بيانات مركز البيع بنجاح.")
+                return redirect("dashboard:admin_sales_center_profile", center_id=center.id)
+
+    batches = (
+        AccessCodeBatch.objects.filter(sales_center=center)
+        .select_related("course")
+        .annotate(codes_total=Count("codes", distinct=True), sold_total=Count("codes", filter=models.Q(codes__sale_status="sold"), distinct=True), activated_total=Count("codes__grants", distinct=True))
+        .order_by("-created_at")
+    )
+    return render(
+        request,
+        "dashboard/admin_sales_center_profile.html",
+        {"center": center, "batch_form": batch_form, "edit_form": edit_form, "batches": batches},
+    )
+
+
+@admin_required
+def admin_print_batch_cards(request, batch_id):
+    """توليد صفحة قابلة للطباعة تحتوي على كروت الأكواد (وش وقفا)"""
+    batch = get_object_or_404(
+        AccessCodeBatch.objects.select_related("course", "institute", "sales_center"), 
+        id=batch_id
+    )
+    codes = batch.codes.all().order_by("created_at")
+    
+    # تحضير رابط المنصة لـ QR الخلفية
+    platform_url = request.build_absolute_uri("/")
+    platform_qr = _generate_qr_base64(platform_url)
+    
+    # تحضير الكروت مع الـ QR الخاص بكل كود
+    cards = []
+    for c in codes:
+        cards.append({
+            "obj": c,
+            "qr": _generate_qr_base64(c.code)
+        })
+    
+    # تقسيم الكروت لمجموعات (كل مجموعة 3 كروت لصفحة A4 واحدة)
+    grouped_cards = [cards[i:i + 3] for i in range(0, len(cards), 3)]
+        
+    return render(request, "dashboard/admin_print_batch_cards.html", {
+        "batch": batch,
+        "grouped_cards": grouped_cards,
+        "platform_qr": platform_qr,
+        "platform_name": "تركيز", # يمكن تغييرها حسب الرغبة
+        "print_date": timezone.now(),
+    })
+
+
+def _generate_qr_base64(data):
+    """دالة مساعدة لتوليد QR Code وتحويله لـ Base64 لدمجه في HTML"""
+    qr = qrcode.QRCode(version=1, box_size=10, border=2)
+    qr.add_data(data)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    buffered = BytesIO()
+    img.save(buffered, format="PNG")
+    return base64.b64encode(buffered.getvalue()).decode()
+
+
+@admin_required
+def download_batch_codes(request, batch_id):
+    batch = get_object_or_404(AccessCodeBatch.objects.select_related("course", "institute", "sales_center"), id=batch_id)
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "codes"
+    sheet.append(["code", "course", "partner", "status", "student_name", "student_phone", "activated"])
+    partner = batch.institute.name if batch.institute else batch.sales_center.name if batch.sales_center else ""
+    for code in batch.codes.order_by("created_at"):
+        sheet.append([
+            code.code,
+            batch.course.title,
+            partner,
+            code.sale_status,
+            code.assigned_student_name,
+            code.assigned_student_phone,
+            "yes" if code.redeemed_count else "no",
+        ])
+    for column in ["A", "B", "C", "D", "E", "F", "G"]:
+        sheet.column_dimensions[column].width = 24
+    buffer = BytesIO()
+    workbook.save(buffer)
+    buffer.seek(0)
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = f'attachment; filename="codes-batch-{batch.id}.xlsx"'
+    return response
+
+
+@admin_required
+def download_student_import_template(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "students"
+    headers = ["student_name", "student_phone", "notes"]
+    sheet.append(headers)
+    sheet.append(["مثال: أحمد محمد", "09xxxxxxxx", "طلاب معهد اليمان"])
+    for cell in sheet[1]:
+        cell.style = "Headline 3"
+    sheet.column_dimensions["A"].width = 28
+    sheet.column_dimensions["B"].width = 18
+    sheet.column_dimensions["C"].width = 34
+    info = workbook.create_sheet("instructions")
+    info.append(["استخدم الأعمدة كما هي بدون تغيير أسماء العناوين."])
+    info.append(["student_name", "اسم الطالب كما سيظهر في السجل"])
+    info.append(["student_phone", "رقم الطالب ويستخدم لربط الكود بحسابه"])
+    info.append(["notes", "ملاحظات اختيارية"])
+    buffer = BytesIO()
+    workbook.save(buffer)
+    buffer.seek(0)
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    filename = f"students-template-course-{course.id}.xlsx"
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
+
+@admin_required
+def admin_export_students(request):
+    """تصدير كل بيانات الطلاب إلى ملف Excel للتواصل أو التسويق"""
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Students"
+    sheet.append(["الاسم الكامل", "اسم المستخدم/الهاتف", "الفرع", "المحافظة", "تاريخ الانضمام", "آخر نشاط", "XP", "المستوى"])
+    
+    students = User.objects.filter(is_staff=False).select_related("student_profile").order_by("-date_joined")
+    
+    for s in students:
+        profile = getattr(s, 'student_profile', None)
+        sheet.append([
+            s.get_full_name(),
+            s.username,
+            profile.track if profile else "",
+            profile.governorate if profile else "",
+            s.date_joined.strftime("%Y-%m-%d"),
+            profile.last_activity_date.strftime("%Y-%m-%d") if profile and profile.last_activity_date else "",
+            profile.xp if profile else 0,
+            profile.level if profile else 1,
+        ])
+    
+    for column in ["A", "B", "C", "D", "E", "F", "G", "H"]:
+        sheet.column_dimensions[column].width = 20
+        
+    buffer = BytesIO()
+    workbook.save(buffer)
+    buffer.seek(0)
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = f'attachment; filename="all-students-{timezone.now().strftime("%Y-%m-%d")}.xlsx"'
+    return response
+
+@admin_required
+def admin_instructor_add(request):
+    from .forms import InstructorAddForm
+    from accounts.models import InstructorProfile
+    
+    form = InstructorAddForm(request.POST or None, request.FILES or None)
+    if request.method == "POST" and form.is_valid():
+        username = form.cleaned_data["username"]
+        if User.objects.filter(username=username).exists():
+            messages.error(request, "اسم المستخدم / الهاتف موجود مسبقاً.")
+        else:
+            with transaction.atomic():
+                user = User.objects.create_user(
+                    username=username,
+                    password=form.cleaned_data["password"],
+                    first_name=form.cleaned_data["first_name"],
+                    last_name=form.cleaned_data["last_name"],
+                    is_staff=False,
+                )
+                InstructorProfile.objects.update_or_create(
+                    user=user,
+                    defaults={
+                        "specialty": form.cleaned_data["specialty"],
+                        "bio": form.cleaned_data["bio"],
+                        "avatar": form.cleaned_data["photo"]
+                    }
+                )
+                messages.success(request, f"تم إضافة المدرس {user.get_full_name()} بنجاح.")
+                return redirect("dashboard:instructors_list")
+                
+    return render(request, "dashboard/admin_instructor_add.html", {"form": form})
+
+
+@admin_required
+def admin_system_backup(request):
+    if not settings.ENABLE_ADMIN_BACKUP_EXPORT:
+        raise Http404("Backup export is disabled.")
+
+    """تصدير قاعدة البيانات كاملة كملف JSON للنسخ الاحتياطي"""
+    buffer = BytesIO()
+    # Use management command to dump data to the buffer
+    from django.core.management import call_command
+    
+    # Create a temporary file to hold the dump
+    temp_file = "backup_temp.json"
+    try:
+        # Note: We use -o to ensure proper encoding on Windows
+        call_command('dumpdata', exclude=['contenttypes', 'auth.Permission'], indent=2, output=temp_file)
+        with open(temp_file, 'rb') as f:
+            data = f.read()
+        
+        response = HttpResponse(data, content_type="application/json")
+        response["Content-Disposition"] = f'attachment; filename="backup-{timezone.now().strftime("%Y-%m-%d-%H%M")}.json"'
+        return response
+    finally:
+        if os.path.exists(temp_file):
+            os.remove(temp_file)
+
+
+@admin_required
+def admin_course_control(request, course_id):
+    course = get_object_or_404(Course.objects.select_related("subject", "instructor").prefetch_related("units__lessons"), id=course_id)
+    batch_form = CourseCodeBatchForm(prefix="batch")
+    import_form = CourseStudentImportForm(prefix="import", course=course)
+    lesson_form = CourseLessonUploadForm(prefix="lesson", course=course)
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "create_batch":
+            batch_form = CourseCodeBatchForm(request.POST, prefix="batch")
+            if batch_form.is_valid():
+                batch = batch_form.save(commit=False)
+                batch.course = course
+                batch.save()
+                messages.success(request, "تم إنشاء دفعة الأكواد. يمكنك الآن رفع ملف الطلاب عليها.")
+                return redirect("dashboard:admin_course_control", course_id=course.id)
+        elif action == "import_students":
+            import_form = CourseStudentImportForm(request.POST, request.FILES, prefix="import", course=course)
+            if import_form.is_valid():
+                created = create_codes_from_upload(
+                    import_form.cleaned_data["batch"],
+                    import_form.cleaned_data["file"],
+                    import_form.cleaned_data["free_codes"],
+                )
+                messages.success(request, f"تم توليد {created} كود من ملف الطلاب.")
+                return redirect("dashboard:admin_course_control", course_id=course.id)
+        elif action == "upload_lesson":
+            lesson_form = CourseLessonUploadForm(request.POST, request.FILES, prefix="lesson", course=course)
+            if lesson_form.is_valid():
+                lesson = lesson_form.save(commit=False)
+                lesson.lesson_type = "video"
+                lesson.save()
+                messages.success(request, "تم تسجيل الدرس بنجاح.")
+                return redirect("dashboard:admin_course_control", course_id=course.id)
+        elif action == "clear_device":
+            grant = get_object_or_404(AccessGrant, id=request.POST.get("grant_id"), course=course)
+            grant.device_fingerprint = ""
+            grant.save(update_fields=["device_fingerprint"])
+            UserDevice.objects.filter(user=grant.user).update(is_active=False)
+            messages.success(request, "تم نقل/فك جهاز الطالب. عند دخوله القادم سيتم ربط الجهاز الجديد.")
+            return redirect("dashboard:admin_course_control", course_id=course.id)
+
+    codes = AccessCode.objects.filter(course=course)
+    batches = AccessCodeBatch.objects.filter(course=course).select_related("institute", "sales_center").order_by("-created_at")
+    grants = AccessGrant.objects.filter(course=course).select_related("user", "access_code").order_by("-created_at")[:30]
+    centers = (
+        SalesCenter.objects.filter(access_codes__course=course)
+        .select_related("institute")
+        .annotate(total_codes=Count("access_codes", distinct=True), activated_codes=Count("access_codes__grants", distinct=True))
+        .distinct()
+        .order_by("name")
+    )
+    lessons = Lesson.objects.filter(unit__course=course).select_related("unit").order_by("unit__sort_order", "sort_order")
+    stats = {
+        "lessons": lessons.count(),
+        "codes": codes.count(),
+        "sold": codes.filter(sale_status="sold").count(),
+        "free": codes.filter(is_free_code=True).count(),
+        "activated": codes.filter(redeemed_count__gt=0).count(),
+        "students": AccessGrant.objects.filter(course=course).values("user").distinct().count(),
+    }
+    return render(
+        request,
+        "dashboard/admin_course_control.html",
+        {
+            "course": course,
+            "stats": stats,
+            "batches": batches,
+            "grants": grants,
+            "centers": centers,
+            "lessons": lessons[:20],
+            "batch_form": batch_form,
+            "import_form": import_form,
+            "lesson_form": lesson_form,
+        },
+    )
+
+
+@instructor_required
+def instructor_dashboard(request):
+    courses = (
+        Course.objects.filter(instructor=request.user)
+        .select_related("subject")
+        .annotate(lessons_total=Count("units__lessons", distinct=True), grants_total=Count("access_grants", distinct=True))
+    )
+    sessions = (
+        OnlineLessonSession.objects.filter(lesson__unit__course__in=courses)
+        .select_related("lesson", "lesson__unit", "lesson__unit__course")
+        .annotate(attendance_total=Count("attendances", distinct=True))
+        .order_by("starts_at")
+    )
+    attendance_rows = LessonAttendance.objects.filter(session__lesson__unit__course__in=courses).select_related(
+        "user", "session", "session__lesson", "session__lesson__unit", "session__lesson__unit__course"
+    ).order_by("-created_at")
+    context = {
+        "courses": courses,
+        "courses_count": courses.count(),
+        "lessons_count": Lesson.objects.filter(unit__course__in=courses).count(),
+        "sessions_count": sessions.count(),
+        "attendance_count": attendance_rows.count(),
+        "students_count": AccessGrant.objects.filter(course__in=courses).values("user").distinct().count(),
+        "codes_count": AccessCode.objects.filter(course__in=courses).count(),
+        "sessions": sessions[:8],
+        "attendance_rows": attendance_rows[:10],
+     }
+    return render(request, "dashboard/instructor_dashboard.html", context)
+
+
+@login_required
+def student_dashboard(request):
+    redeem_form = RedeemCodeForm(request.POST or None)
+    current_device = _current_device_fingerprint(request)
+
+    if request.method == "POST" and redeem_form.is_valid():
+        code_value = redeem_form.cleaned_data["code"].strip().upper()
+        with transaction.atomic():
+            access_code = AccessCode.objects.select_for_update().filter(code__iexact=code_value).first()
+            if access_code is None:
+                messages.error(request, "الكود غير صحيح.")
+            else:
+                allowed, reason = access_code.is_redeemable(timezone.now())
+                if not allowed:
+                    messages.error(request, reason)
+                elif not _access_code_matches_student(access_code, request.user):
+                    messages.error(request, "هذا الكود مخصص لطالب آخر ولا يمكن تفعيله على هذا الحساب.")
+                else:
+                    grant, created = AccessGrant.objects.get_or_create(
+                        user=request.user,
+                        course=access_code.course,
+                        lesson=access_code.lesson,
+                        defaults={
+                            "access_code": access_code,
+                            "source": "code",
+                            "device_fingerprint": current_device,
+                            "starts_at": timezone.now(),
+                            "expires_at": access_code.valid_until,
+                        },
+                    )
+                    if created:
+                        access_code.redeemed_count += 1
+                        if access_code.sale_status in {"available", "reserved"}:
+                            access_code.sale_status = "free" if access_code.is_free_code else "sold"
+                        access_code.save(update_fields=["redeemed_count", "sale_status", "updated_at"])
+                        StudentNotification.objects.create(
+                            user=request.user,
+                            notification_type="access",
+                            title="تم تفعيل كود جديد",
+                            body=f"تمت إضافة {access_code.course or access_code.lesson or access_code.plan} إلى حسابك.",
+                            url="/student/",
+                        )
+                        messages.success(request, "تم تفعيل الكود وإضافة المادة إلى حسابك.")
+                    else:
+                        if grant.device_fingerprint and grant.device_fingerprint != current_device:
+                            messages.error(request, "هذه المكثفة مرتبطة بجهاز آخر. تواصل مع الإدارة لنقل الجهاز.")
+                        else:
+                            if not grant.device_fingerprint:
+                                grant.device_fingerprint = current_device
+                                grant.save(update_fields=["device_fingerprint"])
+                            messages.info(request, "هذه المادة أو الدرس مفعّل لديك مسبقًا.")
+        return redirect("dashboard:student_dashboard")
+
+    grants = _device_grants(request.user, current_device).select_related("course", "lesson", "access_code").order_by("-created_at")
+    sessions = _available_sessions_for_user(request.user, current_device)
+    unlocked_lessons = (
+        Lesson.objects.filter(id__in=_student_lesson_ids_for_device(request.user, current_device))
+        .select_related("unit", "unit__course")
+        .order_by("unit__course__title", "unit__sort_order", "sort_order")[:16]
+    )
+
+    # Gamification and Continue Learning
+    student_profile = None
+    if hasattr(request.user, 'student_profile'):
+        student_profile = request.user.student_profile
+        
+    continue_learning = LessonProgress.objects.filter(user=request.user).select_related("lesson", "lesson__unit", "lesson__unit__course").order_by("-updated_at").first()
+
+    context = {
+        "redeem_form": redeem_form,
+        "grants": grants,
+        "unlocked_lessons": unlocked_lessons,
+        "sessions": sessions[:12],
+        "attendances": LessonAttendance.objects.filter(user=request.user).select_related("session").order_by("-created_at")[:12],
+        "attempts": Attempt.objects.filter(user=request.user).select_related("exam").order_by("-created_at")[:8],
+        "notifications": StudentNotification.objects.filter(user=request.user).order_by("-created_at")[:8],
+        "student_profile": student_profile,
+        "continue_learning": continue_learning,
+    }
+    return render(request, "dashboard/student_dashboard.html", context)
+
+
+@login_required
+def student_device_ping(request):
+    response = JsonResponse({"status": "active"})
+    response["Cache-Control"] = "no-store"
+    return response
+
+
+@login_required
+def my_courses_page(request):
+    current_device = _current_device_fingerprint(request)
+    grants = _device_grants(request.user, current_device).select_related(
+        "course", "course__subject", "course__instructor", "lesson", "access_code"
+    ).order_by("-created_at")
+    progress_map = {}
+    for cp in CourseProgress.objects.filter(user=request.user):
+        progress_map[cp.course_id] = cp
+    context = {
+        "grants": grants,
+        "progress_map": progress_map,
+    }
+    return render(request, "dashboard/my_courses.html", context)
+
+
+@login_required
+def favorites_page(request):
+    context = {
+        "favorites": [],
+    }
+    return render(request, "dashboard/favorites.html", context)
+
+
+@login_required
+def notifications_page(request):
+    notifications = StudentNotification.objects.filter(user=request.user).order_by("-created_at")
+    unread_count = notifications.filter(read_at__isnull=True).count()
+    if request.method == "POST" and request.POST.get("action") == "mark_all_read":
+        notifications.filter(read_at__isnull=True).update(read_at=timezone.now())
+        messages.success(request, "تم تعليم جميع الإشعارات كمقروءة.")
+        return redirect("dashboard:notifications")
+    context = {
+        "notifications": notifications,
+        "unread_count": unread_count,
+    }
+    return render(request, "dashboard/notifications.html", context)
+
+
+@login_required
+def profile_page(request):
+    student_profile = None
+    if hasattr(request.user, "student_profile"):
+        student_profile = request.user.student_profile
+    current_device = _current_device_fingerprint(request)
+    grants = _device_grants(request.user, current_device).select_related("course", "lesson").order_by("-created_at")
+    total_xp = student_profile.xp if student_profile else 0
+    level = student_profile.level if student_profile else 1
+    streak = student_profile.streak_days if student_profile else 0
+    completed_lessons = LessonProgress.objects.filter(user=request.user, completed_at__isnull=False).count()
+    total_lessons = Lesson.objects.filter(
+        unit__course__access_grants__user=request.user
+    ).distinct().count()
+    context = {
+        "student_profile": student_profile,
+        "grants": grants,
+        "total_xp": total_xp,
+        "level": level,
+        "streak": streak,
+        "completed_lessons": completed_lessons,
+        "total_lessons": total_lessons,
+    }
+    return render(request, "dashboard/profile.html", context)
+    
+@login_required
+def profile_edit(request):
+    student_profile, _created = StudentProfile.objects.get_or_create(user=request.user)
+        
+    if request.method == "POST":
+        first_name = request.POST.get("first_name")
+        last_name = request.POST.get("last_name")
+        phone = request.POST.get("phone")
+        bio = request.POST.get("bio")
+        
+        request.user.first_name = first_name
+        request.user.last_name = last_name
+        request.user.save()
+        
+        student_profile.phone = phone
+        student_profile.bio = bio
+        if request.FILES.get("avatar"):
+            student_profile.avatar = request.FILES.get("avatar")
+        student_profile.save()
+            
+        messages.success(request, "تم تحديث بياناتك الشخصية بنجاح.")
+        return redirect("dashboard:profile")
+        
+    context = {
+        "student_profile": student_profile,
+    }
+    return render(request, "dashboard/profile_edit.html", context)
+
+@login_required
+def view_certificate(request, course_id):
+    from learning.models import Certificate
+    course = get_object_or_404(Course, id=course_id)
+    certificate = Certificate.objects.filter(user=request.user, course=course).first()
+    
+    if not certificate:
+        # Check if student completed the course to issue a certificate
+        progress = CourseProgress.objects.filter(user=request.user, course=course).first()
+        if progress and progress.completion_percent >= 100:
+            certificate = Certificate.objects.create(user=request.user, course=course)
+        else:
+            messages.error(request, "لم تقم بإكمال هذه الدورة بعد لتتمكن من الحصول على الشهادة.")
+            return redirect("dashboard:student_course_detail", course_id=course.id)
+            
+    context = {
+        "certificate": certificate,
+        "course": course,
+        "student": request.user,
+    }
+    return render(request, "dashboard/certificate.html", context)
+
+def departments_list(request):
+    from learning.models import Subject
+    # Grouping logic or just listing subjects
+    subjects = Subject.objects.all().prefetch_related('courses')
+    context = {
+        "subjects": subjects,
+    }
+    return render(request, "dashboard/departments.html", context)
+
+def search_results(request):
+    query = request.GET.get("q", "")
+    courses = []
+    if query:
+        courses = Course.objects.filter(
+            models.Q(title__icontains=query) | 
+            models.Q(description__icontains=query) |
+            models.Q(subject__name__icontains=query)
+        ).filter(status="published").distinct()
+    
+    context = {
+        "query": query,
+        "courses": courses,
+    }
+    return render(request, "dashboard/search_results.html", context)
+
+def about_page(request):
+    return render(request, "dashboard/about.html")
+
+def contact_page(request):
+    if request.method == "POST":
+        # Logic for contact form could go here
+        messages.success(request, "تم استلام رسالتك بنجاح. سنقوم بالرد عليك في أقرب وقت.")
+        return redirect("dashboard:contact")
+    return render(request, "dashboard/contact.html")
+
+def instructors_list(request):
+    # Fetching users who are staff and have at least one published course
+    from django.contrib.auth.models import User
+    from learning.models import Course
+    
+    # Show all instructors who have a profile, regardless of published courses
+    instructors = User.objects.filter(is_staff=True, instructor_profile__isnull=False).select_related('instructor_profile').distinct()
+    
+    context = {
+        "instructors": instructors,
+    }
+    return render(request, "dashboard/instructors.html", context)
+
+def faq_page(request):
+    return render(request, "dashboard/faq.html")
+
+def privacy_page(request):
+    return render(request, "dashboard/privacy.html")
+
+def terms_page(request):
+    return render(request, "dashboard/terms.html")
+
+
+def _student_course_ids(user):
+    return list(_active_access_grants(user).filter(course__isnull=False).values_list("course_id", flat=True))
+
+
+def _student_course_ids_for_device(user, device_fingerprint):
+    return list(_device_grants(user, device_fingerprint).filter(course__isnull=False).values_list("course_id", flat=True))
+
+
+def _student_lesson_ids(user):
+    direct_lessons = list(_active_access_grants(user).filter(lesson__isnull=False).values_list("lesson_id", flat=True))
+    course_lessons = list(Lesson.objects.filter(unit__course_id__in=_student_course_ids(user)).values_list("id", flat=True))
+    return list(set(direct_lessons + course_lessons))
+
+
+def _student_lesson_ids_for_device(user, device_fingerprint):
+    direct_lessons = list(_device_grants(user, device_fingerprint).filter(lesson__isnull=False).values_list("lesson_id", flat=True))
+    course_lessons = list(Lesson.objects.filter(unit__course_id__in=_student_course_ids_for_device(user, device_fingerprint)).values_list("id", flat=True))
+    return list(set(direct_lessons + course_lessons))
+
+
+def _available_sessions_for_user(user, device_fingerprint=None):
+    lesson_ids = _student_lesson_ids_for_device(user, device_fingerprint) if device_fingerprint else _student_lesson_ids(user)
+    return (
+        OnlineLessonSession.objects.filter(lesson_id__in=lesson_ids)
+        .select_related("lesson", "lesson__unit", "lesson__unit__course")
+        .order_by("starts_at")
+    )
+
+
+@login_required
+def student_course_detail(request, course_id):
+    current_device = _current_device_fingerprint(request)
+    course = get_object_or_404(Course.objects.select_related("subject", "instructor").prefetch_related("units__lessons"), id=course_id)
+    if not _device_grants(request.user, current_device).filter(course=course).exists():
+        messages.error(request, "هذه المادة غير مفعّلة على هذا الجهاز. أدخل الكود أو تواصل مع الإدارة لنقل الجهاز.")
+        return redirect("dashboard:student_dashboard")
+
+    attempts = Attempt.objects.filter(user=request.user, exam__course=course).select_related("exam").order_by("-created_at")
+    completed_lesson_ids = set(
+        LessonProgress.objects.filter(
+            user=request.user,
+            lesson__unit__course=course,
+            completed_at__isnull=False,
+        ).values_list("lesson_id", flat=True)
+    )
+    return render(
+        request,
+        "dashboard/student_course_detail.html",
+        {"course": course, "attempts": attempts, "completed_lesson_ids": completed_lesson_ids},
+    )
+
+
+@login_required
+def student_lesson_detail(request, lesson_id):
+    current_device = _current_device_fingerprint(request)
+    lesson = get_object_or_404(Lesson.objects.select_related("unit", "unit__course"), id=lesson_id)
+    if lesson.id not in _student_lesson_ids_for_device(request.user, current_device):
+        messages.error(request, "هذا الدرس غير مفعّل على هذا الجهاز.")
+        return redirect("dashboard:student_dashboard")
+
+    progress, _created = LessonProgress.objects.get_or_create(
+        user=request.user,
+        lesson=lesson,
+    )
+    _refresh_course_progress(request.user, lesson.unit.course)
+    signed_video_url = ""
+    if lesson.video_file:
+        signed_video_url = _signed_lesson_video_url(request, lesson)
+    return render(
+        request,
+        "dashboard/student_lesson_detail.html",
+        {"lesson": lesson, "progress": progress, "video_embed_url": _video_embed_url(lesson.video_url), "signed_video_url": signed_video_url},
+    )
+
+
+@login_required
+def signed_lesson_video(request, lesson_id, token):
+    lesson = get_object_or_404(Lesson.objects.select_related("unit", "unit__course"), id=lesson_id)
+    current_device = _current_device_fingerprint(request)
+    if lesson.id not in _student_lesson_ids_for_device(request.user, current_device):
+        raise Http404("Video not found")
+    try:
+        payload = signing.TimestampSigner(salt="lesson-video").unsign_object(token, max_age=60 * 10)
+    except signing.BadSignature as exc:
+        raise Http404("Video not found") from exc
+    if payload.get("lesson_id") != lesson.id or payload.get("user_id") != request.user.id or payload.get("device") != current_device:
+        raise Http404("Video not found")
+    if not lesson.video_file:
+        raise Http404("Video not found")
+    response = FileResponse(lesson.video_file.open("rb"), content_type="video/mp4")
+    response["Cache-Control"] = "no-store"
+    response["Content-Disposition"] = 'inline; filename="lesson-video.mp4"'
+    return response
+
+
+def _video_embed_url(video_url):
+    if not video_url:
+        return ""
+    if "youtube.com/watch?v=" in video_url:
+        return video_url.replace("watch?v=", "embed/")
+    if "youtu.be/" in video_url:
+        return video_url.replace("youtu.be/", "www.youtube.com/embed/")
+    if "vimeo.com/" in video_url and "player.vimeo.com" not in video_url:
+        video_id = video_url.rstrip("/").split("/")[-1]
+        return f"https://player.vimeo.com/video/{video_id}"
+    
+    # Bunny.net Support
+    if "mediadelivery.net" in video_url:
+        if "/play/" in video_url:
+            return video_url.replace("/play/", "/embed/")
+        return video_url
+        
+    return video_url
+
+
+def _signed_lesson_video_url(request, lesson):
+    from django.urls import reverse
+
+    payload = {
+        "lesson_id": lesson.id,
+        "user_id": request.user.id,
+        "device": _current_device_fingerprint(request),
+    }
+    token = signing.TimestampSigner(salt="lesson-video").sign_object(payload)
+    return reverse("dashboard:signed_lesson_video", args=[lesson.id, token])
+
+
+@login_required
+def complete_lesson(request, lesson_id):
+    current_device = _current_device_fingerprint(request)
+    lesson = get_object_or_404(Lesson.objects.select_related("unit", "unit__course"), id=lesson_id)
+    if lesson.id not in _student_lesson_ids_for_device(request.user, current_device):
+        messages.error(request, "هذا الدرس غير مفعّل على هذا الجهاز.")
+        return redirect("dashboard:student_dashboard")
+
+    from datetime import date
+    from datetime import timedelta
+
+    LessonProgress.objects.update_or_create(
+        user=request.user,
+        lesson=lesson,
+        defaults={
+            "watched_seconds": lesson.duration_seconds or 0,
+            "last_position_seconds": lesson.duration_seconds or 0,
+            "completed_at": timezone.now(),
+        },
+    )
+    _refresh_course_progress(request.user, lesson.unit.course)
+    
+    # Gamification Engine
+    if hasattr(request.user, 'student_profile'):
+        profile = request.user.student_profile
+        today = date.today()
+        
+        # Streak Logic
+        if profile.last_activity_date != today:
+            if profile.last_activity_date == today - timedelta(days=1):
+                profile.streak_days += 1
+            else:
+                profile.streak_days = 1
+            profile.last_activity_date = today
+            
+        # XP & Level Logic
+        profile.xp += 50
+        new_level = (profile.xp // 500) + 1
+        level_up = False
+        if new_level > profile.level:
+            profile.level = new_level
+            level_up = True
+            
+        profile.save()
+        
+        if level_up:
+            messages.success(request, f"🎉 مبروك! وصلت للمستوى {profile.level}!")
+        else:
+            messages.success(request, f"تم تسجيل الدرس كمكتمل. +50 XP ⚡")
+    else:
+        messages.success(request, "تم تسجيل الدرس كمكتمل.")
+
+    StudentNotification.objects.create(
+        user=request.user,
+        notification_type="lesson",
+        title="تم إكمال درس",
+        body=f"أكملت درس {lesson.title}.",
+        url=f"/student/courses/{lesson.unit.course_id}/",
+    )
+    return redirect("dashboard:student_lesson_detail", lesson_id=lesson.id)
+
+@login_required
+def save_lesson_progress(request, lesson_id):
+    current_device = _current_device_fingerprint(request)
+    if lesson_id not in _student_lesson_ids_for_device(request.user, current_device):
+        return JsonResponse({"status": "forbidden"}, status=403)
+
+    if request.method == "POST":
+        current_time = request.POST.get("current_time")
+        if current_time:
+            try:
+                last_position = max(0, int(float(current_time)))
+            except (TypeError, ValueError):
+                return JsonResponse({"status": "error"}, status=400)
+            LessonProgress.objects.update_or_create(
+                user=request.user,
+                lesson_id=lesson_id,
+                defaults={"last_position_seconds": last_position},
+            )
+            return JsonResponse({"status": "success"})
+    return JsonResponse({"status": "error"}, status=400)
+
+
+@login_required
+def join_session(request, session_id):
+    current_device = _current_device_fingerprint(request)
+    session = get_object_or_404(OnlineLessonSession.objects.select_related("lesson", "lesson__unit", "lesson__unit__course"), id=session_id)
+    if session.lesson_id not in _student_lesson_ids_for_device(request.user, current_device):
+        messages.error(request, "لا تملك صلاحية حضور هذه الجلسة.")
+        return redirect("dashboard:student_dashboard")
+
+    attendance, _created = LessonAttendance.objects.get_or_create(user=request.user, session=session)
+    attendance.status = "attended"
+    attendance.joined_at = attendance.joined_at or timezone.now()
+    attendance.save(update_fields=["status", "joined_at", "updated_at"])
+    StudentNotification.objects.create(
+        user=request.user,
+        notification_type="attendance",
+        title="تم تسجيل حضورك",
+        body=f"تم تسجيل حضورك في {session.title}.",
+        url=f"/student/lessons/{session.lesson_id}/",
+    )
+
+    messages.success(request, "تم تسجيل حضورك في الجلسة.")
+    if session.meeting_url:
+        return redirect(session.meeting_url)
+    return redirect("dashboard:student_lesson_detail", lesson_id=session.lesson_id)
+
+
+def _refresh_course_progress(user, course):
+    total_lessons = Lesson.objects.filter(unit__course=course).count()
+    completed_lessons = LessonProgress.objects.filter(user=user, lesson__unit__course=course, completed_at__isnull=False).count()
+    completion_percent = 0
+    if total_lessons:
+        completion_percent = round((completed_lessons / total_lessons) * 100, 2)
+    CourseProgress.objects.update_or_create(
+        user=user,
+        course=course,
+        defaults={
+            "completion_percent": completion_percent,
+            "completed_lessons": completed_lessons,
+            "total_lessons": total_lessons,
+            "last_activity_at": timezone.now(),
+        },
+    )
+
+
+def _current_device_fingerprint(request):
+    return device_fingerprint(request)
+
+
+def _touch_user_device(request, user):
+    return activate_user_device(request, user)
+
+
+def _device_seed(request):
+    return device_seed(request)
+
+
+def _set_device_cookie(response, request):
+    return set_device_cookie(response, request)
+
+
+def _device_grants(user, device_fingerprint):
+    return _active_access_grants(user).filter(
+        models.Q(device_fingerprint="") | models.Q(device_fingerprint=device_fingerprint)
+    )
+
+
+def _active_access_grants(user):
+    now = timezone.now()
+    return AccessGrant.objects.filter(user=user).filter(
+        models.Q(starts_at__isnull=True) | models.Q(starts_at__lte=now),
+        models.Q(expires_at__isnull=True) | models.Q(expires_at__gte=now),
+    )
+
+
+def _access_code_matches_student(access_code, user):
+    if not access_code.assigned_student_phone and not access_code.assigned_student_name:
+        return True
+    profile = getattr(user, "student_profile", None)
+    user_phone = profile.phone if profile else user.username
+    if access_code.assigned_student_phone:
+        return access_code.assigned_student_phone.strip() == user_phone.strip()
+    full_name = (user.get_full_name() or user.first_name or user.username).strip()
+    return access_code.assigned_student_name.strip() == full_name
+
+
+def _catalog_tabs():
+    return [
+        {"label": "مكثفات العلمي", "kind": "intensive", "track": "scientific"},
+        {"label": "مكثفات الأدبي", "kind": "intensive", "track": "literary"},
+        {"label": "منهاج العلمي", "kind": "curriculum", "track": "scientific"},
+        {"label": "منهاج الأدبي", "kind": "curriculum", "track": "literary"},
+        {"label": "التاسع", "kind": "material", "track": "ninth"},
+    ]
+
+
+def instructor_courses(request, instructor_id):
+    instructor = get_object_or_404(User, id=instructor_id)
+    courses = (
+        Course.objects.filter(instructor=instructor, status="published")
+        .select_related("subject")
+        .annotate(lessons_total=Count("units__lessons", distinct=True))
+        .order_by("-published_at")
+    )
+    if not courses.exists():
+        raise Http404("No published courses were found for this instructor.")
+    instructor_profile = getattr(instructor, 'instructor_profile', None)
+    
+    return render(
+        request,
+        "dashboard/instructor_courses.html",
+        {
+            "instructor": instructor,
+            "instructor_profile": instructor_profile,
+            "courses": courses,
+        },
+    )
+
+
+@admin_required
+def admin_billing(request):
+    from billing.models import Subscription, Payment, AccessCodeBatch
+    
+    # Calculate counts on unsliced querysets
+    active_subs_count = Subscription.objects.filter(status="active").count()
+    
+    # Get sliced data for display
+    subscriptions = Subscription.objects.select_related("user", "plan").order_by("-created_at")[:50]
+    payments = Payment.objects.select_related("user").order_by("-created_at")[:50]
+    batches = AccessCodeBatch.objects.select_related("course", "institute", "sales_center").order_by("-created_at")[:50]
+    
+    # Prepare payments with dollar amounts
+    for p in payments:
+        p.amount_dollars = p.amount_cents / 100
+
+    context = {
+        "subscriptions": subscriptions,
+        "payments": payments,
+        "batches": batches,
+        "total_revenue": sum(p.amount_cents for p in payments if p.status == "paid") / 100,
+        "active_subs_count": active_subs_count,
+    }
+    return render(request, "dashboard/admin_billing.html", context)
+
+
+@admin_required
+def admin_content_hub(request):
+    from learning.models import Subject, Course
+    from .forms import SubjectForm
+    from django.utils.text import slugify
+
+    subject_form = SubjectForm()
+    
+    if request.method == "POST" and request.POST.get("action") == "create_subject":
+        subject_form = SubjectForm(request.POST)
+        if subject_form.is_valid():
+            subject = subject_form.save(commit=False)
+            if not subject.slug:
+                base_slug = slugify(subject.name, allow_unicode=True) or "subject"
+                slug = base_slug
+                counter = 2
+                while Subject.objects.filter(slug=slug).exists():
+                    slug = f"{base_slug}-{counter}"
+                    counter += 1
+                subject.slug = slug
+            subject.save()
+            messages.success(request, f"تم إضافة المادة {subject.name} بنجاح.")
+            return redirect("dashboard:admin_content_hub")
+
+    subjects = Subject.objects.annotate(courses_count=Count("courses")).order_by("name")
+    recent_courses = Course.objects.select_related("subject", "instructor").order_by("-created_at")[:20]
+    
+    return render(
+        request,
+        "dashboard/admin_content_hub.html",
+        {
+            "subjects": subjects,
+            "recent_courses": recent_courses,
+            "subject_form": subject_form,
+        },
+    )
+
+
+@admin_required
+def admin_exams_hub(request):
+    from exams.models import Exam, Question, Attempt
+    exams = Exam.objects.select_related("course").annotate(questions_count=Count("questions")).order_by("-created_at")
+    recent_attempts = Attempt.objects.select_related("user", "exam").order_by("-created_at")[:50]
+    
+    return render(
+        request,
+        "dashboard/admin_exams_hub.html",
+        {
+            "exams": exams,
+            "recent_attempts": recent_attempts,
+            "total_questions": Question.objects.count(),
+        },
+    )
+
+
+@admin_required
+def admin_departments(request):
+    from accounts.models import AcademicBranch
+    from .forms import AcademicBranchForm
+    
+    if request.method == "POST":
+        form = AcademicBranchForm(request.POST)
+        if form.is_valid():
+            branch = form.save()
+            messages.success(request, f"تمت إضافة قسم {branch.name} بنجاح.")
+            return redirect("dashboard:admin_departments")
+            
+    departments = AcademicBranch.objects.all().order_by("sort_order", "name")
+    return render(request, "dashboard/admin_departments.html", {
+        "departments": departments,
+        "department_form": AcademicBranchForm()
+    })
+
+
+@admin_required
+def admin_department_edit(request, department_id):
+    from accounts.models import AcademicBranch
+    from .forms import AcademicBranchForm
+    branch = get_object_or_404(AcademicBranch, id=department_id)
+    
+    if request.method == "POST":
+        form = AcademicBranchForm(request.POST, instance=branch)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"تم تحديث قسم {branch.name} بنجاح.")
+        else:
+            messages.error(request, "حدث خطأ أثناء التحديث.")
+            
+    return redirect("dashboard:admin_departments")
+
+
+@admin_required
+def admin_subjects(request):
+    from learning.models import Subject
+    from .forms import SubjectForm
+    from django.utils.text import slugify
+
+    if request.method == "POST":
+        form = SubjectForm(request.POST)
+        if form.is_valid():
+            subject = form.save(commit=False)
+            if not subject.slug:
+                subject.slug = slugify(subject.name, allow_unicode=True) or f"sub-{Subject.objects.count() + 1}"
+            subject.save()
+            messages.success(request, f"تمت إضافة مادة {subject.name} بنجاح.")
+            return redirect("dashboard:admin_subjects")
+
+    subjects = Subject.objects.annotate(
+        courses_count=Count("courses", distinct=True),
+        units_count=Count("courses__units", distinct=True),
+        lessons_count=Count("courses__units__lessons", distinct=True)
+    ).order_by("name")
+    
+    return render(request, "dashboard/admin_subjects.html", {
+        "subjects": subjects,
+        "subject_form": SubjectForm()
+    })
+
+
+@admin_required
+def admin_subject_edit(request, subject_id):
+    from learning.models import Subject
+    from .forms import SubjectForm
+    subject = get_object_or_404(Subject, id=subject_id)
+    
+    if request.method == "POST":
+        form = SubjectForm(request.POST, instance=subject)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"تم تحديث مادة {subject.name} بنجاح.")
+        else:
+            messages.error(request, "حدث خطأ أثناء التحديث.")
+            
+    return redirect("dashboard:admin_subjects")
+
+
+@admin_required
+def admin_units(request):
+    from learning.models import Unit, Course
+    from .forms import UnitForm
+    course_id = request.GET.get("course_id")
+    
+    if request.method == "POST":
+        form = UnitForm(request.POST)
+        if form.is_valid():
+            unit = form.save()
+            messages.success(request, f"تمت إضافة وحدة {unit.title} بنجاح.")
+            return redirect("dashboard:admin_units")
+
+    units = Unit.objects.select_related("course").annotate(
+        lessons_count=Count("lessons")
+    ).order_by("course__title", "sort_order")
+    
+    if course_id:
+        units = units.filter(course_id=course_id)
+        
+    courses = Course.objects.only("id", "title").order_by("title")
+    
+    return render(request, "dashboard/admin_units.html", {
+        "units": units,
+        "courses": courses,
+        "selected_course_id": course_id,
+        "unit_form": UnitForm()
+    })
+
+
+@admin_required
+def admin_unit_edit(request, unit_id):
+    from learning.models import Unit
+    from .forms import UnitForm
+    unit = get_object_or_404(Unit, id=unit_id)
+    
+    if request.method == "POST":
+        form = UnitForm(request.POST, instance=unit)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"تم تحديث وحدة {unit.title} بنجاح.")
+        else:
+            messages.error(request, "حدث خطأ أثناء تحديث الوحدة.")
+            
+    return redirect("dashboard:admin_units")
+
+
+@admin_required
+def admin_lessons(request):
+    from learning.models import Lesson, Course, Unit
+    from .forms import CourseLessonUploadForm
+    course_id = request.GET.get("course_id")
+    unit_id = request.GET.get("unit_id")
+    
+    if request.method == "POST":
+        # Handle Lesson Creation
+        unit = get_object_or_404(Unit, id=request.POST.get("unit"))
+        lesson = Lesson.objects.create(
+            unit=unit,
+            title=request.POST.get("title"),
+            lesson_type=request.POST.get("lesson_type", "video"),
+            video_url=request.POST.get("video_url", ""),
+            sort_order=request.POST.get("sort_order", 0)
+        )
+        messages.success(request, f"تمت إضافة درس {lesson.title} بنجاح.")
+        return redirect("dashboard:admin_lessons")
+
+    lessons = Lesson.objects.select_related("unit", "unit__course").order_by("unit__course__title", "unit__sort_order", "sort_order")
+    
+    if unit_id:
+        lessons = lessons.filter(unit_id=unit_id)
+    elif course_id:
+        lessons = lessons.filter(unit__course_id=course_id)
+        
+    courses = Course.objects.only("id", "title").order_by("title")
+    units = Unit.objects.filter(course_id=course_id) if course_id else Unit.objects.none()
+    
+    return render(request, "dashboard/admin_lessons.html", {
+        "lessons": lessons,
+        "courses": courses,
+        "units": units,
+        "all_units": Unit.objects.select_related("course").all().order_by("course__title", "sort_order"),
+        "selected_course_id": course_id,
+        "selected_unit_id": unit_id
+    })
+
+
+@admin_required
+def admin_lesson_edit(request, lesson_id):
+    from learning.models import Lesson
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+    
+    if request.method == "POST":
+        lesson.title = request.POST.get("title")
+        lesson.video_url = request.POST.get("video_url", "")
+        lesson.sort_order = request.POST.get("sort_order", 0)
+        lesson.is_free_preview = request.POST.get("is_free_preview") == "on"
+        lesson.save()
+        messages.success(request, f"تم تحديث درس {lesson.title} بنجاح.")
+            
+    return redirect("dashboard:admin_lessons")
+
+
+@admin_required
+def admin_student_detail(request, user_id):
+    student = get_object_or_404(User.objects.select_related("student_profile"), id=user_id)
+    
+    if request.method == "POST":
+        action = request.POST.get("action")
+        
+        if action == "toggle_status":
+            student.is_active = not student.is_active
+            student.save()
+            status = "نشط" if student.is_active else "موقوف"
+            messages.success(request, f"تم تغيير حالة الطالب إلى {status} بنجاح.")
+            
+        elif action == "reset_devices":
+            student.devices.all().delete()
+            messages.success(request, "تم تصفير جميع أجهزة الطالب بنجاح.")
+            
+        elif action == "grant_course":
+            course_id = request.POST.get("course_id")
+            course = get_object_or_404(Course, id=course_id)
+            AccessGrant.objects.get_or_create(
+                user=student,
+                course=course,
+                defaults={"source": "admin_manual"}
+            )
+            messages.success(request, f"تم تفعيل مادة {course.title} للطالب بنجاح.")
+            
+        elif action == "revoke_course":
+            grant_id = request.POST.get("grant_id")
+            AccessGrant.objects.filter(id=grant_id, user=student).delete()
+            messages.success(request, "تم سحب صلاحية المادة من الطالب.")
+
+        return redirect("dashboard:admin_student_detail", user_id=student.id)
+
+    # Context data
+    all_courses = Course.objects.filter(status="published").order_by("title")
+    student_grants = AccessGrant.objects.filter(user=student).select_related("course", "access_code")
+    enrolled_course_ids = student_grants.values_list("course_id", flat=True)
+    available_courses = all_courses.exclude(id__in=enrolled_course_ids)
+    
+    attempts = Attempt.objects.filter(user=student).select_related("exam", "exam__course").order_by("-created_at")[:10]
+    devices = UserDevice.objects.filter(user=student).order_by("-last_seen_at")
+
+    context = {
+        "student": student,
+        "available_courses": available_courses,
+        "student_grants": student_grants,
+        "attempts": attempts,
+        "devices": devices,
+    }
+    return render(request, "dashboard/admin_student_detail.html", context)

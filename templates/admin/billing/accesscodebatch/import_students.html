@@ -1,0 +1,17 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+  <h1>{{ title }}</h1>
+  <p>
+    ارفع ملف CSV أو XLSX يحوي أعمدة <code>name</code> و <code>phone</code>.
+    يمكن أيضاً استخدام <code>الاسم</code> و <code>الهاتف</code>.
+  </p>
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div class="submit-row">
+      <input type="submit" value="توليد الأكواد">
+      <a href="{% url 'admin:billing_accesscodebatch_change' batch.pk %}">رجوع</a>
+    </div>
+  </form>
+{% endblock %}

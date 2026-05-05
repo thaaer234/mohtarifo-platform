@@ -1,0 +1,146 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}تعديل الملف الشخصي | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="profile-edit-wrapper reveal-up">
+    <div class="section-header mb-8">
+        <h2 class="section-title"><i data-lucide="user-cog"></i> إعدادات الحساب</h2>
+        <a href="{% url 'dashboard:profile' %}" class="btn btn-glass"><i data-lucide="arrow-right"></i> العودة للملف الشخصي</a>
+    </div>
+
+    <div class="premium-card edit-container">
+        <form method="post" enctype="multipart/form-data" class="modern-form">
+            {% csrf_token %}
+            
+            <div class="form-layout">
+                <!-- Avatar Section -->
+                <div class="avatar-edit-section">
+                    <div class="avatar-preview-container">
+                        {% if student_profile.avatar %}
+                            <img src="{{ student_profile.avatar.url }}" alt="Avatar" id="avatarPreview">
+                        {% else %}
+                            <div class="avatar-placeholder" id="avatarPreview">
+                                <i data-lucide="user"></i>
+                            </div>
+                        {% endif %}
+                        <label for="avatarInput" class="avatar-upload-btn">
+                            <i data-lucide="camera"></i>
+                            <input type="file" name="avatar" id="avatarInput" accept="image/*" hidden>
+                        </label>
+                    </div>
+                    <p class="avatar-hint">اضغط على الأيقونة لتغيير الصورة الشخصية</p>
+                </div>
+
+                <!-- Fields Section -->
+                <div class="fields-section">
+                    <div class="grid-2">
+                        <div class="input-group">
+                            <label><i data-lucide="user"></i> الاسم الأول</label>
+                            <input type="text" name="first_name" value="{{ request.user.first_name }}" placeholder="أدخل اسمك الأول" required>
+                        </div>
+                        <div class="input-group">
+                            <label><i data-lucide="user"></i> اسم العائلة</label>
+                            <input type="text" name="last_name" value="{{ request.user.last_name }}" placeholder="أدخل اسم العائلة" required>
+                        </div>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="input-group">
+                            <label><i data-lucide="mail"></i> البريد الإلكتروني</label>
+                            <input type="email" value="{{ request.user.email }}" disabled style="opacity: 0.6; cursor: not-allowed;">
+                            <span class="hint-text">لا يمكن تغيير البريد الإلكتروني حالياً</span>
+                        </div>
+                        <div class="input-group">
+                            <label><i data-lucide="phone"></i> رقم الهاتف</label>
+                            <input type="text" name="phone" value="{{ student_profile.phone }}" placeholder="أدخل رقم هاتفك">
+                        </div>
+                    </div>
+
+                    <div class="input-group full-width">
+                        <label><i data-lucide="info"></i> نبذة تعريفية (Bio)</label>
+                        <textarea name="bio" rows="4" placeholder="أخبرنا قليلاً عن طموحاتك وأهدافك...">{{ student_profile.bio }}</textarea>
+                    </div>
+
+                    <div class="form-actions mt-8">
+                        <button type="submit" class="btn btn-primary btn-glow px-12">
+                            <i data-lucide="save"></i> حفظ التغييرات
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .profile-edit-wrapper { max-width: 1000px; margin: 2rem auto; }
+    .edit-container { padding: 3rem !important; border-radius: 35px !important; }
+
+    .form-layout { display: grid; grid-template-columns: 250px 1fr; gap: 4rem; }
+
+    /* Avatar Styling */
+    .avatar-edit-section { text-align: center; }
+    .avatar-preview-container { 
+        position: relative; width: 180px; height: 180px; margin: 0 auto 1.5rem; 
+        border-radius: 50%; border: 4px solid var(--brand-gold-glow); 
+        padding: 6px; background: var(--bg-surface);
+    }
+    .avatar-preview-container img, .avatar-placeholder { 
+        width: 100%; height: 100%; border-radius: 50%; object-fit: cover; 
+        display: flex; align-items: center; justify-content: center; background: var(--bg-base); font-size: 3rem; color: var(--text-muted);
+    }
+    .avatar-upload-btn { 
+        position: absolute; bottom: 5px; right: 5px; width: 45px; height: 45px; 
+        background: var(--brand-gold); color: #000; border-radius: 50%; 
+        display: flex; align-items: center; justify-content: center; cursor: pointer; 
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2); transition: 0.3s;
+    }
+    .avatar-upload-btn:hover { transform: scale(1.1); background: #fff; }
+    .avatar-hint { font-size: 0.8rem; color: var(--text-muted); }
+
+    /* Form Fields */
+    .input-group { margin-bottom: 1.5rem; }
+    .input-group label { display: block; font-weight: 700; color: var(--text-primary); margin-bottom: 0.75rem; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; }
+    .input-group label i { width: 16px; color: var(--brand-gold); }
+    
+    .input-group input, .input-group textarea { 
+        width: 100%; padding: 1.1rem; border-radius: 16px; 
+        background: var(--bg-base); border: 1px solid var(--border-light); 
+        color: var(--text-primary); font-family: inherit; font-size: 1rem; transition: 0.3s;
+    }
+    .input-group input:focus, .input-group textarea:focus { border-color: var(--brand-gold); box-shadow: var(--shadow-glow); outline: none; }
+    
+    .hint-text { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem; display: block; }
+    
+    .px-12 { padding-left: 3rem !important; padding-right: 3rem !important; }
+
+    @media (max-width: 850px) {
+        .form-layout { grid-template-columns: 1fr; gap: 2rem; }
+        .edit-container { padding: 2rem !important; }
+    }
+</style>
+
+<script>
+    document.getElementById('avatarInput').onchange = function (evt) {
+        const [file] = this.files
+        if (file) {
+            const preview = document.getElementById('avatarPreview');
+            if(preview.tagName === 'IMG') {
+                preview.src = URL.createObjectURL(file);
+            } else {
+                // Handle placeholder case
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.borderRadius = '50%';
+                img.style.objectFit = 'cover';
+                preview.innerHTML = '';
+                preview.appendChild(img);
+            }
+        }
+    }
+</script>
+{% endblock %}

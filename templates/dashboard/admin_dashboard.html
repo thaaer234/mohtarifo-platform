@@ -1,0 +1,272 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}لوحة الإدارة | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="reveal-up">
+    <!-- Header Section -->
+    <header class="flex-between mb-10 flex-wrap gap-6">
+        <div class="flex-center gap-6">
+            <div class="flex-center" style="width: 70px; height: 70px; border-radius: 24px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold);">
+                {% if instructor_profile.avatar %}
+                    <img src="{{ instructor_profile.avatar.url }}" alt="Admin" style="width: 100%; height: 100%; border-radius: 24px; object-fit: cover;">
+                {% else %}
+                    <i data-lucide="shield" style="width: 32px; height: 32px;"></i>
+                {% endif %}
+            </div>
+            <div>
+                <h1 style="font-size: 2.2rem; margin-bottom: 0.25rem;">غرفة العمليات المركزية</h1>
+                <p class="text-muted" style="margin-bottom: 0;">مرحباً بك مجدداً، إليك نظرة شاملة على أداء المنصة اليوم.</p>
+            </div>
+        </div>
+        <div class="flex-center gap-4">
+            <a href="/admin/" class="btn btn-secondary" target="_blank" style="opacity: 0.5; font-size: 0.75rem;">
+                <i data-lucide="shield-check" style="width: 14px;"></i> Django Admin
+            </a>
+            <a href="{% url 'dashboard:admin_course_create' %}" class="btn btn-primary btn-glow">
+                <i data-lucide="plus-circle" style="width: 18px;"></i> إضافة دورة جديدة
+            </a>
+        </div>
+    </header>
+
+    <!-- Quick Action Center -->
+    <div class="grid-4 mb-12">
+        <a href="{% url 'dashboard:admin_content_hub' %}" class="premium-card flex-center gap-4" style="padding: 1.5rem; text-decoration: none; justify-content: flex-start; transition: 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='none'">
+            <div class="flex-center" style="width: 50px; height: 50px; border-radius: 16px; background: rgba(139, 92, 246, 0.1); color: #8b5cf6;"><i data-lucide="book-plus"></i></div>
+            <div>
+                <strong class="block" style="font-size: 1rem; color: var(--text-primary);">إضافة مادة</strong>
+                <span class="text-muted" style="font-size: 0.75rem;">إنشاء مادة تعليمية جديدة</span>
+            </div>
+        </a>
+        <a href="{% url 'dashboard:admin_instructor_add' %}" class="premium-card flex-center gap-4" style="padding: 1.5rem; text-decoration: none; justify-content: flex-start; transition: 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='none'">
+            <div class="flex-center" style="width: 50px; height: 50px; border-radius: 16px; background: rgba(59, 130, 246, 0.1); color: #3b82f6;"><i data-lucide="user-plus"></i></div>
+            <div>
+                <strong class="block" style="font-size: 1rem; color: var(--text-primary);">إضافة مدرس</strong>
+                <span class="text-muted" style="font-size: 0.75rem;">تسجيل أستاذ جديد</span>
+            </div>
+        </a>
+        <a href="{% url 'dashboard:admin_course_create' %}" class="premium-card flex-center gap-4" style="padding: 1.5rem; text-decoration: none; justify-content: flex-start; transition: 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='none'">
+            <div class="flex-center" style="width: 50px; height: 50px; border-radius: 16px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold);"><i data-lucide="layers"></i></div>
+            <div>
+                <strong class="block" style="font-size: 1rem; color: var(--text-primary);">إضافة دورة</strong>
+                <span class="text-muted" style="font-size: 0.75rem;">إنشاء كورس أو مكثفة</span>
+            </div>
+        </a>
+        <a href="{% url 'dashboard:admin_partners' %}" class="premium-card flex-center gap-4" style="padding: 1.5rem; text-decoration: none; justify-content: flex-start; transition: 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='none'">
+            <div class="flex-center" style="width: 50px; height: 50px; border-radius: 16px; background: rgba(16, 185, 129, 0.1); color: #10b981;"><i data-lucide="store"></i></div>
+            <div>
+                <strong class="block" style="font-size: 1rem; color: var(--text-primary);">إضافة مركز</strong>
+                <span class="text-muted" style="font-size: 0.75rem;">تفعيل مركز بيع جديد</span>
+            </div>
+        </a>
+    </div>
+
+    <!-- Top Stats Bento Grid -->
+    <div class="stats-grid mb-12">
+        <div class="premium-card stat-card" style="border-right: 4px solid #3b82f6;">
+            <div class="flex-between w-full mb-4">
+                <div class="stat-icon" style="color: #3b82f6; background: rgba(59, 130, 246, 0.1);"><i data-lucide="users"></i></div>
+                <span class="badge badge-success" style="font-size: 0.7rem;"><i data-lucide="trending-up" style="width: 12px;"></i> +12%</span>
+            </div>
+            <div class="stat-info">
+                <span class="value">{{ students_count }}</span>
+                <span class="label">إجمالي الطلاب</span>
+            </div>
+        </div>
+        <div class="premium-card stat-card" style="border-right: 4px solid var(--brand-gold);">
+            <div class="flex-between w-full mb-4">
+                <div class="stat-icon"><i data-lucide="book-open"></i></div>
+            </div>
+            <div class="stat-info">
+                <span class="value">{{ courses_count }}</span>
+                <span class="label">الدورات المنشورة</span>
+            </div>
+        </div>
+        <div class="premium-card stat-card" style="border-right: 4px solid #10b981;">
+            <div class="flex-between w-full mb-4">
+                <div class="stat-icon" style="color: #10b981; background: rgba(16, 185, 129, 0.1);"><i data-lucide="ticket"></i></div>
+            </div>
+            <div class="stat-info">
+                <span class="value">{{ sold_codes_count }}</span>
+                <span class="label">الأكواد المفعلة</span>
+            </div>
+        </div>
+        <div class="premium-card stat-card" style="border-right: 4px solid #8b5cf6;">
+            <div class="flex-between w-full mb-4">
+                <div class="stat-icon" style="color: #8b5cf6; background: rgba(139, 92, 246, 0.1);"><i data-lucide="store"></i></div>
+            </div>
+            <div class="stat-info">
+                <span class="value">{{ sales_centers_count }}</span>
+                <span class="label">مراكز البيع</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-dashboard-layout">
+        <!-- Main Content Area -->
+        <main>
+            <!-- Recent Content Hub -->
+            <section class="mb-10">
+                <div class="flex-between mb-6">
+                    <h3 style="font-size: 1.4rem; display: flex; align-items: center; gap: 0.75rem;"><i data-lucide="layers" class="gold"></i> إدارة المحتوى التعليمي</h3>
+                    <a href="{% url 'dashboard:admin_partners' %}" class="gold font-bold" style="font-size: 0.85rem;">إدارة الشركاء <i data-lucide="chevron-left" style="width: 14px;"></i></a>
+                </div>
+                <div class="flex-column gap-3">
+                    {% for course in courses|slice:":5" %}
+                        <div class="premium-card flex-between" style="padding: 1.25rem 2rem;">
+                            <div>
+                                <strong class="block" style="font-size: 1rem; color: var(--text-primary); margin-bottom: 0.25rem;">{{ course.title }}</strong>
+                                <span class="text-muted" style="font-size: 0.8rem;">{{ course.lessons_total }} درس • {{ course.units.count }} وحدات</span>
+                            </div>
+                            <div class="flex-center gap-2">
+                                <a href="{% url 'dashboard:admin_course_control' course.id %}" class="btn btn-secondary" style="padding: 0.5rem; border-radius: 12px;" title="تحكم"><i data-lucide="settings" style="width: 18px;"></i></a>
+                                <a href="{% url 'dashboard:public_course_detail' course.id %}" class="btn btn-secondary" style="padding: 0.5rem; border-radius: 12px;" target="_blank" title="عرض"><i data-lucide="eye" style="width: 18px;"></i></a>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="premium-card text-center py-8" style="border-style: dashed;">
+                            <i data-lucide="folder-open" class="text-muted mb-4" style="opacity: 0.2; width: 48px; height: 48px;"></i>
+                            <p class="text-muted">لا توجد دورات حالياً</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            <!-- Sales & Batches Hub -->
+            <section class="mb-10">
+                <div class="flex-between mb-6">
+                    <h3 style="font-size: 1.4rem; display: flex; align-items: center; gap: 0.75rem;"><i data-lucide="barcode" class="gold"></i> أحدث دفعات الأكواد</h3>
+                    <a href="{% url 'dashboard:admin_billing' %}" class="gold font-bold" style="font-size: 0.85rem;">إدارة الدفعات <i data-lucide="chevron-left" style="width: 14px;"></i></a>
+                </div>
+                <div class="premium-card" style="padding: 0; overflow: hidden;">
+                    <table style="width: 100%; border-collapse: collapse; text-align: right;">
+                        <thead>
+                            <tr style="background: var(--bg-surface-elevated); color: var(--text-muted); font-size: 0.85rem;">
+                                <th style="padding: 1.25rem 2rem;">اسم الدفعة</th>
+                                <th style="padding: 1.25rem 2rem;">التاريخ</th>
+                                <th style="padding: 1.25rem 2rem;">الحالة</th>
+                                <th style="padding: 1.25rem 2rem;">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for batch in recent_batches|slice:":5" %}
+                            <tr style="border-bottom: 1px solid var(--border-light); transition: 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='none'">
+                                <td style="padding: 1.25rem 2rem;"><strong style="color: var(--text-primary);">{{ batch.name }}</strong></td>
+                                <td style="padding: 1.25rem 2rem;" class="text-muted">{{ batch.created_at|date:"Y-m-d" }}</td>
+                                <td style="padding: 1.25rem 2rem;"><span class="badge badge-success">نشط</span></td>
+                                <td style="padding: 1.25rem 2rem;">
+                                    <a href="{% url 'dashboard:admin_print_batch_cards' batch.id %}" class="gold" title="طباعة البطاقات">
+                                        <i data-lucide="printer" style="width: 20px;"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center py-8 text-muted">لا توجد دفعات حالياً</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Learning Architecture Hub -->
+            <section>
+                <div class="flex-between mb-6">
+                    <h3 style="font-size: 1.4rem; display: flex; align-items: center; gap: 0.75rem;"><i data-lucide="git-branch" class="gold"></i> الهيكلية التعليمية والأقسام</h3>
+                </div>
+                <div class="grid-2">
+                    <a href="{% url 'dashboard:admin_departments' %}" class="premium-card flex-center gap-4" style="padding: 1.5rem; text-decoration: none; justify-content: flex-start; transition: 0.3s;" onmouseover="this.style.transform='scale(1.02)'; this.style.borderColor='var(--brand-gold)'" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-light)'">
+                        <div class="flex-center" style="width: 50px; height: 50px; border-radius: 16px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold);"><i data-lucide="component"></i></div>
+                        <div>
+                            <strong class="block" style="font-size: 1rem; color: var(--text-primary);">إدارة الأقسام</strong>
+                            <span class="text-muted" style="font-size: 0.75rem;">الأفرع الأكاديمية</span>
+                        </div>
+                    </a>
+                    <a href="{% url 'dashboard:admin_subjects' %}" class="premium-card flex-center gap-4" style="padding: 1.5rem; text-decoration: none; justify-content: flex-start; transition: 0.3s;" onmouseover="this.style.transform='scale(1.02)'; this.style.borderColor='var(--brand-gold)'" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-light)'">
+                        <div class="flex-center" style="width: 50px; height: 50px; border-radius: 16px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold);"><i data-lucide="book-type"></i></div>
+                        <div>
+                            <strong class="block" style="font-size: 1rem; color: var(--text-primary);">إدارة المواد</strong>
+                            <span class="text-muted" style="font-size: 0.75rem;">المناهج والمواد</span>
+                        </div>
+                    </a>
+                    <a href="{% url 'dashboard:admin_units' %}" class="premium-card flex-center gap-4" style="padding: 1.5rem; text-decoration: none; justify-content: flex-start; transition: 0.3s;" onmouseover="this.style.transform='scale(1.02)'; this.style.borderColor='var(--brand-gold)'" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-light)'">
+                        <div class="flex-center" style="width: 50px; height: 50px; border-radius: 16px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold);"><i data-lucide="folder-tree"></i></div>
+                        <div>
+                            <strong class="block" style="font-size: 1rem; color: var(--text-primary);">إدارة الوحدات</strong>
+                            <span class="text-muted" style="font-size: 0.75rem;">تنظيم الكورسات</span>
+                        </div>
+                    </a>
+                    <a href="{% url 'dashboard:admin_lessons' %}" class="premium-card flex-center gap-4" style="padding: 1.5rem; text-decoration: none; justify-content: flex-start; transition: 0.3s;" onmouseover="this.style.transform='scale(1.02)'; this.style.borderColor='var(--brand-gold)'" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-light)'">
+                        <div class="flex-center" style="width: 50px; height: 50px; border-radius: 16px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold);"><i data-lucide="file-video"></i></div>
+                        <div>
+                            <strong class="block" style="font-size: 1rem; color: var(--text-primary);">إدارة الدروس</strong>
+                            <span class="text-muted" style="font-size: 0.75rem;">رفع الفيديوهات والملفات</span>
+                        </div>
+                    </a>
+                </div>
+            </section>
+        </main>
+
+        <!-- Admin Sidebar Tools -->
+        <aside>
+            <div class="premium-card mb-6">
+                <h4 class="gold mb-6" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">الاختبارات والتقييم</h4>
+                <div class="flex-column gap-2">
+                    <a href="{% url 'dashboard:admin_exams_hub' %}" class="flex-center gap-4 p-3 text-muted" style="text-decoration: none; justify-content: flex-start; border-radius: 12px; transition: 0.3s;" onmouseover="this.style.background='var(--bg-surface-elevated)'; this.style.color='var(--text-primary)'" onmouseout="this.style.background='none'; this.style.color='var(--text-muted)'">
+                        <i data-lucide="pencil-ruler" style="width: 18px;"></i> <span class="font-bold">بنك الاختبارات</span>
+                    </a>
+                    <a href="{% url 'dashboard:admin_exams_hub' %}" class="flex-center gap-4 p-3 text-muted" style="text-decoration: none; justify-content: flex-start; border-radius: 12px; transition: 0.3s;" onmouseover="this.style.background='var(--bg-surface-elevated)'; this.style.color='var(--text-primary)'" onmouseout="this.style.background='none'; this.style.color='var(--text-muted)'">
+                        <i data-lucide="help-circle" style="width: 18px;"></i> <span class="font-bold">بنك الأسئلة</span>
+                    </a>
+                    <a href="{% url 'dashboard:admin_exams_hub' %}" class="flex-center gap-4 p-3 text-muted" style="text-decoration: none; justify-content: flex-start; border-radius: 12px; transition: 0.3s;" onmouseover="this.style.background='var(--bg-surface-elevated)'; this.style.color='var(--text-primary)'" onmouseout="this.style.background='none'; this.style.color='var(--text-muted)'">
+                        <i data-lucide="graduation-cap" style="width: 18px;"></i> <span class="font-bold">نتائج الطلاب</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="premium-card mb-6">
+                <h4 class="gold mb-6" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">المالية والاشتراكات</h4>
+                <div class="flex-column gap-2">
+                    <a href="{% url 'dashboard:admin_billing' %}" class="flex-center gap-4 p-3 text-muted" style="text-decoration: none; justify-content: flex-start; border-radius: 12px; transition: 0.3s;" onmouseover="this.style.background='var(--bg-surface-elevated)'; this.style.color='var(--text-primary)'" onmouseout="this.style.background='none'; this.style.color='var(--text-muted)'">
+                        <i data-lucide="credit-card" style="width: 18px;"></i> <span class="font-bold">الاشتراكات النشطة</span>
+                    </a>
+                    <a href="{% url 'dashboard:admin_billing' %}" class="flex-center gap-4 p-3 text-muted" style="text-decoration: none; justify-content: flex-start; border-radius: 12px; transition: 0.3s;" onmouseover="this.style.background='var(--bg-surface-elevated)'; this.style.color='var(--text-primary)'" onmouseout="this.style.background='none'; this.style.color='var(--text-muted)'">
+                        <i data-lucide="dollar-sign" style="width: 18px;"></i> <span class="font-bold">سجل المدفوعات</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="premium-card" style="background: var(--bg-surface-elevated);">
+                <h4 class="gold mb-6" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">النظام والبيانات</h4>
+                <div class="flex-column gap-6">
+                    <div>
+                        <h5 style="font-size: 0.9rem; margin-bottom: 0.5rem;">النسخ الاحتياطي</h5>
+                        <p class="text-muted" style="font-size: 0.75rem; margin-bottom: 1rem;">تصدير كامل لقاعدة البيانات</p>
+                        <a href="{% url 'dashboard:admin_system_backup' %}" class="btn btn-secondary w-full" style="font-size: 0.8rem;">
+                            <i data-lucide="download" style="width: 14px;"></i> تحميل JSON
+                        </a>
+                    </div>
+                    <div>
+                        <h5 style="font-size: 0.9rem; margin-bottom: 0.5rem;">تصدير الطلاب</h5>
+                        <p class="text-muted" style="font-size: 0.75rem; margin-bottom: 1rem;">ملف Excel بأرقام الهواتف</p>
+                        <a href="{% url 'dashboard:admin_export_students' %}" class="btn btn-secondary w-full" style="font-size: 0.8rem;">
+                            <i data-lucide="file-spreadsheet" style="width: 14px;"></i> تصدير Excel
+                        </a>
+                    </div>
+                    <div style="padding-top: 1.5rem; border-top: 1px solid var(--border-light);">
+                        <a href="{% url 'dashboard:student_dashboard' %}" class="btn btn-primary w-full" style="font-size: 0.8rem;">
+                            <i data-lucide="eye" style="width: 14px;"></i> عرض كطالب
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<style>
+    @media (max-width: 1100px) {
+        .admin-dashboard-layout { grid-template-columns: 1fr !important; gap: 4rem !important; }
+    }
+</style>
+{% endblock %}

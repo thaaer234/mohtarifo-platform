@@ -1,0 +1,26 @@
+node_modules
+.next
+dist
+coverage
+.env
+.env.local
+*.log
+packages/database/prisma/migrations
+
+# Python / Django
+__pycache__/
+*.py[cod]
+*.sqlite3
+db.sqlite3
+staticfiles/
+media/
+
+# Local deployment artifacts and private data exports
+*.zip
+data_dump*.json
+
+# Local editor / OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

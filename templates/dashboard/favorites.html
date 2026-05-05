@@ -1,0 +1,73 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}المفضلة | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="page-wrapper reveal-up">
+    <header class="page-header mb-12">
+        <div class="page-header-content">
+            <div class="page-icon-wrapper red-glow">
+                <i data-lucide="heart"></i>
+            </div>
+            <div>
+                <h1 class="page-title">دروسي المفضلة</h1>
+                <p class="page-subtitle">الدروس التي قمت بحفظها للعودة إليها لاحقاً</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="empty-state-premium">
+        <div class="empty-icon-animated">
+            <i data-lucide="heart" class="heart-pulse"></i>
+        </div>
+        <h3>لم تقم بإضافة أي دروس للمفضلة بعد</h3>
+        <p>عند مشاهدة درس، اضغط على أيقونة القلب لحفظه هنا والعودة إليه بسرعة</p>
+        <a href="{% url 'dashboard:my_courses' %}" class="btn btn-secondary mt-6">
+            <i data-lucide="book-open" style="width: 18px;"></i>
+            تصفح دوراتي
+        </a>
+    </div>
+</div>
+
+<style>
+    .page-wrapper { padding: 2rem 0; max-width: 1200px; margin: 0 auto; }
+    .page-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem; }
+    .page-header-content { display: flex; align-items: center; gap: 1.5rem; }
+    .page-icon-wrapper { width: 60px; height: 60px; border-radius: 20px; display: flex; align-items: center; justify-content: center; }
+    .page-icon-wrapper i { width: 28px; height: 28px; }
+    .red-glow { background: rgba(239, 68, 68, 0.1); color: #ef4444; box-shadow: 0 0 25px rgba(239, 68, 68, 0.1); }
+    .page-title { font-size: 2rem; font-weight: 900; color: var(--text-primary); }
+    .page-subtitle { color: var(--text-muted); font-size: 1rem; margin-top: 0.25rem; }
+
+    .empty-state-premium {
+        text-align: center;
+        padding: 6rem 2rem;
+        background: var(--glass-bg);
+        border: 1px dashed var(--border-light);
+        border-radius: 30px;
+    }
+    .empty-icon-animated { margin: 0 auto 2rem; }
+    .heart-pulse {
+        width: 64px;
+        height: 64px;
+        color: #ef4444;
+        opacity: 0.2;
+        animation: heartbeat 2s infinite ease-in-out;
+    }
+    @keyframes heartbeat {
+        0% { transform: scale(1); opacity: 0.2; }
+        15% { transform: scale(1.2); opacity: 0.4; }
+        30% { transform: scale(1); opacity: 0.2; }
+        45% { transform: scale(1.15); opacity: 0.35; }
+        60% { transform: scale(1); opacity: 0.2; }
+    }
+    .empty-state-premium h3 { font-size: 1.5rem; color: var(--text-primary); margin-bottom: 0.75rem; }
+    .empty-state-premium p { color: var(--text-muted); font-size: 1rem; max-width: 400px; margin: 0 auto; line-height: 1.8; }
+
+    @media (max-width: 768px) {
+        .page-title { font-size: 1.5rem; }
+        .empty-state-premium { padding: 4rem 1.5rem; }
+    }
+</style>
+{% endblock %}

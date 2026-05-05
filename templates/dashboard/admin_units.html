@@ -1,0 +1,204 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}إدارة الوحدات | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="admin-content-wrapper reveal-up">
+    <header class="hub-header mb-10">
+        <div class="flex-between align-center">
+            <div>
+                <span class="badge mb-2">الهيكلية التعليمية</span>
+                <h1 class="page-title">إدارة الوحدات الدراسية</h1>
+            </div>
+            <div class="hub-actions">
+                <button onclick="openCreateModal()" class="btn btn-primary">
+                    <i data-lucide="plus"></i> إضافة وحدة جديدة
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Create Modal -->
+    <div id="create-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card animate-scale-up">
+            <div class="modal-header">
+                <h2 class="section-title"><i data-lucide="plus-circle"></i> إضافة وحدة جديدة</h2>
+                <button onclick="closeModals()" class="btn-icon"><i data-lucide="x"></i></button>
+            </div>
+            <form method="post" class="modal-body">
+                {% csrf_token %}
+                <div class="form-grid">
+                    {% for field in unit_form %}
+                        <div class="form-group">
+                            <label class="form-label">{{ field.label }}</label>
+                            {{ field }}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="modal-footer mt-8">
+                    <button type="button" onclick="closeModals()" class="btn btn-glass">إلغاء</button>
+                    <button type="submit" class="btn btn-primary btn-glow">حفظ الوحدة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-card animate-scale-up">
+            <div class="modal-header">
+                <h2 class="section-title"><i data-lucide="edit-3"></i> تعديل الوحدة</h2>
+                <button onclick="closeModals()" class="btn-icon"><i data-lucide="x"></i></button>
+            </div>
+            <form id="edit-form" method="post" class="modal-body">
+                {% csrf_token %}
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">الدورة التابعة</label>
+                        <select name="course" id="edit-course" class="form-control" required>
+                            {% for course in courses %}
+                                <option value="{{ course.id }}">{{ course.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">اسم الوحدة</label>
+                        <input type="text" name="title" id="edit-title" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">وصف الوحدة</label>
+                        <textarea name="description" id="edit-description" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الترتيب</label>
+                        <input type="number" name="sort_order" id="edit-sort-order" class="form-control" value="0">
+                    </div>
+                </div>
+                <div class="modal-footer mt-8">
+                    <button type="button" onclick="closeModals()" class="btn btn-glass">إلغاء</button>
+                    <button type="submit" class="btn btn-primary btn-glow">تحديث البيانات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="premium-card mb-8">
+        <form method="get" class="filter-form flex-align gap-4">
+            <div class="input-group" style="flex: 1;">
+                <label class="text-xs mb-1 block text-muted">تصفية حسب الدورة</label>
+                <select name="course_id" class="form-control" onchange="this.form.submit()">
+                    <option value="">جميع الدورات</option>
+                    {% for course in courses %}
+                        <option value="{{ course.id }}" {% if selected_course_id == course.id|stringformat:"s" %}selected{% endif %}>{{ course.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-responsive premium-card">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ترتيب</th>
+                    <th>اسم الوحدة</th>
+                    <th>الدورة التابعة</th>
+                    <th>عدد الدروس</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for unit in units %}
+                <tr>
+                    <td><span class="sort-badge">{{ unit.sort_order }}</span></td>
+                    <td><strong>{{ unit.title }}</strong></td>
+                    <td><span class="tag">{{ unit.course.title }}</span></td>
+                    <td>{{ unit.lessons_count }} درس</td>
+                    <td>
+                        <button onclick="openEditModal('{{ unit.id }}', '{{ unit.course.id }}', '{{ unit.title|escapejs }}', '{{ unit.description|escapejs }}', '{{ unit.sort_order }}')" class="btn-icon" title="تعديل">
+                            <i data-lucide="edit-3"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center p-12">
+                        <p class="text-muted">لا توجد وحدات مطابقة للبحث.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .sort-badge { background: rgba(197, 160, 89, 0.1); color: var(--brand-gold); padding: 0.25rem 0.5rem; border-radius: 6px; font-weight: 700; font-size: 0.8rem; }
+    .admin-table { width: 100%; border-collapse: collapse; }
+    .admin-table th { padding: 1.25rem; border-bottom: 1px solid var(--border-light); text-align: right; color: var(--text-muted); font-size: 0.85rem; }
+    .admin-table td { padding: 1.25rem; border-bottom: 1px solid var(--border-light); color: var(--text-primary); }
+    .btn-icon { color: var(--brand-gold); transition: 0.3s; padding: 0.5rem; border-radius: 8px; border: none; background: none; cursor: pointer; }
+    .btn-icon:hover { background: rgba(197, 160, 89, 0.1); }
+    .tag { font-size: 0.75rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-light); padding: 0.2rem 0.6rem; border-radius: 100px; color: var(--text-secondary); }
+    .form-control { width: 100%; background: var(--bg-base); border: 1px solid var(--border-light); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 12px; outline: none; }
+
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 1000; padding: 1.5rem;
+    }
+    .modal-card {
+        background: var(--bg-surface); border: 1px solid var(--border-strong);
+        border-radius: 28px; width: 100%; max-width: 500px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+    }
+    .modal-header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 2rem; }
+    .modal-footer { padding: 1.5rem 2rem; background: rgba(0,0,0,0.1); border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 1rem; }
+    .form-group { margin-bottom: 1.5rem; }
+    .form-label { display: block; font-weight: 700; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem; }
+    .modal-body input, .modal-body textarea, .modal-body select {
+        width: 100%; padding: 0.85rem 1.25rem; background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border-strong); border-radius: 12px; color: var(--text-primary);
+    }
+    .animate-scale-up { animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes scaleUp { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+</style>
+
+<script>
+    function openCreateModal() {
+        document.getElementById('create-modal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function openEditModal(id, courseId, title, description, sortOrder) {
+        const modal = document.getElementById('edit-modal');
+        const form = document.getElementById('edit-form');
+        form.action = `/admin-dashboard/content/units/${id}/edit/`;
+        
+        document.getElementById('edit-course').value = courseId;
+        document.getElementById('edit-title').value = title;
+        document.getElementById('edit-description').value = description;
+        document.getElementById('edit-sort-order').value = sortOrder;
+        
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeModals() {
+        document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+        document.body.style.overflow = 'auto';
+    }
+
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal-overlay')) {
+            closeModals();
+        }
+    };
+</script>
+{% endblock %}

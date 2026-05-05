@@ -1,0 +1,117 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}نتائج الامتحان | {{ attempt.exam.title }}{% endblock %}
+
+{% block content %}
+<div class="result-container reveal-up">
+    <!-- Result Hero Section -->
+    <div class="premium-card result-hero text-center mb-10">
+        <div class="result-badge mb-6 {% if attempt.accuracy >= 50 %}pass{% else %}fail{% endif %}">
+            <i data-lucide="{% if attempt.accuracy >= 50 %}check-circle{% else %}alert-circle{% endif %}"></i>
+        </div>
+        <h1 class="result-title mb-2">{% if attempt.accuracy >= 85 %}أداء أسطوري!{% elif attempt.accuracy >= 50 %}عمل جيد، لقد نجحت!{% else %}محاولة جيدة، يمكنك التحسن!{% endif %}</h1>
+        <p class="opacity-70 mb-10">لقد أتممت امتحان {{ attempt.exam.title }} بنجاح.</p>
+        
+        <div class="result-stats-grid">
+            <div class="result-stat-card">
+                <span class="label">الدرجة النهائية</span>
+                <div class="value gold">{{ attempt.score }} / {{ attempt.max_score }}</div>
+            </div>
+            <div class="result-stat-card">
+                <span class="label">النسبة المئوية</span>
+                <div class="value">{{ attempt.accuracy|floatformat:1 }}%</div>
+            </div>
+            <div class="result-stat-card">
+                <span class="label">نقاط الخبرة المكتسبة</span>
+                <div class="value success">+{{ attempt.score|add:10 }} XP</div>
+            </div>
+        </div>
+
+        <div class="mt-10 flex-center gap-6">
+            <a href="{% url 'dashboard:student_dashboard' %}" class="btn btn-secondary">العودة للوحة الطالب</a>
+            <a href="{% url 'exams:exam_detail' attempt.exam.id %}" class="btn btn-primary btn-glow">محاولة أخرى</a>
+        </div>
+    </div>
+
+    <!-- Answers Review -->
+    <div class="review-section">
+        <h3 class="section-title mb-8">
+            <i data-lucide="list-checks" class="gold"></i>
+            <span>مراجعة الإجابات</span>
+        </h3>
+        
+        <div class="answers-list">
+            {% for answer in answers %}
+                <div class="premium-card answer-review-card mb-4 {% if answer.is_correct %}correct-border{% else %}wrong-border{% endif %}">
+                    <div class="flex-between align-center">
+                        <div class="answer-header">
+                            <span class="q-num">السؤال {{ forloop.counter }}</span>
+                            <p class="q-text">{{ answer.question.text }}</p>
+                        </div>
+                        <div class="status-indicator">
+                            {% if answer.is_correct %}
+                                <span class="badge-success"><i data-lucide="check"></i> صحيح</span>
+                            {% else %}
+                                <span class="badge-danger"><i data-lucide="x"></i> خاطئ</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="options-review mt-6">
+                        <div class="option-row {% if answer.is_correct %}correct{% else %}selected-wrong{% endif %}">
+                            <span class="label">إجابتك:</span>
+                            <span class="text">{{ answer.selected_option.text|default:"لم يتم اختيار إجابة" }}</span>
+                        </div>
+                        {% if not answer.is_correct %}
+                            <div class="option-row correct-answer">
+                                <span class="label">الإجابة الصحيحة:</span>
+                                <span class="text">
+                                    {% for opt in answer.question.options.all %}
+                                        {% if opt.is_correct %}{{ opt.text }}{% endif %}
+                                    {% endfor %}
+                                </span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .result-hero { padding: 4rem !important; border-radius: 40px !important; background: linear-gradient(180deg, rgba(143,111,62,0.1), transparent) !important; }
+    
+    .result-badge { width: 100px; height: 100px; border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
+    .result-badge.pass { background: var(--success-bg); color: var(--success); box-shadow: 0 0 30px var(--success-bg); }
+    .result-badge.fail { background: var(--danger-bg); color: var(--danger); box-shadow: 0 0 30px var(--danger-bg); }
+    
+    .result-title { font-size: 2.5rem; color: #fff; font-weight: 800; }
+    
+    .result-stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; max-width: 800px; margin: 0 auto; }
+    .result-stat-card { padding: 2rem; background: rgba(255,255,255,0.03); border-radius: 25px; border: 1px solid var(--border-light); }
+    .result-stat-card .label { display: block; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .result-stat-card .value { font-size: 1.8rem; font-weight: 900; color: #fff; }
+    .result-stat-card .value.gold { color: var(--brand-gold); }
+    .result-stat-card .value.success { color: var(--success); }
+
+    .answer-review-card { padding: 2rem !important; border-left: 5px solid transparent !important; }
+    .answer-review-card.correct-border { border-right: 5px solid var(--success) !important; }
+    .answer-review-card.wrong-border { border-right: 5px solid var(--danger) !important; }
+    
+    .q-num { font-size: 0.8rem; color: var(--brand-gold); font-weight: bold; text-transform: uppercase; }
+    .q-text { font-size: 1.25rem; color: #fff; margin-top: 0.5rem; }
+    
+    .option-row { padding: 1rem; border-radius: 12px; display: flex; gap: 1rem; font-size: 0.95rem; margin-top: 0.5rem; }
+    .option-row.correct { background: var(--success-bg); color: var(--success); }
+    .option-row.selected-wrong { background: var(--danger-bg); color: var(--danger); }
+    .option-row.correct-answer { background: rgba(16, 185, 129, 0.05); color: var(--success); border: 1px dashed var(--success); }
+    .option-row .label { font-weight: bold; min-width: 120px; }
+
+    @media (max-width: 768px) {
+        .result-stats-grid { grid-template-columns: 1fr; }
+        .result-hero { padding: 2.5rem 1.5rem !important; }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,290 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}لوحة القيادة | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="reveal-up">
+    <!-- 1. Immersive Welcome Section -->
+    <section class="dashboard-banner">
+        <div class="flex-between w-full flex-wrap gap-6">
+            <div class="flex-center gap-6">
+                <div class="avatar-wrapper" style="position: relative;">
+                    {% if student_profile.avatar %}
+                        <img src="{{ student_profile.avatar.url }}" alt="Profile" style="width: 100px; height: 100px; border-radius: 30px; border: 2px solid var(--brand-gold); box-shadow: var(--shadow-glow);">
+                    {% else %}
+                        <div class="flex-center" style="width: 100px; height: 100px; border-radius: 30px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold); font-size: 2.5rem; border: 2px solid var(--brand-gold);">
+                            <i data-lucide="user"></i>
+                        </div>
+                    {% endif %}
+                    <div class="badge badge-gold" style="position: absolute; bottom: -10px; right: -10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+                        {{ student_profile.level|default:1 }}
+                    </div>
+                </div>
+                <div>
+                    <h1 class="mb-1" style="font-size: 2.5rem;">أهلاً بك، <span class="gold">{{ request.user.get_full_name|default:request.user.username }}</span></h1>
+                    <p class="text-muted" style="font-size: 1.1rem; margin-bottom: 0;">واصل رحلة التعلم اليوم، ننتظرك بكل حماس!</p>
+                </div>
+            </div>
+            <div class="badge badge-gold glass-card" style="padding: 0.75rem 1.5rem;">
+                <i data-lucide="calendar"></i>
+                <span>{{ today_date|date:"l، d F" }}</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. Performance Stats Grid -->
+    <div class="stats-grid">
+        <div class="premium-card stat-card reveal-up" style="animation-delay: 0.1s;">
+            <div class="stat-icon"><i data-lucide="zap"></i></div>
+            <div class="stat-info w-full">
+                <span class="label">نقاط الخبرة</span>
+                <div class="flex-between align-center">
+                    <h3 class="value mb-0">{{ student_profile.xp|default:0 }} <small class="text-muted" style="font-size: 0.9rem;">XP</small></h3>
+                </div>
+                <div class="progress-bar-container mt-4">
+                    <div class="progress-bar-fill" style="width: 75%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="premium-card stat-card reveal-up" style="animation-delay: 0.2s;">
+            <div class="stat-icon" style="color: #f59e0b; background: rgba(245, 158, 11, 0.1);"><i data-lucide="flame"></i></div>
+            <div class="stat-info">
+                <span class="label">أيام الالتزام</span>
+                <h3 class="value mb-0">{{ student_profile.streak_days|default:0 }} <small class="text-muted" style="font-size: 0.9rem;">يوم</small></h3>
+                <p class="text-muted mt-2 mb-0" style="font-size: 0.8rem;">استمر في التقدم يومياً!</p>
+            </div>
+        </div>
+
+        <div class="premium-card stat-card reveal-up" style="animation-delay: 0.3s;">
+            <div class="stat-icon" style="color: #10b981; background: rgba(16, 185, 129, 0.1);"><i data-lucide="award"></i></div>
+            <div class="stat-info">
+                <span class="label">دروس مكتملة</span>
+                <h3 class="value mb-0">{{ attempts.count|default:0 }} <small class="text-muted" style="font-size: 0.9rem;">/ {{ total_lessons|default:"-" }}</small></h3>
+                <p class="text-muted mt-2 mb-0" style="font-size: 0.8rem;">لقد أنجزت عملاً رائعاً!</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="student-dashboard-layout">
+        <!-- Left: Course Content -->
+        <div>
+            <!-- Continue Learning -->
+            {% if continue_learning %}
+            <div class="flex-between mb-6">
+                <h2 class="mb-0" style="font-size: 1.6rem; display: flex; align-items: center; gap: 0.75rem;">
+                    <i data-lucide="play-circle" class="gold"></i> متابعة التعلم
+                </h2>
+            </div>
+            <div class="premium-card reveal-up mb-12" style="padding: 0; overflow: hidden; display: flex;">
+                <div style="position: relative; width: 300px; flex-shrink: 0;">
+                    {% if continue_learning.lesson.unit.course.image %}
+                        <img src="{{ continue_learning.lesson.unit.course.image.url }}" alt="Course" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                        <div style="width: 100%; height: 100%; background: var(--bg-surface-elevated); display: flex; align-items: center; justify-content: center;">
+                            <i data-lucide="video" class="text-muted" style="width: 40px; height: 40px;"></i>
+                        </div>
+                    {% endif %}
+                    <div class="flex-center" style="position: absolute; inset: 0; background: rgba(0,0,0,0.3); color: #fff; font-size: 2.5rem; opacity: 0; transition: 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
+                        <i data-lucide="play"></i>
+                    </div>
+                </div>
+                <div style="padding: 2.5rem; flex-grow: 1;">
+                    <span class="badge badge-gold mb-2" style="font-size: 0.7rem;">{{ continue_learning.lesson.unit.course.title }}</span>
+                    <h3 style="font-size: 1.8rem; margin-bottom: 1rem;">{{ continue_learning.lesson.title }}</h3>
+                    <div class="mb-6">
+                        <div class="progress-bar-container" style="max-width: 300px;">
+                            <div class="progress-bar-fill" style="width: 45%;"></div>
+                        </div>
+                        <span class="text-muted mt-2 block" style="font-size: 0.85rem;">متبقي تقريباً 15 دقيقة</span>
+                    </div>
+                    <a href="{% url 'dashboard:student_lesson_detail' continue_learning.lesson.id %}" class="btn btn-primary">متابعة الآن</a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- My Courses -->
+            <div class="flex-between mb-6 mt-8">
+                <h2 class="mb-0" style="font-size: 1.6rem; display: flex; align-items: center; gap: 0.75rem;">
+                    <i data-lucide="book-open" class="gold"></i> مكتبتي التعليمية
+                </h2>
+                <a href="{% url 'dashboard:my_courses' %}" class="btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">عرض الكل <i data-lucide="chevron-left" style="width: 14px;"></i></a>
+            </div>
+            
+            <div class="grid-2">
+                {% for grant in grants|slice:":4" %}
+                <div class="premium-card" style="padding: 1.25rem; display: flex; gap: 1.25rem; align-items: center;">
+                    <div style="width: 100px; height: 100px; border-radius: 18px; overflow: hidden; position: relative; flex-shrink: 0;">
+                        {% if grant.course.image %}
+                            <img src="{{ grant.course.image.url }}" alt="{{ grant.course.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                            <div class="flex-center" style="width: 100%; height: 100%; background: var(--bg-surface-elevated); color: var(--text-muted);">
+                                <i data-lucide="book"></i>
+                            </div>
+                        {% endif %}
+                        <a href="{% url 'dashboard:student_course_detail' grant.course.id %}" class="flex-center" style="position: absolute; inset: 0; background: rgba(0,0,0,0.6); color: #fff; text-decoration: none; font-weight: 800; font-size: 0.75rem; opacity: 0; transition: 0.3s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">
+                            دخول
+                        </a>
+                    </div>
+                    <div>
+                        <h4 style="font-size: 1.1rem; margin-bottom: 0.5rem;">{{ grant.course.title }}</h4>
+                        <div class="flex-center gap-2 text-muted" style="font-size: 0.75rem; justify-content: flex-start;">
+                            <i data-lucide="layers" style="width: 12px;"></i> {{ grant.course.units.count }} وحدات
+                            <span style="width: 3px; height: 3px; background: var(--text-muted); border-radius: 50%;"></span>
+                            <span>{{ grant.course.subject.name }}</span>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="premium-card text-center" style="grid-column: span 2; padding: 4rem;">
+                    <i data-lucide="book-x" class="text-muted mb-4" style="width: 48px; height: 48px; opacity: 0.5;"></i>
+                    <p class="text-muted">لم تقم بتفعيل أي دورات بعد.</p>
+                    <a href="{% url 'dashboard:landing' %}#courses" class="btn btn-primary mt-4">استعرض الدورات</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Right: Actions & Notifications -->
+        <aside>
+            <div class="premium-card mb-8">
+                <h3 style="font-size: 1.2rem; display: flex; align-items: center; gap: 0.75rem;">
+                    <i data-lucide="key" class="gold"></i> تفعيل كود مادة
+                </h3>
+                <p class="text-muted" style="font-size: 0.85rem; line-height: 1.6; margin-bottom: 1.5rem;">أدخل الكود المكتوب على البطاقة لتفعيل دورتك فوراً.</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="input-glow-wrapper mb-4">
+                        <i data-lucide="hash" class="field-icon"></i>
+                        <input type="text" name="code" id="activation-code-input" placeholder="أدخل الكود هنا..." required>
+                        <button type="button" class="flex-center" id="start-qr-scan" style="width: 45px; height: 45px; margin: 5px; border-radius: 12px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold); border: none; cursor: pointer; position: absolute; left: 0;">
+                            <i data-lucide="qr-code"></i>
+                        </button>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-glow w-full">تفعيل المادة</button>
+                </form>
+            </div>
+
+            <div class="premium-card">
+                <h3 style="font-size: 1.2rem; display: flex; align-items: center; gap: 0.75rem;">
+                    <i data-lucide="bell" class="gold"></i> آخر التنبيهات
+                </h3>
+                <div class="mt-6">
+                    {% for notification in notifications|slice:":5" %}
+                    <div class="flex-center gap-4 mb-4" style="padding: 1rem; background: var(--bg-surface-elevated); border-radius: 18px; justify-content: flex-start;">
+                        <div class="flex-center" style="width: 40px; height: 40px; border-radius: 12px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold); flex-shrink: 0;">
+                            <i data-lucide="info" style="width: 18px;"></i>
+                        </div>
+                        <div style="flex-grow: 1;">
+                            <p style="font-size: 0.85rem; font-weight: 700; margin-bottom: 0.25rem;">{{ notification.title }}</p>
+                            <span class="text-muted" style="font-size: 0.7rem; font-weight: 600;">{{ notification.created_at|timesince }}</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-4" style="font-size: 0.85rem;">لا توجد تنبيهات جديدة.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<!-- QR Scanner Modal -->
+<div id="qr-modal" class="flex-center" style="position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 30000; display: none; padding: 2rem;">
+    <div class="premium-card w-full" style="max-width: 500px; padding: 0; overflow: hidden;">
+        <div class="flex-between" style="padding: 1.5rem; border-bottom: 1px solid var(--border-light);">
+            <h4 class="mb-0 flex-center gap-2"><i data-lucide="scan-line" class="gold"></i> ماسح كود QR</h4>
+            <button id="close-qr-modal" class="flex-center" style="background: none; border: none; color: var(--text-muted); cursor: pointer;"><i data-lucide="x"></i></button>
+        </div>
+        <div style="padding: 2rem; position: relative;">
+            <div id="reader" style="width: 100%; border-radius: 15px; overflow: hidden;"></div>
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; border: 2px solid var(--brand-gold); border-radius: 20px; pointer-events: none; box-shadow: 0 0 0 1000px rgba(0,0,0,0.5);">
+                <div style="position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: var(--brand-gold); box-shadow: 0 0 10px var(--brand-gold); animation: qr-scan-line 2s infinite linear;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes qr-scan-line {
+        0% { top: 0; }
+        100% { top: 100%; }
+    }
+    #qr-modal.active { display: flex !important; }
+    
+    @media (max-width: 1200px) {
+        .student-dashboard-layout { grid-template-columns: 1fr !important; gap: 3rem !important; }
+    }
+    @media (max-width: 768px) {
+        .dashboard-banner h1 { font-size: 1.8rem !important; }
+        .stats-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+        }
+        .stat-card {
+            padding: 1.5rem !important;
+        }
+        .stat-icon {
+            width: 50px !important;
+            height: 50px !important;
+        }
+        .stat-info .value {
+            font-size: 1.6rem !important;
+        }
+        .student-dashboard-layout > div { order: 1; }
+        .student-dashboard-layout > aside { order: 2; }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script>
+    const qrModal = document.getElementById('qr-modal');
+    const closeQrModal = document.getElementById('close-qr-modal');
+    const startScanBtn = document.getElementById('start-qr-scan');
+    const codeInput = document.getElementById('activation-code-input');
+    let html5QrCode;
+
+    if (startScanBtn) {
+        startScanBtn.addEventListener('click', async () => {
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+                alert("⚠️ تنبيه أمني: المتصفح يمنع الكاميرا على روابط HTTP. يرجى استخدام HTTPS.");
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                stream.getTracks().forEach(track => track.stop());
+
+                qrModal.classList.add('active');
+                if (!html5QrCode) {
+                    html5QrCode = new Html5Qrcode("reader");
+                }
+
+                const config = { fps: 20, qrbox: { width: 250, height: 250 }, aspectRatio: 1.0 };
+                await html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+                    codeInput.value = decodedText;
+                    stopScan();
+                });
+            } catch (err) {
+                alert("تعذر فتح الكاميرا: " + (err.message || "يرجى التحقق من الأذونات"));
+                stopScan();
+            }
+        });
+    }
+
+    if (closeQrModal) {
+        closeQrModal.addEventListener('click', stopScan);
+    }
+
+    async function stopScan() {
+        qrModal.classList.remove('active');
+        if (html5QrCode && html5QrCode.isScanning) {
+            await html5QrCode.stop();
+            html5QrCode.clear();
+        }
+    }
+</script>
+{% endblock %}

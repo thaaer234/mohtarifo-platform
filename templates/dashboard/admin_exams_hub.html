@@ -1,0 +1,109 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}بنك الاختبارات والتقييم | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="admin-exams-hub reveal-up">
+    <!-- Header -->
+    <header class="hub-header mb-10">
+        <div class="flex-between align-center">
+            <div>
+                <span class="badge mb-2">التقييم الأكاديمي</span>
+                <h1 class="page-title">بنك الاختبارات والنتائج</h1>
+            </div>
+            <div class="hub-stats">
+                <div class="mini-stat">
+                    <span class="label">إجمالي الأسئلة</span>
+                    <span class="value">{{ total_questions }}</span>
+                </div>
+                <div class="mini-stat">
+                    <span class="label">الاختبارات</span>
+                    <span class="value">{{ exams.count }}</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="hub-grid">
+        <!-- Exams List -->
+        <section class="hub-column">
+            <div class="flex-between mb-6">
+                <h2 class="section-title"><i data-lucide="pencil-ruler"></i> قائمة الاختبارات</h2>
+                <a href="/admin/exams/exam/add/" class="btn btn-primary btn-sm" target="_blank">+ إضافة اختبار</a>
+            </div>
+            <div class="exams-list">
+                {% for exam in exams %}
+                    <div class="premium-card mb-4">
+                        <div class="flex-between align-center">
+                            <div>
+                                <strong style="color:var(--text-primary); display:block; margin-bottom:0.25rem;">{{ exam.title }}</strong>
+                                <span class="text-muted small">{{ exam.course.title }} • {{ exam.questions_count }} سؤال</span>
+                            </div>
+                            <div class="flex-center gap-2">
+                                <a href="/admin/exams/exam/{{ exam.id }}/change/" class="btn-icon" target="_blank"><i data-lucide="edit-3"></i></a>
+                                <a href="/admin/exams/question/?exam__id__exact={{ exam.id }}" class="btn-icon gold" target="_blank" title="إدارة الأسئلة"><i data-lucide="help-circle"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <p class="text-center p-8 text-muted">لا توجد اختبارات مضافة بعد</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Results / Attempts -->
+        <section class="hub-column">
+            <h2 class="section-title mb-6"><i data-lucide="graduation-cap"></i> آخر نتائج الطلاب</h2>
+            <div class="table-responsive premium-card">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>الطالب</th>
+                            <th>الاختبار</th>
+                            <th>الدرجة</th>
+                            <th>التاريخ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attempt in recent_attempts %}
+                        <tr>
+                            <td><strong>{{ attempt.user.get_full_name }}</strong></td>
+                            <td>{{ attempt.exam.title }}</td>
+                            <td>
+                                <span class="score-badge {% if attempt.score_percent >= 50 %}success{% else %}danger{% endif %}">
+                                    {{ attempt.score_percent }}%
+                                </span>
+                            </td>
+                            <td>{{ attempt.created_at|date:"Y-m-d" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center p-8">لا توجد محاولات اختبار بعد</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+
+<style>
+    .hub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; }
+    .mini-stat { text-align: left; background: rgba(197, 160, 89, 0.05); padding: 1rem 1.5rem; border-radius: 16px; border-left: 3px solid var(--brand-gold); }
+    .hub-stats { display: flex; gap: 1rem; }
+    .mini-stat .label { display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: 700; margin-bottom: 0.25rem; }
+    .mini-stat .value { font-size: 1.5rem; font-weight: 900; color: var(--brand-gold); }
+
+    .score-badge { padding: 0.2rem 0.6rem; border-radius: 6px; font-weight: 800; font-size: 0.85rem; }
+    .score-badge.success { background: rgba(16, 185, 129, 0.1); color: var(--success); }
+    .score-badge.danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+
+    .admin-table { width: 100%; border-collapse: collapse; text-align: right; }
+    .admin-table th { padding: 1rem; border-bottom: 1px solid var(--border-light); color: var(--text-muted); font-size: 0.85rem; }
+    .admin-table td { padding: 1.25rem 1rem; border-bottom: 1px solid var(--border-light); color: var(--text-primary); }
+
+    @media (max-width: 992px) {
+        .hub-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}

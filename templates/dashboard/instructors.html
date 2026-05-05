@@ -1,0 +1,116 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}نخبة الأساتذة | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="instructors-page-wrapper reveal-up">
+    <header class="section-header text-center mb-16">
+        <h1 class="page-title mb-4">نخبة <span class="gold">المحترفين</span></h1>
+        <p class="text-muted max-w-600 mx-auto">تعلم على أيدي أمهر الأساتذة والخبراء المتخصصين، لضمان رحلة تعليمية متميزة وناجحة.</p>
+    </header>
+
+    <div class="instructors-grid">
+        {% for instructor in instructors %}
+        <div class="instructor-card-premium">
+            <div class="inst-avatar-wrap">
+                {% if instructor.instructor_profile.avatar %}
+                    <img src="{{ instructor.instructor_profile.avatar.url }}" alt="{{ instructor.get_full_name }}" class="inst-img">
+                {% else %}
+                    {% with first_course=instructor.courses.first %}
+                        {% if first_course.teacher_photo %}
+                            <img src="{{ first_course.teacher_photo.url }}" alt="{{ instructor.get_full_name }}" class="inst-img">
+                        {% else %}
+                            <div class="inst-img-placeholder">
+                                <i data-lucide="user"></i>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                {% endif %}
+                <div class="inst-badge">محترف</div>
+            </div>
+            
+            <div class="inst-info text-center mt-6">
+                <h3 class="inst-name">{{ instructor.get_full_name|default:instructor.username }}</h3>
+                <p class="inst-specialty">
+                    {% if instructor.instructor_profile.specialty %}
+                        {{ instructor.instructor_profile.specialty }}
+                    {% elif instructor.courses.first %}
+                        {{ instructor.courses.first.subject.name }}
+                    {% else %}
+                        مدرس متخصص
+                    {% endif %}
+                </p>
+                
+                {% if instructor.instructor_profile.bio %}
+                    <p class="inst-bio mt-3 text-muted">{{ instructor.instructor_profile.bio|truncatewords:20 }}</p>
+                {% endif %}
+
+                <div class="inst-stats mt-4">
+                    <div class="inst-stat">
+                        <strong>{{ instructor.courses.count }}</strong>
+                        <span>دورات</span>
+                    </div>
+                    <div class="inst-divider"></div>
+                    <div class="inst-stat">
+                        <strong>100%</strong>
+                        <span>التزام</span>
+                    </div>
+                </div>
+                <div class="inst-actions mt-8">
+                    <a href="{% url 'dashboard:instructor_courses' instructor.id %}" class="btn btn-primary w-full btn-glow">عرض كافة الدورات</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state full-width text-center p-20">
+            <i data-lucide="users" style="width: 80px; height: 80px; opacity: 0.1; margin-bottom: 2rem;"></i>
+            <h3>سيتم إضافة الكادر التدريسي قريباً</h3>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .instructors-page-wrapper { padding: 4rem 0; }
+    .instructors-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 3rem; }
+    
+    .instructor-card-premium { 
+        background: var(--bg-surface); 
+        border: 1px solid var(--border-light); 
+        border-radius: 40px; 
+        padding: 2.5rem; 
+        transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+    }
+    .instructor-card-premium:hover { transform: translateY(-15px); border-color: var(--brand-gold); box-shadow: var(--shadow-glow); }
+
+    .inst-avatar-wrap { 
+        width: 160px; height: 160px; margin: 0 auto; position: relative; 
+        border-radius: 50%; padding: 8px; border: 2px dashed var(--brand-gold);
+    }
+    .inst-img, .inst-img-placeholder { 
+        width: 100%; height: 100%; border-radius: 50%; object-fit: cover; 
+        background: rgba(255,255,255,0.03); display: flex; align-items: center; justify-content: center;
+    }
+    .inst-img-placeholder i { width: 60px; height: 60px; color: var(--text-muted); }
+    
+    .inst-badge { 
+        position: absolute; bottom: 5px; right: 5px; background: var(--brand-gold); 
+        color: #000; font-size: 0.7rem; font-weight: 900; padding: 0.4rem 0.8rem; 
+        border-radius: 100px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+
+    .inst-name { font-size: 1.5rem; font-weight: 900; color: var(--text-primary); margin-bottom: 0.25rem; }
+    .inst-specialty { color: var(--brand-gold); font-size: 0.95rem; font-weight: 700; }
+    .inst-bio { font-size: 0.85rem; line-height: 1.6; height: 3.2em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+    .inst-stats { display: flex; justify-content: center; align-items: center; gap: 2rem; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 20px; }
+    .inst-stat { display: flex; flex-direction: column; }
+    .inst-stat strong { font-size: 1.2rem; color: var(--text-primary); }
+    .inst-stat span { font-size: 0.75rem; color: var(--text-muted); }
+    .inst-divider { width: 1px; height: 30px; background: var(--border-light); }
+
+    .full-width { grid-column: 1 / -1; }
+</style>
+{% endblock %}

@@ -1,0 +1,195 @@
+{% extends "dashboard/base.html" %}
+{% block title %}المعاهد ومراكز البيع | محترفو التعليم{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumb animate-fade-up">
+    <a href="{% url 'dashboard:admin_dashboard' %}">لوحة الإدارة</a>
+    <span class="breadcrumb-separator">/</span>
+    <span style="color: var(--text-primary);">المعاهد ومراكز البيع</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="premium-card mb-8 animate-fade-up">
+    <div class="flex-between align-center" style="flex-wrap: wrap; gap: 1.5rem;">
+        <div>
+            <span class="badge mb-2">إدارة الشركاء</span>
+            <h1 style="font-size: 2.2rem; color:var(--text-primary); margin-bottom:0.5rem;">المعاهد ومراكز البيع</h1>
+            <p style="color:var(--text-secondary); max-width: 600px;">
+                إدارة بروفايلات المعاهد ومراكز البيع وتوزيع الأكواد والمبيعات.
+            </p>
+        </div>
+        <div class="flex-center gap-4">
+            <button onclick="openModal('add-institute-modal')" class="btn btn-glass">
+                <i data-lucide="plus"></i> إضافة معهد جديد
+            </button>
+            <button onclick="openModal('add-center-modal')" class="btn btn-primary btn-glow">
+                <i data-lucide="plus-circle"></i> إضافة مركز بيع
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="grid-2 animate-fade-up" style="animation-delay: 0.1s;">
+    <!-- Institutes List -->
+    <article class="premium-card">
+        <h2 style="font-size: 1.5rem; margin-bottom: 2rem; display:flex; align-items:center; gap:0.75rem;">
+            <i data-lucide="building" style="color:var(--brand-gold);"></i> المعاهد الشريكة
+        </h2>
+        <div class="partner-list">
+            {% for institute in institutes %}
+                <a href="{% url 'dashboard:admin_institute_profile' institute.id %}" class="partner-item">
+                    <div class="partner-info">
+                        <strong>{{ institute.name }}</strong>
+                        <span>{{ institute.centers_total }} مركز • {{ institute.codes_total }} كود</span>
+                    </div>
+                    <div class="partner-meta">
+                        <span class="badge success">{{ institute.activated_total }} مفعل</span>
+                        <i data-lucide="chevron-left"></i>
+                    </div>
+                </a>
+            {% empty %}
+                <div class="empty-state p-8">
+                    <p class="text-muted">لا توجد معاهد مضافة حالياً.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </article>
+
+    <!-- Centers List -->
+    <article class="premium-card">
+        <h2 style="font-size: 1.5rem; margin-bottom: 2rem; display:flex; align-items:center; gap:0.75rem;">
+            <i data-lucide="map-pin" style="color:var(--brand-gold);"></i> مراكز التوزيع والبيع
+        </h2>
+        <div class="partner-list">
+            {% for center in centers %}
+                <a href="{% url 'dashboard:admin_sales_center_profile' center.id %}" class="partner-item">
+                    <div class="partner-info">
+                        <strong>{{ center.name }}</strong>
+                        <span>{{ center.institute.name|default:"مركز مستقل" }}</span>
+                    </div>
+                    <div class="partner-meta">
+                        <span class="badge gold">{{ center.codes_total }} كود</span>
+                        <i data-lucide="chevron-left"></i>
+                    </div>
+                </a>
+            {% empty %}
+                <div class="empty-state p-8">
+                    <p class="text-muted">لا توجد مراكز بيع مضافة حالياً.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </article>
+</div>
+
+<!-- Modal: Add Institute -->
+<div id="add-institute-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-card animate-scale-up">
+        <div class="modal-header">
+            <h2 class="section-title"><i data-lucide="plus-circle"></i> إنشاء معهد جديد</h2>
+            <button onclick="closeModal('add-institute-modal')" class="btn-icon"><i data-lucide="x"></i></button>
+        </div>
+        <form method="post" class="modal-body" enctype="multipart/form-data">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_institute">
+            <div class="form-grid">
+                {% for field in institute_form %}
+                    <div class="form-group">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="modal-footer mt-8">
+                <button type="button" onclick="closeModal('add-institute-modal')" class="btn btn-glass">إلغاء</button>
+                <button type="submit" class="btn btn-primary btn-glow">تأكيد الإنشـاء</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Add Center -->
+<div id="add-center-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-card animate-scale-up">
+        <div class="modal-header">
+            <h2 class="section-title"><i data-lucide="plus-circle"></i> إنشاء مركز بيع جديد</h2>
+            <button onclick="closeModal('add-center-modal')" class="btn-icon"><i data-lucide="x"></i></button>
+        </div>
+        <form method="post" class="modal-body">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_center">
+            <div class="form-grid">
+                {% for field in center_form %}
+                    <div class="form-group">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="modal-footer mt-8">
+                <button type="button" onclick="closeModal('add-center-modal')" class="btn btn-glass">إلغاء</button>
+                <button type="submit" class="btn btn-primary btn-glow">تأكيد الإنشـاء</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    .partner-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .partner-item {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 1.25rem; background: rgba(255,255,255,0.02);
+        border: 1px solid var(--border-light); border-radius: 18px;
+        text-decoration: none; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .partner-item:hover {
+        background: rgba(255,255,255,0.05); border-color: var(--brand-gold);
+        transform: translateX(-5px); box-shadow: var(--shadow-glow);
+    }
+    .partner-info strong { display: block; color: var(--text-primary); font-size: 1.1rem; margin-bottom: 0.25rem; }
+    .partner-info span { color: var(--text-muted); font-size: 0.85rem; }
+    .partner-meta { display: flex; align-items: center; gap: 1rem; color: var(--brand-gold); }
+
+    /* Modal CSS */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(10px);
+        display: flex; align-items: center; justify-content: center;
+        z-index: 1000; padding: 1.5rem;
+    }
+    .modal-card {
+        background: var(--bg-surface); border: 1px solid var(--border-strong);
+        border-radius: 28px; width: 100%; max-width: 650px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+    }
+    .modal-header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; }
+    .modal-body { padding: 2rem; max-height: 75vh; overflow-y: auto; }
+    .modal-footer { padding: 1.5rem 2rem; background: rgba(0,0,0,0.1); border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 1rem; }
+
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+
+    .modal-body input, .modal-body select, .modal-body textarea {
+        width: 100%; padding: 0.85rem 1.25rem; background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border-strong); border-radius: var(--radius-md);
+        color: var(--text-primary); font-family: inherit; font-size: 1rem; margin-top: 0.5rem;
+    }
+    .modal-body input:focus { border-color: var(--brand-gold); outline: none; box-shadow: 0 0 0 4px var(--brand-gold-glow); }
+    .form-label { font-weight: 700; color: var(--text-secondary); font-size: 0.9rem; }
+
+    .animate-scale-up { animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes scaleUp { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+</style>
+
+<script>
+    function openModal(id) {
+        document.getElementById(id).style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+</script>
+{% endblock %}

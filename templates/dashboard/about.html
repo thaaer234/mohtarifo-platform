@@ -1,0 +1,121 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}من نحن | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="about-wrapper reveal-up">
+    <!-- Hero Section -->
+    <section class="about-hero text-center mb-20">
+        <h1 class="hero-title">نحن <span class="gold">محترفو التعليم</span></h1>
+        <p class="hero-subtitle max-w-700 mx-auto">منصة محترفو التعليم هي الوجهة الأولى للطلاب الطامحين للتميز والنجاح الأكاديمي عبر أحدث طرق التعلم الرقمي.</p>
+        <div class="slogan-badge mt-10 animate-fade-up">
+            <span class="slogan-text">"نحن قوم نحترف التعليم واهتمامنا بالتفاصيل يصنع الفرق"</span>
+        </div>
+    </section>
+
+    <!-- Mission & Vision -->
+    <div class="grid-2 gap-12 mb-20">
+        <div class="premium-card p-10">
+            <div class="icon-box-gold mb-6"><i data-lucide="target"></i></div>
+            <h3 class="mb-4">رؤيتنا</h3>
+            <p class="text-muted line-relaxed">نسعى لأن نكون المنصة التعليمية الرائدة في المنطقة، عبر توفير محتوى تعليمي عالي الجودة يجمع بين البساطة والعمق العلمي.</p>
+        </div>
+        <div class="premium-card p-10">
+            <div class="icon-box-gold mb-6"><i data-lucide="rocket"></i></div>
+            <h3 class="mb-4">رسالتنا</h3>
+            <p class="text-muted line-relaxed">تمكين الطلاب من أدوات النجاح عبر تقديم تجربة تعلم تفاعلية، مرنة، وشاملة تغطي كافة جوانب المنهاج الدراسي بأسلوب احترافي.</p>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <section class="about-stats mb-20">
+        <div class="grid-4 gap-8">
+            <div class="stat-item">
+                <div class="stat-num">10K+</div>
+                <div class="stat-label">طالب نشط</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num">500+</div>
+                <div class="stat-label">درس فيديو</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num">50+</div>
+                <div class="stat-label">مدرس خبير</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num">100%</div>
+                <div class="stat-label">التزام بالتميز</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Us -->
+    <section class="why-us text-center">
+        <h2 class="section-title mb-12">لماذا تختار محترفو التعليم؟</h2>
+        <div class="grid-3 gap-8">
+            <div class="feature-simple">
+                <i data-lucide="shield-check"></i>
+                <h4>محتوى معتمد</h4>
+                <p>كافة دروسنا مراجعة من قبل خبراء تربويين لضمان دقة المعلومات.</p>
+            </div>
+            <div class="feature-simple">
+                <i data-lucide="zap"></i>
+                <h4>تعلم ذكي</h4>
+                <p>نستخدم تقنيات حديثة لتسريع عملية التعلم وزيادة الاستيعاب.</p>
+            </div>
+            <div class="feature-simple">
+                <i data-lucide="smartphone"></i>
+                <h4>في كل مكان</h4>
+                <p>تعلم من هاتفك أو حاسوبك في أي وقت ومن أي مكان.</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+    .about-wrapper { padding: 4rem 0; }
+    .hero-title { font-size: 4rem; font-weight: 900; color: var(--text-primary); margin-bottom: 1.5rem; }
+    .hero-subtitle { font-size: 1.25rem; color: var(--text-muted); line-height: 1.8; }
+    
+    .slogan-badge {
+        display: inline-block;
+        padding: 1rem 2rem;
+        background: var(--brand-gold-glow);
+        border: 1px solid var(--brand-gold);
+        border-radius: 100px;
+        position: relative;
+    }
+    .slogan-text {
+        font-family: 'Cairo', sans-serif;
+        font-weight: 800;
+        font-size: 1.4rem;
+        color: var(--brand-gold);
+    }
+
+    .max-w-700 { max-width: 700px; }
+    
+    .icon-box-gold { 
+        width: 60px; height: 60px; background: var(--brand-gold-glow); 
+        color: var(--brand-gold); border-radius: 16px; 
+        display: flex; align-items: center; justify-content: center;
+    }
+    .icon-box-gold i { width: 30px; height: 30px; }
+    
+    .line-relaxed { line-height: 1.8; font-size: 1.1rem; }
+
+    .about-stats { background: var(--bg-surface); border-radius: 40px; padding: 4rem; border: 1px solid var(--border-light); }
+    .stat-item { text-align: center; }
+    .stat-num { font-size: 3rem; font-weight: 900; color: var(--brand-gold); margin-bottom: 0.5rem; }
+    .stat-label { font-size: 1.1rem; color: var(--text-muted); font-weight: 700; }
+
+    .feature-simple i { width: 48px; height: 48px; color: var(--brand-gold); margin-bottom: 1.5rem; opacity: 0.8; }
+    .feature-simple h4 { font-size: 1.4rem; font-weight: 800; margin-bottom: 1rem; color: var(--text-primary); }
+    .feature-simple p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.6; }
+
+    @media (max-width: 768px) {
+        .hero-title { font-size: 2.5rem; }
+        .about-stats { padding: 2rem; }
+    }
+</style>
+{% endblock %}

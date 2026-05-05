@@ -1,0 +1,160 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}حسابي | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="reveal-up" style="max-width: 1000px; margin: 0 auto;">
+
+    <!-- Profile Header -->
+    <div class="premium-card mb-12" style="padding: 3rem;">
+        <div class="flex-between w-full flex-wrap gap-8">
+            <div class="flex-center gap-8 flex-wrap" style="justify-content: flex-start;">
+                <div style="position: relative;">
+                    <div class="flex-center" style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--brand-gold), var(--brand-gold-light)); color: #000; font-size: 2.5rem; font-weight: 900; box-shadow: 0 0 30px rgba(var(--brand-gold-rgb), 0.3);">
+                        {% if student_profile.avatar %}
+                            <img src="{{ student_profile.avatar.url }}" alt="Avatar" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                        {% else %}
+                            <span>{{ request.user.first_name|first|default:"م" }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex-center" style="position: absolute; bottom: -4px; right: -4px; width: 30px; height: 30px; border-radius: 50%; background: #3b82f6; color: #fff; font-size: 0.75rem; font-weight: 900; border: 3px solid var(--bg-surface);">
+                        {{ level }}
+                    </div>
+                </div>
+                <div>
+                    <h2 style="font-size: 2.2rem; margin-bottom: 0.5rem;">{{ request.user.get_full_name|default:request.user.username }}</h2>
+                    <p class="text-muted mb-4">طالب في محترفو التعليم</p>
+                    <div class="flex-center gap-2 flex-wrap" style="justify-content: flex-start;">
+                        {% if student_profile.track %}
+                        <span class="badge" style="background: var(--bg-base);"><i data-lucide="git-branch" style="width: 12px;"></i> {{ student_profile.track }}</span>
+                        {% endif %}
+                        {% if student_profile.governorate %}
+                        <span class="badge" style="background: var(--bg-base);"><i data-lucide="map-pin" style="width: 12px;"></i> {{ student_profile.governorate }}</span>
+                        {% endif %}
+                        {% if student_profile.phone %}
+                        <span class="badge" style="background: var(--bg-base);"><i data-lucide="phone" style="width: 12px;"></i> {{ student_profile.phone }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="flex-center gap-4">
+                <a href="{% url 'dashboard:profile_edit' %}" class="btn btn-secondary">
+                    <i data-lucide="edit-3"></i> تعديل البيانات
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid mb-12">
+        <div class="premium-card stat-card">
+            <div class="stat-icon"><i data-lucide="zap"></i></div>
+            <div class="stat-info">
+                <span class="value">{{ total_xp }}</span>
+                <span class="label">نقاط الخبرة</span>
+            </div>
+        </div>
+        <div class="premium-card stat-card">
+            <div class="stat-icon" style="color: #8b5cf6; background: rgba(139, 92, 246, 0.1);"><i data-lucide="trophy"></i></div>
+            <div class="stat-info">
+                <span class="value">{{ level }}</span>
+                <span class="label">المستوى</span>
+            </div>
+        </div>
+        <div class="premium-card stat-card">
+            <div class="stat-icon" style="color: #f97316; background: rgba(249, 115, 22, 0.1);"><i data-lucide="flame"></i></div>
+            <div class="stat-info">
+                <span class="value">{{ streak }}</span>
+                <span class="label">أيام الالتزام</span>
+            </div>
+        </div>
+        <div class="premium-card stat-card">
+            <div class="stat-icon" style="color: #10b981; background: rgba(16, 185, 129, 0.1);"><i data-lucide="check-circle"></i></div>
+            <div class="stat-info">
+                <span class="value">{{ completed_lessons }}</span>
+                <span class="label">درس مكتمل</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Courses Section -->
+    <section class="mb-12">
+        <h2 class="mb-6" style="font-size: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+            <i data-lucide="book-open" class="gold"></i> مواد مفعلة
+        </h2>
+        {% if grants %}
+        <div class="flex-column gap-3">
+            {% for grant in grants %}
+            <div class="premium-card" style="padding: 1.25rem 2rem;">
+                <div class="flex-between w-full">
+                    <div class="flex-center gap-6">
+                        <div class="flex-center" style="width: 40px; height: 40px; border-radius: 12px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold);">
+                            {% if grant.course %}
+                                <i data-lucide="graduation-cap" style="width: 18px;"></i>
+                            {% else %}
+                                <i data-lucide="play-circle" style="width: 18px;"></i>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <strong class="block" style="font-size: 1rem; color: var(--text-primary);">
+                                {% if grant.course %}{{ grant.course.title }}{% elif grant.lesson %}{{ grant.lesson.title }}{% endif %}
+                            </strong>
+                            <span class="text-muted" style="font-size: 0.75rem;">{{ grant.get_source_display }} · {{ grant.created_at|date:"Y/m/d" }}</span>
+                        </div>
+                    </div>
+                    <div>
+                        {% if grant.course %}
+                        <a href="{% url 'dashboard:student_course_detail' grant.course.id %}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.8rem;">دخول</a>
+                        {% elif grant.lesson %}
+                        <a href="{% url 'dashboard:student_lesson_detail' grant.lesson.id %}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.8rem;">مشاهدة</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="premium-card text-center py-12" style="border-style: dashed;">
+            <i data-lucide="inbox" class="text-muted mb-4" style="width: 32px; opacity: 0.15;"></i>
+            <p class="text-muted">لا توجد مواد مفعلة بعد</p>
+        </div>
+        {% endif %}
+    </section>
+
+    <!-- Account Info -->
+    <section>
+        <h2 class="mb-6" style="font-size: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+            <i data-lucide="settings" class="gold"></i> معلومات الحساب
+        </h2>
+        <div class="premium-card" style="padding: 0;">
+            <div class="flex-column">
+                <div class="flex-between" style="padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-light);">
+                    <span class="text-muted font-bold flex-center gap-3"><i data-lucide="user" class="gold" style="width: 16px;"></i> الاسم</span>
+                    <span class="font-bold">{{ request.user.get_full_name|default:request.user.username }}</span>
+                </div>
+                <div class="flex-between" style="padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-light);">
+                    <span class="text-muted font-bold flex-center gap-3"><i data-lucide="phone" class="gold" style="width: 16px;"></i> رقم الهاتف</span>
+                    <span class="font-bold">{{ student_profile.phone|default:request.user.username }}</span>
+                </div>
+                {% if student_profile.track %}
+                <div class="flex-between" style="padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-light);">
+                    <span class="text-muted font-bold flex-center gap-3"><i data-lucide="git-branch" class="gold" style="width: 16px;"></i> الفرع</span>
+                    <span class="font-bold">{{ student_profile.track }}</span>
+                </div>
+                {% endif %}
+                {% if student_profile.governorate %}
+                <div class="flex-between" style="padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-light);">
+                    <span class="text-muted font-bold flex-center gap-3"><i data-lucide="map-pin" class="gold" style="width: 16px;"></i> المحافظة</span>
+                    <span class="font-bold">{{ student_profile.governorate }}</span>
+                </div>
+                {% endif %}
+                <div class="flex-between" style="padding: 1.5rem 2rem;">
+                    <span class="text-muted font-bold flex-center gap-3"><i data-lucide="calendar" class="gold" style="width: 16px;"></i> تاريخ التسجيل</span>
+                    <span class="font-bold">{{ request.user.date_joined|date:"Y/m/d" }}</span>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

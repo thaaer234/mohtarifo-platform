@@ -1,0 +1,242 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}إدارة الدروس | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="reveal-up">
+    <header class="flex-between mb-10 flex-wrap gap-6">
+        <div>
+            <div class="badge badge-gold mb-3">الهيكلية التعليمية</div>
+            <h1 style="font-size: 2.2rem; margin-bottom: 0;">إدارة الدروس التعليمية</h1>
+        </div>
+        <div class="flex-center gap-4">
+            <button onclick="openCreateModal()" class="btn btn-primary btn-glow">
+                <i data-lucide="plus" style="width: 18px;"></i> إضافة درس جديد
+            </button>
+        </div>
+    </header>
+
+    <!-- Create Modal -->
+    <div id="create-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(12px); z-index: 10000; align-items: center; justify-content: center; padding: 2rem;">
+        <div class="premium-card reveal-up" style="max-width: 600px; width: 100%; padding: 0; overflow: hidden; border-radius: 32px;">
+            <div class="flex-between" style="padding: 1.5rem 2.5rem; background: var(--bg-surface-elevated); border-bottom: 1px solid var(--border-light);">
+                <h2 style="font-size: 1.5rem; margin-bottom: 0; display: flex; align-items: center; gap: 0.75rem;"><i data-lucide="plus-circle" class="gold"></i> إضافة درس جديد</h2>
+                <button onclick="closeModals()" class="flex-center" style="background: none; border: none; color: var(--text-muted); cursor: pointer;"><i data-lucide="x"></i></button>
+            </div>
+            <form method="post" style="padding: 2.5rem;" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="flex-column gap-6">
+                    <div class="premium-field">
+                        <label>الوحدة</label>
+                        <div class="input-glow-wrapper">
+                            <select name="unit" required style="width: 100%; background: none; border: none; color: inherit; padding: 1rem 1.25rem;">
+                                <option value="">اختر الوحدة</option>
+                                {% for u in all_units %}
+                                    <option value="{{ u.id }}">{{ u.course.title }} - {{ u.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="premium-field">
+                        <label>عنوان الدرس</label>
+                        <div class="input-glow-wrapper">
+                            <input type="text" name="title" placeholder="مثلاً: حل مسائل الوحدة الأولى" required>
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="premium-field">
+                            <label>نوع الدرس</label>
+                            <div class="input-glow-wrapper">
+                                <select name="lesson_type" style="width: 100%; background: none; border: none; color: inherit; padding: 1rem 1.25rem;">
+                                    <option value="video">فيديو</option>
+                                    <option value="pdf">ملف PDF</option>
+                                    <option value="quiz">اختبار</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="premium-field">
+                            <label>الترتيب</label>
+                            <div class="input-glow-wrapper">
+                                <input type="number" name="sort_order" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="premium-field">
+                        <label>رابط الفيديو (Bunny.net)</label>
+                        <div class="input-glow-wrapper">
+                            <input type="url" name="video_url" placeholder="https://iframe.mediadelivery.net/embed/...">
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-center gap-4 mt-10" style="justify-content: flex-end;">
+                    <button type="button" onclick="closeModals()" class="btn btn-secondary">إلغاء</button>
+                    <button type="submit" class="btn btn-primary btn-glow">حفظ الدرس</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Modal (Similar structure) -->
+    <div id="edit-modal" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(12px); z-index: 10000; align-items: center; justify-content: center; padding: 2rem;">
+        <div class="premium-card" style="max-width: 600px; width: 100%; padding: 0; overflow: hidden; border-radius: 32px;">
+            <div class="flex-between" style="padding: 1.5rem 2.5rem; background: var(--bg-surface-elevated); border-bottom: 1px solid var(--border-light);">
+                <h2 style="font-size: 1.5rem; margin-bottom: 0; display: flex; align-items: center; gap: 0.75rem;"><i data-lucide="edit-3" class="gold"></i> تعديل الدرس</h2>
+                <button onclick="closeModals()" class="flex-center" style="background: none; border: none; color: var(--text-muted); cursor: pointer;"><i data-lucide="x"></i></button>
+            </div>
+            <form id="edit-form" method="post" style="padding: 2.5rem;" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="flex-column gap-6">
+                    <div class="premium-field">
+                        <label>عنوان الدرس</label>
+                        <div class="input-glow-wrapper">
+                            <input type="text" name="title" id="edit-title" required>
+                        </div>
+                    </div>
+                    <div class="premium-field">
+                        <label>رابط الفيديو</label>
+                        <div class="input-glow-wrapper">
+                            <input type="url" name="video_url" id="edit-video-url">
+                        </div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="premium-field">
+                            <label>الترتيب</label>
+                            <div class="input-glow-wrapper">
+                                <input type="number" name="sort_order" id="edit-sort-order">
+                            </div>
+                        </div>
+                        <div class="flex-center gap-3" style="justify-content: flex-start; margin-top: 2rem;">
+                            <input type="checkbox" name="is_free_preview" id="edit-free" style="width: 20px; height: 20px; accent-color: var(--brand-gold);">
+                            <label for="edit-free" class="text-muted font-bold" style="margin: 0; font-size: 0.9rem; cursor: pointer;">معاينة مجانية</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-center gap-4 mt-10" style="justify-content: flex-end;">
+                    <button type="button" onclick="closeModals()" class="btn btn-secondary">إلغاء</button>
+                    <button type="submit" class="btn btn-primary btn-glow">تحديث الدرس</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="premium-card mb-8" style="padding: 1.5rem 2.5rem;">
+        <form method="get" class="grid-2 gap-8">
+            <div class="premium-field mb-0">
+                <label>تصفية حسب الدورة</label>
+                <div class="input-glow-wrapper">
+                    <select name="course_id" onchange="this.form.submit()" style="width: 100%; background: none; border: none; color: inherit; padding: 1rem 1.25rem;">
+                        <option value="">جميع الدورات</option>
+                        {% for course in courses %}
+                            <option value="{{ course.id }}" {% if selected_course_id == course.id|stringformat:"s" %}selected{% endif %}>{{ course.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="premium-field mb-0">
+                <label>تصفية حسب الوحدة</label>
+                <div class="input-glow-wrapper">
+                    <select name="unit_id" onchange="this.form.submit()" style="width: 100%; background: none; border: none; color: inherit; padding: 1rem 1.25rem;">
+                        <option value="">جميع الوحدات</option>
+                        {% for unit in units %}
+                            <option value="{{ unit.id }}" {% if selected_unit_id == unit.id|stringformat:"s" %}selected{% endif %}>{{ unit.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="premium-card" style="padding: 0; overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse; text-align: right;">
+            <thead>
+                <tr style="background: var(--bg-surface-elevated); color: var(--text-muted); font-size: 0.85rem;">
+                    <th style="padding: 1.25rem 2rem;">ترتيب</th>
+                    <th style="padding: 1.25rem 2rem;">عنوان الدرس</th>
+                    <th style="padding: 1.25rem 2rem;">الوحدة التابعة</th>
+                    <th style="padding: 1.25rem 2rem;">نوع المحتوى</th>
+                    <th style="padding: 1.25rem 2rem;">مجاني</th>
+                    <th style="padding: 1.25rem 2rem;">إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lesson in lessons %}
+                <tr style="border-bottom: 1px solid var(--border-light); transition: 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='none'">
+                    <td style="padding: 1.25rem 2rem;"><span class="badge" style="background: rgba(var(--brand-gold-rgb), 0.1); border-radius: 6px;">{{ lesson.sort_order }}</span></td>
+                    <td style="padding: 1.25rem 2rem;">
+                        <div class="flex-column" style="gap: 0.25rem;">
+                            <strong style="color: var(--text-primary);">{{ lesson.title }}</strong>
+                            <span class="gold" style="font-size: 0.7rem; opacity: 0.7;">{{ lesson.unit.course.title }}</span>
+                        </div>
+                    </td>
+                    <td style="padding: 1.25rem 2rem;"><span class="text-muted" style="font-size: 0.85rem;">{{ lesson.unit.title }}</span></td>
+                    <td style="padding: 1.25rem 2rem;">
+                        <span class="badge flex-center gap-2" style="background: var(--bg-base); font-size: 0.75rem;">
+                            {% if lesson.lesson_type == 'video' %}<i data-lucide="play-circle" style="width: 14px;"></i>{% elif lesson.lesson_type == 'pdf' %}<i data-lucide="file-text" style="width: 14px;"></i>{% else %}<i data-lucide="layers" style="width: 14px;"></i>{% endif %}
+                            {{ lesson.get_lesson_type_display }}
+                        </span>
+                    </td>
+                    <td style="padding: 1.25rem 2rem;">
+                        {% if lesson.is_free_preview %}
+                            <span class="badge badge-success" style="font-size: 0.7rem;">متاح</span>
+                        {% else %}
+                            <span class="badge" style="background: rgba(255,255,255,0.05); color: var(--text-muted); font-size: 0.7rem;">مقفل</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1.25rem 2rem;">
+                        <div class="flex-center gap-3" style="justify-content: flex-start;">
+                            <button onclick="openEditModal('{{ lesson.id }}', '{{ lesson.title|escapejs }}', '{{ lesson.video_url }}', '{{ lesson.sort_order }}', {{ lesson.is_free_preview|yesno:'true,false' }})" class="flex-center" style="background: none; border: none; color: var(--brand-gold); cursor: pointer; transition: 0.3s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                                <i data-lucide="edit-3" style="width: 20px;"></i>
+                            </button>
+                            <a href="{% url 'dashboard:student_lesson_detail' lesson.id %}" class="flex-center" style="color: var(--brand-gold); transition: 0.3s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                                <i data-lucide="external-link" style="width: 20px;"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center p-12">
+                        <i data-lucide="folder-x" class="text-muted mb-4" style="width: 48px; height: 48px; opacity: 0.2;"></i>
+                        <p class="text-muted">لا توجد دروس مطابقة للبحث.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function openCreateModal() {
+        document.getElementById('create-modal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function openEditModal(id, title, videoUrl, sortOrder, isFree) {
+        const modal = document.getElementById('edit-modal');
+        const form = document.getElementById('edit-form');
+        form.action = `/admin-dashboard/content/lessons/${id}/edit/`;
+        
+        document.getElementById('edit-title').value = title;
+        document.getElementById('edit-video-url').value = videoUrl;
+        document.getElementById('edit-sort-order').value = sortOrder;
+        document.getElementById('edit-free').checked = isFree;
+        
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function closeModals() {
+        document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+        document.body.style.overflow = 'auto';
+    }
+
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal-overlay')) {
+            closeModals();
+        }
+    };
+</script>
+{% endblock %}

@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}تسجيل الدخول{% endblock %}
+{% block content %}
+<div class="flex-center" style="min-height: 60vh;">
+    <div class="premium-card reveal-up" style="max-width: 450px; padding: 3rem; width: 100%;">
+        <div class="text-center mb-8">
+            <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">مرحباً بك مجدداً</h2>
+            <p class="text-muted">سجل دخولك لمتابعة رحلتك التعليمية</p>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="premium-field">
+                <label>اسم المستخدم أو الهاتف</label>
+                <div class="input-glow-wrapper">
+                    <i data-lucide="user" class="field-icon"></i>
+                    <input type="text" name="username" placeholder="اسم المستخدم..." required>
+                </div>
+            </div>
+            
+            <div class="premium-field">
+                <label>كلمة المرور</label>
+                <div class="input-glow-wrapper password-field">
+                    <i data-lucide="lock" class="field-icon"></i>
+                    <input type="password" name="password" id="pwd" placeholder="كلمة المرور..." required>
+                    <button type="button" class="eye-btn" id="toggle-pwd">
+                        <i data-lucide="eye" style="width: 18px;"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="flex-between mb-8">
+                <div class="flex-center gap-2">
+                    <input type="checkbox" id="remember" style="width: 16px; height: 16px; accent-color: var(--brand-gold);">
+                    <label for="remember" class="text-muted" style="margin: 0; font-size: 0.85rem; cursor: pointer;">تذكرني</label>
+                </div>
+                <a href="#" class="gold font-bold" style="font-size: 0.85rem;">نسيت كلمة المرور؟</a>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-glow w-full">دخول للمنصة</button>
+        </form>
+        
+        <div class="text-center mt-8 pt-8" style="border-top: 1px solid var(--border-light);">
+            <p class="text-muted" style="font-size: 0.9rem;">ليس لديك حساب بعد؟ <a href="{% url 'dashboard:register' %}" class="gold font-bold">إنشاء حساب جديد</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('toggle-pwd').onclick = () => {
+        const pwd = document.getElementById('pwd');
+        const icon = document.querySelector('#toggle-pwd i');
+        if (pwd.type === 'password') {
+            pwd.type = 'text';
+            icon.setAttribute('data-lucide', 'eye-off');
+        } else {
+            pwd.type = 'password';
+            icon.setAttribute('data-lucide', 'eye');
+        }
+        lucide.createIcons();
+    };
+</script>
+{% endblock %}

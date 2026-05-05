@@ -1,0 +1,78 @@
+{% extends "dashboard/base.html" %}
+{% load static inline_static %}
+
+{% block title %}إنشاء حساب | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="auth-page-container flex-center">
+    <!-- Registration Card -->
+    <div class="auth-card-premium reveal-up" style="max-width: 800px;">
+        <div class="auth-card-glow"></div>
+        <div class="auth-header text-center mb-10">
+            <div class="auth-logo-box mb-6">
+                <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo" class="auth-logo">
+            </div>
+            <h1 class="auth-main-title">انضم للمحترفين</h1>
+            <p class="auth-subtitle">أنشئ حسابك وابدأ رحلة التفوق والنجاح</p>
+        </div>
+
+        <form method="post" class="auth-form-body">
+            {% csrf_token %}
+            
+            <div class="grid-2 gap-x-8 gap-y-2">
+                {% for field in form %}
+                    {% if not field.is_hidden %}
+                        <div class="premium-field mb-6 {% if forloop.last and forloop.counter|divisibleby:1 %}grid-full{% endif %}">
+                            <label>{{ field.label }}</label>
+                            <div class="input-glow-wrapper {% if 'password' in field.name %}password-field{% endif %}">
+                                <span class="field-icon">
+                                    {% if 'username' in field.name %}<i data-lucide="user"></i>
+                                    {% elif 'email' in field.name %}<i data-lucide="mail"></i>
+                                    {% elif 'phone' in field.name %}<i data-lucide="phone"></i>
+                                    {% elif 'password' in field.name %}<i data-lucide="lock"></i>
+                                    {% else %}<i data-lucide="edit-3"></i>{% endif %}
+                                </span>
+                                {{ field }}
+                                {% if 'password' in field.name %}
+                                    <button type="button" class="eye-btn" onclick="togglePass('{{ field.id_for_label }}', this)">
+                                        <i data-lucide="eye"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                            {% if field.errors %}
+                                <div class="field-error-msg mt-2"><i data-lucide="alert-circle"></i> {{ field.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        {{ field }}
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <div class="terms-check mb-8">
+                <p>بإنشائك للحساب، أنت توافق على <a href="#" class="gold-link">شروط الاستخدام</a> و <a href="#" class="gold-link">سياسة الخصوصية</a>.</p>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-massive btn-glow w-full">
+                <span>تأكيد الحساب والانطلاق</span>
+                <i data-lucide="rocket"></i>
+            </button>
+        </form>
+
+        <div class="auth-footer mt-10 text-center">
+            <p>لديك حساب بالفعل؟ <a href="{% url 'dashboard:login' %}" class="gold-link">سجل دخولك الآن</a></p>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function togglePass(id, btn) {
+        const input = document.getElementById(id);
+        const isPass = input.type === 'password';
+        input.type = isPass ? 'text' : 'password';
+        btn.innerHTML = isPass ? '<i data-lucide="eye-off"></i>' : '<i data-lucide="eye"></i>';
+        lucide.createIcons();
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}نتائج البحث عن: {{ query }} | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="search-wrapper reveal-up">
+    <header class="section-header mb-10">
+        <h2 class="section-title">
+            <i data-lucide="search"></i> 
+            نتائج البحث عن: <span class="gold">"{{ query }}"</span>
+        </h2>
+        <p class="text-muted">عثرنا على {{ courses.count }} نتائج مطابقة لبحثك.</p>
+    </header>
+
+    {% if courses %}
+    <div class="grid-3 gap-8">
+        {% for course in courses %}
+        <div class="course-card-premium">
+            <div class="card-image">
+                {% if course.cover %}
+                    <img src="{{ course.cover.url }}" alt="{{ course.title }}">
+                {% else %}
+                    <div class="image-placeholder"><i data-lucide="image"></i></div>
+                {% endif %}
+                <div class="card-overlay">
+                    <span class="badge">{{ course.get_kind_display }}</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <h3 class="card-title">{{ course.title }}</h3>
+                <p class="card-text">{{ course.description|truncatewords:12 }}</p>
+                <div class="card-footer">
+                    <div class="instructor">
+                        <i data-lucide="user"></i>
+                        <span>{{ course.instructor.get_full_name|default:course.instructor.username }}</span>
+                    </div>
+                    <a href="{% url 'dashboard:public_course_detail' course.id %}" class="btn btn-primary btn-sm">عرض التفاصيل</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state-premium text-center p-20">
+        <i data-lucide="search-x" style="width: 80px; height: 80px; opacity: 0.2; margin-bottom: 2rem;"></i>
+        <h3>عذراً، لم نجد نتائج مطابقة!</h3>
+        <p>حاول البحث بكلمات أخرى أو تصفح الأقسام التعليمية.</p>
+        <a href="{% url 'dashboard:departments_list' %}" class="btn btn-secondary mt-6">تصفح الأقسام</a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .search-wrapper { padding: 2rem 0; }
+    .course-card-premium { 
+        background: var(--bg-surface); border: 1px solid var(--border-light); 
+        border-radius: 25px; overflow: hidden; transition: 0.3s;
+    }
+    .course-card-premium:hover { transform: translateY(-10px); border-color: var(--brand-gold); }
+    .card-image { height: 180px; position: relative; }
+    .card-image img { width: 100%; height: 100%; object-fit: cover; }
+    .card-overlay { position: absolute; top: 1rem; right: 1rem; }
+    .card-body { padding: 1.5rem; }
+    .card-title { font-size: 1.25rem; font-weight: 800; margin-bottom: 0.75rem; color: var(--text-primary); }
+    .card-text { font-size: 0.9rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.5rem; }
+    .card-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--border-light); }
+    .instructor { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary); }
+    .instructor i { width: 16px; color: var(--brand-gold); }
+</style>
+{% endblock %}

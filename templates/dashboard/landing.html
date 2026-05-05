@@ -1,0 +1,318 @@
+{% extends "dashboard/base.html" %}
+{% load static inline_static %}
+
+{% block title %}محترفو التعليم | المنصة التعليمية الأقوى في سوريا{% endblock %}
+
+{% block extra_css %}
+{% endblock %}
+
+{% block content %}
+<div class="landing-page-wrapper">
+    <!-- Hero Section -->
+    <section class="hero-premium">
+        <div class="container hero-grid-wrapper">
+            <div class="hero-content reveal-up">
+                <div class="hero-badge mb-6">
+                    <span class="badge-dot"></span>
+                    <span class="badge-text">المنصة التعليمية الأقوى في سوريا</span>
+                </div>
+                <h1 class="hero-main-title">
+                    اصنع <span class="text-gradient">مستقبلك</span> <br>
+                    بلمسة احترافية
+                </h1>
+                <p class="hero-lead">
+                    نحن لا نقدم مجرد دروس، بل نبني معك قصة نجاح متكاملة من خلال نخبة من الأساتذة المتميزين وأحدث الوسائل التعليمية الذكية.
+                </p>
+                <div class="hero-actions mt-10">
+                    <a href="{% url 'dashboard:register' %}" class="btn btn-primary btn-glow btn-massive">
+                        <span>ابدأ رحلة التفوق</span>
+                        <i data-lucide="sparkles"></i>
+                    </a>
+                    <a href="#courses" class="btn btn-secondary btn-massive">
+                        <span>استكشف الدورات</span>
+                    </a>
+                </div>
+                <div class="hero-stats-row mt-12">
+                    <div class="hero-stat-item">
+                        <span class="stat-num">+50K</span>
+                        <span class="stat-desc">طالب وطالبة</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="hero-stat-item">
+                        <span class="stat-num">98%</span>
+                        <span class="stat-desc">نسبة النجاح</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-visual reveal-up" style="animation-delay: 0.2s;">
+                <div class="visual-inner">
+                    <div class="glass-morph-circle"></div>
+                    <div class="main-visual-card">
+                        <img src="{% static_data_uri 'dashboard/images/hero_student.png' %}" alt="Mohtarifo Education">
+                        <div class="card-glow-overlay"></div>
+                    </div>
+                    <!-- Floating Dynamic Elements -->
+                    <div class="floating-item item-1 animate-float">
+                        <div class="item-icon"><i data-lucide="video"></i></div>
+                        <div class="item-text">
+                            <strong>+1200</strong>
+                            <span>ساعة تدريبية</span>
+                        </div>
+                    </div>
+                    <div class="floating-item item-2 animate-float-alt">
+                        <div class="item-icon"><i data-lucide="users"></i></div>
+                        <div class="item-text">
+                            <strong>نخبة</strong>
+                            <span>الأساتذة</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Bento Grid -->
+    <section class="features-bento py-20">
+        <div class="container">
+            <div class="section-header text-center mb-16 reveal-up">
+                <h2 class="section-title">لماذا يختارنا المحترفون؟</h2>
+                <p class="section-subtitle">نجمع لك كل ما تحتاجه في مكان واحد لتوفير وقتك وجهدك</p>
+            </div>
+            
+            <div class="bento-grid">
+                <div class="bento-item tall premium-card reveal-up">
+                    <div class="bento-content">
+                        <i data-lucide="video" class="bento-icon gold"></i>
+                        <h3>دروس بجودة 4K</h3>
+                        <p>شرح مفصل بأعلى جودة مع إمكانية التحميل والمشاهدة بدون إنترنت.</p>
+                    </div>
+                    <div class="bento-visual">
+                        <div class="video-mockup"></div>
+                    </div>
+                </div>
+                <div class="bento-item wide premium-card reveal-up">
+                    <div class="bento-content">
+                        <i data-lucide="clipboard-check" class="bento-icon success"></i>
+                        <h3>بنك أسئلة ضخم</h3>
+                        <p>أكثر من 10,000 سؤال مؤتمت تحاكي نماذج الوزارة الرسمية.</p>
+                    </div>
+                </div>
+                <div class="bento-item premium-card reveal-up">
+                    <div class="bento-content">
+                        <i data-lucide="users" class="bento-icon blue"></i>
+                        <h3>نخبة الأساتذة</h3>
+                        <p>مدرسون بخبرة تزيد عن 20 عاماً في المناهج السورية.</p>
+                    </div>
+                </div>
+                <div class="bento-item premium-card reveal-up">
+                    <div class="bento-content">
+                        <i data-lucide="award" class="bento-icon purple"></i>
+                        <h3>شهادات إتمام</h3>
+                        <p>احصل على شهادة عند إكمال كل دورة تدريبية.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Courses Catalog -->
+    <section id="courses" class="catalog-section py-20 bg-base">
+        <div class="container">
+            {% if filtered_instructor_name %}
+            <div class="filter-indicator mb-10 reveal-up">
+                <h2 class="section-title">دورات الأستاذ <span class="gold">{{ filtered_instructor_name }}</span></h2>
+                <a href="{% url 'dashboard:landing' %}" class="btn-text mt-2"><i data-lucide="x-circle"></i> عرض كافة الدورات</a>
+            </div>
+            {% else %}
+            <div class="section-header text-center mb-16 reveal-up">
+                <h2 class="section-title">استكشف <span class="gold">المحتوى التعليمي</span></h2>
+                <p class="section-subtitle">اختر فرعك الدراسي وتصفح المكثفات والدورات المتاحة</p>
+            </div>
+            {% endif %}
+            <div class="catalog-filter mb-12">
+                    {% for tab in catalog_tabs %}
+                        <a href="?kind={{ tab.kind }}&track={{ tab.track }}#courses" 
+                           class="filter-btn {% if selected_kind == tab.kind and selected_track == tab.track %}active{% endif %}">
+                            {{ tab.label }}
+                        </a>
+                    {% endfor %}
+                </div>
+
+            <div class="grid-3 gap-8">
+                {% for course in courses %}
+                    <article class="course-card-premium reveal-up">
+                        <div class="course-thumb">
+                            <img src="{% if course.image %}{{ course.image.url }}{% else %}https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=600{% endif %}" alt="{{ course.title }}">
+                            <div class="thumb-badges">
+                                <span class="badge-type">{{ course.get_kind_display }}</span>
+                            </div>
+                        </div>
+                        <div class="course-body">
+                            <span class="course-subject">{{ course.subject.name }}</span>
+                            <h3 class="course-title">{{ course.title }}</h3>
+                            <div class="course-footer">
+                                <div class="instructor">
+                                    <i data-lucide="user"></i>
+                                    <span>{{ course.instructor.get_full_name|default:course.instructor.username }}</span>
+                                </div>
+                                <a href="{% url 'dashboard:public_course_detail' course.id %}" class="btn-arrow">
+                                    <span>التفاصيل</span>
+                                    <i data-lucide="chevron-left"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </article>
+                {% empty %}
+                    <div class="empty-dashboard-state" style="grid-column: span 3;">
+                        <i data-lucide="search-x"></i>
+                        <p>لم نجد دورات تطابق بحثك حالياً.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="final-cta py-20 reveal-up">
+        <div class="container">
+            <div class="cta-glass-box text-center">
+                <div class="cta-glow"></div>
+                <h2 class="mb-6">لا تضيع الوقت، مستقبلك ينتظرك!</h2>
+                <p class="mb-10 opacity-70">سجل الآن واحصل على وصول مجاني لأول دروس من كل دورة.</p>
+                <div class="flex-center gap-6">
+                    <a href="{% url 'dashboard:register' %}" class="btn btn-primary btn-massive btn-glow">أنشئ حسابك الآن</a>
+                    <a href="#" class="btn btn-secondary btn-massive">تواصل مع الدعم</a>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+<style>
+    /* Premium Landing Styles */
+    .landing-page-wrapper { overflow-x: hidden; position: relative; }
+    
+    /* Hero Section Reconstruction */
+    .hero-premium { padding: 200px 0 120px; position: relative; }
+    .hero-grid-wrapper { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 5rem; align-items: center; }
+    .hero-content { position: relative; z-index: 1; }
+    .hero-visual { position: relative; z-index: 5; }
+    
+    .hero-badge { 
+        display: inline-flex; align-items: center; gap: 0.75rem; 
+        padding: 0.6rem 1.2rem; background: rgba(var(--brand-gold-rgb), 0.1); 
+        border: 1px solid var(--brand-gold-glow); border-radius: 100px; 
+    }
+    .badge-dot { width: 8px; height: 8px; background: var(--brand-gold); border-radius: 50%; box-shadow: 0 0 10px var(--brand-gold); animation: pulse 2s infinite; }
+    .badge-text { font-size: 0.85rem; color: var(--text-primary); font-weight: 700; letter-spacing: 0.5px; }
+    
+    .hero-main-title { font-size: clamp(3rem, 6vw, 5rem); line-height: 1.1; font-weight: 900; color: var(--text-primary); letter-spacing: -2px; }
+    .text-gradient { background: linear-gradient(135deg, var(--brand-gold) 0%, var(--brand-gold-light) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    
+    .hero-lead { font-size: 1.25rem; color: var(--text-secondary); max-width: 580px; margin-top: 2rem; line-height: 1.8; }
+    
+    .hero-stats-row { display: flex; align-items: center; gap: 3rem; }
+    .hero-stat-item { display: flex; flex-direction: column; }
+    .stat-num { font-size: 2rem; font-weight: 900; color: var(--brand-gold); line-height: 1; }
+    .stat-desc { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-top: 0.5rem; }
+    .stat-divider { width: 1px; height: 40px; background: var(--border-light); }
+
+    /* Hero Visuals - High End */
+    .visual-inner { position: relative; display: flex; align-items: center; justify-content: center; overflow: visible; }
+    .glass-morph-circle { 
+        position: absolute; width: 400px; height: 400px; 
+        background: radial-gradient(circle, var(--brand-gold-glow) 0%, transparent 70%); 
+        border-radius: 50%; z-index: -1; filter: blur(50px); opacity: 0.5;
+    }
+    .main-visual-card { 
+        width: 100%; max-width: 500px; border-radius: var(--radius-lg); 
+        overflow: hidden; position: relative; z-index: 2;
+        transform: perspective(1000px) rotateY(-8deg) rotateX(2deg);
+        box-shadow: 0 50px 100px rgba(0,0,0,0.4); border: 1px solid var(--glass-border);
+        transition: var(--transition-smooth);
+    }
+    .main-visual-card:hover { transform: perspective(1000px) rotateY(0deg) rotateX(0deg); }
+    .main-visual-card img { width: 100%; height: auto; display: block; filter: brightness(0.9); }
+    .card-glow-overlay { position: absolute; inset: 0; background: linear-gradient(135deg, transparent 40%, rgba(var(--brand-gold-rgb), 0.2) 100%); pointer-events: none; }
+
+    .floating-item { 
+        position: absolute; background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur)); 
+        border: 1px solid var(--glass-border); padding: 1.25rem; border-radius: 20px; 
+        display: flex; align-items: center; gap: 1rem; box-shadow: var(--shadow-soft); z-index: 10; 
+    }
+    .item-1 { top: 10%; right: -40px; }
+    .item-2 { bottom: 15%; left: 0; z-index: 30; }
+    .item-icon { width: 40px; height: 40px; border-radius: 12px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold); display: flex; align-items: center; justify-content: center; }
+    .item-text strong { display: block; font-size: 1.1rem; color: var(--text-primary); }
+    .item-text span { font-size: 0.75rem; color: var(--text-muted); }
+
+    /* Bento Grid Features - Standardized */
+    .bento-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-auto-rows: 240px; gap: 1.5rem; }
+    .bento-item { 
+        padding: 2.5rem !important; border-radius: var(--radius-md) !important;
+        display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .bento-item.tall { grid-row: span 2; }
+    .bento-item.wide { grid-column: span 2; }
+    .bento-icon { width: 48px; height: 48px; padding: 10px; border-radius: 14px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold); margin-bottom: 2rem; }
+    .bento-content h3 { font-size: 1.6rem; margin-bottom: 1rem; }
+    .bento-content p { color: var(--text-secondary); line-height: 1.7; }
+
+    /* Premium Course Cards */
+    .course-card-premium { 
+        background: var(--bg-surface); border-radius: var(--radius-md); 
+        border: 1px solid var(--border-light); overflow: hidden; 
+        transition: var(--transition-smooth); position: relative;
+    }
+    .course-card-premium:hover { 
+        transform: translateY(-12px); border-color: var(--brand-gold-glow); 
+        box-shadow: var(--shadow-glow); 
+    }
+    .course-thumb { position: relative; height: 240px; overflow: hidden; }
+    .course-thumb img { width: 100%; height: 100%; object-fit: cover; transition: 0.8s; }
+    .course-card-premium:hover .course-thumb img { transform: scale(1.1) rotate(2deg); }
+    .thumb-badges { position: absolute; top: 1.25rem; right: 1.25rem; z-index: 2; }
+    .badge-type { background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); color: #fff; padding: 0.5rem 1.25rem; border-radius: 100px; font-size: 0.75rem; font-weight: 800; border: 1px solid rgba(255,255,255,0.1); }
+
+    .course-body { padding: 2rem; }
+    .course-subject { color: var(--brand-gold); font-size: 0.75rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; }
+    .course-title { font-size: 1.5rem; color: var(--text-primary); margin: 0.75rem 0 2rem; font-weight: 900; line-height: 1.3; }
+    
+    .course-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 1.5rem; border-top: 1px solid var(--border-light); }
+    .instructor { display: flex; align-items: center; gap: 0.75rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 600; }
+    .btn-arrow { color: var(--brand-gold); font-weight: 800; display: flex; align-items: center; gap: 0.5rem; }
+    .btn-arrow i { transition: transform 0.3s; }
+    .btn-arrow:hover i { transform: translateX(-5px); }
+
+    /* Catalog Filter */
+    .catalog-filter { display: flex; gap: 0.5rem; background: rgba(var(--brand-gold-rgb), 0.05); padding: 0.5rem; border-radius: 20px; border: 1px solid var(--border-light); width: max-content; margin: 0 auto; }
+    .filter-btn { padding: 0.75rem 1.5rem; border-radius: 15px; color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; font-weight: 700; transition: 0.3s; }
+    .filter-btn.active { background: var(--brand-gold); color: #000; box-shadow: 0 5px 15px var(--brand-gold-glow); }
+    .filter-btn:not(.active):hover { background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold); }
+
+    /* Final CTA - Immersive */
+    .final-cta { padding-bottom: 100px; }
+    .cta-glass-box { 
+        position: relative; padding: 6rem 3rem; border-radius: var(--radius-lg); 
+        background: linear-gradient(135deg, rgba(var(--brand-gold-rgb), 0.1) 0%, rgba(0,0,0,0.8) 100%); 
+        border: 1px solid var(--brand-gold-glow); overflow: hidden; box-shadow: var(--shadow-glow); 
+    }
+    .light-theme .cta-glass-box { background: linear-gradient(135deg, rgba(var(--brand-gold-rgb), 0.05) 0%, #ffffff 100%); }
+    .cta-glow { position: absolute; top: -50%; left: -20%; width: 600px; height: 600px; background: radial-gradient(circle, var(--brand-gold-glow) 0%, transparent 70%); opacity: 0.5; pointer-events: none; }
+
+    /* Responsive Polish */
+    @media (max-width: 1024px) {
+        .hero-grid-wrapper { grid-template-columns: 1fr; gap: 4rem; text-align: center; }
+        .hero-lead { margin: 2rem auto; }
+        .hero-actions, .hero-stats-row { justify-content: center; }
+        .visual-inner { margin-top: 2rem; }
+        .floating-item { display: none; }
+    }
+    @media (max-width: 768px) {
+        .hero-premium { padding: 140px 0 80px; }
+        .bento-grid { grid-template-columns: 1fr; grid-auto-rows: auto; }
+        .bento-item.tall, .bento-item.wide { grid-row: auto; grid-column: auto; }
+        .catalog-filter { width: 100%; overflow-x: auto; justify-content: flex-start; }
+    }
+</style>
+{% endblock %}

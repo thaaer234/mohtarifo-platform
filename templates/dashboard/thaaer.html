@@ -1,0 +1,126 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}thaaer | مراجعة واجهات محترفو التعليم{% endblock %}
+{% block body_class %}print-review-page{% endblock %}
+
+{% block content %}
+  <section class="review-cover">
+    <p class="eyebrow">ملف مراجعة وطباعه</p>
+    <h1>thaaer</h1>
+    <p>كل الواجهات التي تم بناؤها للمنصة، مع المسارات والمنطق الإداري المرتبط بها.</p>
+    <div class="review-meta">
+      <span>محترفو التعليم</span>
+      <span>هوية: أخضر تعليمي، حبر داكن، كهرماني دافئ</span>
+      <span>جاهز للطباعة</span>
+    </div>
+  </section>
+
+  <section class="review-section">
+    <h2>خريطة الواجهات</h2>
+    <div class="review-grid">
+      {% for title, url, description in screens %}
+        <article class="review-card">
+          <strong>{{ title }}</strong>
+          <a href="{{ url }}">{{ url }}</a>
+          <p>{{ description }}</p>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="review-section">
+    <h2>الكتالوج قبل الدخول</h2>
+    <div class="review-catalog-preview">
+      {% for course in courses %}
+        <article class="market-card print-card">
+          <div class="course-visual">
+            <div class="teacher-figure">
+              <span>{{ course.subject.name|first }}</span>
+            </div>
+          </div>
+          <div class="market-card-body">
+            <h3>{{ course.title }}</h3>
+            <p>{{ course.subject.name }}</p>
+            <hr>
+            <strong>{{ course.instructor.get_full_name|default:course.instructor.username }}</strong>
+            <span class="price">{% if course.price_cents %}SAR {{ course.price_cents }}{% else %}كود تفعيل{% endif %}</span>
+          </div>
+        </article>
+      {% empty %}
+        <p class="muted">لا توجد مكثفات منشورة بعد.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="review-section">
+    <h2>صفحة المكثفة ومشغل الدروس</h2>
+    <div class="review-course-preview">
+      <aside class="lesson-sidebar">
+        <h3>الوحدات والدروس</h3>
+        <section class="lesson-group">
+          <header>
+            <strong>{% if sample_course %}{{ sample_course.title }}{% else %}مكثفة تجريبية{% endif %}</strong>
+            <small>{{ sample_lessons|length }} درس</small>
+          </header>
+          {% for lesson in sample_lessons %}
+            <div class="lesson-row {% if forloop.first %}active{% endif %}">
+              <span>{{ forloop.counter }}. {{ lesson.title }}</span>
+              <small>{% if forloop.first %}عرض{% else %}مقفل{% endif %}</small>
+            </div>
+          {% empty %}
+            <div class="lesson-row"><span>لا توجد دروس بعد</span><small>-</small></div>
+          {% endfor %}
+        </section>
+      </aside>
+      <article class="review-player-block">
+        <p class="eyebrow">مشغل المنصة</p>
+        <div class="paper-video">
+          <span>فيديو الجلسة</span>
+        </div>
+        <p>الطالب يشاهد الفيديو داخل المنصة، ثم يسجل حضور الجلسة وتُحدّث نسبة الإنجاز.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="review-section">
+    <h2>التسجيل والدخول</h2>
+    <div class="review-auth-preview">
+      <article class="auth-card print-auth-card">
+        <div class="auth-avatar" aria-hidden="true">م</div>
+        <h3>إنشاء حساب</h3>
+        <div class="fake-field">الاسم الكامل</div>
+        <div class="fake-field">رقم الهاتف</div>
+        <div class="fake-field">الفرع من الإدارة</div>
+        <div class="fake-field">المحافظة من الإدارة</div>
+        <button class="primary-button" type="button">إنشاء الحساب</button>
+      </article>
+      <article class="auth-card print-auth-card">
+        <div class="auth-avatar" aria-hidden="true">م</div>
+        <h3>تسجيل الدخول</h3>
+        <div class="fake-field">رقم الهاتف</div>
+        <div class="fake-field">كلمة المرور</div>
+        <button class="primary-button" type="button">تسجيل الدخول</button>
+        <p class="muted">الجهاز الحالي يُربط بحساب الطالب عند الدخول.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="review-section">
+    <h2>الإدارة والبيع والمعاهد</h2>
+    <div class="review-stats">
+      <article><span>المكثفات</span><strong>{{ stats.courses }}</strong></article>
+      <article><span>الدروس</span><strong>{{ stats.lessons }}</strong></article>
+      <article><span>الأكواد</span><strong>{{ stats.codes }}</strong></article>
+      <article><span>دفعات الأكواد</span><strong>{{ stats.batches }}</strong></article>
+      <article><span>المعاهد</span><strong>{{ stats.institutes }}</strong></article>
+      <article><span>مراكز البيع</span><strong>{{ stats.sales_centers }}</strong></article>
+      <article><span>الطلاب</span><strong>{{ stats.students }}</strong></article>
+      <article><span>الأجهزة</span><strong>{{ stats.devices }}</strong></article>
+    </div>
+    <div class="review-notes">
+      <p>كل الأقسام والوحدات والدروس والفيديوهات تُدار من Django Admin.</p>
+      <p>المعاهد ومراكز البيع ودفعات الأكواد تُدار من لوحة الإدارة، مع استيراد CSV/XLSX للطلاب وتوليد أكواد مخصصة.</p>
+      <p>الكود المخصص لا يعمل إلا للطالب المرتبط، والمكثفة تظهر على الجهاز المفعّل فقط.</p>
+    </div>
+  </section>
+{% endblock %}

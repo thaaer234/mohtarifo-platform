@@ -1,0 +1,268 @@
+from django.conf import settings
+from django.db import models
+
+from learning.models import Course, Lesson
+
+
+class Institute(models.Model):
+    name = models.CharField(max_length=160, unique=True)
+    contact_name = models.CharField(max_length=120, blank=True)
+    phone = models.CharField(max_length=40, blank=True)
+    logo = models.ImageField(upload_to="institutes/logos/", null=True, blank=True)
+    notes = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "معهد"
+        verbose_name_plural = "المعاهد"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class SalesCenter(models.Model):
+    name = models.CharField(max_length=160)
+    institute = models.ForeignKey(Institute, on_delete=models.SET_NULL, related_name="sales_centers", null=True, blank=True)
+    phone = models.CharField(max_length=40, blank=True)
+    address = models.CharField(max_length=255, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "مركز بيع"
+        verbose_name_plural = "مراكز البيع"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class AccessCodeBatch(models.Model):
+    name = models.CharField(max_length=160)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="code_batches")
+    institute = models.ForeignKey(Institute, on_delete=models.SET_NULL, related_name="code_batches", null=True, blank=True)
+    sales_center = models.ForeignKey(SalesCenter, on_delete=models.SET_NULL, related_name="code_batches", null=True, blank=True)
+    allocated_count = models.PositiveIntegerField(default=0)
+    free_count = models.PositiveIntegerField(default=0)
+    code_prefix = models.CharField(max_length=24, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "دفعة أكواد"
+        verbose_name_plural = "دفعات الأكواد"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def redeemed_count(self):
+        return self.codes.filter(redeemed_count__gt=0).count()
+
+    @property
+    def sold_count(self):
+        return self.codes.filter(sale_status="sold").count()
+
+
+class Plan(models.Model):
+    name = models.CharField(max_length=120)
+    code = models.SlugField(unique=True)
+    billing_period = models.CharField(max_length=40)
+    price_cents = models.PositiveIntegerField()
+    currency = models.CharField(max_length=10, default="USD")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "خطة اشتراك"
+        verbose_name_plural = "خطط الاشتراك"
+
+    def __str__(self):
+        return self.name
+
+
+class Subscription(models.Model):
+    STATUS_CHOICES = [
+        ("active", "نشط"),
+        ("past_due", "متأخر"),
+        ("canceled", "ملغى"),
+        ("expired", "منتهي"),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="subscriptions")
+    plan = models.ForeignKey(Plan, on_delete=models.PROTECT, related_name="subscriptions")
+    provider = models.CharField(max_length=40, default="stripe")
+    provider_subscription_id = models.CharField(max_length=255, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
+    starts_at = models.DateTimeField()
+    renews_at = models.DateTimeField(null=True, blank=True)
+    ends_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "اشتراك"
+        verbose_name_plural = "الاشتراكات"
+
+
+class Payment(models.Model):
+    STATUS_CHOICES = [
+        ("pending", "قيد الانتظار"),
+        ("paid", "مدفوع"),
+        ("failed", "فشل"),
+        ("refunded", "مسترد"),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="payments")
+    provider = models.CharField(max_length=40, default="stripe")
+    provider_payment_id = models.CharField(max_length=255, blank=True)
+    amount_cents = models.PositiveIntegerField()
+    currency = models.CharField(max_length=10, default="USD")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "دفعة"
+        verbose_name_plural = "الدفعات"
+
+
+class CoursePurchase(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="course_purchases")
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="purchases")
+    payment = models.ForeignKey(Payment, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "شراء مادة"
+        verbose_name_plural = "مشتريات المواد"
+        unique_together = [("user", "course")]
+
+
+class Coupon(models.Model):
+    code = models.CharField(max_length=80, unique=True)
+    discount_percent = models.PositiveIntegerField(null=True, blank=True)
+    discount_cents = models.PositiveIntegerField(null=True, blank=True)
+    max_redemptions = models.PositiveIntegerField(null=True, blank=True)
+    redeemed_count = models.PositiveIntegerField(default=0)
+    starts_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "كوبون"
+        verbose_name_plural = "الكوبونات"
+
+    def __str__(self):
+        return self.code
+
+
+class AccessCode(models.Model):
+    ACCESS_TYPE_CHOICES = [
+        ("course", "Course"),
+        ("lesson", "Lesson"),
+        ("subscription", "Subscription"),
+    ]
+    STATUS_CHOICES = [
+        ("active", "Active"),
+        ("disabled", "Disabled"),
+        ("expired", "Expired"),
+    ]
+    SALE_STATUS_CHOICES = [
+        ("available", "Available"),
+        ("reserved", "Reserved"),
+        ("sold", "Sold"),
+        ("free", "Free"),
+    ]
+
+    code = models.CharField(max_length=80, unique=True)
+    access_type = models.CharField(max_length=20, choices=ACCESS_TYPE_CHOICES, default="course")
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="access_codes", null=True, blank=True)
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="access_codes", null=True, blank=True)
+    plan = models.ForeignKey(Plan, on_delete=models.SET_NULL, related_name="access_codes", null=True, blank=True)
+    batch = models.ForeignKey(AccessCodeBatch, on_delete=models.SET_NULL, related_name="codes", null=True, blank=True)
+    institute = models.ForeignKey(Institute, on_delete=models.SET_NULL, related_name="access_codes", null=True, blank=True)
+    sales_center = models.ForeignKey(SalesCenter, on_delete=models.SET_NULL, related_name="access_codes", null=True, blank=True)
+    assigned_student_name = models.CharField(max_length=160, blank=True)
+    assigned_student_phone = models.CharField(max_length=40, blank=True)
+    sale_status = models.CharField(max_length=20, choices=SALE_STATUS_CHOICES, default="available")
+    is_free_code = models.BooleanField(default=False)
+    max_redemptions = models.PositiveIntegerField(default=1)
+    redeemed_count = models.PositiveIntegerField(default=0)
+    valid_from = models.DateTimeField(null=True, blank=True)
+    valid_until = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "كود وصول"
+        verbose_name_plural = "أكواد الوصول"
+
+    def __str__(self):
+        return self.code
+
+    def is_redeemable(self, now):
+        if self.status != "active":
+            return False, "الكود غير نشط."
+        if self.valid_from and now < self.valid_from:
+            return False, "الكود غير متاح بعد."
+        if self.valid_until and now > self.valid_until:
+            return False, "انتهت صلاحية الكود."
+        if self.redeemed_count >= self.max_redemptions:
+            return False, "تم استخدام الكود بالكامل."
+        return True, ""
+
+
+class AccessGrant(models.Model):
+    SOURCE_CHOICES = [
+        ("code", "Code"),
+        ("purchase", "Purchase"),
+        ("admin", "Admin"),
+        ("subscription", "Subscription"),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="access_grants")
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="access_grants", null=True, blank=True)
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="access_grants", null=True, blank=True)
+    access_code = models.ForeignKey(AccessCode, on_delete=models.SET_NULL, related_name="grants", null=True, blank=True)
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default="code")
+    device_fingerprint = models.CharField(max_length=128, blank=True)
+    starts_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "صلاحية وصول"
+        verbose_name_plural = "صلاحيات الوصول"
+        constraints = [
+            models.UniqueConstraint(fields=["user", "course", "lesson"], name="unique_user_course_lesson_access")
+        ]
+
+    def __str__(self):
+        target = self.course or self.lesson
+        return f"{self.user} -> {target}"
+
+
+class UserDevice(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="devices")
+    fingerprint = models.CharField(max_length=128)
+    label = models.CharField(max_length=120, blank=True)
+    user_agent = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    first_seen_at = models.DateTimeField(auto_now_add=True)
+    last_seen_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "جهاز طالب"
+        verbose_name_plural = "أجهزة الطلاب"
+        unique_together = [("user", "fingerprint")]
+
+    def __str__(self):
+        return f"{self.user} - {self.label or self.fingerprint[:12]}"

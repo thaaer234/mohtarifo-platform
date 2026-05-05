@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}لوحة الطالب{% endblock %}
+
+{% block content %}
+<div class="reveal-up">
+    <header class="section-header mb-8">
+        <div>
+            <span class="badge badge-gold mb-2">لوحة الطالب</span>
+            <h1 class="page-title">مرحباً {{ request.user.username }}</h1>
+            <p class="text-muted mb-0">تابع تقدمك والوصول السريع إلى المواد المتاحة.</p>
+        </div>
+    </header>
+
+    <div class="grid-2">
+        <div class="premium-card">
+            <h2 class="section-title mb-6"><i data-lucide="trending-up" class="gold"></i> التقدم العام</h2>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" style="width:64%;"></div>
+            </div>
+        </div>
+
+        <div class="premium-card">
+            <h2 class="section-title mb-6"><i data-lucide="book-open" class="gold"></i> الدورات المتاحة</h2>
+            <ul class="clean-list">
+                <li>مكثف التفاضل والنهايات</li>
+                <li>امتحانيات الكهرباء والمغناطيس</li>
+                <li>مراجعة العضوية النهائية</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

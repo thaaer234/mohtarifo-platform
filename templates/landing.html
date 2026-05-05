@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}الرئيسية | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="reveal-up">
+    <!-- Hero Section: Split Layout -->
+    <section class="flex-between py-12 flex-wrap gap-12" style="min-height: 80vh; align-items: center;">
+        <div class="reveal-left" style="flex: 1; min-width: 300px;">
+            <div class="badge badge-gold mb-6">اختيار المتفوقين لعام 2026</div>
+            <h1 style="font-size: 4rem; line-height: 1.1; margin-bottom: 2rem;">طريقك للـ <span class="gold">600</span> <br> يبدأ من هنا</h1>
+            <p class="text-muted" style="font-size: 1.25rem; line-height: 1.6; max-width: 600px;">المنصة الأقوى للمكثفات والامتحانيات لطلاب الشهادة الثانوية. محتوى مركز، اختبارات ذكية، ومتابعة دقيقة لكل تفاصيل دراستك.</p>
+            
+            <div class="flex-center gap-6 mt-12" style="justify-content: flex-start;">
+                <a href="{% url 'dashboard:register' %}" class="btn btn-primary btn-glow" style="padding: 1.25rem 3rem;">ابدأ رحلة التفوق</a>
+                <a href="#features" class="btn btn-secondary" style="padding: 1.25rem 3rem;">اكتشف الميزات</a>
+            </div>
+        </div>
+        <div class="reveal-right" style="flex: 1; min-width: 300px; display: flex; justify-content: flex-end;">
+            <div style="position: relative; width: 100%; max-width: 500px;">
+                <img src="{% static 'dashboard/images/hero_student.png' %}" alt="Success Student" style="width: 100%; height: auto; border-radius: 40px; box-shadow: 0 40px 100px rgba(0,0,0,0.4);">
+                
+                <div class="glass-card" style="position: absolute; top: 10%; right: -10%; padding: 1.5rem 2rem; border-radius: 20px; animation: float 4s infinite ease-in-out;">
+                    <strong class="gold block" style="font-size: 1.5rem;">+2,000</strong>
+                    <span class="text-muted" style="font-size: 0.9rem;">سؤال مؤتمت</span>
+                </div>
+                
+                <div class="glass-card" style="position: absolute; bottom: 10%; left: -10%; padding: 1.5rem 2rem; border-radius: 20px; animation: float 4s infinite ease-in-out; animation-delay: 2s;">
+                    <strong class="gold block" style="font-size: 1.5rem;">98%</strong>
+                    <span class="text-muted" style="font-size: 0.9rem;">نسبة نجاح</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section: Interactive Grid -->
+    <section id="features" class="py-24">
+        <div class="text-center mb-16 reveal-up">
+            <h2 style="font-size: 3rem; margin-bottom: 1.5rem;">لماذا يختارنا المتفوقون؟</h2>
+            <p class="text-muted" style="font-size: 1.1rem; max-width: 700px; margin: 0 auto;">نقدم لك تجربة تعليمية متكاملة تضمن لك استغلال كل دقيقة في دراستك.</p>
+        </div>
+
+        <div class="grid-3">
+            <div class="premium-card reveal-up" style="padding: 3rem; transition: 0.4s; cursor: pointer;" onmouseover="this.style.transform='translateY(-15px) scale(1.02)'; this.style.borderColor='var(--brand-gold-glow)'" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-light)'">
+                <div style="font-size: 3.5rem; margin-bottom: 2rem;">📚</div>
+                <div class="badge mb-4">حصري</div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 1.5rem;">مكثفات مركزة</h3>
+                <p class="text-muted" style="line-height: 1.7;">محتوى تم إعداده بعناية ليغطي أهم نقاط المنهاج والأسئلة المتوقعة في وقت قياسي.</p>
+            </div>
+
+            <div class="premium-card reveal-up" style="padding: 3rem; transition: 0.4s; cursor: pointer; animation-delay: 0.2s;" onmouseover="this.style.transform='translateY(-15px) scale(1.02)'; this.style.borderColor='var(--brand-gold-glow)'" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-light)'">
+                <div style="font-size: 3.5rem; margin-bottom: 2rem;">⚡</div>
+                <div class="badge mb-4">ذكي</div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 1.5rem;">بنك أسئلة ضخم</h3>
+                <p class="text-muted" style="line-height: 1.7;">اختبارات مؤتمتة لكل درس ووحدة مع تصحيح فوري وتحليل لنقاط قوتك وضعفك.</p>
+            </div>
+
+            <div class="premium-card reveal-up" style="padding: 3rem; transition: 0.4s; cursor: pointer; animation-delay: 0.4s;" onmouseover="this.style.transform='translateY(-15px) scale(1.02)'; this.style.borderColor='var(--brand-gold-glow)'" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-light)'">
+                <div style="font-size: 3.5rem; margin-bottom: 2rem;">🛡️</div>
+                <div class="badge mb-4">آمن</div>
+                <h3 style="font-size: 1.5rem; margin-bottom: 1.5rem;">حماية الخصوصية</h3>
+                <p class="text-muted" style="line-height: 1.7;">نظام تشفير متطور لحماية حسابك ومحتواك الدراسي وضمان تجربة تعليمية آمنة.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Showcase Section: Real Platform Preview -->
+    <section class="py-24" style="background: var(--bg-surface-elevated); border-radius: 40px; margin: 4rem 0;">
+        <div class="container grid-2 gap-16 align-center">
+            <div class="reveal-left">
+                <h2 style="font-size: 2.8rem; line-height: 1.2; margin-bottom: 2rem;">لوحة تحكم ذكية <br> تتابع تقدمك لحظة بلحظة</h2>
+                <p class="text-muted mb-10" style="font-size: 1.1rem; line-height: 1.8;">من خلال رسوم بيانية وتحليلات دقيقة، ستعرف بالضبط أين تقف في كل مادة، وما هي المواضيع التي تحتاج لتركيز أكبر.</p>
+                <div class="flex-column gap-6">
+                    <div class="flex-center gap-4" style="justify-content: flex-start;">
+                        <div style="width: 10px; height: 10px; background: var(--brand-gold); border-radius: 50%;"></div>
+                        <span class="text-secondary font-bold">تحليل أداء ذكي لكل موضوع</span>
+                    </div>
+                    <div class="flex-center gap-4" style="justify-content: flex-start;">
+                        <div style="width: 10px; height: 10px; background: var(--brand-gold); border-radius: 50%;"></div>
+                        <span class="text-secondary font-bold">خطة دراسية مرنة تتكيف مع وقتك</span>
+                    </div>
+                    <div class="flex-center gap-4" style="justify-content: flex-start;">
+                        <div style="width: 10px; height: 10px; background: var(--brand-gold); border-radius: 50%;"></div>
+                        <span class="text-secondary font-bold">تنبيهات فورية بالاختبارات الجديدة</span>
+                    </div>
+                </div>
+            </div>
+            <div class="reveal-right">
+                <div class="premium-card" style="padding: 0; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.5);">
+                    <div style="background: rgba(255,255,255,0.05); padding: 1rem 1.5rem; display: flex; gap: 8px;">
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: #ff5f56;"></div>
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: #ffbd2e;"></div>
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: #27c93f;"></div>
+                    </div>
+                    <div style="padding: 3rem;">
+                        <div style="height: 20px; width: 60%; background: var(--bg-base); border-radius: 10px; margin-bottom: 2rem;"></div>
+                        <div class="grid-2 gap-6">
+                            <div style="height: 120px; background: var(--bg-base); border-radius: 20px;"></div>
+                            <div style="height: 120px; background: var(--bg-base); border-radius: 20px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="py-24 reveal-up">
+        <div class="premium-card text-center" style="padding: 6rem 2rem; background: linear-gradient(135deg, rgba(var(--brand-gold-rgb), 0.1), transparent); border: 1px solid var(--brand-gold-glow);">
+            <h2 style="font-size: 3rem; margin-bottom: 1.5rem;">جاهز للانضمام لنخبة الطلاب؟</h2>
+            <p class="text-muted mb-12" style="font-size: 1.25rem;">اشترك الآن واحصل على وصول فوري لأقوى المكثفات والامتحانات.</p>
+            <div class="flex-center gap-12 flex-wrap">
+                <a href="{% url 'dashboard:register' %}" class="btn btn-primary btn-glow" style="padding: 1.5rem 4rem; font-size: 1.3rem;">ابدأ الآن مجاناً</a>
+                <div class="flex-center gap-4">
+                    <div class="flex-center" style="margin-left: -10px;">
+                        <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--bg-surface-elevated); border: 2px solid var(--bg-base); margin-right: -12px;"></div>
+                        <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--bg-surface-elevated); border: 2px solid var(--bg-base); margin-right: -12px;"></div>
+                        <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--bg-surface-elevated); border: 2px solid var(--bg-base); margin-right: -12px;"></div>
+                    </div>
+                    <span class="text-secondary font-bold">انضم لـ +50,000 طالب</span>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<style>
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-15px); }
+    }
+    
+    .reveal-up { opacity: 0; transform: translateY(50px); transition: all 1s cubic-bezier(0.22, 1, 0.36, 1); }
+    .reveal-left { opacity: 0; transform: translateX(-50px); transition: all 1s cubic-bezier(0.22, 1, 0.36, 1); }
+    .reveal-right { opacity: 0; transform: translateX(50px); transition: all 1s cubic-bezier(0.22, 1, 0.36, 1); }
+    .reveal-active { opacity: 1; transform: translate(0, 0); }
+</style>
+
+<script>
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('reveal-active');
+            }
+        });
+    }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+
+    document.querySelectorAll('.reveal-up, .reveal-left, .reveal-right').forEach(el => {
+        revealObserver.observe(el);
+    });
+</script>
+{% endblock %}
