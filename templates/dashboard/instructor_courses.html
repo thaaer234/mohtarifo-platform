@@ -2,6 +2,31 @@
 {% load static %}
 
 {% block title %}دورات الأستاذ {{ instructor.get_full_name }} | محترفو التعليم{% endblock %}
+{% block meta_description %}تصفح دورات الأستاذ {{ instructor.get_full_name|default:instructor.username }} على منصة محترفو التعليم: مكثفات ودروس منظمة لطلاب سوريا.{% endblock %}
+{% block og_title %}دورات الأستاذ {{ instructor.get_full_name|default:instructor.username }} | محترفو التعليم{% endblock %}
+{% block og_description %}كل الدورات المنشورة للأستاذ {{ instructor.get_full_name|default:instructor.username }} في مكان واحد ضمن منصة محترفو التعليم.{% endblock %}
+{% block og_image %}{% if instructor_profile.avatar %}{{ SEO_SITE_URL }}{{ instructor_profile.avatar.url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block twitter_image %}{% if instructor_profile.avatar %}{{ SEO_SITE_URL }}{{ instructor_profile.avatar.url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block og_image_alt %}الأستاذ {{ instructor.get_full_name|default:instructor.username }}{% endblock %}
+
+{% block structured_data %}
+{{ block.super }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "{{ instructor.get_full_name|default:instructor.username|escapejs }}",
+  "jobTitle": "{{ instructor_profile.specialty|default:'مدرس متخصص'|escapejs }}",
+  "url": "{{ SEO_CANONICAL_URL|escapejs }}",
+  "worksFor": {
+    "@type": "EducationalOrganization",
+    "name": "{{ SEO_SITE_NAME|escapejs }}",
+    "url": "{{ SEO_SITE_URL|escapejs }}"
+  }{% if instructor_profile.avatar %},
+  "image": "{{ SEO_SITE_URL|escapejs }}{{ instructor_profile.avatar.url|escapejs }}"{% endif %}
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="instructor-courses-wrapper reveal-up">

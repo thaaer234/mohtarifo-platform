@@ -8,6 +8,25 @@
 {% block twitter_title %}محترفو التعليم | منصة المكثفات والدورات في سوريا{% endblock %}
 {% block twitter_description %}مكثفات، دورات، امتحانات، ومتابعة تقدم لطلاب البكالوريا والتاسع في سوريا.{% endblock %}
 
+{% block structured_data %}
+{{ block.super }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "محترفو التعليم",
+  "url": "{{ SEO_CANONICAL_URL|escapejs }}",
+  "description": "محترفو التعليم منصة تعليمية سورية للمكثفات والدورات والامتحانات، تجمع نخبة من الأساتذة ومحتوى منظم لطلاب البكالوريا والتاسع.",
+  "inLanguage": "ar-SY",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "{{ SEO_SITE_NAME|escapejs }}",
+    "url": "{{ SEO_SITE_URL|escapejs }}"
+  }
+}
+</script>
+{% endblock %}
+
 {% block extra_css %}
 {% endblock %}
 

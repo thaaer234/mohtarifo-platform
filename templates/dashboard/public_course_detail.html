@@ -2,12 +2,48 @@
 {% load static %}
 
 {% block title %}{{ course.title }} | محترفو التعليم{% endblock %}
-{% block meta_description %}{{ course.description|striptags|truncatechars:155 }}{% endblock %}
+{% block meta_description %}{% if course.description %}{{ course.description|striptags|truncatechars:155 }}{% else %}دورة {{ course.title }} على منصة محترفو التعليم بإشراف الأستاذ {{ course.instructor.get_full_name|default:course.instructor.username }}.{% endif %}{% endblock %}
 {% block og_type %}article{% endblock %}
 {% block og_title %}{{ course.title }} | محترفو التعليم{% endblock %}
-{% block og_description %}{{ course.description|striptags|truncatechars:155 }}{% endblock %}
+{% block og_description %}{% if course.description %}{{ course.description|striptags|truncatechars:155 }}{% else %}دورة {{ course.title }} على منصة محترفو التعليم.{% endif %}{% endblock %}
 {% block twitter_title %}{{ course.title }} | محترفو التعليم{% endblock %}
-{% block twitter_description %}{{ course.description|striptags|truncatechars:155 }}{% endblock %}
+{% block twitter_description %}{% if course.description %}{{ course.description|striptags|truncatechars:155 }}{% else %}دورة {{ course.title }} على منصة محترفو التعليم.{% endif %}{% endblock %}
+{% block og_image %}{% if course.cover %}{{ SEO_SITE_URL }}{{ course.cover.url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block twitter_image %}{% if course.cover %}{{ SEO_SITE_URL }}{{ course.cover.url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block og_image_alt %}{{ course.title }}{% endblock %}
+
+{% block structured_data %}
+{{ block.super }}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Course",
+  "name": "{{ course.title|escapejs }}",
+  "description": "{% if course.description %}{{ course.description|striptags|truncatechars:300|escapejs }}{% else %}دورة {{ course.title|escapejs }} على منصة محترفو التعليم بإشراف الأستاذ {{ course.instructor.get_full_name|default:course.instructor.username|escapejs }}.{% endif %}",
+  "url": "{{ SEO_CANONICAL_URL|escapejs }}",
+  "inLanguage": "ar-SY",
+  "educationalLevel": "{{ course.get_academic_track_display|escapejs }}",
+  "provider": {
+    "@type": "EducationalOrganization",
+    "name": "{{ SEO_SITE_NAME|escapejs }}",
+    "url": "{{ SEO_SITE_URL|escapejs }}"
+  },
+  "about": "{{ course.subject.name|escapejs }}",
+  "creator": {
+    "@type": "Person",
+    "name": "{{ course.instructor.get_full_name|default:course.instructor.username|escapejs }}"
+  }{% if course.cover %},
+  "image": "{{ SEO_SITE_URL|escapejs }}{{ course.cover.url|escapejs }}"{% endif %}{% if course.price_display %},
+  "offers": {
+    "@type": "Offer",
+    "url": "{{ SEO_CANONICAL_URL|escapejs }}",
+    "price": "{{ course.price_display|escapejs }}",
+    "priceCurrency": "SYP",
+    "availability": "https://schema.org/InStock"
+  }{% endif %}
+}
+</script>
+{% endblock %}
 
 {% block breadcrumbs %}
 <div class="flex-center gap-3 reveal-up" style="justify-content: flex-start; font-size: 0.85rem;">

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>{% block title %}Mohtarifo{% endblock %} | محترفو التعليم</title>
+    <title>{% block title %}محترفو التعليم{% endblock %}</title>
 
     <!-- SEO & PWA -->
     <meta name="description" content="{% block meta_description %}{{ SEO_DEFAULT_DESCRIPTION }}{% endblock %}">
@@ -16,11 +16,19 @@
     <meta property="og:title" content="{% block og_title %}محترفو التعليم{% endblock %}">
     <meta property="og:description" content="{% block og_description %}{{ SEO_DEFAULT_DESCRIPTION }}{% endblock %}">
     <meta property="og:url" content="{{ SEO_CANONICAL_URL }}">
+    <meta property="og:image" content="{% block og_image %}{{ SEO_DEFAULT_IMAGE_URL }}{% endblock %}">
+    <meta property="og:image:alt" content="{% block og_image_alt %}{{ SEO_SITE_NAME }}{% endblock %}">
+    <meta name="application-name" content="{{ SEO_SITE_NAME }}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{% block twitter_title %}محترفو التعليم{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}{{ SEO_DEFAULT_DESCRIPTION }}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ SEO_DEFAULT_IMAGE_URL }}{% endblock %}">
     <link rel="manifest" href="{% url 'dashboard:pwa_manifest' %}">
     <meta name="theme-color" content="#0a0a0a">
+    {% if SEO_BASE_SCHEMA %}
+    <script type="application/ld+json">{{ SEO_BASE_SCHEMA }}</script>
+    {% endif %}
+    {% block structured_data %}{% endblock %}
     <script>
         (function () {
             try {
