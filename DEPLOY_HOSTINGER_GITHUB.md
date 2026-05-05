@@ -117,15 +117,19 @@ https://github.com/YOUR_USERNAME/mohtarifo-platform.git
 
 ```bash
 git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/mohtarifo-platform.git
+git remote add origin https://github.com/thaaer234/mohtarifo-platform.git
 git push -u origin main
 ```
 
 إذا طلب تسجيل دخول، استخدم GitHub account أو Personal Access Token حسب إعدادات جهازك.
 
-## 4. إنشاء ملف نقل البيانات من SQLite
+## 4. نقل البيانات من SQLite إلى PostgreSQL، اختياري
 
-قبل الرفع النهائي، جهز dump من قاعدة SQLite المحلية:
+هذه الخطوة مطلوبة فقط إذا تريد نقل البيانات الموجودة حاليا داخل `db.sqlite3` إلى قاعدة PostgreSQL على السيرفر.
+
+إذا كانت البيانات الحالية وهمية أو تجريبية، لا تنقلها. الأفضل أن تبدأ PostgreSQL نظيفة على Hostinger، ثم تنشئ مدير جديد وتضيف البيانات الحقيقية من لوحة الإدارة.
+
+إذا قررت نقل البيانات الحالية، جهز dump من قاعدة SQLite المحلية:
 
 ```bash
 python manage.py dumpdata --exclude contenttypes --exclude auth.permission --exclude sessions --exclude admin.logentry --indent 2 -o data_dump_production.json
@@ -140,6 +144,14 @@ scp data_dump_production.json root@SERVER_IP:/var/www/mohtarifo/
 ```
 
 إذا لم تستخدم SCP، ارفعه من File Manager أو SFTP في Hostinger.
+
+أما إذا لا تريد نقل البيانات، تجاهل أوامر `dumpdata` و `loaddata` بالكامل. على السيرفر بعد `migrate` أنشئ حساب مدير جديد:
+
+```bash
+python manage.py createsuperuser
+```
+
+ثم افتح لوحة الإدارة وأدخل البيانات الحقيقية مباشرة في PostgreSQL.
 
 ## 5. اختيار السيرفر في Hostinger
 
@@ -314,13 +326,13 @@ python manage.py migrate
 python manage.py collectstatic --noinput
 ```
 
-إذا تريد نقل بياناتك الحالية:
+إذا تريد نقل بياناتك الحالية من SQLite:
 
 ```bash
 python manage.py loaddata data_dump_production.json
 ```
 
-إذا لم تنقل البيانات وتريد إنشاء مدير جديد:
+إذا لم تنقل البيانات لأن البيانات المحلية وهمية أو تجريبية، أنشئ مدير جديد:
 
 ```bash
 python manage.py createsuperuser
