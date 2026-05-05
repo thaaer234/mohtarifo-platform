@@ -47,6 +47,8 @@ ALLOWED_HOSTS = [
 if not DEBUG and (not ALLOWED_HOSTS or '*' in ALLOWED_HOSTS):
     raise ImproperlyConfigured('DJANGO_ALLOWED_HOSTS must list explicit production hostnames.')
 
+SITE_URL = os.environ.get('DJANGO_SITE_URL', '').rstrip('/')
+
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
     for origin in os.environ.get('DJANGO_CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',')
@@ -102,6 +104,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'dashboard.seo.seo_context',
             ],
         },
     },

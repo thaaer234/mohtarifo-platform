@@ -3,6 +3,7 @@ import base64
 import os
 from io import BytesIO
 import qrcode
+from xml.sax.saxutils import escape
 
 from django.conf import settings
 from django.contrib import messages
@@ -17,6 +18,7 @@ from django.db.models import Avg, Count
 from django.core import signing
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.core.paginator import Paginator
 from openpyxl import Workbook
@@ -42,6 +44,7 @@ from .forms import (
     StudentRegistrationForm,
 )
 from .models import StudentNotification
+from .seo import _site_url
 
 
 def _is_admin_user(user):
@@ -278,6 +281,72 @@ self.addEventListener("fetch", (event) => {
     response = HttpResponse(script, content_type="application/javascript")
     response["Cache-Control"] = "no-cache, no-store, must-revalidate"
     return response
+
+
+def robots_txt(request):
+    site_url = _site_url(request)
+    lines = [
+        "User-agent: *",
+        "Disallow: /admin/",
+        "Disallow: /admin-dashboard/",
+        "Disallow: /api/",
+        "Disallow: /student/",
+        "Disallow: /login/",
+        "Disallow: /register/",
+        "Disallow: /device-logged-out/",
+        f"Sitemap: {site_url}/sitemap.xml",
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain; charset=utf-8")
+
+
+def sitemap_xml(request):
+    site_url = _site_url(request)
+    urls = [
+        (reverse("dashboard:landing"), "daily", "1.0"),
+        (reverse("dashboard:departments_list"), "weekly", "0.8"),
+        (reverse("dashboard:instructors_list"), "weekly", "0.8"),
+        (reverse("dashboard:about"), "monthly", "0.6"),
+        (reverse("dashboard:contact"), "monthly", "0.6"),
+        (reverse("dashboard:faq"), "monthly", "0.6"),
+        (reverse("dashboard:privacy"), "yearly", "0.3"),
+        (reverse("dashboard:terms"), "yearly", "0.3"),
+    ]
+
+    courses = Course.objects.filter(status="published").only("id", "updated_at").order_by("-updated_at")
+    for course in courses:
+        urls.append((reverse("dashboard:public_course_detail", args=[course.id]), "weekly", "0.9", course.updated_at))
+
+    instructors = (
+        User.objects.filter(courses__status="published")
+        .distinct()
+        .only("id")
+        .order_by("id")
+    )
+    for instructor in instructors:
+        urls.append((reverse("dashboard:instructor_courses", args=[instructor.id]), "weekly", "0.7"))
+
+    items = []
+    for entry in urls:
+        path, changefreq, priority, *lastmod = entry
+        lastmod_tag = ""
+        if lastmod and lastmod[0]:
+            lastmod_tag = f"<lastmod>{lastmod[0].date().isoformat()}</lastmod>"
+        items.append(
+            "<url>"
+            f"<loc>{escape(site_url + path)}</loc>"
+            f"{lastmod_tag}"
+            f"<changefreq>{changefreq}</changefreq>"
+            f"<priority>{priority}</priority>"
+            "</url>"
+        )
+
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+        + "".join(items)
+        + "</urlset>"
+    )
+    return HttpResponse(xml, content_type="application/xml; charset=utf-8")
 
 
 def _client_ip(request):

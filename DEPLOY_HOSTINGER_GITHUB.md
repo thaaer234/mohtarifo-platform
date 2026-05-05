@@ -160,7 +160,8 @@ python manage.py createsuperuser
 ```text
 Germany - Best latency
 ```
-
+thaaer7426thsh@SH
+thaaer7426thsh@SH
 اختيار Germany جيد.
 
 يفضل اختيار Ubuntu Server، مثلا:
@@ -271,6 +272,7 @@ nano /var/www/mohtarifo/.env
 ```env
 DJANGO_SECRET_KEY=PUT_LONG_RANDOM_SECRET_HERE
 DJANGO_DEBUG=False
+DJANGO_SITE_URL=http://SERVER_IP
 DJANGO_ALLOWED_HOSTS=SERVER_IP
 DJANGO_CORS_ALLOWED_ORIGINS=http://SERVER_IP
 DJANGO_CSRF_TRUSTED_ORIGINS=http://SERVER_IP
@@ -299,6 +301,7 @@ DRF_THROTTLE_EXAM_SUBMIT=60/hour
 
 ```env
 DJANGO_ALLOWED_HOSTS=your-domain.com,www.your-domain.com
+DJANGO_SITE_URL=https://your-domain.com
 DJANGO_CORS_ALLOWED_ORIGINS=https://your-domain.com
 DJANGO_CSRF_TRUSTED_ORIGINS=https://your-domain.com
 DJANGO_SECURE_SSL_REDIRECT=True
@@ -563,6 +566,7 @@ nano /var/www/mohtarifo/.env
 ```env
 DJANGO_CORS_ALLOWED_ORIGINS=https://your-domain.com
 DJANGO_CSRF_TRUSTED_ORIGINS=https://your-domain.com
+DJANGO_SITE_URL=https://your-domain.com
 DJANGO_SECURE_SSL_REDIRECT=True
 DJANGO_SECURE_HSTS_SECONDS=31536000
 ```
@@ -578,6 +582,19 @@ systemctl restart nginx
 
 ```bash
 certbot renew --dry-run
+```
+
+بعد تشغيل الدومين والـ SSL، افتح Google Search Console وأضف الدومين، ثم أرسل sitemap:
+
+```text
+https://your-domain.com/sitemap.xml
+```
+
+وتأكد أن الملفات التالية تعمل:
+
+```text
+https://your-domain.com/robots.txt
+https://your-domain.com/sitemap.xml
 ```
 
 ## 18. طريقة تحديث الموقع بعد أي تعديل

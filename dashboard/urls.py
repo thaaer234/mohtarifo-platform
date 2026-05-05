@@ -6,6 +6,8 @@ app_name = "dashboard"
 
 urlpatterns = [
     path("", views.home, name="home"),
+    path("robots.txt", views.robots_txt, name="robots_txt"),
+    path("sitemap.xml", views.sitemap_xml, name="sitemap_xml"),
     path("manifest.webmanifest", views.pwa_manifest, name="pwa_manifest"),
     path("sw.js", views.service_worker, name="service_worker"),
     path("landing/", views.landing_page, name="landing"),

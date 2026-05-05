@@ -2,6 +2,12 @@
 {% load static %}
 
 {% block title %}{{ course.title }} | محترفو التعليم{% endblock %}
+{% block meta_description %}{{ course.description|striptags|truncatechars:155 }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_title %}{{ course.title }} | محترفو التعليم{% endblock %}
+{% block og_description %}{{ course.description|striptags|truncatechars:155 }}{% endblock %}
+{% block twitter_title %}{{ course.title }} | محترفو التعليم{% endblock %}
+{% block twitter_description %}{{ course.description|striptags|truncatechars:155 }}{% endblock %}
 
 {% block breadcrumbs %}
 <div class="flex-center gap-3 reveal-up" style="justify-content: flex-start; font-size: 0.85rem;">

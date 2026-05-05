@@ -5,9 +5,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{% block title %}Mohtarifo{% endblock %} | محترفو التعليم</title>
-    
-    <!-- Meta Tags for SEO & PWA -->
-    <meta name="description" content="المنصة التعليمية الأقوى للمكثفات والامتحانات لطلاب الشهادة الثانوية في سوريا.">
+
+    <!-- SEO & PWA -->
+    <meta name="description" content="{% block meta_description %}{{ SEO_DEFAULT_DESCRIPTION }}{% endblock %}">
+    <meta name="robots" content="{% block meta_robots %}{{ SEO_ROBOTS }}{% endblock %}">
+    <link rel="canonical" href="{% block canonical_url %}{{ SEO_CANONICAL_URL }}{% endblock %}">
+    <meta property="og:site_name" content="{{ SEO_SITE_NAME }}">
+    <meta property="og:locale" content="ar_SY">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:title" content="{% block og_title %}محترفو التعليم{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ SEO_DEFAULT_DESCRIPTION }}{% endblock %}">
+    <meta property="og:url" content="{{ SEO_CANONICAL_URL }}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}محترفو التعليم{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{{ SEO_DEFAULT_DESCRIPTION }}{% endblock %}">
     <link rel="manifest" href="{% url 'dashboard:pwa_manifest' %}">
     <meta name="theme-color" content="#0a0a0a">
     <script>
