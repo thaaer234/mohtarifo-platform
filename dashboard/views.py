@@ -28,16 +28,18 @@ from openpyxl import Workbook
 from accounts.models import StudentProfile
 from analytics.models import TopicPerformance
 from billing.devices import activate_user_device, device_fingerprint, device_seed, set_device_cookie
-from billing.models import AccessCode, AccessCodeBatch, AccessGrant, CoursePackage, Institute, Payment, SalesCenter, Subscription, UserDevice
+from billing.models import AccessCode, AccessCodeBatch, AccessCodePrintLog, AccessGrant, CoursePackage, Institute, Payment, SalesCenter, Subscription, UserDevice
 from billing.services import create_codes_for_batch, create_codes_from_upload, unique_code
 from exams.models import Attempt, Exam, Question
 from learning.models import Course, CourseProgress, Lesson, LessonAttendance, LessonProgress, OnlineLessonSession
 
 from .forms import (
+    CatalogSectionForm,
     CourseCodeBatchForm,
     CourseCodeSaleForm,
     CourseCreateForm,
     CourseLessonUploadForm,
+    CourseUnitQuickForm,
     CoursePackageForm,
     CourseStudentImportForm,
     PackageCodeGenerateForm,
@@ -48,7 +50,7 @@ from .forms import (
     SalesCenterForm,
     StudentRegistrationForm,
 )
-from .models import StudentNotification
+from .models import CatalogSection, StudentNotification
 from .seo import _site_url
 from .security import sanitize_plain_text, validate_syrian_mobile
 
@@ -93,8 +95,19 @@ def home(request):
 
 def landing_page(request):
     instructor_id = request.GET.get("instructor")
-    selected_kind = request.GET.get("kind", "intensive")
-    selected_track = request.GET.get("track", "scientific")
+    catalog_tabs = _catalog_tabs()
+    requested_kind = request.GET.get("kind")
+    requested_track = request.GET.get("track")
+    selected_tab = None
+    if requested_kind and requested_track:
+        selected_tab = next(
+            (tab for tab in catalog_tabs if tab["kind"] == requested_kind and tab["track"] == requested_track),
+            None,
+        )
+    if not selected_tab and catalog_tabs:
+        selected_tab = catalog_tabs[0]
+    selected_kind = selected_tab["kind"] if selected_tab else ""
+    selected_track = selected_tab["track"] if selected_tab else ""
     
     courses_query = Course.objects.filter(status="published")
     
@@ -104,8 +117,10 @@ def landing_page(request):
         instructor = User.objects.filter(id=instructor_id).first()
         if instructor:
             instructor_name = instructor.get_full_name() or instructor.username
-    else:
+    elif selected_tab:
         courses_query = courses_query.filter(kind=selected_kind, academic_track=selected_track)
+    else:
+        courses_query = courses_query.none()
         
     courses = (
         courses_query
@@ -124,7 +139,7 @@ def landing_page(request):
             "courses": courses,
             "selected_kind": selected_kind,
             "selected_track": selected_track,
-            "catalog_tabs": _catalog_tabs(),
+            "catalog_tabs": catalog_tabs,
             "filtered_instructor_name": instructor_name,
         },
     )
@@ -521,12 +536,94 @@ def admin_dashboard(request):
 
 @admin_required
 def admin_course_create(request):
-    form = CourseCreateForm(request.POST or None, request.FILES or None)
+    initial = {}
+    if request.method == "GET":
+        initial["kind"] = request.GET.get("kind") or None
+        initial["academic_track"] = request.GET.get("track") or None
+        initial = {key: value for key, value in initial.items() if value}
+    form = CourseCreateForm(request.POST or None, request.FILES or None, initial=initial)
     if request.method == "POST" and form.is_valid():
         course = form.save()
         messages.success(request, "تم إنشاء المحتوى. الآن كمل الجلسات والأكواد والتفاصيل من لوحة الدورة.")
         return redirect("dashboard:admin_course_control", course_id=course.id)
-    return render(request, "dashboard/admin_course_create.html", {"form": form})
+    selected_tab = None
+    for tab in _catalog_tabs():
+        if tab["kind"] == initial.get("kind") and tab["track"] == initial.get("academic_track"):
+            selected_tab = tab
+            break
+    return render(request, "dashboard/admin_course_create.html", {"form": form, "selected_tab": selected_tab})
+
+
+@admin_required
+def admin_catalog_manager(request):
+    if request.method == "POST":
+        action = request.POST.get("action")
+        section_id = request.POST.get("section_id")
+        section = CatalogSection.objects.filter(id=section_id).first() if section_id else None
+        if action in {"create_section", "update_section"}:
+            form = CatalogSectionForm(
+                request.POST,
+                instance=section,
+                prefix="new" if action == "create_section" else "section",
+            )
+            if form.is_valid():
+                saved = form.save()
+                messages.success(request, f"تم حفظ فلتر {saved.label}.")
+                return redirect(f"{reverse('dashboard:admin_catalog_manager')}?kind={saved.kind}&track={saved.track}")
+        elif action == "delete_section" and section:
+            courses_count = Course.objects.filter(kind=section.kind, academic_track=section.track).count()
+            label = section.label
+            if courses_count:
+                section.is_visible = False
+                section.save(update_fields=["is_visible", "updated_at"])
+                messages.warning(request, f"تم إخفاء فلتر {label} من واجهة الطالب لأنه يحتوي على دورات.")
+            else:
+                section.delete()
+                messages.success(request, f"تم حذف فلتر {label}.")
+            return redirect("dashboard:admin_catalog_manager")
+
+    base_tabs = _catalog_tabs(include_hidden=True)
+    selected_kind = request.GET.get("kind") or (base_tabs[0]["kind"] if base_tabs else "")
+    selected_track = request.GET.get("track") or (base_tabs[0]["track"] if base_tabs else "")
+    tabs = []
+    for tab in base_tabs:
+        courses_qs = Course.objects.filter(kind=tab["kind"], academic_track=tab["track"])
+        tab = {
+            **tab,
+            "courses_count": courses_qs.count(),
+            "published_count": courses_qs.filter(status="published").count(),
+            "draft_count": courses_qs.filter(status="draft").count(),
+            "is_active": tab["kind"] == selected_kind and tab["track"] == selected_track,
+        }
+        tabs.append(tab)
+
+    selected_tab = next((tab for tab in tabs if tab["is_active"]), tabs[0] if tabs else None)
+    selected_section = CatalogSection.objects.filter(id=selected_tab.get("id")).first() if selected_tab else None
+    section_form = CatalogSectionForm(instance=selected_section, prefix="section")
+    new_section_form = CatalogSectionForm(prefix="new", initial={"sort_order": (CatalogSection.objects.count() + 1) * 10})
+    courses = Course.objects.none()
+    if selected_tab:
+        courses = (
+            Course.objects.filter(kind=selected_tab["kind"], academic_track=selected_tab["track"])
+            .select_related("subject", "instructor")
+            .annotate(
+                lessons_total=Count("units__lessons", distinct=True),
+                codes_total=Count("access_codes", distinct=True),
+                students_total=Count("access_grants", distinct=True),
+            )
+            .order_by("subject__name", "title")
+        )
+    return render(
+        request,
+        "dashboard/admin_catalog_manager.html",
+        {
+            "catalog_tabs": tabs,
+            "selected_tab": selected_tab,
+            "section_form": section_form,
+            "new_section_form": new_section_form,
+            "courses": courses,
+        },
+    )
 
 
 @admin_required
@@ -737,6 +834,12 @@ def admin_print_batch_cards(request, batch_id):
             "obj": c,
             "qr": _generate_qr_base64(c.code)
         })
+    AccessCodePrintLog.objects.create(
+        batch=batch,
+        printed_by=request.user if request.user.is_authenticated else None,
+        cards_count=len(cards),
+        notes="فتح صفحة طباعة الكروت",
+    )
     
     # تقسيم الكروت لمجموعات (كل مجموعة 3 كروت لصفحة A4 واحدة)
     grouped_cards = [cards[i:i + 3] for i in range(0, len(cards), 3)]
@@ -878,7 +981,7 @@ def admin_instructor_add(request):
                     password=form.cleaned_data["password"],
                     first_name=form.cleaned_data["first_name"],
                     last_name=form.cleaned_data["last_name"],
-                    is_staff=False,
+                    is_staff=True,
                 )
                 InstructorProfile.objects.update_or_create(
                     user=user,
@@ -927,6 +1030,7 @@ def admin_course_control(request, course_id):
     import_form = CourseStudentImportForm(prefix="import", course=course)
     lesson_form = CourseLessonUploadForm(prefix="lesson", course=course)
     sale_form = CourseCodeSaleForm(prefix="sale", course=course)
+    unit_form = CourseUnitQuickForm(prefix="unit")
     if request.method == "POST":
         action = request.POST.get("action")
         if action == "create_batch":
@@ -954,6 +1058,14 @@ def admin_course_control(request, course_id):
                 lesson.lesson_type = "video"
                 lesson.save()
                 messages.success(request, "تم تسجيل الدرس بنجاح.")
+                return redirect("dashboard:admin_course_control", course_id=course.id)
+        elif action == "create_unit":
+            unit_form = CourseUnitQuickForm(request.POST, prefix="unit")
+            if unit_form.is_valid():
+                unit = unit_form.save(commit=False)
+                unit.course = course
+                unit.save()
+                messages.success(request, f"تم إنشاء الجلسة {unit.title}.")
                 return redirect("dashboard:admin_course_control", course_id=course.id)
         elif action == "sell_code":
             sale_form = CourseCodeSaleForm(request.POST, prefix="sale", course=course)
@@ -1024,6 +1136,8 @@ def admin_course_control(request, course_id):
         .order_by("name")
     )
     lessons = Lesson.objects.filter(unit__course=course).select_related("unit").order_by("unit__sort_order", "sort_order")
+    units = course.units.prefetch_related("lessons").order_by("sort_order", "id")
+    print_logs = AccessCodePrintLog.objects.filter(batch__course=course).select_related("batch", "printed_by").order_by("-created_at")[:12]
     stats = {
         "lessons": lessons.count(),
         "codes": codes.count(),
@@ -1036,6 +1150,8 @@ def admin_course_control(request, course_id):
         "gross_sales": codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0,
         "my_sales": codes.filter(sale_status="sold", sold_by=request.user).count(),
         "my_gross_sales": codes.filter(sale_status="sold", sold_by=request.user).aggregate(total=Sum("sold_price_cents"))["total"] or 0,
+        "prints": AccessCodePrintLog.objects.filter(batch__course=course).count(),
+        "printed_cards": AccessCodePrintLog.objects.filter(batch__course=course).aggregate(total=Sum("cards_count"))["total"] or 0,
     }
     stats["gross_sales_display"] = f"{stats['gross_sales'] // 100:,}"
     stats["my_gross_sales_display"] = f"{stats['my_gross_sales'] // 100:,}"
@@ -1049,10 +1165,13 @@ def admin_course_control(request, course_id):
             "grants": grants,
             "centers": centers,
             "lessons": lessons[:20],
+            "units": units,
+            "print_logs": print_logs,
             "batch_form": batch_form,
             "import_form": import_form,
             "lesson_form": lesson_form,
             "sale_form": sale_form,
+            "unit_form": unit_form,
         },
     )
 
@@ -1646,7 +1765,7 @@ def _access_code_matches_student(access_code, user):
     return access_code.assigned_student_name.strip() == full_name
 
 
-def _catalog_tabs():
+def _default_catalog_tabs():
     return [
         {"label": "مكثفات العلمي", "kind": "intensive", "track": "scientific"},
         {"label": "مكثفات الأدبي", "kind": "intensive", "track": "literary"},
@@ -1654,6 +1773,39 @@ def _catalog_tabs():
         {"label": "منهاج الأدبي", "kind": "curriculum", "track": "literary"},
         {"label": "التاسع", "kind": "material", "track": "ninth"},
     ]
+
+
+def _ensure_default_catalog_sections():
+    for index, tab in enumerate(_default_catalog_tabs(), start=1):
+        CatalogSection.objects.get_or_create(
+            kind=tab["kind"],
+            track=tab["track"],
+            defaults={"label": tab["label"], "sort_order": index * 10, "is_visible": True},
+        )
+
+
+def _catalog_tabs(include_hidden=False):
+    try:
+        all_sections = CatalogSection.objects.all()
+        sections = all_sections
+        if not include_hidden:
+            sections = sections.filter(is_visible=True)
+        sections = list(sections.order_by("sort_order", "label"))
+        if not sections:
+            return []
+        return [
+            {
+                "id": section.id,
+                "label": section.label,
+                "kind": section.kind,
+                "track": section.track,
+                "sort_order": section.sort_order,
+                "is_visible": section.is_visible,
+            }
+            for section in sections
+        ]
+    except Exception:
+        return _default_catalog_tabs()
 
 
 def instructor_courses(request, instructor_id):
@@ -1701,8 +1853,132 @@ def admin_billing(request):
         "batches": batches,
         "total_revenue": sum(p.amount_cents for p in payments if p.status == "paid") / 100,
         "active_subs_count": active_subs_count,
+        "filter_reports": _filter_financial_rows(),
+        "course_reports": _course_financial_rows()[:30],
     }
     return render(request, "dashboard/admin_billing.html", context)
+
+
+def _filter_financial_rows():
+    rows = []
+    for tab in _catalog_tabs():
+        codes = AccessCode.objects.filter(course__kind=tab["kind"], course__academic_track=tab["track"])
+        prints = AccessCodePrintLog.objects.filter(batch__course__kind=tab["kind"], batch__course__academic_track=tab["track"])
+        rows.append({
+            "label": tab["label"],
+            "kind": tab["kind"],
+            "track": tab["track"],
+            "courses": Course.objects.filter(kind=tab["kind"], academic_track=tab["track"]).count(),
+            "codes": codes.count(),
+            "sold": codes.filter(sale_status="sold").count(),
+            "activated": codes.filter(redeemed_count__gt=0).count(),
+            "inactive": codes.filter(redeemed_count=0).count(),
+            "printed": prints.aggregate(total=Sum("cards_count"))["total"] or 0,
+            "gross": codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0,
+        })
+    return rows
+
+
+def _course_financial_rows():
+    rows = []
+    courses = Course.objects.select_related("subject", "instructor").order_by("academic_track", "kind", "subject__name", "title")
+    for course in courses:
+        codes = AccessCode.objects.filter(course=course)
+        prints = AccessCodePrintLog.objects.filter(batch__course=course)
+        rows.append({
+            "course": course,
+            "codes": codes.count(),
+            "sold": codes.filter(sale_status="sold").count(),
+            "activated": codes.filter(redeemed_count__gt=0).count(),
+            "inactive": codes.filter(redeemed_count=0).count(),
+            "printed": prints.aggregate(total=Sum("cards_count"))["total"] or 0,
+            "gross": codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0,
+        })
+    return rows
+
+
+@admin_required
+def admin_financial_report_export(request):
+    workbook = Workbook()
+    filters_sheet = workbook.active
+    filters_sheet.title = "filters"
+    filters_sheet.append(["filter", "courses", "codes", "sold", "activated", "inactive", "printed_cards", "gross_syp"])
+    for row in _filter_financial_rows():
+        filters_sheet.append([row["label"], row["courses"], row["codes"], row["sold"], row["activated"], row["inactive"], row["printed"], row["gross"] // 100])
+
+    courses_sheet = workbook.create_sheet("courses")
+    courses_sheet.append(["course", "filter", "subject", "instructor", "codes", "sold", "activated", "inactive", "printed_cards", "gross_syp"])
+    for row in _course_financial_rows():
+        course = row["course"]
+        courses_sheet.append([
+            course.title,
+            f"{course.get_kind_display()} {course.get_academic_track_display()}",
+            course.subject.name,
+            course.instructor.get_full_name() or course.instructor.username,
+            row["codes"],
+            row["sold"],
+            row["activated"],
+            row["inactive"],
+            row["printed"],
+            row["gross"] // 100,
+        ])
+    return _workbook_response(workbook, f"financial-report-{timezone.now().strftime('%Y%m%d-%H%M')}.xlsx")
+
+
+@admin_required
+def admin_course_report_export(request, course_id):
+    course = get_object_or_404(Course.objects.select_related("subject", "instructor"), id=course_id)
+    workbook = Workbook()
+    summary = workbook.active
+    summary.title = "summary"
+    codes = AccessCode.objects.filter(course=course)
+    prints = AccessCodePrintLog.objects.filter(batch__course=course)
+    summary.append(["course", course.title])
+    summary.append(["codes", codes.count()])
+    summary.append(["sold", codes.filter(sale_status="sold").count()])
+    summary.append(["activated", codes.filter(redeemed_count__gt=0).count()])
+    summary.append(["inactive", codes.filter(redeemed_count=0).count()])
+    summary.append(["printed_cards", prints.aggregate(total=Sum("cards_count"))["total"] or 0])
+    summary.append(["gross_syp", (codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0) // 100])
+
+    codes_sheet = workbook.create_sheet("codes")
+    codes_sheet.append(["code", "sale_status", "student_name", "student_phone", "sold_by", "sold_at", "activated", "sales_center", "batch"])
+    for code in codes.select_related("sold_by", "sales_center", "batch").order_by("-created_at"):
+        codes_sheet.append([
+            code.code,
+            code.sale_status,
+            code.assigned_student_name,
+            code.assigned_student_phone,
+            code.sold_by.username if code.sold_by else "",
+            code.sold_at.strftime("%Y-%m-%d %H:%M") if code.sold_at else "",
+            "yes" if code.redeemed_count else "no",
+            code.sales_center.name if code.sales_center else "",
+            code.batch.name if code.batch else "",
+        ])
+
+    activations = workbook.create_sheet("activations")
+    activations.append(["student", "username", "code", "device", "created_at"])
+    for grant in AccessGrant.objects.filter(course=course).select_related("user", "access_code").order_by("-created_at"):
+        activations.append([
+            grant.user.get_full_name() or grant.user.username,
+            grant.user.username,
+            grant.access_code.code if grant.access_code else "",
+            grant.device_fingerprint,
+            grant.created_at.strftime("%Y-%m-%d %H:%M"),
+        ])
+    return _workbook_response(workbook, f"course-report-{course.id}-{timezone.now().strftime('%Y%m%d-%H%M')}.xlsx")
+
+
+def _workbook_response(workbook, filename):
+    buffer = BytesIO()
+    workbook.save(buffer)
+    buffer.seek(0)
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
 
 
 @admin_required

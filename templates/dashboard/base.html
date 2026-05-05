@@ -88,8 +88,11 @@
                 <div class="nav-links">
                     {% if user.is_staff %}
                         <a href="{% url 'dashboard:admin_dashboard' %}" class="nav-link {% if 'admin' in request.path %}active{% endif %}">الرئيسية</a>
+                        <a href="{% url 'dashboard:admin_content_hub' %}" class="nav-link">المحتوى</a>
+                        <a href="{% url 'dashboard:admin_catalog_manager' %}" class="nav-link">الاستكشاف</a>
                         <a href="{% url 'dashboard:admin_students' %}" class="nav-link">الطلاب</a>
                         <a href="{% url 'dashboard:admin_billing' %}" class="nav-link">المالية</a>
+                        <a href="{% url 'dashboard:admin_partners' %}" class="nav-link">الشركاء</a>
                         <a href="{% url 'dashboard:admin_packages' %}" class="nav-link">الباقات</a>
                     {% elif user.is_authenticated %}
                         <a href="{% url 'dashboard:student_dashboard' %}" class="nav-link {% if request.path == '/dashboard/student/' %}active{% endif %}">الرئيسية</a>

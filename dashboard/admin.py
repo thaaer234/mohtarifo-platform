@@ -1,6 +1,13 @@
 from django.contrib import admin
 
-from .models import StudentNotification
+from .models import CatalogSection, StudentNotification
+
+
+@admin.register(CatalogSection)
+class CatalogSectionAdmin(admin.ModelAdmin):
+    list_display = ("label", "kind", "track", "sort_order", "is_visible")
+    list_filter = ("is_visible", "kind", "track")
+    search_fields = ("label",)
 
 
 @admin.register(StudentNotification)

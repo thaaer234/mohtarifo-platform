@@ -24,6 +24,7 @@ class Course(models.Model):
         ("semester", "فصل"),
         ("foundation", "تأسيس"),
         ("material", "مادة"),
+        ("exam_camp", "معسكر امتحاني"),
     ]
 
     TRACK_CHOICES = [

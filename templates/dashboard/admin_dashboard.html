@@ -4,269 +4,359 @@
 {% block title %}لوحة الإدارة | محترفو التعليم{% endblock %}
 
 {% block content %}
-<div class="reveal-up">
-    <!-- Header Section -->
-    <header class="flex-between mb-10 flex-wrap gap-6">
-        <div class="flex-center gap-6">
-            <div class="flex-center" style="width: 70px; height: 70px; border-radius: 24px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold);">
+<div class="admin-command-page reveal-up">
+    <header class="admin-command-hero">
+        <div class="admin-command-title">
+            <div class="admin-avatar">
                 {% if instructor_profile.avatar %}
-                    <img src="{{ instructor_profile.avatar.url }}" alt="Admin" style="width: 100%; height: 100%; border-radius: 24px; object-fit: cover;">
+                    <img src="{{ instructor_profile.avatar.url }}" alt="Admin">
                 {% else %}
-                    <i data-lucide="shield" style="width: 32px; height: 32px;"></i>
+                    <i data-lucide="shield-check"></i>
                 {% endif %}
             </div>
             <div>
-                <h1 style="font-size: 2.2rem; margin-bottom: 0.25rem;">غرفة العمليات المركزية</h1>
-                <p class="text-muted" style="margin-bottom: 0;">مرحباً بك مجدداً، إليك نظرة شاملة على أداء المنصة اليوم.</p>
+                <div class="badge badge-gold mb-3">لوحة الإدارة</div>
+                <h1>غرفة العمليات المركزية</h1>
+                <p class="text-muted">كل شيء مفصول حسب العمل: المحتوى، الطلاب، البيع، التقارير، والأدوات.</p>
             </div>
         </div>
-        <div class="flex-center gap-4">
-            <a href="/admin/" class="btn btn-secondary" target="_blank" style="opacity: 0.5; font-size: 0.75rem;">
-                <i data-lucide="shield-check" style="width: 14px;"></i> Django Admin
-            </a>
-            <a href="{% url 'dashboard:admin_course_create' %}" class="btn btn-primary btn-glow">
-                <i data-lucide="plus-circle" style="width: 18px;"></i> إضافة دورة جديدة
-            </a>
+        <div class="admin-command-actions">
+            <a href="{% url 'dashboard:admin_course_create' %}" class="btn btn-primary btn-glow"><i data-lucide="plus-circle"></i> دورة جديدة</a>
+            <a href="{% url 'dashboard:admin_financial_report_export' %}" class="btn btn-secondary"><i data-lucide="download"></i> تقرير شامل</a>
+            <a href="/admin/" target="_blank" class="btn btn-secondary"><i data-lucide="database"></i> Django Admin</a>
         </div>
     </header>
 
-    <!-- Quick Action Center -->
-    <div class="grid-4 mb-12">
-        <a href="{% url 'dashboard:admin_content_hub' %}" class="premium-card flex-center gap-4" style="padding: 1.5rem; text-decoration: none; justify-content: flex-start; transition: 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='none'">
-            <div class="flex-center" style="width: 50px; height: 50px; border-radius: 16px; background: rgba(139, 92, 246, 0.1); color: #8b5cf6;"><i data-lucide="book-plus"></i></div>
-            <div>
-                <strong class="block" style="font-size: 1rem; color: var(--text-primary);">إضافة مادة</strong>
-                <span class="text-muted" style="font-size: 0.75rem;">إنشاء مادة تعليمية جديدة</span>
-            </div>
-        </a>
-        <a href="{% url 'dashboard:admin_instructor_add' %}" class="premium-card flex-center gap-4" style="padding: 1.5rem; text-decoration: none; justify-content: flex-start; transition: 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='none'">
-            <div class="flex-center" style="width: 50px; height: 50px; border-radius: 16px; background: rgba(59, 130, 246, 0.1); color: #3b82f6;"><i data-lucide="user-plus"></i></div>
-            <div>
-                <strong class="block" style="font-size: 1rem; color: var(--text-primary);">إضافة مدرس</strong>
-                <span class="text-muted" style="font-size: 0.75rem;">تسجيل أستاذ جديد</span>
-            </div>
-        </a>
-        <a href="{% url 'dashboard:admin_course_create' %}" class="premium-card flex-center gap-4" style="padding: 1.5rem; text-decoration: none; justify-content: flex-start; transition: 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='none'">
-            <div class="flex-center" style="width: 50px; height: 50px; border-radius: 16px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold);"><i data-lucide="layers"></i></div>
-            <div>
-                <strong class="block" style="font-size: 1rem; color: var(--text-primary);">إضافة دورة</strong>
-                <span class="text-muted" style="font-size: 0.75rem;">إنشاء كورس أو مكثفة</span>
-            </div>
-        </a>
-        <a href="{% url 'dashboard:admin_partners' %}" class="premium-card flex-center gap-4" style="padding: 1.5rem; text-decoration: none; justify-content: flex-start; transition: 0.3s;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='none'">
-            <div class="flex-center" style="width: 50px; height: 50px; border-radius: 16px; background: rgba(16, 185, 129, 0.1); color: #10b981;"><i data-lucide="store"></i></div>
-            <div>
-                <strong class="block" style="font-size: 1rem; color: var(--text-primary);">إضافة مركز</strong>
-                <span class="text-muted" style="font-size: 0.75rem;">تفعيل مركز بيع جديد</span>
-            </div>
-        </a>
-    </div>
+    <section class="admin-health-grid">
+        <article class="admin-health-card">
+            <i data-lucide="users"></i>
+            <span>الطلاب</span>
+            <strong>{{ students_count }}</strong>
+            <a href="{% url 'dashboard:admin_students' %}">إدارة الطلاب</a>
+        </article>
+        <article class="admin-health-card">
+            <i data-lucide="book-open"></i>
+            <span>الدورات</span>
+            <strong>{{ courses_count }}</strong>
+            <a href="{% url 'dashboard:admin_content_hub' %}">إدارة المحتوى</a>
+        </article>
+        <article class="admin-health-card">
+            <i data-lucide="key-round"></i>
+            <span>الأكواد</span>
+            <strong>{{ codes_count }}</strong>
+            <a href="{% url 'dashboard:admin_billing' %}">المالية والأكواد</a>
+        </article>
+        <article class="admin-health-card">
+            <i data-lucide="shopping-cart"></i>
+            <span>المباع</span>
+            <strong>{{ sold_codes_count }}</strong>
+            <a href="{% url 'dashboard:admin_billing' %}">تقرير المبيعات</a>
+        </article>
+        <article class="admin-health-card">
+            <i data-lucide="store"></i>
+            <span>مراكز البيع</span>
+            <strong>{{ sales_centers_count }}</strong>
+            <a href="{% url 'dashboard:admin_partners' %}">إدارة الشركاء</a>
+        </article>
+        <article class="admin-health-card">
+            <i data-lucide="file-question"></i>
+            <span>الاختبارات</span>
+            <strong>{{ exams_count }}</strong>
+            <a href="{% url 'dashboard:admin_exams_hub' %}">مركز الاختبارات</a>
+        </article>
+    </section>
 
-    <!-- Top Stats Bento Grid -->
-    <div class="stats-grid mb-12">
-        <div class="premium-card stat-card" style="border-right: 4px solid #3b82f6;">
-            <div class="flex-between w-full mb-4">
-                <div class="stat-icon" style="color: #3b82f6; background: rgba(59, 130, 246, 0.1);"><i data-lucide="users"></i></div>
-                <span class="badge badge-success" style="font-size: 0.7rem;"><i data-lucide="trending-up" style="width: 12px;"></i> +12%</span>
+    <section class="admin-workspace-grid">
+        <article class="admin-zone primary-zone">
+            <div class="zone-head">
+                <div>
+                    <div class="badge badge-gold mb-3">المحتوى التعليمي</div>
+                    <h2>الدورات، المواد، الجلسات، والأقسام</h2>
+                </div>
+                <a href="{% url 'dashboard:admin_course_create' %}" class="btn btn-primary btn-sm"><i data-lucide="plus"></i> إضافة دورة</a>
             </div>
-            <div class="stat-info">
-                <span class="value">{{ students_count }}</span>
-                <span class="label">إجمالي الطلاب</span>
+            <div class="admin-action-grid">
+                <a href="{% url 'dashboard:admin_course_create' %}" class="admin-action-card">
+                    <i data-lucide="layers"></i>
+                    <strong>إنشاء دورة</strong>
+                    <span>كورس، مكثفة، منهاج، أو مادة</span>
+                </a>
+                <a href="{% url 'dashboard:admin_catalog_manager' %}" class="admin-action-card">
+                    <i data-lucide="layout-grid"></i>
+                    <strong>واجهة الاستكشاف</strong>
+                    <span>مكثفات العلمي والأدبي والمنهاج والتاسع</span>
+                </a>
+                <a href="{% url 'dashboard:admin_content_hub' %}" class="admin-action-card">
+                    <i data-lucide="book-plus"></i>
+                    <strong>مركز المحتوى</strong>
+                    <span>المواد والدورات الحديثة</span>
+                </a>
+                <a href="{% url 'dashboard:admin_subjects' %}" class="admin-action-card">
+                    <i data-lucide="book-type"></i>
+                    <strong>المواد</strong>
+                    <span>رياضيات، فيزياء، عربي...</span>
+                </a>
+                <a href="{% url 'dashboard:admin_units' %}" class="admin-action-card">
+                    <i data-lucide="folder-tree"></i>
+                    <strong>الجلسات</strong>
+                    <span>تنظيم جلسات كل دورة</span>
+                </a>
+                <a href="{% url 'dashboard:admin_lessons' %}" class="admin-action-card">
+                    <i data-lucide="file-video"></i>
+                    <strong>الأقسام/الدروس</strong>
+                    <span>فيديو، PDF، معاينة مجانية</span>
+                </a>
+                <a href="{% url 'dashboard:admin_instructor_add' %}" class="admin-action-card">
+                    <i data-lucide="user-plus"></i>
+                    <strong>المدرسون</strong>
+                    <span>إضافة مدرس وصورته</span>
+                </a>
             </div>
-        </div>
-        <div class="premium-card stat-card" style="border-right: 4px solid var(--brand-gold);">
-            <div class="flex-between w-full mb-4">
-                <div class="stat-icon"><i data-lucide="book-open"></i></div>
-            </div>
-            <div class="stat-info">
-                <span class="value">{{ courses_count }}</span>
-                <span class="label">الدورات المنشورة</span>
-            </div>
-        </div>
-        <div class="premium-card stat-card" style="border-right: 4px solid #10b981;">
-            <div class="flex-between w-full mb-4">
-                <div class="stat-icon" style="color: #10b981; background: rgba(16, 185, 129, 0.1);"><i data-lucide="ticket"></i></div>
-            </div>
-            <div class="stat-info">
-                <span class="value">{{ sold_codes_count }}</span>
-                <span class="label">الأكواد المفعلة</span>
-            </div>
-        </div>
-        <div class="premium-card stat-card" style="border-right: 4px solid #8b5cf6;">
-            <div class="flex-between w-full mb-4">
-                <div class="stat-icon" style="color: #8b5cf6; background: rgba(139, 92, 246, 0.1);"><i data-lucide="store"></i></div>
-            </div>
-            <div class="stat-info">
-                <span class="value">{{ sales_centers_count }}</span>
-                <span class="label">مراكز البيع</span>
-            </div>
-        </div>
-    </div>
+        </article>
 
-    <div class="admin-dashboard-layout">
-        <!-- Main Content Area -->
-        <main>
-            <!-- Recent Content Hub -->
-            <section class="mb-10">
-                <div class="flex-between mb-6">
-                    <h3 style="font-size: 1.4rem; display: flex; align-items: center; gap: 0.75rem;"><i data-lucide="layers" class="gold"></i> إدارة المحتوى التعليمي</h3>
-                    <a href="{% url 'dashboard:admin_partners' %}" class="gold font-bold" style="font-size: 0.85rem;">إدارة الشركاء <i data-lucide="chevron-left" style="width: 14px;"></i></a>
+        <article class="admin-zone">
+            <div class="zone-head compact">
+                <div>
+                    <div class="badge badge-gold mb-3">البيع والأكواد</div>
+                    <h2>التوزيع والدفع</h2>
                 </div>
-                <div class="flex-column gap-3">
-                    {% for course in courses|slice:":5" %}
-                        <div class="premium-card flex-between" style="padding: 1.25rem 2rem;">
-                            <div>
-                                <strong class="block" style="font-size: 1rem; color: var(--text-primary); margin-bottom: 0.25rem;">{{ course.title }}</strong>
-                                <span class="text-muted" style="font-size: 0.8rem;">{{ course.lessons_total }} درس • {{ course.units.count }} وحدات</span>
-                            </div>
-                            <div class="flex-center gap-2">
-                                <a href="{% url 'dashboard:admin_course_control' course.id %}" class="btn btn-secondary" style="padding: 0.5rem; border-radius: 12px;" title="تحكم"><i data-lucide="settings" style="width: 18px;"></i></a>
-                                <a href="{% url 'dashboard:public_course_detail' course.id %}" class="btn btn-secondary" style="padding: 0.5rem; border-radius: 12px;" target="_blank" title="عرض"><i data-lucide="eye" style="width: 18px;"></i></a>
-                            </div>
-                        </div>
-                    {% empty %}
-                        <div class="premium-card text-center py-8" style="border-style: dashed;">
-                            <i data-lucide="folder-open" class="text-muted mb-4" style="opacity: 0.2; width: 48px; height: 48px;"></i>
-                            <p class="text-muted">لا توجد دورات حالياً</p>
-                        </div>
-                    {% endfor %}
-                </div>
-            </section>
+            </div>
+            <div class="admin-action-list">
+                <a href="{% url 'dashboard:admin_billing' %}"><i data-lucide="wallet"></i><span>المركز المالي والتقارير</span></a>
+                <a href="{% url 'dashboard:admin_partners' %}"><i data-lucide="store"></i><span>المعاهد ومراكز البيع</span></a>
+                <a href="{% url 'dashboard:admin_packages' %}"><i data-lucide="package"></i><span>باقات الدورات</span></a>
+                <a href="{% url 'dashboard:admin_financial_report_export' %}"><i data-lucide="file-spreadsheet"></i><span>تصدير تقرير شامل</span></a>
+            </div>
+        </article>
 
-            <!-- Sales & Batches Hub -->
-            <section class="mb-10">
-                <div class="flex-between mb-6">
-                    <h3 style="font-size: 1.4rem; display: flex; align-items: center; gap: 0.75rem;"><i data-lucide="barcode" class="gold"></i> أحدث دفعات الأكواد</h3>
-                    <a href="{% url 'dashboard:admin_billing' %}" class="gold font-bold" style="font-size: 0.85rem;">إدارة الدفعات <i data-lucide="chevron-left" style="width: 14px;"></i></a>
+        <article class="admin-zone">
+            <div class="zone-head compact">
+                <div>
+                    <div class="badge badge-gold mb-3">الطلاب</div>
+                    <h2>الحسابات والوصول</h2>
                 </div>
-                <div class="premium-card" style="padding: 0; overflow: hidden;">
-                    <table style="width: 100%; border-collapse: collapse; text-align: right;">
-                        <thead>
-                            <tr style="background: var(--bg-surface-elevated); color: var(--text-muted); font-size: 0.85rem;">
-                                <th style="padding: 1.25rem 2rem;">اسم الدفعة</th>
-                                <th style="padding: 1.25rem 2rem;">التاريخ</th>
-                                <th style="padding: 1.25rem 2rem;">الحالة</th>
-                                <th style="padding: 1.25rem 2rem;">الإجراءات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for batch in recent_batches|slice:":5" %}
-                            <tr style="border-bottom: 1px solid var(--border-light); transition: 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='none'">
-                                <td style="padding: 1.25rem 2rem;"><strong style="color: var(--text-primary);">{{ batch.name }}</strong></td>
-                                <td style="padding: 1.25rem 2rem;" class="text-muted">{{ batch.created_at|date:"Y-m-d" }}</td>
-                                <td style="padding: 1.25rem 2rem;"><span class="badge badge-success">نشط</span></td>
-                                <td style="padding: 1.25rem 2rem;">
-                                    <a href="{% url 'dashboard:admin_print_batch_cards' batch.id %}" class="gold" title="طباعة البطاقات">
-                                        <i data-lucide="printer" style="width: 20px;"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr><td colspan="4" class="text-center py-8 text-muted">لا توجد دفعات حالياً</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </section>
+            </div>
+            <div class="admin-action-list">
+                <a href="{% url 'dashboard:admin_students' %}"><i data-lucide="users"></i><span>إدارة الطلاب</span></a>
+                <a href="{% url 'dashboard:admin_export_students' %}"><i data-lucide="download"></i><span>تصدير الطلاب Excel</span></a>
+                <a href="{% url 'dashboard:student_dashboard' %}"><i data-lucide="eye"></i><span>عرض الواجهة كطالب</span></a>
+            </div>
+        </article>
 
-            <!-- Learning Architecture Hub -->
-            <section>
-                <div class="flex-between mb-6">
-                    <h3 style="font-size: 1.4rem; display: flex; align-items: center; gap: 0.75rem;"><i data-lucide="git-branch" class="gold"></i> الهيكلية التعليمية والأقسام</h3>
+        <article class="admin-zone">
+            <div class="zone-head compact">
+                <div>
+                    <div class="badge badge-gold mb-3">التقييم</div>
+                    <h2>الاختبارات والأسئلة</h2>
                 </div>
-                <div class="grid-2">
-                    <a href="{% url 'dashboard:admin_departments' %}" class="premium-card flex-center gap-4" style="padding: 1.5rem; text-decoration: none; justify-content: flex-start; transition: 0.3s;" onmouseover="this.style.transform='scale(1.02)'; this.style.borderColor='var(--brand-gold)'" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-light)'">
-                        <div class="flex-center" style="width: 50px; height: 50px; border-radius: 16px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold);"><i data-lucide="component"></i></div>
+            </div>
+            <div class="admin-action-list">
+                <a href="{% url 'dashboard:admin_exams_hub' %}"><i data-lucide="clipboard-check"></i><span>مركز الاختبارات</span></a>
+                <a href="{% url 'dashboard:admin_exams_hub' %}"><i data-lucide="help-circle"></i><span>بنك الأسئلة</span></a>
+                <a href="{% url 'dashboard:admin_exams_hub' %}"><i data-lucide="bar-chart-3"></i><span>نتائج ومحاولات الطلاب</span></a>
+            </div>
+        </article>
+
+        <article class="admin-zone">
+            <div class="zone-head compact">
+                <div>
+                    <div class="badge badge-gold mb-3">النظام</div>
+                    <h2>البيانات والأدوات</h2>
+                </div>
+            </div>
+            <div class="admin-action-list">
+                <a href="{% url 'dashboard:admin_system_backup' %}"><i data-lucide="archive"></i><span>نسخة احتياطية JSON</span></a>
+                <a href="/admin/" target="_blank"><i data-lucide="settings"></i><span>Django Admin المتقدم</span></a>
+            </div>
+        </article>
+    </section>
+
+    <section class="admin-lower-grid">
+        <article class="admin-zone">
+            <div class="zone-head">
+                <div>
+                    <div class="badge badge-gold mb-3">نشاط حديث</div>
+                    <h2>آخر الدورات المدارة</h2>
+                </div>
+                <a href="{% url 'dashboard:admin_content_hub' %}" class="btn btn-secondary btn-sm">كل المحتوى</a>
+            </div>
+            <div class="admin-table-list">
+                {% for course in courses|slice:":6" %}
+                    <div class="admin-row-card">
                         <div>
-                            <strong class="block" style="font-size: 1rem; color: var(--text-primary);">إدارة الأقسام</strong>
-                            <span class="text-muted" style="font-size: 0.75rem;">الأفرع الأكاديمية</span>
+                            <strong>{{ course.title }}</strong>
+                            <span>{{ course.subject.name }} · {{ course.lessons_total }} قسم · {{ course.grants_total }} طالب</span>
                         </div>
-                    </a>
-                    <a href="{% url 'dashboard:admin_subjects' %}" class="premium-card flex-center gap-4" style="padding: 1.5rem; text-decoration: none; justify-content: flex-start; transition: 0.3s;" onmouseover="this.style.transform='scale(1.02)'; this.style.borderColor='var(--brand-gold)'" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-light)'">
-                        <div class="flex-center" style="width: 50px; height: 50px; border-radius: 16px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold);"><i data-lucide="book-type"></i></div>
-                        <div>
-                            <strong class="block" style="font-size: 1rem; color: var(--text-primary);">إدارة المواد</strong>
-                            <span class="text-muted" style="font-size: 0.75rem;">المناهج والمواد</span>
+                        <div class="row-actions">
+                            <a href="{% url 'dashboard:admin_course_control' course.id %}" title="تحكم"><i data-lucide="settings"></i></a>
+                            <a href="{% url 'dashboard:public_course_detail' course.id %}" target="_blank" title="عرض"><i data-lucide="eye"></i></a>
                         </div>
-                    </a>
-                    <a href="{% url 'dashboard:admin_units' %}" class="premium-card flex-center gap-4" style="padding: 1.5rem; text-decoration: none; justify-content: flex-start; transition: 0.3s;" onmouseover="this.style.transform='scale(1.02)'; this.style.borderColor='var(--brand-gold)'" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-light)'">
-                        <div class="flex-center" style="width: 50px; height: 50px; border-radius: 16px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold);"><i data-lucide="folder-tree"></i></div>
-                        <div>
-                            <strong class="block" style="font-size: 1rem; color: var(--text-primary);">إدارة الوحدات</strong>
-                            <span class="text-muted" style="font-size: 0.75rem;">تنظيم الكورسات</span>
-                        </div>
-                    </a>
-                    <a href="{% url 'dashboard:admin_lessons' %}" class="premium-card flex-center gap-4" style="padding: 1.5rem; text-decoration: none; justify-content: flex-start; transition: 0.3s;" onmouseover="this.style.transform='scale(1.02)'; this.style.borderColor='var(--brand-gold)'" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-light)'">
-                        <div class="flex-center" style="width: 50px; height: 50px; border-radius: 16px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold);"><i data-lucide="file-video"></i></div>
-                        <div>
-                            <strong class="block" style="font-size: 1rem; color: var(--text-primary);">إدارة الدروس</strong>
-                            <span class="text-muted" style="font-size: 0.75rem;">رفع الفيديوهات والملفات</span>
-                        </div>
-                    </a>
-                </div>
-            </section>
-        </main>
-
-        <!-- Admin Sidebar Tools -->
-        <aside>
-            <div class="premium-card mb-6">
-                <h4 class="gold mb-6" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">الاختبارات والتقييم</h4>
-                <div class="flex-column gap-2">
-                    <a href="{% url 'dashboard:admin_exams_hub' %}" class="flex-center gap-4 p-3 text-muted" style="text-decoration: none; justify-content: flex-start; border-radius: 12px; transition: 0.3s;" onmouseover="this.style.background='var(--bg-surface-elevated)'; this.style.color='var(--text-primary)'" onmouseout="this.style.background='none'; this.style.color='var(--text-muted)'">
-                        <i data-lucide="pencil-ruler" style="width: 18px;"></i> <span class="font-bold">بنك الاختبارات</span>
-                    </a>
-                    <a href="{% url 'dashboard:admin_exams_hub' %}" class="flex-center gap-4 p-3 text-muted" style="text-decoration: none; justify-content: flex-start; border-radius: 12px; transition: 0.3s;" onmouseover="this.style.background='var(--bg-surface-elevated)'; this.style.color='var(--text-primary)'" onmouseout="this.style.background='none'; this.style.color='var(--text-muted)'">
-                        <i data-lucide="help-circle" style="width: 18px;"></i> <span class="font-bold">بنك الأسئلة</span>
-                    </a>
-                    <a href="{% url 'dashboard:admin_exams_hub' %}" class="flex-center gap-4 p-3 text-muted" style="text-decoration: none; justify-content: flex-start; border-radius: 12px; transition: 0.3s;" onmouseover="this.style.background='var(--bg-surface-elevated)'; this.style.color='var(--text-primary)'" onmouseout="this.style.background='none'; this.style.color='var(--text-muted)'">
-                        <i data-lucide="graduation-cap" style="width: 18px;"></i> <span class="font-bold">نتائج الطلاب</span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="premium-card mb-6">
-                <h4 class="gold mb-6" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">المالية والاشتراكات</h4>
-                <div class="flex-column gap-2">
-                    <a href="{% url 'dashboard:admin_billing' %}" class="flex-center gap-4 p-3 text-muted" style="text-decoration: none; justify-content: flex-start; border-radius: 12px; transition: 0.3s;" onmouseover="this.style.background='var(--bg-surface-elevated)'; this.style.color='var(--text-primary)'" onmouseout="this.style.background='none'; this.style.color='var(--text-muted)'">
-                        <i data-lucide="credit-card" style="width: 18px;"></i> <span class="font-bold">الاشتراكات النشطة</span>
-                    </a>
-                    <a href="{% url 'dashboard:admin_billing' %}" class="flex-center gap-4 p-3 text-muted" style="text-decoration: none; justify-content: flex-start; border-radius: 12px; transition: 0.3s;" onmouseover="this.style.background='var(--bg-surface-elevated)'; this.style.color='var(--text-primary)'" onmouseout="this.style.background='none'; this.style.color='var(--text-muted)'">
-                        <i data-lucide="dollar-sign" style="width: 18px;"></i> <span class="font-bold">سجل المدفوعات</span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="premium-card" style="background: var(--bg-surface-elevated);">
-                <h4 class="gold mb-6" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">النظام والبيانات</h4>
-                <div class="flex-column gap-6">
-                    <div>
-                        <h5 style="font-size: 0.9rem; margin-bottom: 0.5rem;">النسخ الاحتياطي</h5>
-                        <p class="text-muted" style="font-size: 0.75rem; margin-bottom: 1rem;">تصدير كامل لقاعدة البيانات</p>
-                        <a href="{% url 'dashboard:admin_system_backup' %}" class="btn btn-secondary w-full" style="font-size: 0.8rem;">
-                            <i data-lucide="download" style="width: 14px;"></i> تحميل JSON
-                        </a>
                     </div>
-                    <div>
-                        <h5 style="font-size: 0.9rem; margin-bottom: 0.5rem;">تصدير الطلاب</h5>
-                        <p class="text-muted" style="font-size: 0.75rem; margin-bottom: 1rem;">ملف Excel بأرقام الهواتف</p>
-                        <a href="{% url 'dashboard:admin_export_students' %}" class="btn btn-secondary w-full" style="font-size: 0.8rem;">
-                            <i data-lucide="file-spreadsheet" style="width: 14px;"></i> تصدير Excel
-                        </a>
-                    </div>
-                    <div style="padding-top: 1.5rem; border-top: 1px solid var(--border-light);">
-                        <a href="{% url 'dashboard:student_dashboard' %}" class="btn btn-primary w-full" style="font-size: 0.8rem;">
-                            <i data-lucide="eye" style="width: 14px;"></i> عرض كطالب
-                        </a>
-                    </div>
-                </div>
+                {% empty %}
+                    <div class="empty-inline">لا توجد دورات حالياً.</div>
+                {% endfor %}
             </div>
-        </aside>
-    </div>
+        </article>
+
+        <article class="admin-zone">
+            <div class="zone-head">
+                <div>
+                    <div class="badge badge-gold mb-3">الأكواد</div>
+                    <h2>آخر دفعات الأكواد</h2>
+                </div>
+                <a href="{% url 'dashboard:admin_billing' %}" class="btn btn-secondary btn-sm">المالية</a>
+            </div>
+            <div class="admin-table-list">
+                {% for batch in recent_batches|slice:":6" %}
+                    <div class="admin-row-card">
+                        <div>
+                            <strong>{{ batch.name }}</strong>
+                            <span>{{ batch.course.title }} · {% firstof batch.institute.name batch.sales_center.name "مستقل" %}</span>
+                        </div>
+                        <div class="row-actions">
+                            <a href="{% url 'dashboard:download_batch_codes' batch.id %}" title="Excel"><i data-lucide="download"></i></a>
+                            <a href="{% url 'dashboard:admin_print_batch_cards' batch.id %}" target="_blank" title="طباعة"><i data-lucide="printer"></i></a>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-inline">لا توجد دفعات حالياً.</div>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
 </div>
 
 <style>
-    @media (max-width: 1100px) {
-        .admin-dashboard-layout { grid-template-columns: 1fr !important; gap: 4rem !important; }
+    .admin-command-page { padding-bottom: 2rem; }
+    .admin-command-hero {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 2rem;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-light);
+        border-radius: 28px;
+        background: linear-gradient(135deg, rgba(var(--brand-gold-rgb), .12), transparent 42%), var(--bg-surface);
+    }
+    .admin-command-title { display: flex; align-items: center; gap: 1.25rem; min-width: 0; }
+    .admin-avatar { width: 72px; height: 72px; border-radius: 22px; display: grid; place-items: center; color: var(--brand-gold); background: rgba(var(--brand-gold-rgb), .1); flex: 0 0 auto; }
+    .admin-avatar img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
+    .admin-avatar i { width: 34px; height: 34px; }
+    .admin-command-hero h1 { font-size: clamp(2rem, 4vw, 3rem); line-height: 1.15; margin: 0 0 .55rem; }
+    .admin-command-hero p { margin: 0; line-height: 1.8; }
+    .admin-command-actions { display: flex; gap: .75rem; flex-wrap: wrap; justify-content: flex-end; }
+    .admin-command-actions .btn { white-space: nowrap; }
+
+    .admin-health-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .admin-health-card {
+        display: grid;
+        gap: .45rem;
+        min-height: 132px;
+        padding: 1.2rem;
+        border: 1px solid var(--border-light);
+        border-radius: 20px;
+        background: var(--bg-surface);
+        text-decoration: none;
+    }
+    .admin-health-card i { width: 22px; height: 22px; color: var(--brand-gold); }
+    .admin-health-card span { color: var(--text-muted); font-size: .78rem; font-weight: 900; }
+    .admin-health-card strong { color: var(--text-primary); font-size: 1.8rem; line-height: 1; }
+    .admin-health-card a { color: var(--brand-gold); font-size: .78rem; font-weight: 900; text-decoration: none; }
+
+    .admin-workspace-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr);
+        gap: 1.5rem;
+        align-items: stretch;
+        margin-bottom: 1.5rem;
+    }
+    .admin-zone {
+        padding: 1.6rem;
+        border: 1px solid var(--border-light);
+        border-radius: 22px;
+        background: var(--bg-surface);
+    }
+    .primary-zone { grid-row: span 4; }
+    .zone-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
+    .zone-head.compact { margin-bottom: 1rem; }
+    .zone-head h2 { font-size: 1.35rem; line-height: 1.35; margin: 0; }
+
+    .admin-action-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+    .admin-action-card,
+    .admin-action-list a {
+        border: 1px solid var(--border-light);
+        border-radius: 16px;
+        background: var(--bg-surface-elevated);
+        color: inherit;
+        text-decoration: none;
+        transition: transform .22s ease, border-color .22s ease, background .22s ease;
+    }
+    .admin-action-card { display: grid; gap: .5rem; padding: 1.2rem; }
+    .admin-action-card:hover,
+    .admin-action-list a:hover,
+    .admin-row-card:hover { transform: translateY(-3px); border-color: var(--brand-gold-glow); }
+    .admin-action-card i,
+    .admin-action-list i { width: 22px; height: 22px; color: var(--brand-gold); }
+    .admin-action-card strong { color: var(--text-primary); font-size: 1rem; }
+    .admin-action-card span,
+    .admin-action-list span { color: var(--text-muted); font-size: .82rem; line-height: 1.5; }
+    .admin-action-list { display: grid; gap: .7rem; }
+    .admin-action-list a { display: flex; align-items: center; gap: .75rem; padding: .9rem 1rem; }
+
+    .admin-lower-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+    .admin-table-list { display: grid; gap: .75rem; }
+    .admin-row-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem;
+        border: 1px solid var(--border-light);
+        border-radius: 16px;
+        background: var(--bg-surface-elevated);
+        transition: transform .22s ease, border-color .22s ease;
+    }
+    .admin-row-card strong { display: block; color: var(--text-primary); margin-bottom: .25rem; }
+    .admin-row-card span { color: var(--text-muted); font-size: .82rem; }
+    .row-actions { display: flex; gap: .45rem; flex: 0 0 auto; }
+    .row-actions a {
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        color: var(--brand-gold);
+        text-decoration: none;
+        background: var(--bg-base);
+    }
+    .row-actions i { width: 17px; height: 17px; }
+    .empty-inline { padding: 1rem; color: var(--text-muted); text-align: center; border: 1px dashed var(--border-light); border-radius: 14px; }
+    .btn-sm { padding: .55rem .85rem !important; font-size: .8rem !important; }
+
+    @media (max-width: 1200px) {
+        .admin-health-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .admin-workspace-grid,
+        .admin-lower-grid { grid-template-columns: 1fr; }
+        .primary-zone { grid-row: auto; }
+    }
+    @media (max-width: 760px) {
+        .admin-command-hero,
+        .zone-head { align-items: flex-start; flex-direction: column; }
+        .admin-command-title { align-items: flex-start; }
+        .admin-command-actions,
+        .admin-command-actions .btn { width: 100%; justify-content: center; }
+        .admin-health-grid,
+        .admin-action-grid { grid-template-columns: 1fr; }
+        .admin-row-card { align-items: flex-start; flex-direction: column; }
+        .row-actions { width: 100%; }
+        .row-actions a { flex: 1; }
     }
 </style>
 {% endblock %}

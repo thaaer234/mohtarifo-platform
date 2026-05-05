@@ -18,6 +18,13 @@
             <p style="color:var(--text-secondary);">
                 حدد النوع والفرع والمادة والأستاذ والسعر. بعد الحفظ ستنتقل مباشرة إلى لوحة الدورة لإضافة الجلسات والأكواد.
             </p>
+            <p style="color:var(--text-muted); font-size:0.95rem; margin-top:0.75rem;">
+                إذا لم يكن المدرس موجوداً في القائمة، اترك حقل الأستاذ فارغاً واكتب بيانات المدرس الجديد داخل نفس الفورم.
+                <a href="{% url 'dashboard:admin_instructor_add' %}" class="gold" style="font-weight:800;">أو افتح صفحة إضافة مدرس مستقلة</a>
+            </p>
+            {% if selected_tab %}
+                <div class="badge badge-gold mt-4">سيتم إضافتها ضمن: {{ selected_tab.label }}</div>
+            {% endif %}
         </div>
 
         <form method="post" enctype="multipart/form-data">

@@ -4,9 +4,10 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 
-from accounts.models import AcademicBranch, Governorate
+from accounts.models import AcademicBranch, Governorate, InstructorProfile
 from billing.models import AccessCode, AccessCodeBatch, CoursePackage, Institute, SalesCenter
 from learning.models import Course, Lesson, Subject, Unit
+from .models import CatalogSection
 from .security import sanitize_plain_text, validate_syrian_mobile
 
 
@@ -79,6 +80,9 @@ class RedeemCodeForm(forms.Form):
 class CourseCreateForm(forms.ModelForm):
     subject = forms.ModelChoiceField(label="المادة", queryset=Subject.objects.order_by("name"), required=False)
     new_subject = forms.CharField(label="مادة جديدة", max_length=120, required=False)
+    new_instructor_name = forms.CharField(label="اسم مدرس جديد", max_length=120, required=False)
+    new_instructor_phone = forms.CharField(label="هاتف المدرس الجديد", max_length=40, required=False)
+    new_instructor_specialty = forms.CharField(label="اختصاص المدرس الجديد", max_length=120, required=False)
     price_amount = forms.DecimalField(label="السعر", min_value=0, max_digits=12, decimal_places=2, required=False)
 
     class Meta:
@@ -90,6 +94,9 @@ class CourseCreateForm(forms.ModelForm):
             "subject",
             "new_subject",
             "instructor",
+            "new_instructor_name",
+            "new_instructor_phone",
+            "new_instructor_specialty",
             "title",
             "description",
             "price_amount",
@@ -102,6 +109,9 @@ class CourseCreateForm(forms.ModelForm):
             "academic_track": "الفرع",
             "term": "الفصل",
             "instructor": "الأستاذ",
+            "new_instructor_name": "اسم مدرس جديد",
+            "new_instructor_phone": "هاتف المدرس الجديد",
+            "new_instructor_specialty": "اختصاص المدرس الجديد",
             "title": "اسم المكثفة أو الدورة",
             "description": "وصف مختصر",
             "teacher_photo": "صورة المدرس",
@@ -111,7 +121,13 @@ class CourseCreateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["instructor"].queryset = User.objects.filter(is_staff=True).order_by("first_name", "username")
+        self.fields["instructor"].queryset = (
+            User.objects.filter(instructor_profile__status="active")
+            .distinct()
+            .order_by("first_name", "last_name", "username")
+        )
+        self.fields["instructor"].required = False
+        self.fields["instructor"].empty_label = "اختر مدرس موجود أو أضف مدرس جديد"
         self.fields["description"].required = False
         self.fields["cover"].required = False
         self.fields["teacher_photo"].required = False
@@ -121,10 +137,41 @@ class CourseCreateForm(forms.ModelForm):
         cleaned = super().clean()
         if not cleaned.get("subject") and not cleaned.get("new_subject"):
             raise forms.ValidationError("اختر مادة موجودة أو اكتب مادة جديدة.")
+        if not cleaned.get("instructor") and not cleaned.get("new_instructor_name"):
+            raise forms.ValidationError("اختر مدرس موجود أو اكتب اسم مدرس جديد.")
+        if cleaned.get("new_instructor_name"):
+            phone = (cleaned.get("new_instructor_phone") or "").strip()
+            if phone and User.objects.filter(username=phone).exists():
+                raise forms.ValidationError("رقم هاتف المدرس موجود مسبقاً. اختر المدرس من القائمة أو استخدم رقم آخر.")
         return cleaned
 
     def save(self, commit=True):
         course = super().save(commit=False)
+        new_instructor_name = self.cleaned_data.get("new_instructor_name", "").strip()
+        if new_instructor_name:
+            raw_phone = (self.cleaned_data.get("new_instructor_phone") or "").strip()
+            username = raw_phone or slugify(new_instructor_name, allow_unicode=False) or "teacher"
+            base_username = username
+            counter = 2
+            while User.objects.filter(username=username).exists():
+                username = f"{base_username}-{counter}"
+                counter += 1
+            name_parts = new_instructor_name.split(" ", 1)
+            instructor = User.objects.create_user(
+                username=username,
+                password=None,
+                first_name=name_parts[0],
+                last_name=name_parts[1] if len(name_parts) > 1 else "",
+                is_staff=True,
+            )
+            InstructorProfile.objects.update_or_create(
+                user=instructor,
+                defaults={
+                    "specialty": self.cleaned_data.get("new_instructor_specialty") or "",
+                    "status": "active",
+                },
+            )
+            course.instructor = instructor
         subject = self.cleaned_data.get("subject")
         new_subject = self.cleaned_data.get("new_subject", "").strip()
         if new_subject:
@@ -225,6 +272,25 @@ class CourseCodeSaleForm(forms.Form):
                 .order_by("created_at")
             )
         self.fields["price_amount"].required = False
+
+
+class CourseUnitQuickForm(forms.ModelForm):
+    class Meta:
+        model = Unit
+        fields = ["title", "description", "sort_order"]
+        labels = {
+            "title": "اسم الجلسة",
+            "description": "وصف مختصر",
+            "sort_order": "ترتيب الجلسة",
+        }
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 2}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["description"].required = False
+        self.fields["sort_order"].required = False
 
 
 class InstituteForm(forms.ModelForm):
@@ -338,6 +404,24 @@ class SubjectForm(forms.ModelForm):
         self.fields["description"].required = False
         self.fields["slug"].required = False
         self.fields["slug"].help_text = "اتركه فارغاً ليتم توليده تلقائياً"
+
+
+class CatalogSectionForm(forms.ModelForm):
+    class Meta:
+        model = CatalogSection
+        fields = ["label", "kind", "track", "sort_order", "is_visible"]
+        labels = {
+            "label": "اسم الفلتر",
+            "kind": "نوع المحتوى",
+            "track": "الفرع",
+            "sort_order": "الترتيب",
+            "is_visible": "ظاهر للطلاب",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["kind"].widget = forms.Select(choices=Course.KIND_CHOICES)
+        self.fields["track"].widget = forms.Select(choices=Course.TRACK_CHOICES)
 
 
 class UnitForm(forms.ModelForm):

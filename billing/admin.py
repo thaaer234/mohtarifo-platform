@@ -6,6 +6,7 @@ from django.urls import path
 from .models import (
     AccessCode,
     AccessCodeBatch,
+    AccessCodePrintLog,
     AccessGrant,
     Coupon,
     CoursePackage,
@@ -84,6 +85,14 @@ class AccessCodeBatchAdmin(admin.ModelAdmin):
                 "title": f"استيراد طلاب: {batch.name}",
             },
         )
+
+
+@admin.register(AccessCodePrintLog)
+class AccessCodePrintLogAdmin(admin.ModelAdmin):
+    list_display = ("batch", "printed_by", "cards_count", "created_at")
+    list_filter = ("batch__course", "batch__sales_center", "printed_by")
+    search_fields = ("batch__name", "batch__course__title", "printed_by__username", "notes")
+    autocomplete_fields = ("batch", "printed_by")
 
 
 @admin.register(Plan)

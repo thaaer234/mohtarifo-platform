@@ -67,6 +67,22 @@ class AccessCodeBatch(models.Model):
         return self.codes.filter(sale_status="sold").count()
 
 
+class AccessCodePrintLog(models.Model):
+    batch = models.ForeignKey(AccessCodeBatch, on_delete=models.CASCADE, related_name="print_logs")
+    printed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name="access_code_prints", null=True, blank=True)
+    cards_count = models.PositiveIntegerField(default=0)
+    notes = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "سجل طباعة أكواد"
+        verbose_name_plural = "سجلات طباعة الأكواد"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.batch} - {self.cards_count}"
+
+
 class Plan(models.Model):
     name = models.CharField(max_length=120)
     code = models.SlugField(unique=True)
