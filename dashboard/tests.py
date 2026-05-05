@@ -56,7 +56,7 @@ class StudentAccessSecurityTests(TestCase):
         )
         self.client.force_login(self.student)
         response = self.client.get(reverse("dashboard:student_lesson_detail", args=[self.lesson.id]))
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 404)
 
     def test_join_session_requires_device_scoped_access(self):
         session = OnlineLessonSession.objects.create(
@@ -87,7 +87,7 @@ class DashboardRoleSecurityTests(TestCase):
     def test_instructor_cannot_open_admin_dashboard(self):
         self.client.force_login(self.instructor)
         response = self.client.get(reverse("dashboard:admin_dashboard"))
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 403)
 
     def test_active_instructor_can_open_instructor_dashboard(self):
         self.client.force_login(self.instructor)
@@ -97,7 +97,7 @@ class DashboardRoleSecurityTests(TestCase):
     def test_student_cannot_open_instructor_dashboard(self):
         self.client.force_login(self.student)
         response = self.client.get(reverse("dashboard:instructor_dashboard"))
-        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.status_code, 403)
 
     def test_admin_backup_export_disabled_by_default(self):
         self.client.force_login(self.admin)

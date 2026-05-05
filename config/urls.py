@@ -23,8 +23,12 @@ urlpatterns = [
     path('api/v1/learning/', include('learning.urls')),
     path('api/v1/analytics/', include('analytics.urls')),
     path('api/v1/billing/', include('billing.urls')),
-    path('admin/', admin.site.urls),
+    path(settings.ADMIN_URL, admin.site.urls),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+handler403 = "dashboard.error_views.permission_denied"
+handler404 = "dashboard.error_views.page_not_found"
+handler500 = "dashboard.error_views.server_error"

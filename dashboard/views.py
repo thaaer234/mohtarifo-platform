@@ -1,3 +1,4 @@
+from functools import wraps
 import secrets
 import base64
 import os
@@ -8,11 +9,12 @@ from xml.sax.saxutils import escape
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core import management
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import models, transaction
 from django.db.models import Avg, Count
 from django.core import signing
@@ -45,6 +47,7 @@ from .forms import (
 )
 from .models import StudentNotification
 from .seo import _site_url
+from .security import sanitize_plain_text, validate_syrian_mobile
 
 
 def _is_admin_user(user):
@@ -56,8 +59,23 @@ def _is_active_instructor(user):
     return user.is_authenticated and user.is_active and profile is not None and profile.status == "active"
 
 
-admin_required = user_passes_test(_is_admin_user, login_url="dashboard:login")
-instructor_required = user_passes_test(_is_active_instructor, login_url="dashboard:login")
+def _role_required(test_func, login_url="dashboard:login"):
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapped(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                return redirect(f"{reverse(login_url)}?next={request.get_full_path()}")
+            if not test_func(request.user):
+                raise PermissionDenied
+            return view_func(request, *args, **kwargs)
+
+        return wrapped
+
+    return decorator
+
+
+admin_required = _role_required(_is_admin_user)
+instructor_required = _role_required(_is_active_instructor)
 
 
 def home(request):
@@ -121,14 +139,14 @@ def public_course_detail(request, course_id):
         id=course_id,
     )
     first_lesson = (
-        Lesson.objects.filter(unit__course=course, video_url__gt="")
+        Lesson.objects.filter(unit__course=course, is_free_preview=True, video_url__gt="")
         .select_related("unit", "unit__course")
         .order_by("unit__sort_order", "sort_order", "id")
         .first()
     )
     has_access = False
     if request.user.is_authenticated:
-        has_access = AccessGrant.objects.filter(user=request.user, course=course).exists()
+        has_access = _active_access_grants(request.user).filter(course=course).exists()
     return render(
         request,
         "dashboard/public_course_detail.html",
@@ -136,7 +154,7 @@ def public_course_detail(request, course_id):
             "course": course,
             "first_lesson": first_lesson,
             "has_access": has_access,
-            "video_embed_url": _video_embed_url(first_lesson.video_url) if first_lesson else "",
+            "video_embed_url": _video_embed_url(first_lesson.video_url) if first_lesson and (has_access or first_lesson.is_free_preview) else "",
         },
     )
 
@@ -288,6 +306,7 @@ def robots_txt(request):
     lines = [
         "User-agent: *",
         "Disallow: /admin/",
+        f"Disallow: /{settings.ADMIN_URL}",
         "Disallow: /admin-dashboard/",
         "Disallow: /api/",
         "Disallow: /student/",
@@ -1125,13 +1144,18 @@ def profile_edit(request):
     student_profile, _created = StudentProfile.objects.get_or_create(user=request.user)
         
     if request.method == "POST":
-        first_name = request.POST.get("first_name")
-        last_name = request.POST.get("last_name")
-        phone = request.POST.get("phone")
-        bio = request.POST.get("bio")
+        try:
+            first_name = sanitize_plain_text(request.POST.get("first_name"), max_length=120)
+            last_name = sanitize_plain_text(request.POST.get("last_name"), max_length=120)
+            phone = validate_syrian_mobile(request.POST.get("phone"), user=request.user)
+            bio = sanitize_plain_text(request.POST.get("bio"), max_length=1000)
+        except ValidationError as exc:
+            messages.error(request, " ".join(exc.messages))
+            return redirect("dashboard:profile_edit")
         
         request.user.first_name = first_name
         request.user.last_name = last_name
+        request.user.username = phone
         request.user.save()
         
         student_profile.phone = phone
@@ -1262,8 +1286,7 @@ def student_course_detail(request, course_id):
     current_device = _current_device_fingerprint(request)
     course = get_object_or_404(Course.objects.select_related("subject", "instructor").prefetch_related("units__lessons"), id=course_id)
     if not _device_grants(request.user, current_device).filter(course=course).exists():
-        messages.error(request, "هذه المادة غير مفعّلة على هذا الجهاز. أدخل الكود أو تواصل مع الإدارة لنقل الجهاز.")
-        return redirect("dashboard:student_dashboard")
+        raise Http404("Course not found")
 
     attempts = Attempt.objects.filter(user=request.user, exam__course=course).select_related("exam").order_by("-created_at")
     completed_lesson_ids = set(
@@ -1285,8 +1308,7 @@ def student_lesson_detail(request, lesson_id):
     current_device = _current_device_fingerprint(request)
     lesson = get_object_or_404(Lesson.objects.select_related("unit", "unit__course"), id=lesson_id)
     if lesson.id not in _student_lesson_ids_for_device(request.user, current_device):
-        messages.error(request, "هذا الدرس غير مفعّل على هذا الجهاز.")
-        return redirect("dashboard:student_dashboard")
+        raise Http404("Lesson not found")
 
     progress, _created = LessonProgress.objects.get_or_create(
         user=request.user,

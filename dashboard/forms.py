@@ -1,11 +1,13 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 
 from accounts.models import AcademicBranch, Governorate
 from billing.models import AccessCodeBatch, Institute, SalesCenter
 from learning.models import Course, Lesson, Subject, Unit
+from .security import sanitize_plain_text, validate_syrian_mobile
 
 
 class StudentRegistrationForm(UserCreationForm):
@@ -42,6 +44,24 @@ class StudentRegistrationForm(UserCreationForm):
         ]
         self.fields["track"].choices = branch_choices
         self.fields["governorate"].choices = governorate_choices
+
+    def clean_first_name(self):
+        return sanitize_plain_text(self.cleaned_data["first_name"], max_length=120)
+
+    def clean_username(self):
+        return validate_syrian_mobile(self.cleaned_data["username"])
+
+    def clean_track(self):
+        value = self.cleaned_data["track"]
+        if not value:
+            raise ValidationError("اختر الفرع.")
+        return sanitize_plain_text(value, max_length=80)
+
+    def clean_governorate(self):
+        value = self.cleaned_data["governorate"]
+        if not value:
+            raise ValidationError("اختر المحافظة.")
+        return sanitize_plain_text(value, max_length=80)
 
     def save(self, commit=True):
         user = super().save(commit=False)

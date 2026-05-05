@@ -48,6 +48,10 @@ if not DEBUG and (not ALLOWED_HOSTS or '*' in ALLOWED_HOSTS):
     raise ImproperlyConfigured('DJANGO_ALLOWED_HOSTS must list explicit production hostnames.')
 
 SITE_URL = os.environ.get('DJANGO_SITE_URL', '').rstrip('/')
+ADMIN_URL = os.environ.get('DJANGO_ADMIN_URL', 'SHAM/THAAER7426/').strip('/')
+if not ADMIN_URL:
+    ADMIN_URL = 'SHAM/THAAER7426'
+ADMIN_URL = f'{ADMIN_URL}/'
 
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
@@ -87,6 +91,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'dashboard.middleware.SuspiciousInputMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'billing.middleware.ActiveDeviceMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',

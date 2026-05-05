@@ -1,0 +1,42 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}403 - غير مصرح | محترفو التعليم{% endblock %}
+{% block meta_robots %}noindex,nofollow{% endblock %}
+
+{% block content %}
+<div class="error-page-container flex-center reveal-up">
+    <div class="error-content text-center">
+        <div class="error-code-wrapper">
+            <h1 class="error-code">403</h1>
+            <div class="error-glow"></div>
+        </div>
+        <h2 class="error-title">غير مصرح بالدخول</h2>
+        <p class="error-desc">لا تملك صلاحية فتح هذه الصفحة. إذا كنت تعتقد أن هذا خطأ، تواصل مع الإدارة.</p>
+
+        <div class="error-actions mt-10">
+            <a href="{% url 'dashboard:home' %}" class="btn btn-primary btn-glow">
+                <i data-lucide="home"></i> العودة للرئيسية
+            </a>
+            <a href="{% url 'dashboard:contact' %}" class="btn btn-glass">
+                <i data-lucide="help-circle"></i> تواصل معنا
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .error-page-container { min-height: 70vh; padding: 4rem 2rem; }
+    .error-code-wrapper { position: relative; display: inline-block; margin-bottom: 2rem; }
+    .error-code { font-size: 10rem; font-weight: 900; color: var(--brand-gold); line-height: 1; letter-spacing: 0; }
+    .error-glow { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120%; height: 120%; background: radial-gradient(circle, var(--brand-gold-glow) 0%, transparent 70%); z-index: -1; opacity: 0.5; filter: blur(40px); }
+    .error-title { font-size: 2.5rem; color: var(--text-primary); margin-bottom: 1rem; }
+    .error-desc { font-size: 1.1rem; color: var(--text-muted); max-width: 500px; margin: 0 auto; line-height: 1.8; }
+    .error-actions { display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; }
+
+    @media (max-width: 600px) {
+        .error-code { font-size: 6rem; }
+        .error-title { font-size: 1.8rem; }
+    }
+</style>
+{% endblock %}
