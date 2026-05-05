@@ -31,6 +31,7 @@ class AccessGrantSerializer(serializers.ModelSerializer):
 class AccessCodeSerializer(serializers.ModelSerializer):
     course_title = serializers.CharField(source="course.title", read_only=True)
     lesson_title = serializers.CharField(source="lesson.title", read_only=True)
+    package_title = serializers.CharField(source="package.name", read_only=True)
 
     class Meta:
         model = AccessCode
@@ -40,6 +41,7 @@ class AccessCodeSerializer(serializers.ModelSerializer):
             "access_type",
             "course_title",
             "lesson_title",
+            "package_title",
             "max_redemptions",
             "redeemed_count",
             "valid_until",

@@ -16,6 +16,7 @@
             </p>
         </div>
         <div class="flex-center gap-4">
+            <a href="#sell-code" class="btn btn-secondary">بيع كود لطالب</a>
             <a href="#upload-lesson" class="btn btn-primary btn-glow">رفع جلسة فيديو</a>
         </div>
     </header>
@@ -38,6 +39,11 @@
             <a href="#batches" class="btn btn-secondary w-full mt-4" style="font-size: 0.8rem;">رصيد الجهات</a>
         </div>
         <div class="premium-card stat-card" style="padding: 1.5rem; text-align: center;">
+            <span class="label">غير مفعل</span>
+            <span class="value text-muted">{{ stats.inactive }}</span>
+            <a href="#batches" class="btn btn-secondary w-full mt-4" style="font-size: 0.8rem;">تقرير الأكواد</a>
+        </div>
+        <div class="premium-card stat-card" style="padding: 1.5rem; text-align: center;">
             <span class="label">المجاني</span>
             <span class="value text-muted">{{ stats.free }}</span>
             <a href="{% url 'dashboard:admin_partners' %}" class="btn btn-secondary w-full mt-4" style="font-size: 0.8rem;">المعاهد</a>
@@ -51,6 +57,16 @@
             <span class="label">الطلاب</span>
             <span class="value">{{ stats.students }}</span>
             <a href="{% url 'dashboard:admin_students' %}" class="btn btn-secondary w-full mt-4" style="font-size: 0.8rem;">كل الطلاب</a>
+        </div>
+        <div class="premium-card stat-card" style="padding: 1.5rem; text-align: center;">
+            <span class="label">إجمالي الصندوق</span>
+            <span class="value gold">{{ stats.gross_sales_display }}</span>
+            <span class="text-muted" style="font-size: .8rem;">ل.س</span>
+        </div>
+        <div class="premium-card stat-card" style="padding: 1.5rem; text-align: center;">
+            <span class="label">مبيعاتي</span>
+            <span class="value">{{ stats.my_sales }}</span>
+            <span class="text-muted" style="font-size: .8rem;">{{ stats.my_gross_sales_display }} ل.س</span>
         </div>
     </div>
 
@@ -84,6 +100,28 @@
         </article>
 
         <div class="flex-column gap-8">
+            <article class="premium-card" id="sell-code" style="padding: 2.5rem;">
+                <div class="badge badge-gold mb-4">بيع مباشر</div>
+                <h3 style="font-size: 1.4rem; margin-bottom: 1.5rem;">بيع كود وإضافة الدورة لحساب الطالب</h3>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="sell_code">
+                    <div class="flex-column gap-5">
+                        {% for field in sale_form %}
+                            <div class="premium-field">
+                                <label>{{ field.label }}</label>
+                                <div class="input-glow-wrapper">{{ field }}</div>
+                                {% for error in field.errors %}
+                                    <p class="text-danger mt-2" style="font-size: 0.8rem;">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button class="btn btn-primary btn-glow w-full mt-6" type="submit">تسجيل البيع وتفعيل الدورة</button>
+                </form>
+                <p class="text-muted mt-4" style="font-size: .85rem; line-height: 1.7;">إذا لم يكن لدى الطالب حساب، سيتم إنشاء حساب برقم الهاتف وإضافة صلاحية الدورة له مباشرة.</p>
+            </article>
+
             <!-- Distribution Info -->
             <article class="premium-card" style="padding: 2.5rem;">
                 <div class="badge badge-gold mb-4">التوزيع</div>

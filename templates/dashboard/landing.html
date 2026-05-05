@@ -165,9 +165,14 @@
 
             <div class="grid-3 gap-8">
                 {% for course in courses %}
-                    <article class="course-card-premium reveal-up">
-                        <div class="course-thumb">
-                            <img src="{% if course.image %}{{ course.image.url }}{% else %}https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=600{% endif %}" alt="{{ course.title }}">
+                    <article class="course-card-premium course-card-with-teacher reveal-up">
+                        <div class="course-thumb course-layered-thumb">
+                            <img class="course-cover-img" src="{% if course.cover %}{{ course.cover.url }}{% else %}https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=600{% endif %}" alt="{{ course.title }}">
+                            {% if course.teacher_photo %}
+                                <img class="course-teacher-cutout" src="{{ course.teacher_photo.url }}" alt="{{ course.instructor.get_full_name|default:course.instructor.username }}">
+                            {% else %}
+                                <img class="course-teacher-cutout" src="{% static 'dashboard/images/teacher_labcoat.png' %}" alt="{{ course.instructor.get_full_name|default:course.instructor.username }}">
+                            {% endif %}
                             <div class="thumb-badges">
                                 <span class="badge-type">{{ course.get_kind_display }}</span>
                             </div>
@@ -180,8 +185,8 @@
                                     <i data-lucide="user"></i>
                                     <span>{{ course.instructor.get_full_name|default:course.instructor.username }}</span>
                                 </div>
-                                <a href="{% url 'dashboard:public_course_detail' course.id %}" class="btn-arrow">
-                                    <span>التفاصيل</span>
+                                <a href="{% url 'dashboard:public_course_detail' course.id %}" class="btn-arrow stretched-link">
+                                    <span>التفاصيل والشراء</span>
                                     <i data-lucide="chevron-left"></i>
                                 </a>
                             </div>
@@ -206,7 +211,7 @@
                 <p class="mb-10 opacity-70">سجل الآن واحصل على وصول مجاني لأول دروس من كل دورة.</p>
                 <div class="flex-center gap-6">
                     <a href="{% url 'dashboard:register' %}" class="btn btn-primary btn-massive btn-glow">أنشئ حسابك الآن</a>
-                    <a href="#" class="btn btn-secondary btn-massive">تواصل مع الدعم</a>
+                    <a href="{% url 'dashboard:shop' %}" class="btn btn-secondary btn-massive">طرق الدفع والأكواد</a>
                 </div>
             </div>
         </div>
@@ -285,17 +290,36 @@
     /* Premium Course Cards */
     .course-card-premium { 
         background: var(--bg-surface); border-radius: var(--radius-md); 
-        border: 1px solid var(--border-light); overflow: hidden; 
-        transition: var(--transition-smooth); position: relative;
+        border: 1px solid var(--border-light); overflow: visible; /* to allow cutout to pop out */
+        transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s ease, box-shadow 0.25s ease; position: relative;
     }
+    .course-card-with-teacher { overflow: visible; }
+    .course-card-with-teacher .course-body { border-radius: 0 0 var(--radius-md) var(--radius-md); position: relative; }
     .course-card-premium:hover { 
-        transform: translateY(-12px); border-color: var(--brand-gold-glow); 
-        box-shadow: var(--shadow-glow); 
+        transform: translateY(-6px); border-color: var(--brand-gold-glow); 
+        box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 0 20px rgba(var(--brand-gold-rgb), 0.1); 
     }
+    
+    .stretched-link::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        cursor: pointer;
+    }
+
     .course-thumb { position: relative; height: 240px; overflow: hidden; }
-    .course-thumb img { width: 100%; height: 100%; object-fit: cover; transition: 0.8s; }
-    .course-card-premium:hover .course-thumb img { transform: scale(1.1) rotate(2deg); }
-    .thumb-badges { position: absolute; top: 1.25rem; right: 1.25rem; z-index: 2; }
+    .course-layered-thumb { overflow: visible; isolation: isolate; background: var(--bg-surface-elevated); position: relative; border-radius: var(--radius-md) var(--radius-md) 0 0; }
+    .course-layered-thumb::after { content: ""; position: absolute; inset: auto 0 0; height: 52%; background: linear-gradient(0deg, rgba(0,0,0,.72), transparent); z-index: 1; border-radius: inherit; pointer-events: none; }
+
+    .course-cover-img { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .25s ease, filter .25s ease; border-radius: var(--radius-md) var(--radius-md) 0 0; }
+    .course-teacher-cutout { position: absolute; left: 5%; bottom: -3px; z-index: 3; width: 48%; height: 112%; object-fit: contain; object-position: bottom center; transform-origin: bottom center; filter: drop-shadow(0 10px 14px rgba(0,0,0,.3)); transition: transform .25s ease, filter .25s ease; pointer-events: none; }
+    .course-card-with-teacher:hover .course-cover-img { transform: scale(1.03); filter: brightness(0.9) saturate(1.05); }
+    .course-card-with-teacher:hover .course-teacher-cutout { 
+        transform: translateY(-20px) scale(1.22);
+        filter: drop-shadow(0 15px 25px rgba(0,0,0,.45));
+    }
+    .thumb-badges { position: absolute; top: 1.25rem; right: 1.25rem; z-index: 4; }
     .badge-type { background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); color: #fff; padding: 0.5rem 1.25rem; border-radius: 100px; font-size: 0.75rem; font-weight: 800; border: 1px solid rgba(255,255,255,0.1); }
 
     .course-body { padding: 2rem; }

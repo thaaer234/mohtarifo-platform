@@ -90,12 +90,15 @@
                         <a href="{% url 'dashboard:admin_dashboard' %}" class="nav-link {% if 'admin' in request.path %}active{% endif %}">الرئيسية</a>
                         <a href="{% url 'dashboard:admin_students' %}" class="nav-link">الطلاب</a>
                         <a href="{% url 'dashboard:admin_billing' %}" class="nav-link">المالية</a>
+                        <a href="{% url 'dashboard:admin_packages' %}" class="nav-link">الباقات</a>
                     {% elif user.is_authenticated %}
                         <a href="{% url 'dashboard:student_dashboard' %}" class="nav-link {% if request.path == '/dashboard/student/' %}active{% endif %}">الرئيسية</a>
                         <a href="{% url 'dashboard:my_courses' %}" class="nav-link {% if 'my-courses' in request.path %}active{% endif %}">مكتبتي</a>
+                        <a href="{% url 'dashboard:shop' %}" class="nav-link {% if '/shop/' in request.path %}active{% endif %}">تسوق</a>
                         <a href="{% url 'dashboard:notifications' %}" class="nav-link {% if 'notifications' in request.path %}active{% endif %}">تنبيهات</a>
                     {% else %}
                         <a href="{% url 'dashboard:landing' %}" class="nav-link active">الرئيسية</a>
+                        <a href="{% url 'dashboard:shop' %}" class="nav-link">تسوق</a>
                         <a href="{% url 'dashboard:about' %}" class="nav-link">عن المنصة</a>
                         <a href="{% url 'dashboard:contact' %}" class="nav-link">اتصل بنا</a>
                     {% endif %}
@@ -143,6 +146,7 @@
         </div>
         <div class="mobile-nav-links">
             <a href="{% url 'dashboard:landing' %}" class="mobile-nav-link"><i data-lucide="home"></i> الرئيسية</a>
+            <a href="{% url 'dashboard:shop' %}" class="mobile-nav-link"><i data-lucide="shopping-bag"></i> تسوق</a>
             <a href="{% url 'dashboard:about' %}" class="mobile-nav-link"><i data-lucide="info"></i> عن المنصة</a>
             <a href="{% url 'dashboard:contact' %}" class="mobile-nav-link"><i data-lucide="phone"></i> اتصل بنا</a>
             <div class="mobile-auth-separator"></div>
@@ -188,6 +192,10 @@
                 <i data-lucide="book-open"></i>
                 <span>دوراتي</span>
             </a>
+            <a href="{% url 'dashboard:shop' %}" class="bottom-nav-item {% if '/shop/' in request.path %}active{% endif %}">
+                <i data-lucide="shopping-bag"></i>
+                <span>تسوق</span>
+            </a>
             <a href="{% url 'dashboard:notifications' %}" class="bottom-nav-item {% if '/notifications/' in request.path %}active{% endif %}">
                 <i data-lucide="bell"></i>
                 <span>تنبيهات</span>
@@ -200,6 +208,10 @@
             <a href="{% url 'dashboard:landing' %}" class="bottom-nav-item active">
                 <i data-lucide="home"></i>
                 <span>الرئيسية</span>
+            </a>
+            <a href="{% url 'dashboard:shop' %}" class="bottom-nav-item {% if '/shop/' in request.path %}active{% endif %}">
+                <i data-lucide="shopping-bag"></i>
+                <span>تسوق</span>
             </a>
             <a href="{% url 'dashboard:about' %}" class="bottom-nav-item">
                 <i data-lucide="info"></i>
@@ -224,15 +236,16 @@
                     <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Mohtarifo Logo" class="footer-logo-img mb-6" style="height: 40px;">
                     <p class="footer-desc">المنصة التعليمية الأولى في سوريا، نرافقك من الدرس الأول حتى التفوق في الامتحان النهائي.</p>
                     <div class="social-links">
-                        <a href="#" class="social-icon"><i data-lucide="facebook"></i></a>
-                        <a href="#" class="social-icon"><i data-lucide="instagram"></i></a>
-                        <a href="#" class="social-icon"><i data-lucide="youtube"></i></a>
-                        <a href="#" class="social-icon"><i data-lucide="send"></i></a>
+                        <a href="{{ CONTACT_FACEBOOK_URL }}" class="social-icon" target="_blank" rel="noopener" title="Facebook"><i data-lucide="facebook"></i></a>
+                        <a href="{{ CONTACT_INSTAGRAM_URL }}" class="social-icon" target="_blank" rel="noopener" title="Instagram"><i data-lucide="instagram"></i></a>
+                        <a href="{{ CONTACT_WHATSAPP_URL }}" class="social-icon" target="_blank" rel="noopener" title="WhatsApp"><i data-lucide="message-circle"></i></a>
+                        <a href="{% url 'dashboard:contact' %}" class="social-icon" title="التواصل"><i data-lucide="send"></i></a>
                     </div>
                 </div>
                 <div class="footer-links-group">
                     <h3 class="footer-title">روابط سريعة</h3>
                     <a href="{% url 'dashboard:landing' %}">الرئيسية</a>
+                    <a href="{% url 'dashboard:shop' %}">تسوق الدورات</a>
                     <a href="{% url 'dashboard:about' %}">عن المنصة</a>
                     <a href="{% url 'dashboard:instructors_list' %}">نخبة المدرسين</a>
                 </div>
@@ -240,6 +253,8 @@
                     <h3 class="footer-title">الدعم والمساعدة</h3>
                     <a href="{% url 'dashboard:faq' %}">الأسئلة الشائعة</a>
                     <a href="{% url 'dashboard:contact' %}">اتصل بنا</a>
+                    <a href="{{ CONTACT_WHATSAPP_URL }}" target="_blank" rel="noopener">واتساب {{ CONTACT_WHATSAPP_LOCAL }}</a>
+                    <a href="{{ CONTACT_INSTAGRAM_URL }}" target="_blank" rel="noopener">Instagram @{{ CONTACT_INSTAGRAM }}</a>
                     <a href="{% url 'dashboard:privacy' %}">سياسة الخصوصية</a>
                 </div>
             </div>

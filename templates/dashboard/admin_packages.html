@@ -1,0 +1,125 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}إدارة الباقات | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="reveal-up">
+    <header class="flex-between flex-wrap gap-6 mb-10">
+        <div>
+            <div class="badge badge-gold mb-3">الباقات</div>
+            <h1 style="font-size:2.3rem; margin-bottom:.5rem;">باقات الدورات والأكواد الموحدة</h1>
+            <p class="text-muted">اصنع باقة مثل “دورات العلمي”، واختر الدورات داخلها، ثم ولد أكواد تفعّل كل الدورات دفعة واحدة.</p>
+        </div>
+        <a class="btn btn-secondary" href="{% url 'dashboard:admin_billing' %}">العودة للمركز المالي</a>
+    </header>
+
+    <div class="grid-2 gap-8 mb-12">
+        <article class="premium-card" style="padding:2.5rem;">
+            <h2 style="font-size:1.4rem; margin-bottom:1.5rem;">إنشاء باقة</h2>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_package">
+                <div class="flex-column gap-5">
+                    {% for field in package_form %}
+                        <div class="premium-field">
+                            <label>{{ field.label }}</label>
+                            <div class="input-glow-wrapper package-field">{{ field }}</div>
+                            {% for error in field.errors %}<p class="text-danger mt-2">{{ error }}</p>{% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <button class="btn btn-primary btn-glow w-full mt-6" type="submit">حفظ الباقة</button>
+            </form>
+        </article>
+
+        <article class="premium-card" style="padding:2.5rem;">
+            <h2 style="font-size:1.4rem; margin-bottom:1.5rem;">توليد أكواد باقة</h2>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="generate_package_codes">
+                <div class="flex-column gap-5">
+                    {% for field in code_form %}
+                        <div class="premium-field">
+                            <label>{{ field.label }}</label>
+                            <div class="input-glow-wrapper">{{ field }}</div>
+                            {% for error in field.errors %}<p class="text-danger mt-2">{{ error }}</p>{% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <button class="btn btn-primary btn-glow w-full mt-6" type="submit">توليد الأكواد</button>
+            </form>
+            <p class="text-muted mt-4" style="line-height:1.7; font-size:.9rem;">الكود الناتج نوعه Package، وعند تفعيله من الطالب يضيف كل دورات الباقة إلى حسابه.</p>
+        </article>
+    </div>
+
+    <section class="premium-card mb-10" style="padding:2.5rem;">
+        <h2 style="font-size:1.5rem; margin-bottom:1.5rem;">تقرير الباقات</h2>
+        <div class="grid-3 gap-6">
+            {% for package in packages %}
+                <article class="premium-card" style="padding:1.5rem; background:var(--bg-surface-elevated);">
+                    <div class="flex-between gap-4 mb-4">
+                        <strong style="color:var(--text-primary); font-size:1.1rem;">{{ package.name }}</strong>
+                        <span class="badge {% if package.is_active %}badge-gold{% endif %}">{{ package.courses_total }} دورة</span>
+                    </div>
+                    <div class="flex-column gap-2 text-muted" style="font-size:.9rem;">
+                        <span>{{ package.codes_total }} كود</span>
+                        <span>{{ package.sold_total }} مباع</span>
+                        <span>{{ package.activated_total }} مفعل</span>
+                        <span class="gold font-bold">{{ package.gross_sales|default:0 }} قرش مبيعات</span>
+                    </div>
+                    <div class="mt-4 text-muted" style="font-size:.8rem; line-height:1.7;">
+                        {% for course in package.courses.all|slice:":4" %}
+                            <span class="tag">{{ course.title }}</span>
+                        {% endfor %}
+                    </div>
+                </article>
+            {% empty %}
+                <p class="text-muted">لا توجد باقات بعد.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="premium-card" style="padding:2.5rem;">
+        <h2 style="font-size:1.5rem; margin-bottom:1.5rem;">آخر أكواد الباقات</h2>
+        <div class="table-responsive">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>الكود</th>
+                        <th>الباقة</th>
+                        <th>الحالة</th>
+                        <th>البيع</th>
+                        <th>التفعيل</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for code in package_codes %}
+                        <tr>
+                            <td><strong>{{ code.code }}</strong></td>
+                            <td>{{ code.package.name }}</td>
+                            <td>{{ code.get_status_display }}</td>
+                            <td>{{ code.get_sale_status_display }}{% if code.sold_by %} · {{ code.sold_by.username }}{% endif %}</td>
+                            <td>{% if code.redeemed_count %}مفعل{% else %}غير مفعل{% endif %}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="5" class="text-center p-8">لا توجد أكواد باقات بعد.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<style>
+    .package-field ul { list-style:none; padding:0; margin:0; display:grid; gap:.75rem; max-height:320px; overflow:auto; }
+    .package-field li { padding:.75rem 1rem; border:1px solid var(--border-light); border-radius:12px; background:var(--bg-base); }
+    .package-field label { display:flex; gap:.75rem; align-items:center; cursor:pointer; }
+    .premium-field input,
+    .premium-field select,
+    .premium-field textarea { width:100%; padding:1rem; border-radius:12px; border:1px solid var(--border-light); background:var(--bg-base); color:var(--text-primary); font-family:inherit; }
+    .table-responsive { overflow-x:auto; }
+    .admin-table { width:100%; border-collapse:collapse; text-align:right; }
+    .admin-table th, .admin-table td { padding:1rem; border-bottom:1px solid var(--border-light); }
+    .tag { display:inline-block; margin:.15rem; font-size:.75rem; padding:.2rem .5rem; border-radius:6px; background:var(--bg-base); border:1px solid var(--border-light); }
+</style>
+{% endblock %}

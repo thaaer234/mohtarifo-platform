@@ -195,10 +195,23 @@
         }
         .front-info strong { color: var(--gold); }
 
+        .front-slogan {
+            position: absolute;
+            left: 70px;
+            top: 342px;
+            width: 650px;
+            color: var(--gold-dark);
+            font-size: 20px;
+            line-height: 1.35;
+            font-weight: 700;
+            text-align: center;
+            white-space: nowrap;
+        }
+
         .coupon-box {
             position: absolute;
             right: 12px;
-            top: 206px;
+            top: 218px;
             width: 367px;
             height: 102px;
             border: 1.5px solid #111;
@@ -542,11 +555,11 @@
             <img class="front-hero" src="{% static 'dashboard/img/card_assets/image4.svg' %}" alt="">
 
             <div class="title-frame"></div>
-            <div class="front-title">مكثفة مادة {{ batch.course.subject.name|default:batch.course.title }}</div>
+            <div class="front-title">مادة {{ batch.course.subject.name|default:batch.course.title }}</div>
 
             <div class="front-info">
                 <div class="line">اسم المدرس : <strong>{{ batch.course.instructor.get_full_name|default:"قصي الجابي" }}</strong></div>
-                <div class="line">عدد الساعات : <strong>{{ batch.course.duration|default:"18" }} ساعة</strong></div>
+                <div class="line">اسم الكورس : <strong>{{ card_course_title }}</strong></div>
             </div>
 
             <div class="coupon-box">
@@ -559,6 +572,7 @@
             </div>
 
             {% comment %} <div class="student-code">كود الطالب : <span class="code-value">#{{ item.obj.id|add:1000 }}</span></div> {% endcomment %}
+            <div class="front-slogan">نحن قوم نحترف التعليم واهتمامنا بالتفاصيل يصنع الفرق</div>
             <div class="page-num">01</div>
         </article>
     </div>

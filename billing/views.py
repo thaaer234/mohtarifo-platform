@@ -31,6 +31,37 @@ class RedeemAccessCodeApiView(APIView):
             if not allowed:
                 return Response({"detail": reason}, status=status.HTTP_400_BAD_REQUEST)
 
+            package_grants = []
+            if access_code.access_type == "package" and access_code.package:
+                for course in access_code.package.courses.filter(status="published"):
+                    grant, _created = AccessGrant.objects.get_or_create(
+                        user=user,
+                        course=course,
+                        lesson=None,
+                        defaults={
+                            "access_code": access_code,
+                            "source": "code",
+                            "device_fingerprint": current_device,
+                            "starts_at": timezone.now(),
+                            "expires_at": access_code.valid_until,
+                        },
+                    )
+                    if grant.device_fingerprint and grant.device_fingerprint != current_device:
+                        return Response(
+                            {"detail": "This access is linked to another device. Contact support to move it."},
+                            status=status.HTTP_403_FORBIDDEN,
+                        )
+                    if not grant.device_fingerprint:
+                        grant.device_fingerprint = current_device
+                        grant.save(update_fields=["device_fingerprint"])
+                    package_grants.append(grant)
+                access_code.redeemed_count += 1
+                access_code.save(update_fields=["redeemed_count", "updated_at"])
+                return Response(
+                    {"detail": "Package access code redeemed successfully.", "grants": AccessGrantSerializer(package_grants, many=True).data},
+                    status=status.HTTP_201_CREATED,
+                )
+
             grant, created = AccessGrant.objects.get_or_create(
                 user=user,
                 course=access_code.course,

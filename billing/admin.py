@@ -8,6 +8,7 @@ from .models import (
     AccessCodeBatch,
     AccessGrant,
     Coupon,
+    CoursePackage,
     CoursePurchase,
     Institute,
     Payment,
@@ -120,26 +121,39 @@ class CouponAdmin(admin.ModelAdmin):
     search_fields = ("code",)
 
 
+@admin.register(CoursePackage)
+class CoursePackageAdmin(admin.ModelAdmin):
+    list_display = ("name", "code", "price_cents", "is_active", "created_at")
+    list_filter = ("is_active",)
+    search_fields = ("name", "code", "notes", "courses__title")
+    prepopulated_fields = {"code": ("name",)}
+    filter_horizontal = ("courses",)
+
+
 @admin.register(AccessCode)
 class AccessCodeAdmin(ImportExportModelAdmin):
     list_display = (
         "code",
         "access_type",
         "course",
+        "package",
         "batch",
         "institute",
         "sales_center",
         "assigned_student_name",
         "assigned_student_phone",
         "sale_status",
+        "sold_by",
+        "sold_at",
+        "sold_price_cents",
         "is_free_code",
         "status",
         "redeemed_count",
         "max_redemptions",
     )
-    list_filter = ("access_type", "status", "sale_status", "is_free_code", "course", "batch", "institute", "sales_center", "plan")
-    search_fields = ("code", "course__title", "lesson__title", "assigned_student_name", "assigned_student_phone", "notes")
-    autocomplete_fields = ("course", "lesson", "plan", "batch", "institute", "sales_center")
+    list_filter = ("access_type", "status", "sale_status", "is_free_code", "course", "package", "batch", "institute", "sales_center", "plan", "sold_by")
+    search_fields = ("code", "course__title", "package__name", "lesson__title", "assigned_student_name", "assigned_student_phone", "sold_by__username", "notes")
+    autocomplete_fields = ("course", "lesson", "plan", "package", "batch", "institute", "sales_center", "sold_by")
 
 
 @admin.register(AccessGrant)
@@ -180,4 +194,3 @@ class StudentCodeImportForm(forms.Form):
         help_text="CSV أو XLSX. الأعمدة المطلوبة: name و phone. يمكن استخدام الاسماء العربية: الاسم، الهاتف.",
     )
     free_codes = forms.BooleanField(label="أكواد مجانية", required=False, initial=True)
-

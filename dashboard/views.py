@@ -16,7 +16,7 @@ from django.core.cache import cache
 from django.core import management
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import models, transaction
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Sum
 from django.core import signing
 from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -28,16 +28,19 @@ from openpyxl import Workbook
 from accounts.models import StudentProfile
 from analytics.models import TopicPerformance
 from billing.devices import activate_user_device, device_fingerprint, device_seed, set_device_cookie
-from billing.models import AccessCode, AccessCodeBatch, AccessGrant, Institute, Payment, SalesCenter, Subscription, UserDevice
-from billing.services import create_codes_for_batch, create_codes_from_upload
+from billing.models import AccessCode, AccessCodeBatch, AccessGrant, CoursePackage, Institute, Payment, SalesCenter, Subscription, UserDevice
+from billing.services import create_codes_for_batch, create_codes_from_upload, unique_code
 from exams.models import Attempt, Exam, Question
 from learning.models import Course, CourseProgress, Lesson, LessonAttendance, LessonProgress, OnlineLessonSession
 
 from .forms import (
     CourseCodeBatchForm,
+    CourseCodeSaleForm,
     CourseCreateForm,
     CourseLessonUploadForm,
+    CoursePackageForm,
     CourseStudentImportForm,
+    PackageCodeGenerateForm,
     InstituteForm,
     PartnerBatchForm,
     PartnerInstituteImportForm,
@@ -127,6 +130,36 @@ def landing_page(request):
     )
 
 
+def shop_page(request):
+    selected_kind = request.GET.get("kind", "")
+    selected_track = request.GET.get("track", "")
+    courses_query = Course.objects.filter(status="published").select_related("subject", "instructor")
+    if selected_kind:
+        courses_query = courses_query.filter(kind=selected_kind)
+    if selected_track:
+        courses_query = courses_query.filter(academic_track=selected_track)
+    courses = (
+        courses_query
+        .annotate(
+            lessons_total=Count("units__lessons", distinct=True),
+            sales_centers_total=Count("access_codes__sales_center", distinct=True),
+        )
+        .order_by("academic_track", "kind", "subject__name", "title")
+    )
+    sales_centers = SalesCenter.objects.filter(is_active=True).select_related("institute").order_by("name")
+    return render(
+        request,
+        "dashboard/shop.html",
+        {
+            "courses": courses,
+            "sales_centers": sales_centers,
+            "catalog_tabs": _catalog_tabs(),
+            "selected_kind": selected_kind,
+            "selected_track": selected_track,
+        },
+    )
+
+
 def device_logged_out_page(request):
     return render(request, "dashboard/device_logged_out.html")
 
@@ -147,6 +180,12 @@ def public_course_detail(request, course_id):
     has_access = False
     if request.user.is_authenticated:
         has_access = _active_access_grants(request.user).filter(course=course).exists()
+    sales_centers = (
+        SalesCenter.objects.filter(access_codes__course=course, is_active=True)
+        .select_related("institute")
+        .distinct()
+        .order_by("name")
+    )
     return render(
         request,
         "dashboard/public_course_detail.html",
@@ -154,6 +193,7 @@ def public_course_detail(request, course_id):
             "course": course,
             "first_lesson": first_lesson,
             "has_access": has_access,
+            "sales_centers": sales_centers,
             "video_embed_url": _video_embed_url(first_lesson.video_url) if first_lesson and (has_access or first_lesson.is_free_preview) else "",
         },
     )
@@ -684,6 +724,7 @@ def admin_print_batch_cards(request, batch_id):
         id=batch_id
     )
     codes = batch.codes.all().order_by("created_at")
+    card_course_title = (batch.course.title or "").split(" - ", 1)[0].strip() or batch.course.title
     
     # تحضير رابط المنصة لـ QR الخلفية
     platform_url = request.build_absolute_uri("/")
@@ -702,6 +743,7 @@ def admin_print_batch_cards(request, batch_id):
         
     return render(request, "dashboard/admin_print_batch_cards.html", {
         "batch": batch,
+        "card_course_title": card_course_title,
         "grouped_cards": grouped_cards,
         "platform_qr": platform_qr,
         "platform_name": "تركيز", # يمكن تغييرها حسب الرغبة
@@ -884,6 +926,7 @@ def admin_course_control(request, course_id):
     batch_form = CourseCodeBatchForm(prefix="batch")
     import_form = CourseStudentImportForm(prefix="import", course=course)
     lesson_form = CourseLessonUploadForm(prefix="lesson", course=course)
+    sale_form = CourseCodeSaleForm(prefix="sale", course=course)
     if request.method == "POST":
         action = request.POST.get("action")
         if action == "create_batch":
@@ -912,6 +955,56 @@ def admin_course_control(request, course_id):
                 lesson.save()
                 messages.success(request, "تم تسجيل الدرس بنجاح.")
                 return redirect("dashboard:admin_course_control", course_id=course.id)
+        elif action == "sell_code":
+            sale_form = CourseCodeSaleForm(request.POST, prefix="sale", course=course)
+            if sale_form.is_valid():
+                with transaction.atomic():
+                    access_code = AccessCode.objects.select_for_update().get(id=sale_form.cleaned_data["code"].id, course=course)
+                    student_phone = sanitize_plain_text(sale_form.cleaned_data["student_phone"])
+                    student_name = sanitize_plain_text(sale_form.cleaned_data["student_name"])
+                    student, created = User.objects.get_or_create(
+                        username=student_phone,
+                        defaults={"first_name": student_name, "is_active": True},
+                    )
+                    if created:
+                        student.set_unusable_password()
+                        student.save(update_fields=["password"])
+                    elif student_name and not student.get_full_name():
+                        student.first_name = student_name
+                        student.save(update_fields=["first_name"])
+                    StudentProfile.objects.get_or_create(
+                        user=student,
+                        defaults={"phone": student_phone, "track": course.get_academic_track_display()},
+                    )
+                    access_code.assigned_student_name = student_name
+                    access_code.assigned_student_phone = student_phone
+                    access_code.sale_status = "sold"
+                    access_code.sold_by = request.user
+                    access_code.sold_at = timezone.now()
+                    price_amount = sale_form.cleaned_data.get("price_amount")
+                    access_code.sold_price_cents = int(price_amount * 100) if price_amount is not None else course.price_cents
+                    access_code.save(update_fields=[
+                        "assigned_student_name",
+                        "assigned_student_phone",
+                        "sale_status",
+                        "sold_by",
+                        "sold_at",
+                        "sold_price_cents",
+                        "updated_at",
+                    ])
+                    AccessGrant.objects.get_or_create(
+                        user=student,
+                        course=course,
+                        lesson=None,
+                        defaults={
+                            "access_code": access_code,
+                            "source": "admin",
+                            "starts_at": timezone.now(),
+                            "expires_at": access_code.valid_until,
+                        },
+                    )
+                messages.success(request, f"تم بيع الكود {access_code.code} وإضافة الدورة لحساب الطالب.")
+                return redirect("dashboard:admin_course_control", course_id=course.id)
         elif action == "clear_device":
             grant = get_object_or_404(AccessGrant, id=request.POST.get("grant_id"), course=course)
             grant.device_fingerprint = ""
@@ -935,10 +1028,17 @@ def admin_course_control(request, course_id):
         "lessons": lessons.count(),
         "codes": codes.count(),
         "sold": codes.filter(sale_status="sold").count(),
+        "available": codes.filter(sale_status__in=["available", "reserved"]).count(),
         "free": codes.filter(is_free_code=True).count(),
         "activated": codes.filter(redeemed_count__gt=0).count(),
+        "inactive": codes.filter(redeemed_count=0).count(),
         "students": AccessGrant.objects.filter(course=course).values("user").distinct().count(),
+        "gross_sales": codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0,
+        "my_sales": codes.filter(sale_status="sold", sold_by=request.user).count(),
+        "my_gross_sales": codes.filter(sale_status="sold", sold_by=request.user).aggregate(total=Sum("sold_price_cents"))["total"] or 0,
     }
+    stats["gross_sales_display"] = f"{stats['gross_sales'] // 100:,}"
+    stats["my_gross_sales_display"] = f"{stats['my_gross_sales'] // 100:,}"
     return render(
         request,
         "dashboard/admin_course_control.html",
@@ -952,6 +1052,7 @@ def admin_course_control(request, course_id):
             "batch_form": batch_form,
             "import_form": import_form,
             "lesson_form": lesson_form,
+            "sale_form": sale_form,
         },
     )
 
@@ -1602,6 +1703,65 @@ def admin_billing(request):
         "active_subs_count": active_subs_count,
     }
     return render(request, "dashboard/admin_billing.html", context)
+
+
+@admin_required
+def admin_packages(request):
+    package_form = CoursePackageForm(prefix="package")
+    code_form = PackageCodeGenerateForm(prefix="codes")
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "create_package":
+            package_form = CoursePackageForm(request.POST, prefix="package")
+            if package_form.is_valid():
+                package = package_form.save()
+                messages.success(request, f"تم إنشاء الباقة {package.name}.")
+                return redirect("dashboard:admin_packages")
+        elif action == "generate_package_codes":
+            code_form = PackageCodeGenerateForm(request.POST, prefix="codes")
+            if code_form.is_valid():
+                package = code_form.cleaned_data["package"]
+                quantity = code_form.cleaned_data["quantity"]
+                prefix = code_form.cleaned_data["code_prefix"] or package.code or "PKG"
+                created = 0
+                for _index in range(quantity):
+                    shim = type("CodePrefix", (), {"code_prefix": prefix})()
+                    AccessCode.objects.create(
+                        code=unique_code(shim),
+                        access_type="package",
+                        package=package,
+                        sale_status="available",
+                        max_redemptions=1,
+                        valid_until=timezone.now() + timezone.timedelta(days=180),
+                        notes=f"كود باقة: {package.name}",
+                    )
+                    created += 1
+                messages.success(request, f"تم توليد {created} كود للباقة {package.name}.")
+                return redirect("dashboard:admin_packages")
+
+    packages = (
+        CoursePackage.objects.prefetch_related("courses")
+        .annotate(
+            courses_total=Count("courses", distinct=True),
+            codes_total=Count("access_codes", distinct=True),
+            sold_total=Count("access_codes", filter=models.Q(access_codes__sale_status="sold"), distinct=True),
+            activated_total=Count("access_codes", filter=models.Q(access_codes__redeemed_count__gt=0), distinct=True),
+            gross_sales=Sum("access_codes__sold_price_cents", filter=models.Q(access_codes__sale_status="sold")),
+        )
+        .order_by("name")
+    )
+    package_codes = AccessCode.objects.filter(access_type="package").select_related("package", "sold_by").order_by("-created_at")[:80]
+    return render(
+        request,
+        "dashboard/admin_packages.html",
+        {
+            "package_form": package_form,
+            "code_form": code_form,
+            "packages": packages,
+            "package_codes": package_codes,
+        },
+    )
 
 
 @admin_required

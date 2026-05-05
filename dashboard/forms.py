@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.utils.text import slugify
 
 from accounts.models import AcademicBranch, Governorate
-from billing.models import AccessCodeBatch, Institute, SalesCenter
+from billing.models import AccessCode, AccessCodeBatch, CoursePackage, Institute, SalesCenter
 from learning.models import Course, Lesson, Subject, Unit
 from .security import sanitize_plain_text, validate_syrian_mobile
 
@@ -211,6 +211,22 @@ class CourseLessonUploadForm(forms.ModelForm):
         return cleaned
 
 
+class CourseCodeSaleForm(forms.Form):
+    code = forms.ModelChoiceField(label="الكود", queryset=AccessCode.objects.none())
+    student_name = forms.CharField(label="اسم الطالب", max_length=160)
+    student_phone = forms.CharField(label="رقم الطالب", max_length=40)
+    price_amount = forms.DecimalField(label="قيمة البيع", min_value=0, decimal_places=0, required=False)
+
+    def __init__(self, *args, course=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if course is not None:
+            self.fields["code"].queryset = (
+                AccessCode.objects.filter(course=course, status="active", sale_status__in=["available", "reserved"])
+                .order_by("created_at")
+            )
+        self.fields["price_amount"].required = False
+
+
 class InstituteForm(forms.ModelForm):
     class Meta:
         model = Institute
@@ -249,6 +265,45 @@ class PartnerBatchForm(forms.Form):
     quantity = forms.IntegerField(label="عدد الأكواد", min_value=0, initial=0)
     code_prefix = forms.CharField(label="بادئة الكود", max_length=24, required=False)
     notes = forms.CharField(label="ملاحظات", required=False, widget=forms.Textarea(attrs={"rows": 3}))
+
+
+class CoursePackageForm(forms.ModelForm):
+    price_amount = forms.DecimalField(label="سعر الباقة", min_value=0, max_digits=12, decimal_places=0, required=False)
+
+    class Meta:
+        model = CoursePackage
+        fields = ["name", "code", "courses", "price_amount", "is_active", "notes"]
+        labels = {
+            "name": "اسم الباقة",
+            "code": "رمز الباقة",
+            "courses": "الدورات داخل الباقة",
+            "is_active": "فعالة",
+            "notes": "ملاحظات",
+        }
+        widgets = {
+            "courses": forms.CheckboxSelectMultiple,
+            "notes": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["courses"].queryset = Course.objects.order_by("academic_track", "subject__name", "title")
+        self.fields["notes"].required = False
+
+    def save(self, commit=True):
+        package = super().save(commit=False)
+        price_amount = self.cleaned_data.get("price_amount")
+        package.price_cents = int(price_amount * 100) if price_amount is not None else None
+        if commit:
+            package.save()
+            self.save_m2m()
+        return package
+
+
+class PackageCodeGenerateForm(forms.Form):
+    package = forms.ModelChoiceField(label="الباقة", queryset=CoursePackage.objects.filter(is_active=True).order_by("name"))
+    quantity = forms.IntegerField(label="عدد الأكواد", min_value=1, initial=10)
+    code_prefix = forms.CharField(label="بادئة الكود", max_length=24, required=False)
 
 
 class InstructorAddForm(forms.Form):

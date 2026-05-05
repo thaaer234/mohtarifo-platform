@@ -162,11 +162,31 @@ class Coupon(models.Model):
         return self.code
 
 
+class CoursePackage(models.Model):
+    name = models.CharField(max_length=160)
+    code = models.SlugField(unique=True)
+    courses = models.ManyToManyField(Course, related_name="billing_packages")
+    price_cents = models.PositiveIntegerField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "باقة دورات"
+        verbose_name_plural = "باقات الدورات"
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
 class AccessCode(models.Model):
     ACCESS_TYPE_CHOICES = [
         ("course", "Course"),
         ("lesson", "Lesson"),
         ("subscription", "Subscription"),
+        ("package", "Package"),
     ]
     STATUS_CHOICES = [
         ("active", "Active"),
@@ -185,12 +205,16 @@ class AccessCode(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="access_codes", null=True, blank=True)
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name="access_codes", null=True, blank=True)
     plan = models.ForeignKey(Plan, on_delete=models.SET_NULL, related_name="access_codes", null=True, blank=True)
+    package = models.ForeignKey(CoursePackage, on_delete=models.SET_NULL, related_name="access_codes", null=True, blank=True)
     batch = models.ForeignKey(AccessCodeBatch, on_delete=models.SET_NULL, related_name="codes", null=True, blank=True)
     institute = models.ForeignKey(Institute, on_delete=models.SET_NULL, related_name="access_codes", null=True, blank=True)
     sales_center = models.ForeignKey(SalesCenter, on_delete=models.SET_NULL, related_name="access_codes", null=True, blank=True)
     assigned_student_name = models.CharField(max_length=160, blank=True)
     assigned_student_phone = models.CharField(max_length=40, blank=True)
     sale_status = models.CharField(max_length=20, choices=SALE_STATUS_CHOICES, default="available")
+    sold_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name="sold_access_codes", null=True, blank=True)
+    sold_at = models.DateTimeField(null=True, blank=True)
+    sold_price_cents = models.PositiveIntegerField(null=True, blank=True)
     is_free_code = models.BooleanField(default=False)
     max_redemptions = models.PositiveIntegerField(default=1)
     redeemed_count = models.PositiveIntegerField(default=0)

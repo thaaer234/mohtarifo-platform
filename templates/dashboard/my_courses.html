@@ -26,14 +26,19 @@
     {% if grants %}
     <div class="course-library-grid">
         {% for grant in grants %}
-        <div class="premium-card reveal-up" style="padding: 0; overflow: hidden; animation-delay: {{ forloop.counter0 }}0ms;" onmouseover="this.style.transform='translateY(-10px)'; this.style.borderColor='var(--brand-gold-glow)'" onmouseout="this.style.transform='none'; this.style.borderColor='var(--border-light)'">
-            <div style="position: relative; width: 100%; aspect-ratio: 16/9; overflow: hidden;">
-                {% if grant.course.image %}
-                    <img src="{{ grant.course.image.url }}" alt="Course" style="width: 100%; height: 100%; object-fit: cover; transition: 0.6s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        <div class="premium-card reveal-up" style="position: relative; padding: 0; overflow: visible; animation-delay: {{ forloop.counter0 }}0ms;">
+            <div class="library-course-thumb">
+                {% if grant.course.cover %}
+                    <img class="library-cover-img" src="{{ grant.course.cover.url }}" alt="Course">
                 {% else %}
                     <div class="flex-center" style="width: 100%; height: 100%; background: var(--bg-surface-elevated); color: var(--text-muted);">
                         <i data-lucide="book" style="width: 48px; height: 48px;"></i>
                     </div>
+                {% endif %}
+                {% if grant.course.teacher_photo %}
+                    <img class="library-teacher-cutout" src="{{ grant.course.teacher_photo.url }}" alt="{{ grant.course.instructor.get_full_name|default:grant.course.instructor.username }}">
+                {% else %}
+                    <img class="library-teacher-cutout" src="{% static 'dashboard/images/teacher_labcoat.png' %}" alt="{{ grant.course.instructor.get_full_name|default:grant.course.instructor.username }}">
                 {% endif %}
                 <div class="badge badge-gold" style="position: absolute; top: 1.5rem; right: 1.5rem; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
                     {{ grant.get_source_display }}
@@ -61,9 +66,9 @@
                     </div>
                 </div>
 
-                <a href="{% url 'dashboard:student_course_detail' grant.course.id %}" class="btn btn-primary w-full">دخول الدورة <i data-lucide="arrow-left" style="width: 16px;"></i></a>
+                <a href="{% url 'dashboard:student_course_detail' grant.course.id %}" class="btn btn-primary w-full stretched-link">دخول الدورة <i data-lucide="arrow-left" style="width: 16px;"></i></a>
                 {% else %}
-                <a href="{% url 'dashboard:student_lesson_detail' grant.lesson.id %}" class="btn btn-primary w-full">مشاهدة الدرس <i data-lucide="play" style="width: 16px;"></i></a>
+                <a href="{% url 'dashboard:student_lesson_detail' grant.lesson.id %}" class="btn btn-primary w-full stretched-link">مشاهدة الدرس <i data-lucide="play" style="width: 16px;"></i></a>
                 {% endif %}
             </div>
         </div>
@@ -80,4 +85,47 @@
     </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .premium-card {
+        transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s ease, box-shadow 0.25s ease !important;
+    }
+    .premium-card:hover {
+        transform: translateY(-6px);
+        border-color: var(--brand-gold-glow) !important;
+        box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 0 20px rgba(var(--brand-gold-rgb), 0.1);
+    }
+    .library-course-thumb { position: relative; width: 100%; aspect-ratio: 16/9; overflow: visible; isolation: isolate; background: var(--bg-surface-elevated); border-radius: var(--radius-md) var(--radius-md) 0 0; }
+    
+    /* Subtle overlay to enhance readability and cover image contrast */
+    .library-course-thumb::after {
+        content: "";
+        position: absolute;
+        inset: auto 0 0;
+        height: 52%;
+        background: linear-gradient(0deg, rgba(0,0,0,.72), transparent);
+        z-index: 1;
+        border-radius: inherit;
+        pointer-events: none;
+    }
+
+    .library-cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .25s ease, filter .25s ease; z-index: 0; border-radius: var(--radius-md) var(--radius-md) 0 0; }
+    .library-teacher-cutout { position: absolute; left: 6%; bottom: -3px; z-index: 2; width: 42%; height: 112%; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 10px 14px rgba(0,0,0,.3)); transition: transform .25s ease, filter .25s ease; pointer-events: none; }
+    
+    .premium-card:hover .library-cover-img { transform: scale(1.03); filter: brightness(0.9) saturate(1.05); }
+    .premium-card:hover .library-teacher-cutout { 
+        transform: translateY(-20px) scale(1.22);
+        filter: drop-shadow(0 15px 25px rgba(0,0,0,.45));
+    }
+
+    .stretched-link::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        cursor: pointer;
+    }
+</style>
 {% endblock %}

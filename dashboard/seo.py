@@ -6,6 +6,12 @@ from django.utils.safestring import mark_safe
 
 
 SITE_NAME = "محترفو التعليم"
+CONTACT_WHATSAPP_LOCAL = "0983232446"
+CONTACT_WHATSAPP_INTERNATIONAL = "963983232446"
+CONTACT_INSTAGRAM = "education_pros1"
+CONTACT_INSTAGRAM_URL = "https://www.instagram.com/education_pros1/"
+CONTACT_FACEBOOK_URL = "https://www.facebook.com/bakaloria.syria/posts/%D8%AA%D8%B9%D8%A7%D9%88%D9%86-%D9%81%D8%B1%D9%8A%D9%82-%D9%85%D8%AD%D8%AA%D8%B1%D9%81%D9%88-%D8%A7%D9%84%D8%AA%D8%B9%D9%84%D9%8A%D9%85-%D9%85%D8%B9-%D9%86%D8%AE%D8%A8%D8%A9-%D9%85%D9%86-%D8%A3%D8%B3%D8%A7%D8%AA%D8%B0%D8%A9-%D8%AF%D9%85%D8%B4%D9%82-%D8%A7%D9%84%D9%85%D8%A8%D8%AF%D8%B9%D9%8A%D9%86-%D9%81%D9%8A-%D9%85%D8%B9%D9%87%D8%AF-%D8%A7%D9%84%D9%8A%D9%85%D8%A7%D9%86-%D9%84%D9%84%D8%B9%D9%84%D9%88%D9%85-/791551659798928/"
+CONTACT_WHATSAPP_URL = f"https://wa.me/{CONTACT_WHATSAPP_INTERNATIONAL}"
 DEFAULT_DESCRIPTION = (
     "منصة تعليمية سورية للمكثفات والدورات والامتحانات، تساعد طلاب الشهادة "
     "الثانوية والتاسع على الدراسة مع نخبة من الأساتذة."
@@ -71,7 +77,7 @@ def _base_schema(site_url, image_url):
             "logo": f"{site_url}{static('dashboard/icons/logo2.png')}",
             "image": image_url,
             "description": DEFAULT_DESCRIPTION,
-            "sameAs": [],
+            "sameAs": [CONTACT_INSTAGRAM_URL, CONTACT_FACEBOOK_URL],
         },
         {
             "@context": "https://schema.org",
@@ -103,4 +109,10 @@ def seo_context(request):
         "SEO_DEFAULT_IMAGE_URL": image_url,
         "SEO_ROBOTS": robots,
         "SEO_BASE_SCHEMA": mark_safe(json.dumps(_base_schema(site_url, image_url), ensure_ascii=False)),
+        "CONTACT_WHATSAPP_LOCAL": CONTACT_WHATSAPP_LOCAL,
+        "CONTACT_WHATSAPP_INTERNATIONAL": CONTACT_WHATSAPP_INTERNATIONAL,
+        "CONTACT_WHATSAPP_URL": CONTACT_WHATSAPP_URL,
+        "CONTACT_INSTAGRAM": CONTACT_INSTAGRAM,
+        "CONTACT_INSTAGRAM_URL": CONTACT_INSTAGRAM_URL,
+        "CONTACT_FACEBOOK_URL": CONTACT_FACEBOOK_URL,
     }

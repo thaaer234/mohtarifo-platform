@@ -1,0 +1,351 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}تسوق الدورات | محترفو التعليم{% endblock %}
+{% block meta_description %}تصفح دورات ومكثفات محترفو التعليم واختر طريقة الشراء عبر واتساب أو مراكز البيع المعتمدة.{% endblock %}
+
+{% block content %}
+<div class="shop-page reveal-up">
+    <header class="shop-hero mb-10">
+        <div class="shop-hero-copy">
+            <div class="badge badge-gold mb-3">تسوق</div>
+            <h1>الدورات والجلسات المتاحة</h1>
+            <p class="text-muted">اختر الدورة، شاهد التفاصيل، ثم اطلب الكود عبر واتساب أو من مركز بيع معتمد.</p>
+        </div>
+        <div class="shop-hero-actions">
+            <a class="btn btn-primary btn-glow" href="{{ CONTACT_WHATSAPP_URL }}?text={{ 'مرحبا، أريد الاستفسار عن شراء دورة من منصة محترفو التعليم'|urlencode }}" target="_blank" rel="noopener">
+                <i data-lucide="message-circle"></i>
+                تواصل واتساب
+            </a>
+            <a class="btn btn-secondary" href="#sales-centers">
+                <i data-lucide="map-pin"></i>
+                مراكز البيع
+            </a>
+        </div>
+    </header>
+
+    <div class="catalog-filter shop-filter mb-12">
+        <a href="{% url 'dashboard:shop' %}" class="filter-btn {% if not selected_kind and not selected_track %}active{% endif %}">الكل</a>
+        {% for tab in catalog_tabs %}
+            <a href="?kind={{ tab.kind }}&track={{ tab.track }}" class="filter-btn {% if selected_kind == tab.kind and selected_track == tab.track %}active{% endif %}">
+                {{ tab.label }}
+            </a>
+        {% endfor %}
+    </div>
+
+    <section class="shop-course-grid mb-16">
+        {% for course in courses %}
+            <article class="course-card-premium course-card-with-teacher reveal-up">
+                <div class="course-thumb course-layered-thumb">
+                    {% if course.cover %}
+                        <img class="course-cover-img" src="{{ course.cover.url }}" alt="{{ course.title }}">
+                    {% else %}
+                        <img class="course-cover-img" src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=600" alt="{{ course.title }}">
+                    {% endif %}
+                    {% if course.teacher_photo %}
+                        <img class="course-teacher-cutout" src="{{ course.teacher_photo.url }}" alt="{{ course.instructor.get_full_name|default:course.instructor.username }}">
+                    {% else %}
+                        <img class="course-teacher-cutout" src="{% static 'dashboard/images/teacher_labcoat.png' %}" alt="{{ course.instructor.get_full_name|default:course.instructor.username }}">
+                    {% endif %}
+                    <div class="thumb-badges">
+                        <span class="badge-type">{{ course.get_kind_display }}</span>
+                    </div>
+                </div>
+                <div class="course-body shop-course-body">
+                    <span class="course-subject">{{ course.subject.name }} · {{ course.get_academic_track_display }}</span>
+                    <h3 class="course-title">{{ course.title }}</h3>
+                    <div class="shop-course-meta text-muted">
+                        <span><i data-lucide="video"></i> {{ course.lessons_total }} جلسة/قسم</span>
+                        <span><i data-lucide="user"></i> {{ course.instructor.get_full_name|default:course.instructor.username }}</span>
+                        {% if course.price_display %}<strong class="gold">{{ course.price_display }} ل.س</strong>{% endif %}
+                    </div>
+                    <div class="course-footer shop-course-actions">
+                        <a href="{% url 'dashboard:public_course_detail' course.id %}" class="btn btn-secondary stretched-link">التفاصيل</a>
+                        <a href="{{ CONTACT_WHATSAPP_URL }}?text={{ 'مرحبا، أريد شراء دورة: '|add:course.title|urlencode }}" class="btn btn-primary" target="_blank" rel="noopener">
+                            شراء واتساب
+                        </a>
+                    </div>
+                </div>
+            </article>
+        {% empty %}
+            <div class="empty-dashboard-state" style="grid-column: 1 / -1;">
+                <i data-lucide="search-x"></i>
+                <p>لا توجد دورات ضمن هذا الفلتر حالياً.</p>
+            </div>
+        {% endfor %}
+    </section>
+
+    <section class="premium-card shop-sales-section" id="sales-centers">
+        <div class="shop-section-head">
+            <div>
+                <div class="badge badge-gold mb-3">طرق الشراء ومراكز البيع</div>
+                <h2>مكان تواجد الأكواد</h2>
+            </div>
+            <p class="text-muted">يمكنك طلب الكود مباشرة من واتساب المنصة أو من أي مركز بيع مضاف من الإدارة.</p>
+        </div>
+        <div class="shop-contact-grid">
+            <a class="shop-contact-card" href="{{ CONTACT_WHATSAPP_URL }}" target="_blank" rel="noopener">
+                <i data-lucide="message-circle" class="gold mb-3"></i>
+                <strong class="block mb-2" style="color: var(--text-primary);">واتساب المنصة</strong>
+                <span class="text-muted">{{ CONTACT_WHATSAPP_LOCAL }}</span>
+            </a>
+            {% for center in sales_centers %}
+                <div class="shop-contact-card">
+                    <strong class="block mb-2" style="color: var(--text-primary);">{{ center.name }}</strong>
+                    <div class="text-muted" style="font-size: .9rem; line-height: 1.8;">
+                        {% if center.institute %}<div>{{ center.institute.name }}</div>{% endif %}
+                        {% if center.address %}<div>{{ center.address }}</div>{% endif %}
+                        {% if center.phone %}<div>{{ center.phone }}</div>{% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                <div class="shop-contact-card">
+                    <strong class="block mb-2" style="color: var(--text-primary);">مراكز البيع</strong>
+                    <span class="text-muted">سيتم عرض المراكز المعتمدة هنا بعد إضافتها من الإدارة.</span>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+<style>
+    .shop-page { padding-bottom: 2rem; }
+    .shop-hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 2rem;
+        padding: 2.4rem;
+        border: 1px solid var(--border-light);
+        border-radius: 28px;
+        background:
+            linear-gradient(135deg, rgba(var(--brand-gold-rgb), .12), transparent 38%),
+            var(--bg-surface);
+        box-shadow: var(--shadow-soft);
+    }
+    .shop-hero h1 { font-size: clamp(2rem, 4vw, 3rem); line-height: 1.15; margin: 0 0 .8rem; }
+    .shop-hero p { max-width: 680px; font-size: 1.05rem; line-height: 1.8; margin: 0; }
+    .shop-hero-actions { display: flex; gap: .85rem; flex-wrap: wrap; justify-content: flex-end; }
+    .shop-hero-actions .btn { min-height: 48px; white-space: nowrap; }
+
+    .shop-filter {
+        width: 100%;
+        max-width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-inline: auto;
+        border-radius: 18px;
+        overflow: visible;
+    }
+    .shop-filter .filter-btn { white-space: nowrap; }
+
+    .shop-course-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        column-gap: 2rem;
+        row-gap: 3.5rem;
+    }
+
+    .course-card-premium {
+        position: relative;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        overflow: visible; /* To allow teacher cutout animation to pop out */
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+        transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .course-card-premium:hover {
+        transform: translateY(-6px);
+        border-color: var(--brand-gold-glow);
+        box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 0 20px rgba(var(--brand-gold-rgb), 0.1);
+    }
+
+    .stretched-link::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        cursor: pointer;
+    }
+
+    .course-card-with-teacher .course-body { border-radius: 0 0 var(--radius-md) var(--radius-md); position: relative; }
+    .course-layered-thumb {
+        height: 255px;
+        overflow: visible;
+        position: relative;
+        isolation: isolate;
+        background: var(--bg-surface-elevated);
+        border-radius: var(--radius-md) var(--radius-md) 0 0;
+    }
+    /* Subtle overlay to enhance readability and cover image contrast */
+    .course-layered-thumb::after {
+        content: "";
+        position: absolute;
+        inset: auto 0 0;
+        height: 52%;
+        background: linear-gradient(0deg, rgba(0,0,0,.72), transparent);
+        z-index: 1;
+        border-radius: inherit;
+        pointer-events: none;
+    }
+
+    .course-cover-img {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform .25s ease, filter .25s ease;
+        border-radius: var(--radius-md) var(--radius-md) 0 0;
+    }
+    .course-teacher-cutout {
+        position: absolute;
+        left: 4%;
+        bottom: -4px;
+        z-index: 3;
+        width: min(52%, 190px);
+        height: 116%;
+        object-fit: contain;
+        object-position: bottom center;
+        transform-origin: bottom center;
+        filter: drop-shadow(0 10px 14px rgba(0,0,0,.3));
+        transition: transform .25s ease, filter .25s ease;
+        pointer-events: none;
+    }
+    .course-card-with-teacher:hover .course-cover-img { 
+        transform: scale(1.03); 
+        filter: brightness(0.9) saturate(1.05); 
+    }
+    .course-card-with-teacher:hover .course-teacher-cutout { 
+        transform: translateY(-20px) scale(1.22);
+        filter: drop-shadow(0 15px 25px rgba(0,0,0,.45));
+    }
+    
+    .course-card-with-teacher .thumb-badges { z-index: 4; }
+    
+    .shop-course-body {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        padding: 1.8rem;
+        background: var(--bg-surface);
+        border-radius: 0 0 var(--radius-md) var(--radius-md);
+        z-index: 2; /* Keeps text legible and interactive */
+    }
+    .course-subject {
+        color: var(--brand-gold-light);
+        font-weight: 700;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.4rem;
+    }
+    .shop-course-body .course-title {
+        margin: .5rem 0 1.2rem;
+        min-height: 3.8rem;
+        font-size: 1.4rem;
+        color: var(--text-primary);
+        font-weight: 800;
+        line-height: 1.45;
+    }
+    .shop-course-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .7rem 1.1rem;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        font-size: .9rem;
+        line-height: 1.5;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+    .shop-course-meta span,
+    .shop-course-meta strong {
+        display: inline-flex;
+        align-items: center;
+        gap: .4rem;
+    }
+    .shop-course-meta i { width: 16px; height: 16px; color: var(--brand-gold); }
+    .shop-course-actions {
+        margin-top: auto;
+        gap: .9rem;
+        padding-top: 1.2rem;
+        border-top: 1px solid var(--border-light);
+    }
+    .shop-course-actions .btn {
+        flex: 1;
+        min-width: 0;
+        padding: .85rem 1.2rem;
+        justify-content: center;
+        font-size: .92rem;
+        font-weight: 700;
+        white-space: nowrap;
+        border-radius: 12px;
+    }
+    .shop-course-actions .btn-primary {
+        position: relative;
+        z-index: 5; /* Keep WhatsApp button clickable on top of stretched-link */
+    }
+
+    .shop-sales-section { padding: 2.3rem; }
+    .shop-section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 2rem;
+        margin-bottom: 1.5rem;
+    }
+    .shop-section-head h2 { font-size: 1.7rem; margin: 0; }
+    .shop-section-head p { max-width: 520px; line-height: 1.75; margin: 0; }
+    .shop-contact-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+    }
+    .shop-contact-card {
+        min-height: 130px;
+        padding: 1.35rem;
+        border: 1px solid var(--border-light);
+        border-radius: 18px;
+        background: var(--bg-surface-elevated);
+        text-decoration: none;
+        transition: transform .25s ease, border-color .25s ease, background .25s ease;
+    }
+    .shop-contact-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--brand-gold-glow);
+        background: var(--bg-surface);
+    }
+
+    @media (max-width: 1100px) {
+        .shop-course-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .shop-contact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 760px) {
+        .shop-hero { align-items: flex-start; padding: 1.5rem; border-radius: 22px; }
+        .shop-hero,
+        .shop-section-head { flex-direction: column; }
+        .shop-hero-actions,
+        .shop-hero-actions .btn { width: 100%; justify-content: center; }
+        .shop-filter {
+            justify-content: flex-start;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding: .45rem;
+            scrollbar-width: none;
+        }
+        .shop-filter::-webkit-scrollbar { display: none; }
+        .shop-course-grid,
+        .shop-contact-grid { grid-template-columns: 1fr; }
+        .course-layered-thumb { height: 230px; }
+        .course-teacher-cutout { width: min(50%, 165px); height: 110%; }
+        .shop-course-actions { flex-direction: column; }
+        .shop-sales-section { padding: 1.5rem; }
+    }
+</style>
+{% endblock %}

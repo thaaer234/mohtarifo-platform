@@ -79,8 +79,8 @@
             </div>
             <div class="premium-card reveal-up mb-12" style="padding: 0; overflow: hidden; display: flex;">
                 <div style="position: relative; width: 300px; flex-shrink: 0;">
-                    {% if continue_learning.lesson.unit.course.image %}
-                        <img src="{{ continue_learning.lesson.unit.course.image.url }}" alt="Course" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% if continue_learning.lesson.unit.course.cover %}
+                        <img src="{{ continue_learning.lesson.unit.course.cover.url }}" alt="Course" style="width: 100%; height: 100%; object-fit: cover;">
                     {% else %}
                         <div style="width: 100%; height: 100%; background: var(--bg-surface-elevated); display: flex; align-items: center; justify-content: center;">
                             <i data-lucide="video" class="text-muted" style="width: 40px; height: 40px;"></i>
@@ -116,8 +116,8 @@
                 {% for grant in grants|slice:":4" %}
                 <div class="premium-card" style="padding: 1.25rem; display: flex; gap: 1.25rem; align-items: center;">
                     <div style="width: 100px; height: 100px; border-radius: 18px; overflow: hidden; position: relative; flex-shrink: 0;">
-                        {% if grant.course.image %}
-                            <img src="{{ grant.course.image.url }}" alt="{{ grant.course.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% if grant.course.cover %}
+                            <img src="{{ grant.course.cover.url }}" alt="{{ grant.course.title }}" style="width: 100%; height: 100%; object-fit: cover;">
                         {% else %}
                             <div class="flex-center" style="width: 100%; height: 100%; background: var(--bg-surface-elevated); color: var(--text-muted);">
                                 <i data-lucide="book"></i>

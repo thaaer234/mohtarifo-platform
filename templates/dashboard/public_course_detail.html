@@ -109,8 +109,9 @@
                         </div>
                         <a href="{% url 'dashboard:student_course_detail' course.id %}" class="btn btn-primary btn-glow w-full" style="padding: 1.25rem; font-size: 1.1rem;">دخول الدورة الآن</a>
                     {% else %}
-                        <a href="{% url 'dashboard:login' %}" class="btn btn-primary btn-glow w-full mb-4" style="padding: 1.25rem; font-size: 1.1rem;">اشترك الآن</a>
-                        <p class="text-muted text-center" style="font-size: 0.8rem;">أدخل الكود الخاص بك بعد تسجيل الدخول</p>
+                        <a href="{{ CONTACT_WHATSAPP_URL }}?text={{ 'مرحبا، أريد شراء دورة: '|add:course.title|urlencode }}" class="btn btn-primary btn-glow w-full mb-4" style="padding: 1.25rem; font-size: 1.1rem;" target="_blank" rel="noopener">شراء عبر واتساب</a>
+                        <a href="{% url 'dashboard:shop' %}#sales-centers" class="btn btn-secondary w-full mb-4" style="padding: 1rem;">مراكز البيع وطرق الدفع</a>
+                        <p class="text-muted text-center" style="font-size: 0.8rem;">بعد الحصول على الكود، سجّل الدخول وأدخله من لوحة الطالب.</p>
                     {% endif %}
                 </div>
             </div>
@@ -161,6 +162,37 @@
                             </details>
                         </div>
                     {% endfor %}
+                </div>
+            </section>
+
+            <section class="mt-12">
+                <h3 class="flex-center gap-3 mb-8" style="justify-content: flex-start; font-size: 1.6rem;">
+                    <i data-lucide="shopping-bag" class="gold"></i>
+                    <span>طرق شراء هذه الدورة</span>
+                </h3>
+                <div class="premium-card" style="padding: 2.5rem !important;">
+                    <div class="grid-3 gap-6">
+                        <a class="premium-card" href="{{ CONTACT_WHATSAPP_URL }}?text={{ 'مرحبا، أريد شراء دورة: '|add:course.title|urlencode }}" target="_blank" rel="noopener" style="padding: 1.5rem; text-decoration:none; background: var(--bg-surface-elevated);">
+                            <i data-lucide="message-circle" class="gold mb-3"></i>
+                            <strong class="block mb-2" style="color: var(--text-primary);">واتساب المنصة</strong>
+                            <span class="text-muted">{{ CONTACT_WHATSAPP_LOCAL }}</span>
+                        </a>
+                        {% for center in sales_centers %}
+                            <div class="premium-card" style="padding: 1.5rem; background: var(--bg-surface-elevated);">
+                                <strong class="block mb-2" style="color: var(--text-primary);">{{ center.name }}</strong>
+                                <div class="text-muted" style="font-size:.9rem; line-height:1.8;">
+                                    {% if center.institute %}<div>{{ center.institute.name }}</div>{% endif %}
+                                    {% if center.address %}<div>{{ center.address }}</div>{% endif %}
+                                    {% if center.phone %}<div>{{ center.phone }}</div>{% endif %}
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="premium-card" style="padding: 1.5rem; background: var(--bg-surface-elevated);">
+                                <strong class="block mb-2" style="color: var(--text-primary);">مراكز البيع</strong>
+                                <span class="text-muted">استفسر من واتساب المنصة عن أقرب مركز بيع.</span>
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </section>
         </div>

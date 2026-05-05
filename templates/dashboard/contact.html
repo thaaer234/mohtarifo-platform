@@ -13,25 +13,24 @@
             
             <div class="contact-methods">
                 <div class="method-card">
-                    <div class="method-icon"><i data-lucide="mail"></i></div>
+                    <div class="method-icon"><i data-lucide="message-circle"></i></div>
                     <div class="method-details">
-                        <label>البريد الإلكتروني</label>
-                        <p>support@mohtarifo.com</p>
+                        <label>واتساب</label>
+                        <p><a href="{{ CONTACT_WHATSAPP_URL }}" target="_blank" rel="noopener">{{ CONTACT_WHATSAPP_LOCAL }}</a></p>
                     </div>
                 </div>
                 <div class="method-card">
-                    <div class="method-icon"><i data-lucide="phone"></i></div>
+                    <div class="method-icon"><i data-lucide="instagram"></i></div>
                     <div class="method-details">
-                        <label>أرقام التواصل</label>
-                        <p>+963 967 519 747</p>
-                        <p>+963 967 519 748</p>
+                        <label>الانستغرام</label>
+                        <p><a href="{{ CONTACT_INSTAGRAM_URL }}" target="_blank" rel="noopener">@{{ CONTACT_INSTAGRAM }}</a></p>
                     </div>
                 </div>
                 <div class="method-card">
-                    <div class="method-icon"><i data-lucide="map-pin"></i></div>
+                    <div class="method-icon"><i data-lucide="facebook"></i></div>
                     <div class="method-details">
-                        <label>المقر الرئيسي</label>
-                        <p>سوريا، دمشق</p>
+                        <label>فيسبوك</label>
+                        <p><a href="{{ CONTACT_FACEBOOK_URL }}" target="_blank" rel="noopener">صفحة محترفو التعليم</a></p>
                     </div>
                 </div>
             </div>
@@ -39,9 +38,9 @@
             <div class="social-links mt-12">
                 <p class="mb-4 font-bold">تابعنا على:</p>
                 <div class="flex gap-4">
-                    <a href="#" class="social-btn"><i data-lucide="facebook"></i></a>
-                    <a href="#" class="social-btn"><i data-lucide="instagram"></i></a>
-                    <a href="#" class="social-btn"><i data-lucide="youtube"></i></a>
+                    <a href="{{ CONTACT_FACEBOOK_URL }}" target="_blank" rel="noopener" class="social-btn"><i data-lucide="facebook"></i></a>
+                    <a href="{{ CONTACT_INSTAGRAM_URL }}" target="_blank" rel="noopener" class="social-btn"><i data-lucide="instagram"></i></a>
+                    <a href="{{ CONTACT_WHATSAPP_URL }}" target="_blank" rel="noopener" class="social-btn"><i data-lucide="message-circle"></i></a>
                 </div>
             </div>
         </div>

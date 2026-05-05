@@ -35,7 +35,7 @@
                         <i data-lucide="user"></i>
                         <span>{{ course.instructor.get_full_name|default:course.instructor.username }}</span>
                     </div>
-                    <a href="{% url 'dashboard:public_course_detail' course.id %}" class="btn btn-primary btn-sm">عرض التفاصيل</a>
+                    <a href="{% url 'dashboard:public_course_detail' course.id %}" class="btn btn-primary btn-sm stretched-link">عرض التفاصيل</a>
                 </div>
             </div>
         </div>
@@ -54,8 +54,16 @@
 <style>
     .search-wrapper { padding: 2rem 0; }
     .course-card-premium { 
+        position: relative;
         background: var(--bg-surface); border: 1px solid var(--border-light); 
         border-radius: 25px; overflow: hidden; transition: 0.3s;
+    }
+    .stretched-link::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        cursor: pointer;
     }
     .course-card-premium:hover { transform: translateY(-10px); border-color: var(--brand-gold); }
     .card-image { height: 180px; position: relative; }

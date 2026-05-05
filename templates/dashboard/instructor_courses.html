@@ -87,7 +87,7 @@
                                     <i data-lucide="user"></i>
                                     <span>{{ course.instructor.get_full_name|default:course.instructor.username }}</span>
                                 </div>
-                                <a href="{% url 'dashboard:public_course_detail' course.id %}" class="btn-arrow">
+                                <a href="{% url 'dashboard:public_course_detail' course.id %}" class="btn-arrow stretched-link">
                                     <span>التفاصيل</span>
                                     <i data-lucide="chevron-left"></i>
                                 </a>
@@ -108,6 +108,14 @@
 
 <style>
     .instructor-courses-wrapper { padding-bottom: 6rem; }
+    .course-card-premium { position: relative; }
+    .stretched-link::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        cursor: pointer;
+    }
     
     .instructor-header-premium { 
         background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(197, 160, 89, 0.05) 100%);
