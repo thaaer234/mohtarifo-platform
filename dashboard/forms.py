@@ -216,6 +216,19 @@ class CourseCodeBatchForm(forms.ModelForm):
         self.fields["notes"].required = False
 
 
+class PackageCodeBatchForm(CourseCodeBatchForm):
+    quantity = forms.IntegerField(label="عدد الأكواد", min_value=1, initial=10)
+    free_codes = forms.BooleanField(label="أكواد مجانية", required=False, initial=False)
+
+    class Meta(CourseCodeBatchForm.Meta):
+        fields = ["name", "institute", "sales_center", "quantity", "free_codes", "code_prefix", "notes"]
+        labels = {
+            **CourseCodeBatchForm.Meta.labels,
+            "quantity": "عدد الأكواد",
+            "free_codes": "أكواد مجانية",
+        }
+
+
 class CourseStudentImportForm(forms.Form):
     batch = forms.ModelChoiceField(label="دفعة الأكواد", queryset=AccessCodeBatch.objects.none())
     file = forms.FileField(label="ملف الطلاب CSV/XLSX")

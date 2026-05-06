@@ -76,6 +76,24 @@
                             <span class="tag">{{ course.title }}</span>
                         {% endfor %}
                     </div>
+                    <form method="post" class="package-batch-form mt-5">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="create_package_batch">
+                        <input type="hidden" name="package_id" value="{{ package.id }}">
+                        <div class="package-batch-grid">
+                            {% for field in batch_form %}
+                                <div class="premium-field compact">
+                                    <label>{{ field.label }}</label>
+                                    {{ field }}
+                                    {% for error in field.errors %}<p class="text-danger mt-2">{{ error }}</p>{% endfor %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <button class="btn btn-primary btn-glow w-full mt-4" type="submit">
+                            <i data-lucide="ticket-plus"></i>
+                            إنشاء دفعة أكواد للباقة
+                        </button>
+                    </form>
                 </article>
             {% empty %}
                 <p class="text-muted">لا توجد باقات بعد.</p>
@@ -84,6 +102,41 @@
     </section>
 
     <section class="premium-card" style="padding:2.5rem;">
+        <h2 style="font-size:1.5rem; margin-bottom:1.5rem;">دفعات أكواد البكجات</h2>
+        <div class="table-responsive mb-10">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>الدفعة</th>
+                        <th>الباقة</th>
+                        <th>الأكواد</th>
+                        <th>المباع</th>
+                        <th>المفعل</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for batch in package_batches %}
+                        <tr>
+                            <td><strong>{{ batch.name }}</strong></td>
+                            <td>{{ batch.package.name }}</td>
+                            <td>{{ batch.codes.count }}</td>
+                            <td>{{ batch.sold_count }}</td>
+                            <td>{{ batch.redeemed_count }}</td>
+                            <td>
+                                <div class="row-actions">
+                                    <a href="{% url 'dashboard:download_batch_codes' batch.id %}" class="btn btn-secondary btn-sm">Excel</a>
+                                    <a href="{% url 'dashboard:admin_print_batch_cards' batch.id %}" class="btn btn-primary btn-sm" target="_blank">طباعة</a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="6" class="text-center p-8">لا توجد دفعات أكواد بكجات بعد.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
         <h2 style="font-size:1.5rem; margin-bottom:1.5rem;">آخر أكواد الباقات</h2>
         <div class="table-responsive">
             <table class="admin-table">
@@ -121,11 +174,23 @@
     .premium-field input,
     .premium-field select,
     .premium-field textarea { width:100%; padding:1rem; border-radius:12px; border:1px solid var(--border-light); background:var(--bg-base); color:var(--text-primary); font-family:inherit; }
+    .package-batch-form { padding-top:1rem; border-top:1px solid var(--border-light); }
+    .package-batch-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:.75rem; }
+    .premium-field.compact label { font-size:.72rem; color:var(--text-muted); }
+    .premium-field.compact input,
+    .premium-field.compact select,
+    .premium-field.compact textarea { padding:.7rem .8rem; border-radius:10px; font-size:.85rem; }
+    .premium-field.compact textarea { min-height:44px; }
     .package-courses-field.is-hidden { display:none; }
     .table-responsive { overflow-x:auto; }
     .admin-table { width:100%; border-collapse:collapse; text-align:right; }
     .admin-table th, .admin-table td { padding:1rem; border-bottom:1px solid var(--border-light); }
     .tag { display:inline-block; margin:.15rem; font-size:.75rem; padding:.2rem .5rem; border-radius:6px; background:var(--bg-base); border:1px solid var(--border-light); }
+    .row-actions { display:flex; gap:.5rem; flex-wrap:wrap; }
+    .btn-sm { padding:.45rem .75rem; font-size:.8rem; min-height:unset; }
+    @media (max-width: 760px) {
+        .package-batch-grid { grid-template-columns:1fr; }
+    }
 </style>
 <script>
     const packageTrackSelect = document.getElementById('id_package-package_track');

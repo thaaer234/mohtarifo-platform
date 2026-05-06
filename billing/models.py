@@ -41,7 +41,8 @@ class SalesCenter(models.Model):
 
 class AccessCodeBatch(models.Model):
     name = models.CharField(max_length=160)
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="code_batches")
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="code_batches", null=True, blank=True)
+    package = models.ForeignKey("CoursePackage", on_delete=models.CASCADE, related_name="code_batches", null=True, blank=True)
     institute = models.ForeignKey(Institute, on_delete=models.SET_NULL, related_name="code_batches", null=True, blank=True)
     sales_center = models.ForeignKey(SalesCenter, on_delete=models.SET_NULL, related_name="code_batches", null=True, blank=True)
     allocated_count = models.PositiveIntegerField(default=0)
@@ -56,6 +57,14 @@ class AccessCodeBatch(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
+        return self.name
+
+    @property
+    def target_title(self):
+        if self.course:
+            return self.course.title
+        if self.package:
+            return self.package.name
         return self.name
 
     @property

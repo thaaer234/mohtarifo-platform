@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>قسيمة الشراء - {{ batch.course.title }}</title>
+    <title>قسيمة الشراء - {{ card_course_title }}</title>
     <style>
         @font-face {
             font-family: "AlJazeera";
@@ -555,10 +555,10 @@
             <img class="front-hero" src="{% static 'dashboard/img/card_assets/image4.svg' %}" alt="">
 
             <div class="title-frame"></div>
-            <div class="front-title">مادة {{ batch.course.subject.name|default:batch.course.title }}</div>
+            <div class="front-title">{% if batch.course %}مادة {{ batch.course.subject.name|default:batch.course.title }}{% else %}باقة {{ batch.package.name }}{% endif %}</div>
 
             <div class="front-info">
-                <div class="line">اسم المدرس : <strong>{{ batch.course.instructor.get_full_name|default:"قصي الجابي" }}</strong></div>
+                <div class="line">اسم المدرس : <strong>{% if batch.course %}{{ batch.course.instructor.get_full_name|default:"قصي الجابي" }}{% else %}نخبة المدرسين{% endif %}</strong></div>
                 <div class="line">اسم الكورس : <strong>{{ card_course_title }}</strong></div>
             </div>
 

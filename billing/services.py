@@ -41,11 +41,13 @@ def create_codes_from_upload(batch, uploaded_file, free_codes=True):
 
 def create_codes_for_batch(batch, quantity, free_codes=False):
     created = 0
+    access_type = "package" if batch.package_id else "course"
     for _index in range(quantity):
         AccessCode.objects.create(
             code=unique_code(batch),
-            access_type="course",
+            access_type=access_type,
             course=batch.course,
+            package=batch.package,
             batch=batch,
             institute=batch.institute,
             sales_center=batch.sales_center,

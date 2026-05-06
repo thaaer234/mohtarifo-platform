@@ -38,10 +38,10 @@ class SalesCenterAdmin(admin.ModelAdmin):
 
 @admin.register(AccessCodeBatch)
 class AccessCodeBatchAdmin(admin.ModelAdmin):
-    list_display = ("name", "course", "institute", "sales_center", "allocated_count", "free_count", "sold_count", "redeemed_count", "created_at")
-    list_filter = ("course", "institute", "sales_center")
-    search_fields = ("name", "course__title", "institute__name", "sales_center__name")
-    autocomplete_fields = ("course", "institute", "sales_center")
+    list_display = ("name", "course", "package", "institute", "sales_center", "allocated_count", "free_count", "sold_count", "redeemed_count", "created_at")
+    list_filter = ("course", "package", "institute", "sales_center")
+    search_fields = ("name", "course__title", "package__name", "institute__name", "sales_center__name")
+    autocomplete_fields = ("course", "package", "institute", "sales_center")
     change_form_template = "admin/billing/accesscodebatch/change_form.html"
 
     def get_urls(self):

@@ -44,6 +44,7 @@ from .forms import (
     CoursePackageForm,
     CourseStudentImportForm,
     PackageCodeGenerateForm,
+    PackageCodeBatchForm,
     InstituteForm,
     PartnerBatchForm,
     PartnerInstituteImportForm,
@@ -823,11 +824,12 @@ def admin_sales_center_profile(request, center_id):
 def admin_print_batch_cards(request, batch_id):
     """توليد صفحة قابلة للطباعة تحتوي على كروت الأكواد (وش وقفا)"""
     batch = get_object_or_404(
-        AccessCodeBatch.objects.select_related("course", "institute", "sales_center"), 
+        AccessCodeBatch.objects.select_related("course", "package", "institute", "sales_center"), 
         id=batch_id
     )
     codes = batch.codes.all().order_by("created_at")
-    card_course_title = (batch.course.title or "").split(" - ", 1)[0].strip() or batch.course.title
+    target_title = batch.target_title
+    card_course_title = (target_title or "").split(" - ", 1)[0].strip() or target_title
     
     # تحضير رابط المنصة لـ QR الخلفية
     platform_url = request.build_absolute_uri("/")
@@ -874,23 +876,24 @@ def _generate_qr_base64(data):
 
 @admin_required
 def download_batch_codes(request, batch_id):
-    batch = get_object_or_404(AccessCodeBatch.objects.select_related("course", "institute", "sales_center"), id=batch_id)
+    batch = get_object_or_404(AccessCodeBatch.objects.select_related("course", "package", "institute", "sales_center"), id=batch_id)
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = "codes"
-    sheet.append(["code", "course", "partner", "status", "student_name", "student_phone", "activated"])
+    sheet.append(["code", "target", "type", "partner", "status", "student_name", "student_phone", "activated"])
     partner = batch.institute.name if batch.institute else batch.sales_center.name if batch.sales_center else ""
     for code in batch.codes.order_by("created_at"):
         sheet.append([
             code.code,
-            batch.course.title,
+            batch.target_title,
+            code.get_access_type_display(),
             partner,
             code.sale_status,
             code.assigned_student_name,
             code.assigned_student_phone,
             "yes" if code.redeemed_count else "no",
         ])
-    for column in ["A", "B", "C", "D", "E", "F", "G"]:
+    for column in ["A", "B", "C", "D", "E", "F", "G", "H"]:
         sheet.column_dimensions[column].width = 24
     buffer = BytesIO()
     workbook.save(buffer)
@@ -2119,6 +2122,7 @@ def _workbook_response(workbook, filename):
 def admin_packages(request):
     package_form = CoursePackageForm(prefix="package")
     code_form = PackageCodeGenerateForm(prefix="codes")
+    batch_form = PackageCodeBatchForm(prefix="batch")
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -2149,6 +2153,23 @@ def admin_packages(request):
                     created += 1
                 messages.success(request, f"تم توليد {created} كود للباقة {package.name}.")
                 return redirect("dashboard:admin_packages")
+        elif action == "create_package_batch":
+            batch_form = PackageCodeBatchForm(request.POST, prefix="batch")
+            if batch_form.is_valid():
+                package = request.POST.get("package_id")
+                package_obj = get_object_or_404(CoursePackage, id=package)
+                batch = batch_form.save(commit=False)
+                batch.package = package_obj
+                batch.allocated_count = batch_form.cleaned_data["quantity"]
+                batch.free_count = batch_form.cleaned_data["quantity"] if batch_form.cleaned_data["free_codes"] else 0
+                batch.save()
+                created = create_codes_for_batch(
+                    batch,
+                    batch_form.cleaned_data["quantity"],
+                    free_codes=batch_form.cleaned_data["free_codes"],
+                )
+                messages.success(request, f"تم إنشاء دفعة {batch.name} وتوليد {created} كود للباقة {package_obj.name}.")
+                return redirect("dashboard:admin_packages")
 
     packages = (
         CoursePackage.objects.prefetch_related("courses")
@@ -2166,14 +2187,17 @@ def admin_packages(request):
         package.eligible_courses_count = eligible_courses.count()
         package.eligible_subjects_count = eligible_courses.values("subject").distinct().count()
     package_codes = AccessCode.objects.filter(access_type="package").select_related("package", "sold_by").order_by("-created_at")[:80]
+    package_batches = AccessCodeBatch.objects.filter(package__isnull=False).select_related("package", "institute", "sales_center").order_by("-created_at")[:80]
     return render(
         request,
         "dashboard/admin_packages.html",
         {
             "package_form": package_form,
             "code_form": code_form,
+            "batch_form": batch_form,
             "packages": packages,
             "package_codes": package_codes,
+            "package_batches": package_batches,
         },
     )
 
