@@ -48,11 +48,17 @@
                 {% if instructor_profile.bio %}
                     <p class="inst-bio-text mt-6">{{ instructor_profile.bio }}</p>
                 {% endif %}
-                <div class="inst-stats-row mt-8">
+                <div class="inst-stats-row mt-8" style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
                     <div class="stat-badge">
                         <i data-lucide="book-open"></i>
                         <span>{{ courses.count }} دورة منشورة</span>
                     </div>
+                    {% if user.is_staff %}
+                        <a href="{% url 'dashboard:admin_instructor_report_export' instructor.id %}" class="btn btn-secondary btn-glow" style="min-height: 40px; padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 0.5rem;">
+                            <i data-lucide="file-spreadsheet" class="gold" style="width: 16px; height: 16px;"></i>
+                            <span>تصدير التقرير المالي والطلاب</span>
+                        </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
