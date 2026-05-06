@@ -5,160 +5,175 @@
 
 {% block content %}
 <div class="admin-content-hub reveal-up">
-    <!-- Header -->
-    <header class="hub-header mb-10">
-        <div class="flex-between align-center">
-            <div>
-                <span class="badge mb-2">هيكلية المنصة</span>
-                <h1 class="page-title">إدارة الأقسام والمواد</h1>
-            </div>
-            <div class="hub-actions">
-                <a href="#add-subject" class="btn btn-primary btn-glow">
-                    <i data-lucide="plus-circle"></i> إضافة مادة جديدة
-                </a>
-            </div>
+    <header class="content-hero mb-8">
+        <div>
+            <span class="badge badge-gold mb-3">مركز المحتوى</span>
+            <h1 class="page-title">إدارة المحتوى التعليمي</h1>
+            <p class="text-muted mt-2">نظّم الأقسام والمواد، ثم اربط الدورات بالوحدات والدروس من مكان واحد.</p>
         </div>
+        <button type="button" class="btn btn-primary btn-glow" onclick="openSubjectModal()">
+            <i data-lucide="plus"></i> مادة جديدة
+        </button>
     </header>
 
-    <!-- Modal Overlay -->
-    <div id="modal-overlay" class="modal-overlay" style="display: none;">
-        <div class="modal-card animate-scale-up">
-            <div class="modal-header">
-                <h2 class="section-title"><i data-lucide="plus-circle"></i> إضافة مادة تعليمية جديدة</h2>
-                <button onclick="closeModal()" class="btn-icon"><i data-lucide="x"></i></button>
+    <nav class="content-shortcuts mb-8" aria-label="إدارة المحتوى">
+        <a class="shortcut-card" href="{% url 'dashboard:admin_departments' %}">
+            <span class="shortcut-icon"><i data-lucide="network"></i></span>
+            <strong>الأقسام</strong>
+            <small>الفروع والمسارات الأساسية</small>
+        </a>
+        <a class="shortcut-card" href="{% url 'dashboard:admin_subjects' %}">
+            <span class="shortcut-icon"><i data-lucide="book-open"></i></span>
+            <strong>المواد</strong>
+            <small>{{ subjects|length }} مادة مضافة</small>
+        </a>
+        <a class="shortcut-card" href="{% url 'dashboard:admin_units' %}">
+            <span class="shortcut-icon"><i data-lucide="layers-3"></i></span>
+            <strong>الوحدات</strong>
+            <small>ترتيب محتوى كل دورة</small>
+        </a>
+        <a class="shortcut-card" href="{% url 'dashboard:admin_lessons' %}">
+            <span class="shortcut-icon"><i data-lucide="play-square"></i></span>
+            <strong>الدروس</strong>
+            <small>الفيديوهات والملفات والمعاينات</small>
+        </a>
+        <a class="shortcut-card" href="{% url 'dashboard:admin_catalog_manager' %}">
+            <span class="shortcut-icon"><i data-lucide="layout-dashboard"></i></span>
+            <strong>واجهة الكتالوج</strong>
+            <small>ظهور الدورات للطلاب</small>
+        </a>
+    </nav>
+
+    <div id="subject-modal" class="content-modal" hidden>
+        <div class="content-modal__card" role="dialog" aria-modal="true" aria-labelledby="subject-modal-title">
+            <div class="content-modal__header">
+                <h2 id="subject-modal-title"><i data-lucide="plus-circle"></i> إضافة مادة تعليمية</h2>
+                <button type="button" class="icon-button" onclick="closeSubjectModal()" aria-label="إغلاق">
+                    <i data-lucide="x"></i>
+                </button>
             </div>
-            <form method="post" class="modal-body">
+            <form method="post" class="content-form">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="create_subject">
-                <div class="form-grid">
-                    {% for field in subject_form %}
-                        <div class="form-group">
-                            <label class="form-label">{{ field.label }}</label>
-                            {{ field }}
-                            {% if field.help_text %}<small class="text-muted">{{ field.help_text }}</small>{% endif %}
-                        </div>
-                    {% endfor %}
-                </div>
-                <div class="modal-footer mt-8">
-                    <button type="button" onclick="closeModal()" class="btn btn-glass">إلغاء</button>
-                    <button type="submit" class="btn btn-primary btn-glow">تأكيد الإضافة</button>
+                {% for field in subject_form %}
+                    <label class="content-field">
+                        <span>{{ field.label }}</span>
+                        {{ field }}
+                        {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                        {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+                    </label>
+                {% endfor %}
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeSubjectModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ المادة</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <script>
-        function openModal() {
-            document.getElementById('modal-overlay').style.display = 'flex';
-            document.body.style.overflow = 'hidden'; // Prevent scroll
-        }
-        function closeModal() {
-            document.getElementById('modal-overlay').style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-        
-        // Update trigger button
-        document.querySelector('a[href="#add-subject"]').onclick = function(e) {
-            e.preventDefault();
-            openModal();
-        };
-
-        // Close on overlay click
-        document.getElementById('modal-overlay').onclick = function(e) {
-            if (e.target === this) closeModal();
-        };
-    </script>
-
-    <div class="hub-grid">
-        <!-- Subjects Column -->
-        <section class="hub-column">
-            <h2 class="section-title mb-6"><i data-lucide="book-type"></i> المواد التعليمية</h2>
-            <div class="dept-list">
+    <div class="hub-layout">
+        <section class="premium-card hub-panel">
+            <div class="panel-head">
+                <div>
+                    <h2 class="section-title"><i data-lucide="book-type"></i> المواد التعليمية</h2>
+                    <p class="text-muted">لمحة سريعة عن المواد وعدد الدورات داخل كل مادة.</p>
+                </div>
+                <a class="btn btn-secondary btn-sm" href="{% url 'dashboard:admin_subjects' %}">إدارة المواد</a>
+            </div>
+            <div class="subject-list">
                 {% for sub in subjects %}
-                    <div class="premium-card mb-4 flex-between align-center">
+                    <article class="subject-row">
                         <div>
-                            <strong style="color:var(--text-primary); font-size:1.1rem;">{{ sub.name }}</strong>
-                            <p class="text-muted small">{{ sub.courses_count }} دورة منشورة</p>
+                            <strong>{{ sub.name }}</strong>
+                            <span>{{ sub.courses_count }} دورة</span>
                         </div>
-                        <a href="/admin/learning/subject/{{ sub.id }}/change/" class="btn-icon" target="_blank">
+                        <a class="icon-button" href="/admin/learning/subject/{{ sub.id }}/change/" target="_blank" rel="noopener" aria-label="تعديل {{ sub.name }}">
                             <i data-lucide="edit-3"></i>
                         </a>
-                    </div>
+                    </article>
                 {% empty %}
-                    <p class="text-center p-8 text-muted">لا توجد مواد مضافة بعد</p>
+                    <div class="empty-state">لا توجد مواد مضافة بعد.</div>
                 {% endfor %}
             </div>
         </section>
 
-        <!-- Recent Courses Column -->
-        <section class="hub-column">
-            <h2 class="section-title mb-6"><i data-lucide="layers"></i> أحدث الدورات</h2>
-            <div class="subject-grid">
+        <section class="premium-card hub-panel">
+            <div class="panel-head">
+                <div>
+                    <h2 class="section-title"><i data-lucide="clock-3"></i> أحدث الدورات</h2>
+                    <p class="text-muted">آخر الدورات التي تم إنشاؤها، مع وصول سريع للتحكم بالمحتوى.</p>
+                </div>
+                <a class="btn btn-secondary btn-sm" href="{% url 'dashboard:admin_dashboard' %}">لوحة الإدارة</a>
+            </div>
+            <div class="course-list">
                 {% for course in recent_courses %}
-                    <div class="premium-card">
-                        <div class="flex-between mb-4">
+                    <article class="course-row">
+                        <div>
                             <span class="tag">{{ course.subject.name }}</span>
-                            <div class="flex-center gap-2">
-                                <a href="{% url 'dashboard:admin_course_control' course.id %}" class="btn-icon"><i data-lucide="settings"></i></a>
-                                <a href="/admin/learning/course/{{ course.id }}/change/" class="btn-icon" target="_blank"><i data-lucide="edit-2"></i></a>
-                            </div>
+                            <h3>{{ course.title }}</h3>
+                            <p class="text-muted">{{ course.instructor.get_full_name|default:course.instructor.username }}</p>
                         </div>
-                        <h3 style="font-size: 1.1rem; margin-bottom: 0.5rem;">{{ course.title }}</h3>
-                        <p class="text-muted small">بواسطة: {{ course.instructor.get_full_name }}</p>
-                    </div>
+                        <div class="row-actions">
+                            <a class="icon-button" href="{% url 'dashboard:admin_course_control' course.id %}" aria-label="إدارة {{ course.title }}">
+                                <i data-lucide="settings"></i>
+                            </a>
+                            <a class="icon-button" href="/admin/learning/course/{{ course.id }}/change/" target="_blank" rel="noopener" aria-label="تعديل {{ course.title }}">
+                                <i data-lucide="edit-2"></i>
+                            </a>
+                        </div>
+                    </article>
                 {% empty %}
-                    <p class="text-center p-8 text-muted">لا توجد دورات حالياً</p>
+                    <div class="empty-state">لا توجد دورات حالياً.</div>
                 {% endfor %}
             </div>
         </section>
     </div>
 </div>
 
+<script>
+    const subjectModal = document.getElementById('subject-modal');
+    function openSubjectModal() {
+        subjectModal.hidden = false;
+        document.body.style.overflow = 'hidden';
+    }
+    function closeSubjectModal() {
+        subjectModal.hidden = true;
+        document.body.style.overflow = '';
+    }
+    subjectModal.addEventListener('click', function (event) {
+        if (event.target === subjectModal) closeSubjectModal();
+    });
+</script>
+
 <style>
-    .hub-grid { display: grid; grid-template-columns: 400px 1fr; gap: 2.5rem; }
-    .subject-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.25rem; }
-    .tag { font-size: 0.75rem; padding: 0.25rem 0.75rem; border-radius: 100px; background: rgba(197, 160, 89, 0.1); color: var(--brand-gold); font-weight: 700; }
-    
-    /* Modal Styling */
-    .modal-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);
-        display: flex; align-items: center; justify-content: center;
-        z-index: 1000; padding: 1.5rem;
-    }
-    .modal-card {
-        background: var(--bg-surface); border: 1px solid var(--border-strong);
-        border-radius: 28px; width: 100%; max-width: 600px;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        overflow: hidden;
-    }
-    .modal-header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; }
-    .modal-body { padding: 2rem; }
-    .modal-footer { padding: 1.5rem 2rem; background: rgba(0,0,0,0.1); border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 1rem; }
-
-    .animate-scale-up { animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-    @keyframes scaleUp { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-
-    .form-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
-
-    /* Form fields styling */
-    .modal-body input, .modal-body select, .modal-body textarea {
-        width: 100%;
-        padding: 0.85rem 1.25rem;
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid var(--border-strong);
-        border-radius: var(--radius-md);
-        color: var(--text-primary);
-        font-family: inherit;
-        font-size: 1rem;
-        transition: var(--transition-smooth);
-        margin-top: 0.5rem;
-    }
-    .modal-body input:focus { border-color: var(--brand-gold); outline: none; box-shadow: 0 0 0 4px var(--brand-gold-glow); }
-    .form-label { font-weight: 700; color: var(--text-secondary); font-size: 0.9rem; }
-
-    @media (max-width: 1200px) {
-        .hub-grid { grid-template-columns: 1fr; }
-    }
+    .content-hero, .panel-head, .course-row, .subject-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .content-hero { flex-wrap: wrap; }
+    .content-shortcuts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1rem; }
+    .shortcut-card { display: grid; gap: .45rem; padding: 1.2rem; border: 1px solid var(--border-light); border-radius: 16px; background: var(--bg-surface); text-decoration: none; color: var(--text-primary); transition: .2s ease; }
+    .shortcut-card:hover { transform: translateY(-3px); border-color: var(--brand-gold); }
+    .shortcut-icon { color: var(--brand-gold); }
+    .shortcut-card small, .subject-row span { color: var(--text-muted); font-size: .82rem; }
+    .hub-layout { display: grid; grid-template-columns: minmax(280px, 420px) 1fr; gap: 1.5rem; }
+    .hub-panel { padding: 1.5rem !important; }
+    .subject-list, .course-list { display: grid; gap: .85rem; margin-top: 1.25rem; }
+    .subject-row, .course-row { padding: 1rem; border: 1px solid var(--border-light); border-radius: 14px; background: rgba(255,255,255,.02); }
+    .course-row h3 { margin: .45rem 0 .2rem; font-size: 1rem; }
+    .row-actions { display: flex; gap: .4rem; }
+    .icon-button { width: 38px; height: 38px; border: 0; border-radius: 10px; background: rgba(197,160,89,.1); color: var(--brand-gold); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+    .tag { display: inline-flex; padding: .25rem .65rem; border-radius: 999px; background: rgba(197,160,89,.12); color: var(--brand-gold); font-size: .75rem; font-weight: 800; }
+    .empty-state { padding: 2rem; text-align: center; color: var(--text-muted); border: 1px dashed var(--border-light); border-radius: 14px; }
+    .content-modal[hidden] { display: none; }
+    .content-modal { position: fixed; inset: 0; z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(0,0,0,.72); backdrop-filter: blur(10px); }
+    .content-modal__card { width: min(620px, 100%); max-height: calc(100vh - 2rem); overflow: auto; border: 1px solid var(--border-strong); border-radius: 18px; background: var(--bg-surface); }
+    .content-modal__header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-light); }
+    .content-modal__header h2 { display: flex; gap: .6rem; align-items: center; margin: 0; font-size: 1.15rem; }
+    .content-form { display: grid; gap: 1rem; padding: 1.5rem; }
+    .content-field { display: grid; gap: .45rem; color: var(--text-secondary); font-weight: 800; }
+    .content-field small { color: var(--text-muted); font-weight: 500; }
+    .content-field input, .content-field textarea, .content-field select { width: 100%; border: 1px solid var(--border-light); border-radius: 12px; background: var(--bg-base); color: var(--text-primary); padding: .85rem 1rem; font-family: inherit; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: .75rem; padding-top: .5rem; }
+    .field-error { color: var(--danger, #ef4444) !important; }
+    @media (max-width: 1100px) { .content-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); } .hub-layout { grid-template-columns: 1fr; } }
+    @media (max-width: 640px) { .content-shortcuts { grid-template-columns: 1fr; } .panel-head, .course-row { align-items: flex-start; flex-direction: column; } }
 </style>
 {% endblock %}

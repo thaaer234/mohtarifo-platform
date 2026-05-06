@@ -4,201 +4,212 @@
 {% block title %}إدارة الوحدات | محترفو التعليم{% endblock %}
 
 {% block content %}
-<div class="admin-content-wrapper reveal-up">
-    <header class="hub-header mb-10">
-        <div class="flex-between align-center">
-            <div>
-                <span class="badge mb-2">الهيكلية التعليمية</span>
-                <h1 class="page-title">إدارة الوحدات الدراسية</h1>
-            </div>
-            <div class="hub-actions">
-                <button onclick="openCreateModal()" class="btn btn-primary">
-                    <i data-lucide="plus"></i> إضافة وحدة جديدة
-                </button>
-            </div>
+<div class="admin-units reveal-up">
+    <header class="content-hero mb-8">
+        <div>
+            <span class="badge badge-gold mb-3">الهيكلية التعليمية</span>
+            <h1 class="page-title">إدارة الوحدات الدراسية</h1>
+            <p class="text-muted mt-2">رتّب وحدات كل دورة وشاهد عدد الدروس المرتبطة بها بسرعة.</p>
+        </div>
+        <div class="hero-actions">
+            <a class="btn btn-secondary" href="{% url 'dashboard:admin_content_hub' %}">
+                <i data-lucide="arrow-right"></i> مركز المحتوى
+            </a>
+            <button type="button" onclick="openCreateModal()" class="btn btn-primary btn-glow">
+                <i data-lucide="plus"></i> وحدة جديدة
+            </button>
         </div>
     </header>
 
-    <!-- Create Modal -->
-    <div id="create-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-card animate-scale-up">
-            <div class="modal-header">
-                <h2 class="section-title"><i data-lucide="plus-circle"></i> إضافة وحدة جديدة</h2>
-                <button onclick="closeModals()" class="btn-icon"><i data-lucide="x"></i></button>
-            </div>
-            <form method="post" class="modal-body">
-                {% csrf_token %}
-                <div class="form-grid">
-                    {% for field in unit_form %}
-                        <div class="form-group">
-                            <label class="form-label">{{ field.label }}</label>
-                            {{ field }}
-                        </div>
-                    {% endfor %}
-                </div>
-                <div class="modal-footer mt-8">
-                    <button type="button" onclick="closeModals()" class="btn btn-glass">إلغاء</button>
-                    <button type="submit" class="btn btn-primary btn-glow">حفظ الوحدة</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Edit Modal -->
-    <div id="edit-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-card animate-scale-up">
-            <div class="modal-header">
-                <h2 class="section-title"><i data-lucide="edit-3"></i> تعديل الوحدة</h2>
-                <button onclick="closeModals()" class="btn-icon"><i data-lucide="x"></i></button>
-            </div>
-            <form id="edit-form" method="post" class="modal-body">
-                {% csrf_token %}
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">الدورة التابعة</label>
-                        <select name="course" id="edit-course" class="form-control" required>
-                            {% for course in courses %}
-                                <option value="{{ course.id }}">{{ course.title }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">اسم الوحدة</label>
-                        <input type="text" name="title" id="edit-title" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">وصف الوحدة</label>
-                        <textarea name="description" id="edit-description" class="form-control" rows="3"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">الترتيب</label>
-                        <input type="number" name="sort_order" id="edit-sort-order" class="form-control" value="0">
-                    </div>
-                </div>
-                <div class="modal-footer mt-8">
-                    <button type="button" onclick="closeModals()" class="btn btn-glass">إلغاء</button>
-                    <button type="submit" class="btn btn-primary btn-glow">تحديث البيانات</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Filters -->
-    <div class="premium-card mb-8">
-        <form method="get" class="filter-form flex-align gap-4">
-            <div class="input-group" style="flex: 1;">
-                <label class="text-xs mb-1 block text-muted">تصفية حسب الدورة</label>
-                <select name="course_id" class="form-control" onchange="this.form.submit()">
+    <section class="premium-card toolbar-card mb-8">
+        <form method="get" class="toolbar-form">
+            <label class="content-field">
+                <span>تصفية حسب الدورة</span>
+                <select name="course_id" onchange="this.form.submit()">
                     <option value="">جميع الدورات</option>
                     {% for course in courses %}
                         <option value="{{ course.id }}" {% if selected_course_id == course.id|stringformat:"s" %}selected{% endif %}>{{ course.title }}</option>
                     {% endfor %}
                 </select>
-            </div>
+            </label>
+            {% if selected_course_id %}
+                <a href="{% url 'dashboard:admin_units' %}" class="btn btn-secondary">إزالة الفلتر</a>
+            {% endif %}
         </form>
-    </div>
+    </section>
 
-    <div class="table-responsive premium-card">
+    <section class="admin-table-wrapper units-table">
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th>ترتيب</th>
-                    <th>اسم الوحدة</th>
-                    <th>الدورة التابعة</th>
-                    <th>عدد الدروس</th>
+                    <th>الترتيب</th>
+                    <th>الوحدة</th>
+                    <th>الدورة</th>
+                    <th>الدروس</th>
                     <th>إجراءات</th>
                 </tr>
             </thead>
             <tbody>
                 {% for unit in units %}
-                <tr>
-                    <td><span class="sort-badge">{{ unit.sort_order }}</span></td>
-                    <td><strong>{{ unit.title }}</strong></td>
-                    <td><span class="tag">{{ unit.course.title }}</span></td>
-                    <td>{{ unit.lessons_count }} درس</td>
-                    <td>
-                        <button onclick="openEditModal('{{ unit.id }}', '{{ unit.course.id }}', '{{ unit.title|escapejs }}', '{{ unit.description|escapejs }}', '{{ unit.sort_order }}')" class="btn-icon" title="تعديل">
-                            <i data-lucide="edit-3"></i>
-                        </button>
-                    </td>
-                </tr>
+                    <tr>
+                        <td><span class="sort-badge">{{ unit.sort_order }}</span></td>
+                        <td>
+                            <div class="item-title">
+                                <strong>{{ unit.title }}</strong>
+                                <small>{{ unit.description|truncatewords:12|default:"لا يوجد وصف" }}</small>
+                            </div>
+                        </td>
+                        <td><span class="tag">{{ unit.course.title }}</span></td>
+                        <td>
+                            <a class="lesson-link" href="{% url 'dashboard:admin_lessons' %}?course_id={{ unit.course.id }}&unit_id={{ unit.id }}">
+                                {{ unit.lessons_count }} درس
+                            </a>
+                        </td>
+                        <td>
+                            <button
+                                type="button"
+                                class="icon-button js-edit-unit"
+                                data-id="{{ unit.id }}"
+                                data-course="{{ unit.course.id }}"
+                                data-title="{{ unit.title|default_if_none:''|escape }}"
+                                data-description="{{ unit.description|default_if_none:''|escape }}"
+                                data-sort="{{ unit.sort_order }}"
+                                aria-label="تعديل {{ unit.title }}"
+                            >
+                                <i data-lucide="edit-3"></i>
+                            </button>
+                        </td>
+                    </tr>
                 {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center p-12">
-                        <p class="text-muted">لا توجد وحدات مطابقة للبحث.</p>
-                    </td>
-                </tr>
+                    <tr>
+                        <td colspan="5">
+                            <div class="empty-state">لا توجد وحدات مطابقة للفلتر الحالي.</div>
+                        </td>
+                    </tr>
                 {% endfor %}
             </tbody>
         </table>
+    </section>
+
+    <div id="create-modal" class="content-modal" hidden>
+        <div class="content-modal__card" role="dialog" aria-modal="true" aria-labelledby="create-title">
+            <div class="content-modal__header">
+                <h2 id="create-title"><i data-lucide="plus-circle"></i> إضافة وحدة جديدة</h2>
+                <button type="button" class="icon-button" onclick="closeModals()" aria-label="إغلاق"><i data-lucide="x"></i></button>
+            </div>
+            <form method="post" class="content-form">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                {% for field in unit_form %}
+                    <label class="content-field">
+                        <span>{{ field.label }}</span>
+                        {{ field }}
+                        {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+                    </label>
+                {% endfor %}
+                <div class="modal-actions">
+                    <button type="button" onclick="closeModals()" class="btn btn-secondary">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ الوحدة</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="edit-modal" class="content-modal" hidden>
+        <div class="content-modal__card" role="dialog" aria-modal="true" aria-labelledby="edit-title-heading">
+            <div class="content-modal__header">
+                <h2 id="edit-title-heading"><i data-lucide="edit-3"></i> تعديل الوحدة</h2>
+                <button type="button" class="icon-button" onclick="closeModals()" aria-label="إغلاق"><i data-lucide="x"></i></button>
+            </div>
+            <form id="edit-form" method="post" class="content-form">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                <label class="content-field">
+                    <span>الدورة التابعة</span>
+                    <select name="course" id="edit-course" required>
+                        {% for course in courses %}
+                            <option value="{{ course.id }}">{{ course.title }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="content-field">
+                    <span>اسم الوحدة</span>
+                    <input type="text" name="title" id="edit-title" required>
+                </label>
+                <label class="content-field">
+                    <span>وصف الوحدة</span>
+                    <textarea name="description" id="edit-description" rows="3"></textarea>
+                </label>
+                <label class="content-field">
+                    <span>الترتيب</span>
+                    <input type="number" name="sort_order" id="edit-sort-order" min="0" value="0">
+                </label>
+                <div class="modal-actions">
+                    <button type="button" onclick="closeModals()" class="btn btn-secondary">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">تحديث الوحدة</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
-<style>
-    .sort-badge { background: rgba(197, 160, 89, 0.1); color: var(--brand-gold); padding: 0.25rem 0.5rem; border-radius: 6px; font-weight: 700; font-size: 0.8rem; }
-    .admin-table { width: 100%; border-collapse: collapse; }
-    .admin-table th { padding: 1.25rem; border-bottom: 1px solid var(--border-light); text-align: right; color: var(--text-muted); font-size: 0.85rem; }
-    .admin-table td { padding: 1.25rem; border-bottom: 1px solid var(--border-light); color: var(--text-primary); }
-    .btn-icon { color: var(--brand-gold); transition: 0.3s; padding: 0.5rem; border-radius: 8px; border: none; background: none; cursor: pointer; }
-    .btn-icon:hover { background: rgba(197, 160, 89, 0.1); }
-    .tag { font-size: 0.75rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border-light); padding: 0.2rem 0.6rem; border-radius: 100px; color: var(--text-secondary); }
-    .form-control { width: 100%; background: var(--bg-base); border: 1px solid var(--border-light); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 12px; outline: none; }
-
-    /* Modal Styles */
-    .modal-overlay {
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(8px);
-        display: flex; align-items: center; justify-content: center;
-        z-index: 1000; padding: 1.5rem;
-    }
-    .modal-card {
-        background: var(--bg-surface); border: 1px solid var(--border-strong);
-        border-radius: 28px; width: 100%; max-width: 500px;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        overflow: hidden;
-    }
-    .modal-header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; }
-    .modal-body { padding: 2rem; }
-    .modal-footer { padding: 1.5rem 2rem; background: rgba(0,0,0,0.1); border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 1rem; }
-    .form-group { margin-bottom: 1.5rem; }
-    .form-label { display: block; font-weight: 700; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.5rem; }
-    .modal-body input, .modal-body textarea, .modal-body select {
-        width: 100%; padding: 0.85rem 1.25rem; background: rgba(0, 0, 0, 0.3);
-        border: 1px solid var(--border-strong); border-radius: 12px; color: var(--text-primary);
-    }
-    .animate-scale-up { animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
-    @keyframes scaleUp { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-</style>
-
 <script>
     function openCreateModal() {
-        document.getElementById('create-modal').style.display = 'flex';
+        document.getElementById('create-modal').hidden = false;
         document.body.style.overflow = 'hidden';
-    }
-    
-    function openEditModal(id, courseId, title, description, sortOrder) {
-        const modal = document.getElementById('edit-modal');
-        const form = document.getElementById('edit-form');
-        form.action = `/admin-dashboard/content/units/${id}/edit/`;
-        
-        document.getElementById('edit-course').value = courseId;
-        document.getElementById('edit-title').value = title;
-        document.getElementById('edit-description').value = description;
-        document.getElementById('edit-sort-order').value = sortOrder;
-        
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
-    
-    function closeModals() {
-        document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
-        document.body.style.overflow = 'auto';
     }
 
-    window.onclick = function(event) {
-        if (event.target.classList.contains('modal-overlay')) {
-            closeModals();
-        }
-    };
+    function openEditModal(button) {
+        const modal = document.getElementById('edit-modal');
+        const form = document.getElementById('edit-form');
+        form.action = `/admin-dashboard/content/units/${button.dataset.id}/edit/`;
+        document.getElementById('edit-course').value = button.dataset.course;
+        document.getElementById('edit-title').value = button.dataset.title;
+        document.getElementById('edit-description').value = button.dataset.description;
+        document.getElementById('edit-sort-order').value = button.dataset.sort;
+        modal.hidden = false;
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeModals() {
+        document.querySelectorAll('.content-modal').forEach(function (modal) { modal.hidden = true; });
+        document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('.js-edit-unit').forEach(function (button) {
+        button.addEventListener('click', function () { openEditModal(button); });
+    });
+    document.querySelectorAll('.content-modal').forEach(function (modal) {
+        modal.addEventListener('click', function (event) {
+            if (event.target === modal) closeModals();
+        });
+    });
 </script>
+
+<style>
+    .content-hero, .hero-actions, .toolbar-form { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .hero-actions { justify-content: flex-end; }
+    .toolbar-card { padding: 1.25rem 1.5rem !important; }
+    .toolbar-form .content-field { flex: 1 1 320px; margin: 0; }
+    .units-table { overflow-x: auto; }
+    .item-title { display: grid; gap: .25rem; }
+    .item-title small { color: var(--text-muted); }
+    .sort-badge { display: inline-flex; min-width: 2.1rem; justify-content: center; padding: .3rem .55rem; border-radius: 8px; background: rgba(197,160,89,.12); color: var(--brand-gold); font-weight: 900; }
+    .tag, .lesson-link { display: inline-flex; align-items: center; border-radius: 999px; padding: .28rem .7rem; font-size: .78rem; font-weight: 800; }
+    .tag { border: 1px solid var(--border-light); color: var(--text-secondary); }
+    .lesson-link { background: rgba(197,160,89,.1); color: var(--brand-gold); text-decoration: none; }
+    .icon-button { width: 38px; height: 38px; border: 0; border-radius: 10px; background: rgba(197,160,89,.1); color: var(--brand-gold); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+    .empty-state { padding: 2rem; text-align: center; color: var(--text-muted); border: 1px dashed var(--border-light); border-radius: 14px; }
+    .content-modal[hidden] { display: none; }
+    .content-modal { position: fixed; inset: 0; z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(0,0,0,.72); backdrop-filter: blur(10px); }
+    .content-modal__card { width: min(560px, 100%); max-height: calc(100vh - 2rem); overflow: auto; border: 1px solid var(--border-strong); border-radius: 18px; background: var(--bg-surface); }
+    .content-modal__header { display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-light); }
+    .content-modal__header h2 { display: flex; gap: .6rem; align-items: center; margin: 0; font-size: 1.15rem; }
+    .content-form { display: grid; gap: 1rem; padding: 1.5rem; }
+    .content-field { display: grid; gap: .45rem; color: var(--text-secondary); font-weight: 800; }
+    .content-field input, .content-field textarea, .content-field select { width: 100%; border: 1px solid var(--border-light); border-radius: 12px; background: var(--bg-base); color: var(--text-primary); padding: .85rem 1rem; font-family: inherit; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: .75rem; padding-top: .5rem; }
+    .field-error { color: var(--danger, #ef4444); }
+    @media (max-width: 720px) { .content-hero { align-items: flex-start; } .hero-actions, .hero-actions .btn { width: 100%; } .admin-table { min-width: 760px; } }
+</style>
 {% endblock %}

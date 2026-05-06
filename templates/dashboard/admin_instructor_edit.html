@@ -1,0 +1,191 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}تعديل مدرس | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="admin-instructor-edit reveal-up">
+    <header class="edit-hero">
+        <div class="hero-profile">
+            <div class="hero-avatar">
+                {% if instructor.instructor_profile.avatar %}
+                    <img src="{{ instructor.instructor_profile.avatar.url }}" alt="{{ instructor.get_full_name|default:instructor.username }}">
+                {% else %}
+                    <i data-lucide="user"></i>
+                {% endif %}
+            </div>
+            <div>
+                <div class="badge badge-gold mb-2">ملف المدرس</div>
+                <h1>{{ instructor.get_full_name|default:instructor.username }}</h1>
+                <p>{{ instructor.instructor_profile.specialty|default:"مدرس متخصص" }} · {{ instructor.username }}</p>
+            </div>
+        </div>
+        <div class="hero-actions">
+            <a href="{% url 'dashboard:admin_instructors' %}" class="btn btn-secondary">
+                <i data-lucide="arrow-right"></i>
+                رجوع
+            </a>
+            <a href="{% url 'dashboard:instructor_courses' instructor.id %}" class="btn btn-primary" target="_blank">
+                <i data-lucide="eye"></i>
+                عرض صفحة المدرس
+            </a>
+        </div>
+    </header>
+
+    <section class="edit-stats">
+        <div class="stat-tile"><span>الدورات</span><strong>{{ instructor.courses_total }}</strong></div>
+        <div class="stat-tile"><span>الطلاب</span><strong>{{ instructor.students_total }}</strong></div>
+        <div class="stat-tile"><span>الحالة</span><strong class="status-text">{{ instructor.instructor_profile.get_status_display }}</strong></div>
+    </section>
+
+    <div class="edit-layout">
+        <section class="premium-card edit-form-card">
+            <div class="section-title">
+                <i data-lucide="settings-2"></i>
+                <h2>بيانات المدرس</h2>
+            </div>
+            <form method="post" enctype="multipart/form-data" class="instructor-edit-form">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="form-errors">{{ form.non_field_errors }}</div>
+                {% endif %}
+                <div class="form-grid">
+                    {% for field in form %}
+                        <div class="form-field {% if field.name == 'bio' %}wide{% endif %}">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                            {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-glow">
+                        <i data-lucide="save"></i>
+                        حفظ التعديلات
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <aside class="premium-card courses-side">
+            <div class="section-title">
+                <i data-lucide="book-open"></i>
+                <h2>دورات المدرس</h2>
+            </div>
+            <div class="teacher-courses-list">
+                {% for course in courses %}
+                    <a class="teacher-course-row" href="{% url 'dashboard:admin_course_control' course.id %}">
+                        <span>
+                            <strong>{{ course.title }}</strong>
+                            <small>{{ course.subject.name|default:"بدون مادة" }} · {{ course.get_status_display }}</small>
+                        </span>
+                        <i data-lucide="chevron-left"></i>
+                    </a>
+                {% empty %}
+                    <div class="empty-side">
+                        <i data-lucide="book-plus"></i>
+                        <p>لا توجد دورات مرتبطة بهذا المدرس بعد.</p>
+                        <a href="{% url 'dashboard:admin_course_create' %}" class="btn btn-secondary btn-sm">إضافة دورة</a>
+                    </div>
+                {% endfor %}
+            </div>
+        </aside>
+    </div>
+</div>
+
+<style>
+    .admin-instructor-edit { padding-bottom: 3rem; }
+    .edit-hero {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+        padding: 2rem;
+        border: 1px solid var(--border-light);
+        border-radius: 24px;
+        background: linear-gradient(135deg, rgba(var(--brand-gold-rgb), .14), transparent 45%), var(--bg-surface);
+        margin-bottom: 1.2rem;
+    }
+    .hero-profile { display: flex; align-items: center; gap: 1rem; min-width: 0; }
+    .hero-avatar {
+        width: 92px;
+        height: 92px;
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        overflow: hidden;
+        border-radius: 22px;
+        border: 1px solid var(--brand-gold-glow);
+        background: rgba(var(--brand-gold-rgb), .12);
+        color: var(--brand-gold);
+    }
+    .hero-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .edit-hero h1 { margin: 0 0 .35rem; font-size: clamp(1.7rem, 3.2vw, 2.6rem); overflow-wrap: anywhere; }
+    .edit-hero p { margin: 0; color: var(--text-muted); font-weight: 800; }
+    .hero-actions { display: flex; gap: .75rem; flex-wrap: wrap; justify-content: flex-end; }
+    .edit-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1.2rem; }
+    .stat-tile { padding: 1rem 1.1rem; border: 1px solid var(--border-light); border-radius: 16px; background: var(--bg-surface); }
+    .stat-tile span { display: block; color: var(--text-muted); font-size: .78rem; font-weight: 900; }
+    .stat-tile strong { color: var(--brand-gold); font-size: 1.7rem; line-height: 1.3; }
+    .stat-tile .status-text { font-size: 1.1rem; color: var(--text-primary); }
+    .edit-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 1.2rem; align-items: start; }
+    .edit-form-card, .courses-side { padding: 1.25rem !important; }
+    .section-title { display: flex; align-items: center; gap: .6rem; margin-bottom: 1rem; }
+    .section-title i { color: var(--brand-gold); }
+    .section-title h2 { margin: 0; font-size: 1.15rem; }
+    .instructor-edit-form input,
+    .instructor-edit-form select,
+    .instructor-edit-form textarea {
+        width: 100%;
+        min-height: 46px;
+        padding: .85rem 1rem;
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        background: var(--bg-base);
+        color: var(--text-primary);
+        font-family: inherit;
+    }
+    .instructor-edit-form textarea { resize: vertical; min-height: 120px; line-height: 1.8; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+    .form-field { display: grid; gap: .42rem; }
+    .form-field.wide { grid-column: 1 / -1; }
+    .form-field label { color: var(--text-muted); font-size: .8rem; font-weight: 900; }
+    .field-error, .form-errors { color: var(--danger); font-weight: 800; font-size: .8rem; }
+    .form-actions { display: flex; justify-content: flex-end; margin-top: 1.2rem; }
+    .teacher-courses-list { display: grid; gap: .7rem; }
+    .teacher-course-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+        padding: .85rem;
+        border: 1px solid var(--border-light);
+        border-radius: 14px;
+        background: var(--bg-surface-elevated);
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: transform .18s ease, border-color .18s ease;
+    }
+    .teacher-course-row:hover { transform: translateY(-2px); border-color: var(--brand-gold-glow); }
+    .teacher-course-row span { min-width: 0; }
+    .teacher-course-row strong { display: block; overflow-wrap: anywhere; }
+    .teacher-course-row small { display: block; margin-top: .25rem; color: var(--text-muted); }
+    .teacher-course-row i { color: var(--brand-gold); flex: 0 0 auto; }
+    .empty-side { text-align: center; padding: 2rem 1rem; color: var(--text-muted); }
+    .empty-side i { width: 42px; height: 42px; color: var(--brand-gold); }
+    @media (max-width: 980px) {
+        .edit-layout { grid-template-columns: 1fr; }
+        .edit-hero { align-items: flex-start; flex-direction: column; }
+        .hero-actions { width: 100%; }
+        .hero-actions .btn { flex: 1; justify-content: center; }
+    }
+    @media (max-width: 640px) {
+        .edit-hero { padding: 1.25rem; }
+        .hero-profile { align-items: flex-start; }
+        .hero-avatar { width: 72px; height: 72px; border-radius: 18px; }
+        .edit-stats, .form-grid { grid-template-columns: 1fr; }
+        .form-actions .btn { width: 100%; justify-content: center; }
+    }
+</style>
+{% endblock %}

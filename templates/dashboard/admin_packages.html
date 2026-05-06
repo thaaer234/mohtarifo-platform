@@ -10,7 +10,13 @@
             <h1 style="font-size:2.3rem; margin-bottom:.5rem;">باقات الدورات والأكواد الموحدة</h1>
             <p class="text-muted">اصنع باقة علمي أو أدبي أو تاسع. باقات العلمي والأدبي تضيف المواد المشتركة تلقائياً، وعند وجود أكثر من مدرس للمادة يختار الطالب مدرساً واحداً أثناء التفعيل.</p>
         </div>
-        <a class="btn btn-secondary" href="{% url 'dashboard:admin_billing' %}">العودة للمركز المالي</a>
+        <div class="row-actions">
+            <a class="btn btn-primary btn-glow" href="{% url 'dashboard:admin_packages_report_export' %}">
+                <i data-lucide="file-spreadsheet"></i>
+                تقرير Excel للبكجات
+            </a>
+            <a class="btn btn-secondary" href="{% url 'dashboard:admin_billing' %}">العودة للمركز المالي</a>
+        </div>
     </header>
 
     <div class="grid-2 gap-8 mb-12">
@@ -52,6 +58,33 @@
             <p class="text-muted mt-4" style="line-height:1.7; font-size:.9rem;">الكود الناتج نوعه Package. إذا احتوت مادة على أكثر من دورة، ستظهر للطالب شاشة اختيار مرتبة قبل تفعيل الباقة.</p>
         </article>
     </div>
+
+    <section class="premium-card mb-12" style="padding:2.5rem;">
+        <div class="flex-between flex-wrap gap-4 mb-6">
+            <div>
+                <div class="badge badge-gold mb-3">بيع مباشر</div>
+                <h2 style="font-size:1.5rem; margin:0;">بيع كود باقة لطالب</h2>
+            </div>
+            <p class="text-muted" style="max-width:560px; line-height:1.7; margin:0;">اختر كود باقة متاح، وسجله باسم الطالب. سيظهر كود الباقة للطالب عند إدخاله ويختار المدرس المناسب لكل مادة عند الحاجة.</p>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="sell_package_code">
+            <div class="package-sale-grid">
+                {% for field in sale_form %}
+                    <div class="premium-field">
+                        <label>{{ field.label }}</label>
+                        <div class="input-glow-wrapper">{{ field }}</div>
+                        {% for error in field.errors %}<p class="text-danger mt-2">{{ error }}</p>{% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+            <button class="btn btn-primary btn-glow mt-5" type="submit">
+                <i data-lucide="badge-dollar-sign"></i>
+                تسجيل بيع كود الباقة
+            </button>
+        </form>
+    </section>
 
     <section class="premium-card mb-10" style="padding:2.5rem;">
         <h2 style="font-size:1.5rem; margin-bottom:1.5rem;">تقرير الباقات</h2>
@@ -176,6 +209,7 @@
     .premium-field textarea { width:100%; padding:1rem; border-radius:12px; border:1px solid var(--border-light); background:var(--bg-base); color:var(--text-primary); font-family:inherit; }
     .package-batch-form { padding-top:1rem; border-top:1px solid var(--border-light); }
     .package-batch-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:.75rem; }
+    .package-sale-grid { display:grid; grid-template-columns:1.2fr 1fr 1fr .8fr; gap:1rem; align-items:end; }
     .premium-field.compact label { font-size:.72rem; color:var(--text-muted); }
     .premium-field.compact input,
     .premium-field.compact select,
@@ -190,6 +224,7 @@
     .btn-sm { padding:.45rem .75rem; font-size:.8rem; min-height:unset; }
     @media (max-width: 760px) {
         .package-batch-grid { grid-template-columns:1fr; }
+        .package-sale-grid { grid-template-columns:1fr; }
     }
 </style>
 <script>

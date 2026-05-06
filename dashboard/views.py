@@ -26,7 +26,7 @@ from django.utils import timezone
 from django.core.paginator import Paginator
 from openpyxl import Workbook
 
-from accounts.models import StudentProfile
+from accounts.models import InstructorProfile, StudentProfile
 from analytics.models import TopicPerformance
 from billing.devices import activate_user_device, device_fingerprint, device_seed, set_device_cookie
 from billing.models import AccessCode, AccessCodeBatch, AccessCodePrintLog, AccessGrant, CoursePackage, Institute, Payment, SalesCenter, Subscription, UserDevice
@@ -45,6 +45,9 @@ from .forms import (
     CourseStudentImportForm,
     PackageCodeGenerateForm,
     PackageCodeBatchForm,
+    PackageCodeSaleForm,
+    InstructorAddForm,
+    InstructorEditForm,
     InstituteForm,
     PartnerBatchForm,
     PartnerInstituteImportForm,
@@ -975,9 +978,6 @@ def admin_export_students(request):
 
 @admin_required
 def admin_instructor_add(request):
-    from .forms import InstructorAddForm
-    from accounts.models import InstructorProfile
-    
     form = InstructorAddForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
         username = form.cleaned_data["username"]
@@ -1001,9 +1001,74 @@ def admin_instructor_add(request):
                     }
                 )
                 messages.success(request, f"تم إضافة المدرس {user.get_full_name()} بنجاح.")
-                return redirect("dashboard:instructors_list")
+                return redirect("dashboard:admin_instructors")
                 
     return render(request, "dashboard/admin_instructor_add.html", {"form": form})
+
+
+@admin_required
+def admin_instructors(request):
+    search = request.GET.get("q", "").strip()
+    status = request.GET.get("status", "")
+    instructors = (
+        User.objects.filter(instructor_profile__isnull=False)
+        .select_related("instructor_profile")
+        .annotate(courses_total=Count("courses", distinct=True), students_total=Count("courses__access_grants__user", distinct=True))
+        .order_by("first_name", "last_name", "username")
+    )
+    if search:
+        instructors = instructors.filter(
+            models.Q(first_name__icontains=search)
+            | models.Q(last_name__icontains=search)
+            | models.Q(username__icontains=search)
+            | models.Q(instructor_profile__specialty__icontains=search)
+        )
+    if status:
+        instructors = instructors.filter(instructor_profile__status=status)
+    stats = {
+        "total": User.objects.filter(instructor_profile__isnull=False).count(),
+        "active": User.objects.filter(instructor_profile__status="active").count(),
+        "pending": User.objects.filter(instructor_profile__status="pending").count(),
+        "suspended": User.objects.filter(instructor_profile__status="suspended").count(),
+    }
+    return render(
+        request,
+        "dashboard/admin_instructors.html",
+        {
+            "instructors": instructors,
+            "stats": stats,
+            "search": search,
+            "status": status,
+            "status_choices": InstructorProfile.STATUS_CHOICES,
+        },
+    )
+
+
+@admin_required
+def admin_instructor_edit(request, instructor_id):
+    instructor = get_object_or_404(
+        User.objects.select_related("instructor_profile").annotate(
+            courses_total=Count("courses", distinct=True),
+            students_total=Count("courses__access_grants__user", distinct=True),
+        ),
+        id=instructor_id,
+        instructor_profile__isnull=False,
+    )
+    form = InstructorEditForm(request.POST or None, request.FILES or None, instructor=instructor)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "تم تحديث بيانات المدرس بنجاح.")
+        return redirect("dashboard:admin_instructors")
+    courses = Course.objects.filter(instructor=instructor).select_related("subject").order_by("-created_at")[:12]
+    return render(
+        request,
+        "dashboard/admin_instructor_edit.html",
+        {
+            "form": form,
+            "instructor": instructor,
+            "courses": courses,
+        },
+    )
 
 
 @admin_required
@@ -1713,7 +1778,32 @@ def _video_embed_url(video_url):
         video_id = video_url.rstrip("/").split("/")[-1]
         return f"https://player.vimeo.com/video/{video_id}"
     
-    # Bunny.net Support
+    # Bunny.net Support with Secure Token Authentication
+    if "mediadelivery.net" in video_url:
+        from urllib.parse import urlparse
+        import hashlib
+        import time
+        import os
+        parsed = urlparse(video_url)
+        path_parts = [p for p in parsed.path.split("/") if p]
+        library_id = ""
+        video_id = ""
+        if len(path_parts) >= 3:
+            library_id = path_parts[1]
+            video_id = path_parts[2]
+        elif len(path_parts) == 2:
+            library_id = path_parts[0]
+            video_id = path_parts[1]
+        if library_id and video_id:
+            token_key = os.environ.get("BUNNY_STREAM_TOKEN_KEY", "").strip()
+            if token_key:
+                expires = int(time.time()) + 7200
+                token_input = f"{token_key}{video_id}{expires}"
+                token = hashlib.sha256(token_input.encode("utf-8")).hexdigest()
+                return f"https://iframe.mediadelivery.net/embed/{library_id}/{video_id}?token={token}&expires={expires}"
+            else:
+                return f"https://iframe.mediadelivery.net/embed/{library_id}/{video_id}"
+    # Legacy Fallback if parsing library_id and video_id failed
     if "mediadelivery.net" in video_url:
         if "/play/" in video_url:
             return video_url.replace("/play/", "/embed/")
@@ -2034,6 +2124,25 @@ def _course_financial_rows():
     return rows
 
 
+def _package_financial_rows():
+    rows = []
+    packages = CoursePackage.objects.prefetch_related("courses").order_by("name")
+    for package in packages:
+        codes = AccessCode.objects.filter(access_type="package", package=package)
+        eligible_courses = package.eligible_courses_queryset()
+        rows.append({
+            "package": package,
+            "subjects": eligible_courses.values("subject").distinct().count(),
+            "courses": eligible_courses.count(),
+            "codes": codes.count(),
+            "sold": codes.filter(sale_status="sold").count(),
+            "activated": codes.filter(redeemed_count__gt=0).count(),
+            "inactive": codes.filter(redeemed_count=0).count(),
+            "gross": codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0,
+        })
+    return rows
+
+
 @admin_required
 def admin_financial_report_export(request):
     workbook = Workbook()
@@ -2059,7 +2168,69 @@ def admin_financial_report_export(request):
             row["printed"],
             row["gross"] // 100,
         ])
+    packages_sheet = workbook.create_sheet("packages")
+    packages_sheet.append(["package", "track", "subjects", "courses", "codes", "sold", "activated", "inactive", "gross_syp"])
+    for row in _package_financial_rows():
+        package = row["package"]
+        packages_sheet.append([
+            package.name,
+            package.get_package_track_display(),
+            row["subjects"],
+            row["courses"],
+            row["codes"],
+            row["sold"],
+            row["activated"],
+            row["inactive"],
+            row["gross"] // 100,
+        ])
     return _workbook_response(workbook, f"financial-report-{timezone.now().strftime('%Y%m%d-%H%M')}.xlsx")
+
+
+@admin_required
+def admin_packages_report_export(request):
+    workbook = Workbook()
+    summary = workbook.active
+    summary.title = "packages"
+    summary.append(["package", "track", "subjects", "courses", "codes", "sold", "activated", "inactive", "gross_syp"])
+    for row in _package_financial_rows():
+        package = row["package"]
+        summary.append([
+            package.name,
+            package.get_package_track_display(),
+            row["subjects"],
+            row["courses"],
+            row["codes"],
+            row["sold"],
+            row["activated"],
+            row["inactive"],
+            row["gross"] // 100,
+        ])
+
+    codes_sheet = workbook.create_sheet("codes")
+    codes_sheet.append(["code", "package", "sale_status", "student_name", "student_phone", "sold_by", "sold_at", "sold_price_syp", "activated", "batch", "sales_center"])
+    codes = (
+        AccessCode.objects.filter(access_type="package")
+        .select_related("package", "sold_by", "batch", "sales_center")
+        .order_by("package__name", "-created_at")
+    )
+    for code in codes:
+        codes_sheet.append([
+            code.code,
+            code.package.name if code.package else "",
+            code.sale_status,
+            code.assigned_student_name,
+            code.assigned_student_phone,
+            code.sold_by.username if code.sold_by else "",
+            code.sold_at.strftime("%Y-%m-%d %H:%M") if code.sold_at else "",
+            (code.sold_price_cents or 0) // 100,
+            "yes" if code.redeemed_count else "no",
+            code.batch.name if code.batch else "",
+            code.sales_center.name if code.sales_center else "",
+        ])
+    for sheet in workbook.worksheets:
+        for column in ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"]:
+            sheet.column_dimensions[column].width = 22
+    return _workbook_response(workbook, f"packages-report-{timezone.now().strftime('%Y%m%d-%H%M')}.xlsx")
 
 
 @admin_required
@@ -2123,6 +2294,7 @@ def admin_packages(request):
     package_form = CoursePackageForm(prefix="package")
     code_form = PackageCodeGenerateForm(prefix="codes")
     batch_form = PackageCodeBatchForm(prefix="batch")
+    sale_form = PackageCodeSaleForm(prefix="sale")
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -2170,6 +2342,48 @@ def admin_packages(request):
                 )
                 messages.success(request, f"تم إنشاء دفعة {batch.name} وتوليد {created} كود للباقة {package_obj.name}.")
                 return redirect("dashboard:admin_packages")
+        elif action == "sell_package_code":
+            sale_form = PackageCodeSaleForm(request.POST, prefix="sale")
+            if sale_form.is_valid():
+                with transaction.atomic():
+                    access_code = AccessCode.objects.select_for_update().get(
+                        id=sale_form.cleaned_data["code"].id,
+                        access_type="package",
+                    )
+                    student_phone = sanitize_plain_text(sale_form.cleaned_data["student_phone"])
+                    student_name = sanitize_plain_text(sale_form.cleaned_data["student_name"])
+                    student, created = User.objects.get_or_create(
+                        username=student_phone,
+                        defaults={"first_name": student_name, "is_active": True},
+                    )
+                    if created:
+                        student.set_unusable_password()
+                        student.save(update_fields=["password"])
+                    elif student_name and not student.get_full_name():
+                        student.first_name = student_name
+                        student.save(update_fields=["first_name"])
+                    StudentProfile.objects.get_or_create(
+                        user=student,
+                        defaults={"phone": student_phone, "track": access_code.package.get_package_track_display() if access_code.package else ""},
+                    )
+                    access_code.assigned_student_name = student_name
+                    access_code.assigned_student_phone = student_phone
+                    access_code.sale_status = "sold"
+                    access_code.sold_by = request.user
+                    access_code.sold_at = timezone.now()
+                    price_amount = sale_form.cleaned_data.get("price_amount")
+                    access_code.sold_price_cents = int(price_amount * 100) if price_amount is not None else (access_code.package.price_cents if access_code.package else None)
+                    access_code.save(update_fields=[
+                        "assigned_student_name",
+                        "assigned_student_phone",
+                        "sale_status",
+                        "sold_by",
+                        "sold_at",
+                        "sold_price_cents",
+                        "updated_at",
+                    ])
+                messages.success(request, f"تم بيع كود الباقة {access_code.code} للطالب {student_name}.")
+                return redirect("dashboard:admin_packages")
 
     packages = (
         CoursePackage.objects.prefetch_related("courses")
@@ -2195,6 +2409,7 @@ def admin_packages(request):
             "package_form": package_form,
             "code_form": code_form,
             "batch_form": batch_form,
+            "sale_form": sale_form,
             "packages": packages,
             "package_codes": package_codes,
             "package_batches": package_batches,
@@ -2349,6 +2564,9 @@ def admin_units(request):
         if form.is_valid():
             unit = form.save()
             messages.success(request, f"تمت إضافة وحدة {unit.title} بنجاح.")
+            next_url = request.POST.get("next")
+            if next_url and next_url.startswith("/admin-dashboard/content/units/"):
+                return redirect(next_url)
             return redirect("dashboard:admin_units")
 
     units = Unit.objects.select_related("course").annotate(
@@ -2381,28 +2599,40 @@ def admin_unit_edit(request, unit_id):
             messages.success(request, f"تم تحديث وحدة {unit.title} بنجاح.")
         else:
             messages.error(request, "حدث خطأ أثناء تحديث الوحدة.")
-            
+    next_url = request.POST.get("next")
+    if next_url and next_url.startswith("/admin-dashboard/content/units/"):
+        return redirect(next_url)
     return redirect("dashboard:admin_units")
 
 
 @admin_required
 def admin_lessons(request):
     from learning.models import Lesson, Course, Unit
-    from .forms import CourseLessonUploadForm
     course_id = request.GET.get("course_id")
     unit_id = request.GET.get("unit_id")
     
     if request.method == "POST":
-        # Handle Lesson Creation
-        unit = get_object_or_404(Unit, id=request.POST.get("unit"))
+        unit = get_object_or_404(Unit.objects.select_related("course"), id=request.POST.get("unit"))
         lesson = Lesson.objects.create(
             unit=unit,
-            title=request.POST.get("title"),
+            title=request.POST.get("title", "").strip(),
+            description=request.POST.get("description", "").strip(),
             lesson_type=request.POST.get("lesson_type", "video"),
             video_url=request.POST.get("video_url", ""),
-            sort_order=request.POST.get("sort_order", 0)
+            duration_seconds=request.POST.get("duration_seconds") or None,
+            sort_order=request.POST.get("sort_order") or 0,
+            is_free_preview=request.POST.get("is_free_preview") == "on",
         )
+        if request.FILES.get("video_file"):
+            lesson.video_file = request.FILES["video_file"]
+        if request.FILES.get("pdf_file"):
+            lesson.pdf_file = request.FILES["pdf_file"]
+        if lesson.video_file or lesson.pdf_file:
+            lesson.save(update_fields=["video_file", "pdf_file"])
         messages.success(request, f"تمت إضافة درس {lesson.title} بنجاح.")
+        next_url = request.POST.get("next")
+        if next_url and next_url.startswith("/admin-dashboard/content/lessons/"):
+            return redirect(next_url)
         return redirect("dashboard:admin_lessons")
 
     lessons = Lesson.objects.select_related("unit", "unit__course").order_by("unit__course__title", "unit__sort_order", "sort_order")
@@ -2427,17 +2657,28 @@ def admin_lessons(request):
 
 @admin_required
 def admin_lesson_edit(request, lesson_id):
-    from learning.models import Lesson
+    from learning.models import Lesson, Unit
     lesson = get_object_or_404(Lesson, id=lesson_id)
     
     if request.method == "POST":
-        lesson.title = request.POST.get("title")
+        if request.POST.get("unit"):
+            lesson.unit = get_object_or_404(Unit, id=request.POST.get("unit"))
+        lesson.title = request.POST.get("title", "").strip()
+        lesson.description = request.POST.get("description", "").strip()
+        lesson.lesson_type = request.POST.get("lesson_type", lesson.lesson_type)
         lesson.video_url = request.POST.get("video_url", "")
-        lesson.sort_order = request.POST.get("sort_order", 0)
+        lesson.duration_seconds = request.POST.get("duration_seconds") or None
+        lesson.sort_order = request.POST.get("sort_order") or 0
         lesson.is_free_preview = request.POST.get("is_free_preview") == "on"
+        if request.FILES.get("video_file"):
+            lesson.video_file = request.FILES["video_file"]
+        if request.FILES.get("pdf_file"):
+            lesson.pdf_file = request.FILES["pdf_file"]
         lesson.save()
         messages.success(request, f"تم تحديث درس {lesson.title} بنجاح.")
-            
+    next_url = request.POST.get("next")
+    if next_url and next_url.startswith("/admin-dashboard/content/lessons/"):
+        return redirect(next_url)
     return redirect("dashboard:admin_lessons")
 
 

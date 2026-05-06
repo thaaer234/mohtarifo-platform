@@ -415,6 +415,23 @@ class PackageCodeGenerateForm(forms.Form):
     code_prefix = forms.CharField(label="بادئة الكود", max_length=24, required=False)
 
 
+class PackageCodeSaleForm(forms.Form):
+    code = forms.ModelChoiceField(label="كود الباقة", queryset=AccessCode.objects.none())
+    student_name = forms.CharField(label="اسم الطالب", max_length=160)
+    student_phone = forms.CharField(label="رقم الطالب", max_length=40)
+    price_amount = forms.DecimalField(label="قيمة البيع", min_value=0, decimal_places=0, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["code"].queryset = (
+            AccessCode.objects.filter(access_type="package", status="active", sale_status__in=["available", "reserved"])
+            .select_related("package")
+            .order_by("package__name", "created_at")
+        )
+        self.fields["code"].label_from_instance = lambda code: f"{code.code} - {code.package.name if code.package else 'باقة'}"
+        self.fields["price_amount"].required = False
+
+
 class InstructorAddForm(forms.Form):
     first_name = forms.CharField(label="الاسم الأول")
     last_name = forms.CharField(label="الكنية")
@@ -423,6 +440,57 @@ class InstructorAddForm(forms.Form):
     specialty = forms.CharField(label="التخصص", required=False)
     bio = forms.CharField(label="النبذة التعريفية", widget=forms.Textarea(attrs={"rows": 3}), required=False)
     photo = forms.ImageField(label="الصورة الشخصية", required=False)
+
+
+class InstructorEditForm(forms.Form):
+    first_name = forms.CharField(label="الاسم الأول", max_length=120, required=False)
+    last_name = forms.CharField(label="الكنية", max_length=120, required=False)
+    username = forms.CharField(label="اسم المستخدم / الهاتف", max_length=150)
+    specialty = forms.CharField(label="التخصص", max_length=120, required=False)
+    bio = forms.CharField(label="النبذة التعريفية", widget=forms.Textarea(attrs={"rows": 3}), required=False)
+    avatar = forms.ImageField(label="الصورة الشخصية", required=False)
+    status = forms.ChoiceField(label="الحالة", choices=InstructorProfile.STATUS_CHOICES)
+
+    def __init__(self, *args, instructor=None, **kwargs):
+        self.instructor = instructor
+        initial = kwargs.pop("initial", {})
+        if instructor is not None:
+            profile = instructor.instructor_profile
+            initial = {
+                **initial,
+                "first_name": instructor.first_name,
+                "last_name": instructor.last_name,
+                "username": instructor.username,
+                "specialty": profile.specialty,
+                "bio": profile.bio,
+                "status": profile.status,
+            }
+        super().__init__(*args, initial=initial, **kwargs)
+
+    def clean_username(self):
+        username = self.cleaned_data["username"].strip()
+        qs = User.objects.filter(username=username)
+        if self.instructor is not None:
+            qs = qs.exclude(id=self.instructor.id)
+        if qs.exists():
+            raise ValidationError("اسم المستخدم / الهاتف مستخدم مسبقاً.")
+        return username
+
+    def save(self):
+        instructor = self.instructor
+        profile = instructor.instructor_profile
+        instructor.first_name = self.cleaned_data["first_name"].strip()
+        instructor.last_name = self.cleaned_data["last_name"].strip()
+        instructor.username = self.cleaned_data["username"]
+        instructor.is_staff = True
+        instructor.save(update_fields=["first_name", "last_name", "username", "is_staff"])
+        profile.specialty = self.cleaned_data["specialty"].strip()
+        profile.bio = self.cleaned_data["bio"].strip()
+        profile.status = self.cleaned_data["status"]
+        if self.cleaned_data.get("avatar"):
+            profile.avatar = self.cleaned_data["avatar"]
+        profile.save()
+        return instructor
 
 
 class PartnerInstituteImportForm(forms.Form):

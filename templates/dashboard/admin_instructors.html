@@ -1,0 +1,171 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}إدارة المدرسين | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="admin-instructors-page reveal-up">
+    <header class="instructors-hero">
+        <div>
+            <div class="badge badge-gold mb-3">المدرسون</div>
+            <h1>إدارة المدرسين</h1>
+            <p class="text-muted">أضف المدرسين، عدل صورهم واختصاصاتهم، وتحكم بظهورهم داخل الدورات والواجهة.</p>
+        </div>
+        <a href="{% url 'dashboard:admin_instructor_add' %}" class="btn btn-primary btn-glow">
+            <i data-lucide="user-plus"></i>
+            إضافة مدرس
+        </a>
+    </header>
+
+    <section class="instructors-stats">
+        <div class="stat-tile"><span>الكل</span><strong>{{ stats.total }}</strong></div>
+        <div class="stat-tile"><span>نشط</span><strong>{{ stats.active }}</strong></div>
+        <div class="stat-tile"><span>قيد المراجعة</span><strong>{{ stats.pending }}</strong></div>
+        <div class="stat-tile"><span>موقوف</span><strong>{{ stats.suspended }}</strong></div>
+    </section>
+
+    <section class="premium-card instructors-toolbar">
+        <form method="get" class="toolbar-form">
+            <div class="field">
+                <label>بحث</label>
+                <input type="search" name="q" value="{{ search }}" placeholder="اسم المدرس، الرقم، الاختصاص">
+            </div>
+            <div class="field">
+                <label>الحالة</label>
+                <select name="status">
+                    <option value="">كل الحالات</option>
+                    {% for value,label in status_choices %}
+                        <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button class="btn btn-secondary" type="submit">
+                <i data-lucide="search"></i>
+                تطبيق
+            </button>
+        </form>
+    </section>
+
+    <section class="instructors-grid-admin">
+        {% for instructor in instructors %}
+            <article class="premium-card instructor-admin-card">
+                <div class="instructor-card-head">
+                    <div class="instructor-avatar">
+                        {% if instructor.instructor_profile.avatar %}
+                            <img src="{{ instructor.instructor_profile.avatar.url }}" alt="{{ instructor.get_full_name|default:instructor.username }}">
+                        {% else %}
+                            <i data-lucide="user"></i>
+                        {% endif %}
+                    </div>
+                    <div class="instructor-main">
+                        <h3>{{ instructor.get_full_name|default:instructor.username }}</h3>
+                        <p>{{ instructor.instructor_profile.specialty|default:"مدرس متخصص" }}</p>
+                        <small>{{ instructor.username }}</small>
+                    </div>
+                    <span class="status-chip {{ instructor.instructor_profile.status }}">{{ instructor.instructor_profile.get_status_display }}</span>
+                </div>
+                {% if instructor.instructor_profile.bio %}
+                    <p class="instructor-bio text-muted">{{ instructor.instructor_profile.bio|truncatewords:22 }}</p>
+                {% endif %}
+                <div class="instructor-card-stats">
+                    <span><strong>{{ instructor.courses_total }}</strong> دورة</span>
+                    <span><strong>{{ instructor.students_total }}</strong> طالب</span>
+                </div>
+                <div class="instructor-actions">
+                    <a class="btn btn-primary" href="{% url 'dashboard:admin_instructor_edit' instructor.id %}">
+                        <i data-lucide="edit-3"></i>
+                        تعديل
+                    </a>
+                    <a class="btn btn-secondary" href="{% url 'dashboard:instructor_courses' instructor.id %}" target="_blank">
+                        <i data-lucide="eye"></i>
+                        عرض
+                    </a>
+                </div>
+            </article>
+        {% empty %}
+            <div class="premium-card empty-instructors">
+                <i data-lucide="users"></i>
+                <h3>لا يوجد مدرسون مطابقون</h3>
+                <a href="{% url 'dashboard:admin_instructor_add' %}" class="btn btn-primary mt-4">إضافة أول مدرس</a>
+            </div>
+        {% endfor %}
+    </section>
+</div>
+
+<style>
+    .admin-instructors-page { padding-bottom: 3rem; }
+    .instructors-hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 2rem;
+        padding: 2.3rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid var(--border-light);
+        border-radius: 26px;
+        background: linear-gradient(135deg, rgba(var(--brand-gold-rgb), .12), transparent 42%), var(--bg-surface);
+    }
+    .instructors-hero h1 { margin: 0 0 .6rem; font-size: clamp(2rem, 4vw, 3rem); }
+    .instructors-hero p { max-width: 720px; line-height: 1.8; margin: 0; }
+    .instructors-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+    .stat-tile { padding: 1.2rem; border: 1px solid var(--border-light); border-radius: 18px; background: var(--bg-surface); }
+    .stat-tile span { display: block; color: var(--text-muted); font-size: .82rem; font-weight: 800; }
+    .stat-tile strong { display: block; color: var(--brand-gold); font-size: 2rem; line-height: 1.2; }
+    .instructors-toolbar { padding: 1rem !important; margin-bottom: 1.5rem; }
+    .toolbar-form { display: grid; grid-template-columns: minmax(220px, 1fr) 220px auto; gap: .8rem; align-items: end; }
+    .field { display: grid; gap: .4rem; }
+    .field label { color: var(--text-muted); font-size: .78rem; font-weight: 900; }
+    .field input, .field select {
+        width: 100%;
+        min-height: 44px;
+        padding: .8rem 1rem;
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        background: var(--bg-base);
+        color: var(--text-primary);
+        font-family: inherit;
+    }
+    .instructors-grid-admin { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+    .instructor-admin-card { padding: 1.2rem !important; display: flex; flex-direction: column; gap: 1rem; }
+    .instructor-card-head { display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: .9rem; align-items: center; }
+    .instructor-avatar {
+        width: 72px;
+        height: 72px;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        border-radius: 18px;
+        background: rgba(var(--brand-gold-rgb), .1);
+        color: var(--brand-gold);
+        border: 1px solid var(--brand-gold-glow);
+    }
+    .instructor-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .instructor-main { min-width: 0; }
+    .instructor-main h3 { margin: 0; font-size: 1.05rem; color: var(--text-primary); overflow-wrap: anywhere; }
+    .instructor-main p { margin: .25rem 0; color: var(--brand-gold); font-weight: 800; font-size: .86rem; }
+    .instructor-main small { color: var(--text-muted); }
+    .status-chip { padding: .35rem .65rem; border-radius: 999px; font-size: .72rem; font-weight: 900; white-space: nowrap; background: var(--bg-base); color: var(--text-muted); }
+    .status-chip.active { color: var(--success); background: rgba(16,185,129,.1); }
+    .status-chip.pending { color: var(--brand-gold); background: rgba(var(--brand-gold-rgb), .1); }
+    .status-chip.suspended { color: var(--danger); background: var(--danger-bg); }
+    .instructor-bio { min-height: 44px; margin: 0; line-height: 1.7; font-size: .88rem; }
+    .instructor-card-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem; }
+    .instructor-card-stats span { padding: .75rem; border-radius: 12px; background: var(--bg-surface-elevated); color: var(--text-muted); font-size: .85rem; }
+    .instructor-card-stats strong { color: var(--text-primary); }
+    .instructor-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; margin-top: auto; }
+    .empty-instructors { grid-column: 1 / -1; padding: 4rem !important; text-align: center; }
+    .empty-instructors i { width: 54px; height: 54px; color: var(--brand-gold); }
+    @media (max-width: 1100px) {
+        .instructors-grid-admin { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 760px) {
+        .instructors-hero { flex-direction: column; align-items: flex-start; padding: 1.5rem; }
+        .instructors-hero .btn { width: 100%; justify-content: center; }
+        .instructors-stats,
+        .toolbar-form,
+        .instructors-grid-admin { grid-template-columns: 1fr; }
+        .instructor-card-head { grid-template-columns: 60px minmax(0, 1fr); }
+        .status-chip { grid-column: 1 / -1; width: fit-content; }
+    }
+</style>
+{% endblock %}
