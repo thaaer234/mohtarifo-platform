@@ -24,14 +24,22 @@
         </div>
     </header>
 
-    <div class="catalog-filter shop-filter mb-12">
-        <a href="{% url 'dashboard:shop' %}" class="filter-btn {% if not selected_kind and not selected_track %}active{% endif %}">الكل</a>
-        {% for tab in catalog_tabs %}
-            <a href="?kind={{ tab.kind }}&track={{ tab.track }}" class="filter-btn {% if selected_kind == tab.kind and selected_track == tab.track %}active{% endif %}">
-                {{ tab.label }}
+    <nav class="shop-filter-shell mb-12" aria-label="فلاتر الدورات">
+        <div class="shop-filter-label">
+            <i data-lucide="sliders-horizontal"></i>
+            <span>تصفية الدورات</span>
+        </div>
+        <div class="shop-filter-scroll">
+            <a href="{% url 'dashboard:shop' %}" class="shop-filter-btn {% if not selected_kind and not selected_track %}active{% endif %}">
+                الكل
             </a>
-        {% endfor %}
-    </div>
+            {% for tab in catalog_tabs %}
+                <a href="?kind={{ tab.kind }}&track={{ tab.track }}" class="shop-filter-btn {% if selected_kind == tab.kind and selected_track == tab.track %}active{% endif %}">
+                    {{ tab.label }}
+                </a>
+            {% endfor %}
+        </div>
+    </nav>
 
     <section class="shop-course-grid mb-16">
         {% for course in courses %}
@@ -128,16 +136,68 @@
     .shop-hero-actions { display: flex; gap: .85rem; flex-wrap: wrap; justify-content: flex-end; }
     .shop-hero-actions .btn { min-height: 48px; white-space: nowrap; }
 
-    .shop-filter {
-        width: 100%;
-        max-width: 100%;
+    .shop-filter-shell {
+        display: flex;
+        align-items: center;
+        gap: .9rem;
+        width: min(100%, 980px);
+        margin-inline: auto;
+        padding: .65rem;
+        border: 1px solid var(--border-light);
+        border-radius: 18px;
+        background: var(--bg-surface);
+        box-shadow: var(--shadow-soft);
+    }
+    .shop-filter-label {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        flex: 0 0 auto;
+        padding: .75rem 1rem;
+        color: var(--text-muted);
+        font-size: .86rem;
+        font-weight: 900;
+        border-inline-end: 1px solid var(--border-light);
+    }
+    .shop-filter-label i { width: 17px; height: 17px; color: var(--brand-gold); }
+    .shop-filter-scroll {
+        display: flex;
+        align-items: center;
         justify-content: center;
         flex-wrap: wrap;
-        margin-inline: auto;
-        border-radius: 18px;
-        overflow: visible;
+        gap: .55rem;
+        flex: 1;
+        min-width: 0;
     }
-    .shop-filter .filter-btn { white-space: nowrap; }
+    .shop-filter-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: .72rem 1.15rem;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        color: var(--text-secondary);
+        background: var(--bg-surface-elevated);
+        text-decoration: none;
+        font-size: .92rem;
+        font-weight: 900;
+        line-height: 1;
+        white-space: nowrap;
+        transition: transform .2s ease, border-color .2s ease, background .2s ease, color .2s ease;
+    }
+    .shop-filter-btn:hover {
+        transform: translateY(-2px);
+        border-color: var(--brand-gold-glow);
+        color: var(--brand-gold);
+        background: rgba(var(--brand-gold-rgb), .08);
+    }
+    .shop-filter-btn.active {
+        color: #111;
+        background: var(--brand-gold);
+        border-color: var(--brand-gold);
+        box-shadow: 0 8px 18px var(--brand-gold-glow);
+    }
 
     .shop-course-grid {
         display: grid;
@@ -332,14 +392,29 @@
         .shop-section-head { flex-direction: column; }
         .shop-hero-actions,
         .shop-hero-actions .btn { width: 100%; justify-content: center; }
-        .shop-filter {
+        .shop-filter-shell {
+            width: 100%;
+            align-items: stretch;
+            gap: .55rem;
+            padding: .55rem;
+            border-radius: 16px;
+        }
+        .shop-filter-label {
+            display: none;
+        }
+        .shop-filter-scroll {
             justify-content: flex-start;
             flex-wrap: nowrap;
             overflow-x: auto;
-            padding: .45rem;
+            padding: .1rem;
             scrollbar-width: none;
         }
-        .shop-filter::-webkit-scrollbar { display: none; }
+        .shop-filter-scroll::-webkit-scrollbar { display: none; }
+        .shop-filter-btn {
+            min-height: 40px;
+            padding: .68rem .95rem;
+            font-size: .86rem;
+        }
         .shop-course-grid,
         .shop-contact-grid { grid-template-columns: 1fr; }
         .course-layered-thumb { height: 230px; }

@@ -31,7 +31,7 @@ class Course(models.Model):
         ("scientific", "علمي"),
         ("literary", "أدبي"),
         ("ninth", "تاسع"),
-        ("general", "عام"),
+        ("general", "مشترك"),
     ]
 
     TERM_CHOICES = [

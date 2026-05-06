@@ -8,7 +8,7 @@
         <div>
             <div class="badge badge-gold mb-3">الباقات</div>
             <h1 style="font-size:2.3rem; margin-bottom:.5rem;">باقات الدورات والأكواد الموحدة</h1>
-            <p class="text-muted">اصنع باقة مثل “دورات العلمي”، واختر الدورات داخلها، ثم ولد أكواد تفعّل كل الدورات دفعة واحدة.</p>
+            <p class="text-muted">اصنع باقة علمي أو أدبي أو تاسع. باقات العلمي والأدبي تضيف المواد المشتركة تلقائياً، وعند وجود أكثر من مدرس للمادة يختار الطالب مدرساً واحداً أثناء التفعيل.</p>
         </div>
         <a class="btn btn-secondary" href="{% url 'dashboard:admin_billing' %}">العودة للمركز المالي</a>
     </header>
@@ -21,9 +21,10 @@
                 <input type="hidden" name="action" value="create_package">
                 <div class="flex-column gap-5">
                     {% for field in package_form %}
-                        <div class="premium-field">
+                        <div class="premium-field {% if field.name == 'courses' %}package-courses-field{% endif %}">
                             <label>{{ field.label }}</label>
                             <div class="input-glow-wrapper package-field">{{ field }}</div>
+                            {% if field.help_text %}<small class="text-muted mt-2 block">{{ field.help_text }}</small>{% endif %}
                             {% for error in field.errors %}<p class="text-danger mt-2">{{ error }}</p>{% endfor %}
                         </div>
                     {% endfor %}
@@ -48,7 +49,7 @@
                 </div>
                 <button class="btn btn-primary btn-glow w-full mt-6" type="submit">توليد الأكواد</button>
             </form>
-            <p class="text-muted mt-4" style="line-height:1.7; font-size:.9rem;">الكود الناتج نوعه Package، وعند تفعيله من الطالب يضيف كل دورات الباقة إلى حسابه.</p>
+            <p class="text-muted mt-4" style="line-height:1.7; font-size:.9rem;">الكود الناتج نوعه Package. إذا احتوت مادة على أكثر من دورة، ستظهر للطالب شاشة اختيار مرتبة قبل تفعيل الباقة.</p>
         </article>
     </div>
 
@@ -59,16 +60,19 @@
                 <article class="premium-card" style="padding:1.5rem; background:var(--bg-surface-elevated);">
                     <div class="flex-between gap-4 mb-4">
                         <strong style="color:var(--text-primary); font-size:1.1rem;">{{ package.name }}</strong>
-                        <span class="badge {% if package.is_active %}badge-gold{% endif %}">{{ package.courses_total }} دورة</span>
+                        <span class="badge {% if package.is_active %}badge-gold{% endif %}">{{ package.get_package_track_display }}</span>
                     </div>
                     <div class="flex-column gap-2 text-muted" style="font-size:.9rem;">
                         <span>{{ package.codes_total }} كود</span>
+                        <span>{{ package.eligible_subjects_count }} مادة ضمن الباقة</span>
+                        <span>{{ package.eligible_courses_count }} دورة متاحة للتفعيل</span>
+                        {% if package.package_track == "custom" %}<span>{{ package.courses_total }} دورة محددة يدوياً</span>{% endif %}
                         <span>{{ package.sold_total }} مباع</span>
                         <span>{{ package.activated_total }} مفعل</span>
                         <span class="gold font-bold">{{ package.gross_sales|default:0 }} قرش مبيعات</span>
                     </div>
                     <div class="mt-4 text-muted" style="font-size:.8rem; line-height:1.7;">
-                        {% for course in package.courses.all|slice:":4" %}
+                        {% for course in package.eligible_courses_queryset|slice:":4" %}
                             <span class="tag">{{ course.title }}</span>
                         {% endfor %}
                     </div>
@@ -117,9 +121,24 @@
     .premium-field input,
     .premium-field select,
     .premium-field textarea { width:100%; padding:1rem; border-radius:12px; border:1px solid var(--border-light); background:var(--bg-base); color:var(--text-primary); font-family:inherit; }
+    .package-courses-field.is-hidden { display:none; }
     .table-responsive { overflow-x:auto; }
     .admin-table { width:100%; border-collapse:collapse; text-align:right; }
     .admin-table th, .admin-table td { padding:1rem; border-bottom:1px solid var(--border-light); }
     .tag { display:inline-block; margin:.15rem; font-size:.75rem; padding:.2rem .5rem; border-radius:6px; background:var(--bg-base); border:1px solid var(--border-light); }
 </style>
+<script>
+    const packageTrackSelect = document.getElementById('id_package-package_track');
+    const packageCoursesField = document.querySelector('.package-courses-field');
+
+    function syncPackageCoursesField() {
+        if (!packageTrackSelect || !packageCoursesField) return;
+        packageCoursesField.classList.toggle('is-hidden', packageTrackSelect.value !== 'custom');
+    }
+
+    if (packageTrackSelect) {
+        packageTrackSelect.addEventListener('change', syncPackageCoursesField);
+        syncPackageCoursesField();
+    }
+</script>
 {% endblock %}

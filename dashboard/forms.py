@@ -338,10 +338,12 @@ class CoursePackageForm(forms.ModelForm):
 
     class Meta:
         model = CoursePackage
-        fields = ["name", "code", "courses", "price_amount", "is_active", "notes"]
+        fields = ["name", "code", "package_track", "auto_include_shared", "courses", "price_amount", "is_active", "notes"]
         labels = {
             "name": "اسم الباقة",
             "code": "رمز الباقة",
+            "package_track": "فرع الباقة",
+            "auto_include_shared": "إضافة المواد المشتركة تلقائياً",
             "courses": "الدورات داخل الباقة",
             "is_active": "فعالة",
             "notes": "ملاحظات",
@@ -354,6 +356,8 @@ class CoursePackageForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["courses"].queryset = Course.objects.order_by("academic_track", "subject__name", "title")
+        self.fields["courses"].required = False
+        self.fields["courses"].help_text = "يُستخدم فقط عند اختيار فرع الباقة: مخصصة. أما العلمي والأدبي والتاسع فيتم حساب موادها تلقائياً."
         self.fields["notes"].required = False
 
     def save(self, commit=True):
@@ -362,7 +366,13 @@ class CoursePackageForm(forms.ModelForm):
         package.price_cents = int(price_amount * 100) if price_amount is not None else None
         if commit:
             package.save()
-            self.save_m2m()
+            if package.package_track == "custom":
+                self.save_m2m()
+            else:
+                tracks = [package.package_track]
+                if package.package_track in {"scientific", "literary"} and package.auto_include_shared:
+                    tracks.append("general")
+                package.courses.set(Course.objects.filter(academic_track__in=tracks, status="published"))
         return package
 
 

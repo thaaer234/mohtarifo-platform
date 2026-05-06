@@ -1,4 +1,5 @@
 from functools import wraps
+from collections import defaultdict
 import secrets
 import base64
 import os
@@ -118,7 +119,12 @@ def landing_page(request):
         if instructor:
             instructor_name = instructor.get_full_name() or instructor.username
     elif selected_tab:
-        courses_query = courses_query.filter(kind=selected_kind, academic_track=selected_track)
+        if selected_track in {"scientific", "literary"}:
+            courses_query = courses_query.filter(kind=selected_kind).filter(
+                models.Q(academic_track=selected_track) | models.Q(academic_track="general")
+            )
+        else:
+            courses_query = courses_query.filter(kind=selected_kind, academic_track=selected_track)
     else:
         courses_query = courses_query.none()
         
@@ -129,9 +135,6 @@ def landing_page(request):
         .order_by("subject__name", "title")
     )
     
-    if not instructor_id:
-        courses = courses[:6]
-        
     return render(
         request,
         "dashboard/landing.html",
@@ -152,7 +155,10 @@ def shop_page(request):
     if selected_kind:
         courses_query = courses_query.filter(kind=selected_kind)
     if selected_track:
-        courses_query = courses_query.filter(academic_track=selected_track)
+        if selected_track in {"scientific", "literary"}:
+            courses_query = courses_query.filter(models.Q(academic_track=selected_track) | models.Q(academic_track="general"))
+        else:
+            courses_query = courses_query.filter(academic_track=selected_track)
     courses = (
         courses_query
         .annotate(
@@ -1206,12 +1212,128 @@ def instructor_dashboard(request):
     return render(request, "dashboard/instructor_dashboard.html", context)
 
 
+def _package_subject_groups(access_code, user, current_device):
+    courses = (
+        access_code.package.eligible_courses_queryset()
+        .select_related("subject", "instructor")
+        .order_by("subject__name", "instructor__first_name", "title", "id")
+    )
+    groups_map = defaultdict(list)
+    for course in courses:
+        existing_grant = AccessGrant.objects.filter(user=user, course=course, lesson=None).first()
+        if existing_grant and existing_grant.device_fingerprint and existing_grant.device_fingerprint != current_device:
+            continue
+        groups_map[course.subject_id].append(course)
+    return [courses for _subject_id, courses in sorted(groups_map.items(), key=lambda item: item[1][0].subject.name)]
+
+
+def _build_package_selection(access_code, user, current_device):
+    groups = _package_subject_groups(access_code, user, current_device)
+    steps = []
+    auto_course_ids = []
+    for courses in groups:
+        if len(courses) == 1:
+            auto_course_ids.append(courses[0].id)
+        else:
+            steps.append(
+                {
+                    "subject": courses[0].subject,
+                    "courses": courses,
+                    "index": len(steps) + 1,
+                }
+            )
+    return {
+        "code": access_code.code,
+        "package": access_code.package,
+        "steps": steps,
+        "auto_course_ids": auto_course_ids,
+        "requires_choice": bool(steps),
+        "total_steps": len(steps),
+    }
+
+
+def _redeem_package_choices(request, access_code, current_device, auto_select=False):
+    groups = _package_subject_groups(access_code, request.user, current_device)
+    if not groups:
+        return {"ok": False, "message": "لا توجد دورات منشورة داخل هذه الباقة حالياً.", "count": 0}
+
+    selected_course_ids = []
+    posted_values = list(request.POST.getlist("course_choices"))
+    posted_values.extend(value for key, value in request.POST.items() if key.startswith("course_choice_"))
+    posted_ids = {int(value) for value in posted_values if str(value).isdigit()}
+    for courses in groups:
+        valid_ids = {course.id for course in courses}
+        if len(courses) == 1:
+            selected_course_ids.append(courses[0].id)
+            continue
+        if auto_select:
+            return {"ok": False, "message": "هذه الباقة تحتاج اختيار مدرس لكل مادة.", "count": 0}
+        matching_ids = valid_ids & posted_ids
+        if len(matching_ids) != 1:
+            return {"ok": False, "message": f"اختر دورة واحدة لمادة {courses[0].subject.name}.", "count": 0}
+        selected_course_ids.append(next(iter(matching_ids)))
+
+    grants = []
+    now = timezone.now()
+    for course in Course.objects.filter(id__in=selected_course_ids).select_related("subject"):
+        grant, _created = AccessGrant.objects.get_or_create(
+            user=request.user,
+            course=course,
+            lesson=None,
+            defaults={
+                "access_code": access_code,
+                "source": "code",
+                "device_fingerprint": current_device,
+                "starts_at": now,
+                "expires_at": access_code.valid_until,
+            },
+        )
+        if grant.device_fingerprint and grant.device_fingerprint != current_device:
+            return {"ok": False, "message": "إحدى الدورات مرتبطة بجهاز آخر. تواصل مع الإدارة لنقل الجهاز.", "count": 0}
+        if not grant.device_fingerprint:
+            grant.device_fingerprint = current_device
+            grant.save(update_fields=["device_fingerprint"])
+        grants.append(grant)
+
+    access_code.redeemed_count += 1
+    if access_code.sale_status in {"available", "reserved"}:
+        access_code.sale_status = "free" if access_code.is_free_code else "sold"
+    access_code.save(update_fields=["redeemed_count", "sale_status", "updated_at"])
+    StudentNotification.objects.create(
+        user=request.user,
+        notification_type="access",
+        title="تم تفعيل باقة جديدة",
+        body=f"تمت إضافة {len(grants)} دورة من باقة {access_code.package.name} إلى حسابك.",
+        url="/student/my-courses/",
+    )
+    return {"ok": True, "message": "", "count": len(grants)}
+
+
 @login_required
 def student_dashboard(request):
     redeem_form = RedeemCodeForm(request.POST or None)
     current_device = _current_device_fingerprint(request)
+    package_selection = None
 
-    if request.method == "POST" and redeem_form.is_valid():
+    if request.method == "POST" and request.POST.get("action") == "complete_package_redeem":
+        code_value = request.POST.get("package_code", "").strip().upper()
+        with transaction.atomic():
+            access_code = AccessCode.objects.select_for_update().filter(code__iexact=code_value).first()
+            if access_code is None or access_code.access_type != "package" or not access_code.package:
+                messages.error(request, "كود الباقة غير صحيح.")
+            else:
+                allowed, reason = access_code.is_redeemable(timezone.now())
+                if not allowed:
+                    messages.error(request, reason)
+                elif not _access_code_matches_student(access_code, request.user):
+                    messages.error(request, "هذا الكود مخصص لطالب آخر ولا يمكن تفعيله على هذا الحساب.")
+                else:
+                    result = _redeem_package_choices(request, access_code, current_device)
+                    if result["ok"]:
+                        messages.success(request, f"تم تفعيل الباقة وإضافة {result['count']} دورة إلى مكتبتك.")
+                        return redirect("dashboard:student_dashboard")
+                    messages.error(request, result["message"])
+    elif request.method == "POST" and redeem_form.is_valid():
         code_value = redeem_form.cleaned_data["code"].strip().upper()
         with transaction.atomic():
             access_code = AccessCode.objects.select_for_update().filter(code__iexact=code_value).first()
@@ -1223,6 +1345,16 @@ def student_dashboard(request):
                     messages.error(request, reason)
                 elif not _access_code_matches_student(access_code, request.user):
                     messages.error(request, "هذا الكود مخصص لطالب آخر ولا يمكن تفعيله على هذا الحساب.")
+                elif access_code.access_type == "package" and access_code.package:
+                    package_selection = _build_package_selection(access_code, request.user, current_device)
+                    if package_selection["requires_choice"]:
+                        messages.info(request, "اختر مدرساً واحداً لكل مادة لإكمال تفعيل الباقة.")
+                    else:
+                        result = _redeem_package_choices(request, access_code, current_device, auto_select=True)
+                        if result["ok"]:
+                            messages.success(request, f"تم تفعيل الباقة وإضافة {result['count']} دورة إلى مكتبتك.")
+                            return redirect("dashboard:student_dashboard")
+                        messages.error(request, result["message"])
                 else:
                     grant, created = AccessGrant.objects.get_or_create(
                         user=request.user,
@@ -1257,7 +1389,8 @@ def student_dashboard(request):
                                 grant.device_fingerprint = current_device
                                 grant.save(update_fields=["device_fingerprint"])
                             messages.info(request, "هذه المادة أو الدرس مفعّل لديك مسبقًا.")
-        return redirect("dashboard:student_dashboard")
+        if not package_selection:
+            return redirect("dashboard:student_dashboard")
 
     grants = _device_grants(request.user, current_device).select_related("course", "lesson", "access_code").order_by("-created_at")
     sessions = _available_sessions_for_user(request.user, current_device)
@@ -1284,6 +1417,7 @@ def student_dashboard(request):
         "notifications": StudentNotification.objects.filter(user=request.user).order_by("-created_at")[:8],
         "student_profile": student_profile,
         "continue_learning": continue_learning,
+        "package_selection": package_selection,
     }
     return render(request, "dashboard/student_dashboard.html", context)
 
@@ -2027,6 +2161,10 @@ def admin_packages(request):
         )
         .order_by("name")
     )
+    for package in packages:
+        eligible_courses = package.eligible_courses_queryset()
+        package.eligible_courses_count = eligible_courses.count()
+        package.eligible_subjects_count = eligible_courses.values("subject").distinct().count()
     package_codes = AccessCode.objects.filter(access_type="package").select_related("package", "sold_by").order_by("-created_at")[:80]
     return render(
         request,

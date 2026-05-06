@@ -179,8 +179,17 @@ class Coupon(models.Model):
 
 
 class CoursePackage(models.Model):
+    TRACK_CHOICES = [
+        ("custom", "مخصصة"),
+        ("scientific", "علمي"),
+        ("literary", "أدبي"),
+        ("ninth", "تاسع"),
+    ]
+
     name = models.CharField(max_length=160)
     code = models.SlugField(unique=True)
+    package_track = models.CharField(max_length=24, choices=TRACK_CHOICES, default="custom")
+    auto_include_shared = models.BooleanField(default=True)
     courses = models.ManyToManyField(Course, related_name="billing_packages")
     price_cents = models.PositiveIntegerField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
@@ -195,6 +204,14 @@ class CoursePackage(models.Model):
 
     def __str__(self):
         return self.name
+
+    def eligible_courses_queryset(self):
+        courses = Course.objects.filter(status="published")
+        if self.package_track == "custom":
+            return self.courses.filter(status="published")
+        if self.package_track in {"scientific", "literary"} and self.auto_include_shared:
+            return courses.filter(models.Q(academic_track=self.package_track) | models.Q(academic_track="general"))
+        return courses.filter(academic_track=self.package_track)
 
 
 class AccessCode(models.Model):

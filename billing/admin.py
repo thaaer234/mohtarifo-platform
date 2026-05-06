@@ -132,8 +132,8 @@ class CouponAdmin(admin.ModelAdmin):
 
 @admin.register(CoursePackage)
 class CoursePackageAdmin(admin.ModelAdmin):
-    list_display = ("name", "code", "price_cents", "is_active", "created_at")
-    list_filter = ("is_active",)
+    list_display = ("name", "code", "package_track", "auto_include_shared", "price_cents", "is_active", "created_at")
+    list_filter = ("package_track", "auto_include_shared", "is_active")
     search_fields = ("name", "code", "notes", "courses__title")
     prepopulated_fields = {"code": ("name",)}
     filter_horizontal = ("courses",)

@@ -33,7 +33,25 @@ class RedeemAccessCodeApiView(APIView):
 
             package_grants = []
             if access_code.access_type == "package" and access_code.package:
-                for course in access_code.package.courses.filter(status="published"):
+                package_courses = list(access_code.package.eligible_courses_queryset().select_related("subject", "instructor"))
+                grouped_courses = {}
+                for course in package_courses:
+                    grouped_courses.setdefault(course.subject_id, []).append(course)
+                ambiguous_subjects = [
+                    courses[0].subject.name
+                    for courses in grouped_courses.values()
+                    if len(courses) > 1
+                ]
+                if ambiguous_subjects:
+                    return Response(
+                        {
+                            "detail": "Package requires course selection.",
+                            "requires_selection": True,
+                            "subjects": ambiguous_subjects,
+                        },
+                        status=status.HTTP_409_CONFLICT,
+                    )
+                for course in package_courses:
                     grant, _created = AccessGrant.objects.get_or_create(
                         user=user,
                         course=course,
