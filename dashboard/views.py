@@ -2277,7 +2277,76 @@ def admin_course_report_export(request, course_id):
     return _workbook_response(workbook, f"course-report-{course.id}-{timezone.now().strftime('%Y%m%d-%H%M')}.xlsx")
 
 
+from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+
+def _style_workbook(workbook):
+    # Premium corporate colors matching the platform
+    header_font = Font(name="Cairo", size=11, bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="1F2937", end_color="1F2937", fill_type="solid") # Dark Slate Gray
+    
+    data_font = Font(name="Cairo", size=10)
+    thin_border = Border(
+        left=Side(style='thin', color='D1D5DB'),
+        right=Side(style='thin', color='D1D5DB'),
+        top=Side(style='thin', color='D1D5DB'),
+        bottom=Side(style='thin', color='D1D5DB')
+    )
+    
+    align_right = Alignment(horizontal='right', vertical='center')
+    align_center = Alignment(horizontal='center', vertical='center')
+
+    for sheet in workbook.worksheets:
+        # Set RTL layout for Arabic
+        sheet.sheet_view.rightToLeft = True
+        
+        # Ensure gridlines are visible when printing
+        if sheet.views.sheetView:
+            sheet.views.sheetView[0].showGridLines = True
+            
+        # Setup page layout optimized for A4 print
+        sheet.page_setup.paperSize = sheet.PAPERSIZE_A4
+        sheet.page_setup.orientation = sheet.ORIENTATION_PORTRAIT
+        sheet.page_setup.fitToWidth = 1
+        sheet.page_setup.fitToHeight = 0
+        
+        # Format rows and cells
+        for r_idx, row in enumerate(sheet.iter_rows(), start=1):
+            is_header = r_idx == 1
+            sheet.row_dimensions[r_idx].height = 28 if is_header else 22
+            
+            for cell in row:
+                cell.border = thin_border
+                if is_header:
+                    cell.font = header_font
+                    cell.fill = header_fill
+                    cell.alignment = align_center
+                else:
+                    cell.font = data_font
+                    val = str(cell.value or '')
+                    # Align numbers and short codes in the center, and text/names to the right
+                    if val.isdigit() or len(val) <= 12 or cell.value is None:
+                        cell.alignment = align_center
+                    else:
+                        cell.alignment = align_right
+                        
+        # Auto-adjust column widths to prevent truncation
+        for col in sheet.columns:
+            max_len = 0
+            col_letter = col[0].column_letter
+            for cell in col:
+                val = str(cell.value or '')
+                val_len = len(val.encode('utf-8')) // 2 if any(ord(c) > 127 for c in val) else len(val)
+                if val_len > max_len:
+                    max_len = val_len
+            sheet.column_dimensions[col_letter].width = max(max_len + 4, 12)
+
+
 def _workbook_response(workbook, filename):
+    # Style workbook with Cairo, RTL and A4 printing support before saving
+    try:
+        _style_workbook(workbook)
+    except Exception:
+        pass
     buffer = BytesIO()
     workbook.save(buffer)
     buffer.seek(0)
