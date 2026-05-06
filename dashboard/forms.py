@@ -11,6 +11,20 @@ from .models import CatalogSection
 from .security import sanitize_plain_text, validate_syrian_mobile
 
 
+def _user_display_label(user):
+    full_name = (user.get_full_name() or "").strip()
+    label = full_name or user.username
+    if user.username and user.username != label:
+        return f"{label} - {user.username}"
+    return label
+
+
+def _course_display_label(course):
+    instructor = _user_display_label(course.instructor) if getattr(course, "instructor_id", None) else "بدون مدرس"
+    subject = course.subject.name if getattr(course, "subject_id", None) else "بدون مادة"
+    return f"{course.title} - {subject} - {instructor}"
+
+
 class StudentRegistrationForm(UserCreationForm):
     first_name = forms.CharField(label="الاسم الكامل", max_length=120)
     username = forms.CharField(label="رقم الهاتف", max_length=40)
@@ -126,6 +140,7 @@ class CourseCreateForm(forms.ModelForm):
             .distinct()
             .order_by("first_name", "last_name", "username")
         )
+        self.fields["instructor"].label_from_instance = _user_display_label
         self.fields["instructor"].required = False
         self.fields["instructor"].empty_label = "اختر مدرس موجود أو أضف مدرس جديد"
         self.fields["description"].required = False
@@ -339,11 +354,15 @@ class SalesCenterForm(forms.ModelForm):
 
 
 class PartnerBatchForm(forms.Form):
-    course = forms.ModelChoiceField(label="الدورة", queryset=Course.objects.order_by("-created_at"))
+    course = forms.ModelChoiceField(label="الدورة", queryset=Course.objects.select_related("subject", "instructor").order_by("-created_at"))
     name = forms.CharField(label="اسم الدفعة", max_length=160)
     quantity = forms.IntegerField(label="عدد الأكواد", min_value=0, initial=0)
     code_prefix = forms.CharField(label="بادئة الكود", max_length=24, required=False)
     notes = forms.CharField(label="ملاحظات", required=False, widget=forms.Textarea(attrs={"rows": 3}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["course"].label_from_instance = _course_display_label
 
 
 class CoursePackageForm(forms.ModelForm):
@@ -368,7 +387,8 @@ class CoursePackageForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["courses"].queryset = Course.objects.order_by("academic_track", "subject__name", "title")
+        self.fields["courses"].queryset = Course.objects.select_related("subject", "instructor").order_by("academic_track", "subject__name", "title")
+        self.fields["courses"].label_from_instance = _course_display_label
         self.fields["courses"].required = False
         self.fields["courses"].help_text = "يُستخدم فقط عند اختيار فرع الباقة: مخصصة. أما العلمي والأدبي والتاسع فيتم حساب موادها تلقائياً."
         self.fields["notes"].required = False
@@ -406,10 +426,14 @@ class InstructorAddForm(forms.Form):
 
 
 class PartnerInstituteImportForm(forms.Form):
-    course = forms.ModelChoiceField(label="الدورة", queryset=Course.objects.order_by("-created_at"))
+    course = forms.ModelChoiceField(label="الدورة", queryset=Course.objects.select_related("subject", "instructor").order_by("-created_at"))
     batch_name = forms.CharField(label="اسم دفعة الطلاب", max_length=160)
     file = forms.FileField(label="ملف الطلاب Excel/CSV")
     code_prefix = forms.CharField(label="بادئة الكود", max_length=24, required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["course"].label_from_instance = _course_display_label
 
 
 class SubjectForm(forms.ModelForm):

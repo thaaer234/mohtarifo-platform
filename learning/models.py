@@ -77,7 +77,8 @@ class Course(models.Model):
         ]
 
     def __str__(self):
-        return self.title
+        instructor = self.instructor.get_full_name() or self.instructor.username
+        return f"{self.title} - {instructor}"
 
     @property
     def price_display(self):
