@@ -1,0 +1,277 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}تقرير المدرس {{ instructor.get_full_name|default:instructor.username }} | الإدارة{% endblock %}
+
+{% block content %}
+<div class="admin-instructor-report-page reveal-up">
+    <!-- Screen Header & Actions (Hidden during print) -->
+    <header class="report-header mb-8 no-print">
+        <div>
+            <div class="badge badge-gold mb-2">تقارير الإدارة المتقدمة</div>
+            <h1>تقرير المدرس: {{ instructor.get_full_name|default:instructor.username }}</h1>
+            <p class="text-muted">تقرير مالي تفصيلي شامل لكافة الكورسات، مبيعات مراكز البيع، وقوائم أكواد الطلاب المفصلة.</p>
+        </div>
+        <div class="header-actions">
+            <button onclick="window.print();" class="btn btn-primary btn-glow">
+                <i data-lucide="printer"></i>
+                طباعة التقرير (A4)
+            </button>
+            <a href="{% url 'dashboard:admin_instructor_report_export' instructor.id %}" class="btn btn-secondary btn-glow">
+                <i data-lucide="file-spreadsheet" class="gold"></i>
+                تصدير إكسل (Excel)
+            </a>
+        </div>
+    </header>
+
+    <!-- Print Header (Visible ONLY during print) -->
+    <div class="print-only-header text-center mb-8">
+        <h2>منصة محترفو التعليم - تقرير المدرس الشامل</h2>
+        <h3>المدرس: {{ instructor.get_full_name|default:instructor.username }} ({{ instructor.username }})</h3>
+        <p class="text-muted">تاريخ استخراج التقرير: {% now "Y-m-d H:i" %}</p>
+        <hr style="border-top: 1px dashed var(--border-light); margin: 1.5rem 0;">
+    </div>
+
+    <!-- Overview Statistics Row -->
+    <section class="grid-4 gap-6 mb-8">
+        <div class="premium-card stat-tile">
+            <span>إجمالي الأكواد</span>
+            <strong>{{ total_codes }}</strong>
+        </div>
+        <div class="premium-card stat-tile">
+            <span>الأكواد المباعة</span>
+            <strong class="gold">{{ total_sold }}</strong>
+        </div>
+        <div class="premium-card stat-tile">
+            <span>الأكواد المفعلة</span>
+            <strong class="success-text">{{ total_activated }}</strong>
+        </div>
+        <div class="premium-card stat-tile">
+            <span>إجمالي المبيعات (ل.س)</span>
+            <strong class="gold">{{ total_gross }}</strong>
+        </div>
+    </section>
+
+    <!-- Overall Summary & Sales Centers Breakdown -->
+    <div class="grid-2 gap-8 mb-8 break-avoid">
+        <!-- Summary Table Card -->
+        <section class="premium-card">
+            <div class="section-title mb-6">
+                <i data-lucide="bar-chart-3"></i>
+                <h2>خلاصة مبيعات الدورات</h2>
+            </div>
+            <div class="table-responsive">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>الدورة</th>
+                            <th class="text-center">إجمالي الأكواد</th>
+                            <th class="text-center">المباعة</th>
+                            <th class="text-center">المفعلة</th>
+                            <th class="text-right">المبيعات (ل.س)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in course_data %}
+                            <tr>
+                                <td><strong>{{ data.course.title }}</strong></td>
+                                <td class="text-center">{{ data.cnt_all }}</td>
+                                <td class="text-center">{{ data.cnt_sold }}</td>
+                                <td class="text-center">{{ data.cnt_active }}</td>
+                                <td class="text-right gold"><strong>{{ data.sum_gross }}</strong></td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Sales Centers Card -->
+        <section class="premium-card">
+            <div class="section-title mb-6">
+                <i data-lucide="store"></i>
+                <h2>مبيعات مراكز البيع (الكل)</h2>
+            </div>
+            <div class="table-responsive">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>مركز البيع</th>
+                            <th>المعهد</th>
+                            <th class="text-center">الأكواد المباعة</th>
+                            <th class="text-right">المبيعات (ل.س)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for center in centers_sales %}
+                            <tr>
+                                <td><strong>{{ center.sales_center__name|default:"مبيعات مباشرة / المنصة" }}</strong></td>
+                                <td>{{ center.sales_center__institute__name|default:"-" }}</td>
+                                <td class="text-center">{{ center.sold_count }}</td>
+                                <td class="text-right gold"><strong>{{ center.total_sales|default:0|add:0|floatformat:0 }}</strong></td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">لا توجد مبيعات مسجلة للمراكز بعد.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+
+    <!-- Course Page Separators for Printing (Page Break on Each Course) -->
+    {% for data in course_data %}
+        <section class="course-print-section premium-card mb-8">
+            <div class="course-section-header mb-6">
+                <div class="badge badge-gold mb-2">تفصيل الدورة ومبيعاتها</div>
+                <h2>كورس: {{ data.course.title }}</h2>
+                <span class="status-badge">{{ data.course.get_status_display }}</span>
+            </div>
+
+            <!-- Course stats -->
+            <div class="grid-4 gap-4 mb-6">
+                <div class="sub-stat-tile">
+                    <span>إجمالي أكواد الدورة</span>
+                    <strong>{{ data.cnt_all }}</strong>
+                </div>
+                <div class="sub-stat-tile">
+                    <span>المباعة</span>
+                    <strong>{{ data.cnt_sold }}</strong>
+                </div>
+                <div class="sub-stat-tile">
+                    <span>المفعلة</span>
+                    <strong>{{ data.cnt_active }}</strong>
+                </div>
+                <div class="sub-stat-tile">
+                    <span>مبيعات الدورة</span>
+                    <strong class="gold">{{ data.sum_gross }} ل.س</strong>
+                </div>
+            </div>
+
+            <!-- Sales centers details for this course -->
+            <div class="mb-6 break-avoid">
+                <h3 class="subsection-title mb-4"><i data-lucide="store" style="width:18px;height:18px;"></i> مبيعات مراكز البيع لهذه الدورة</h3>
+                <div class="table-responsive">
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>مركز البيع</th>
+                                <th class="text-center">الأكواد المباعة</th>
+                                <th class="text-right">المبيعات (ل.س)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for cc in data.centers %}
+                                <tr>
+                                    <td><strong>{{ cc.sales_center__name|default:"مبيعات مباشرة / المنصة" }}</strong></td>
+                                    <td class="text-center">{{ cc.sold_count }}</td>
+                                    <td class="text-right gold"><strong>{{ cc.total_sales|default:0|add:0|floatformat:0 }}</strong></td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">لم يتم بيع أكواد من مراكز لهذه الدورة.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Student Enrollments details for this course -->
+            <div class="break-avoid">
+                <h3 class="subsection-title mb-4"><i data-lucide="users" style="width:18px;height:18px;"></i> قائمة الطلاب والرموز المفعلة</h3>
+                <div class="table-responsive">
+                    <table class="report-table">
+                        <thead>
+                            <tr>
+                                <th>الكود</th>
+                                <th>حالة البيع</th>
+                                <th>اسم الطالب</th>
+                                <th>رقم الهاتف</th>
+                                <th>تاريخ البيع</th>
+                                <th class="text-center">مفعل</th>
+                                <th>الموزع</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for code in data.codes %}
+                                <tr>
+                                    <td class="text-center"><code>{{ code.code }}</code></td>
+                                    <td><span class="sale-badge {{ code.sale_status }}">{{ code.get_sale_status_display }}</span></td>
+                                    <td><strong>{{ code.assigned_student_name|default:"-" }}</strong></td>
+                                    <td>{{ code.assigned_student_phone|default:"-" }}</td>
+                                    <td>{{ code.sold_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                                    <td class="text-center">
+                                        {% if code.redeemed_count > 0 %}
+                                            <span class="chip success">نعم</span>
+                                        {% else %}
+                                            <span class="chip danger">لا</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ code.sales_center.name|default:"مباشر" }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted">لا توجد أكواد مسجلة لهذه الدورة بعد.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    {% endfor %}
+</div>
+
+<style>
+    .admin-instructor-report-page { padding-bottom: 5rem; }
+    .report-header { display: flex; justify-content: space-between; align-items: center; gap: 2rem; }
+    .header-actions { display: flex; gap: 1rem; }
+    
+    .stat-tile { padding: 1.5rem !important; display: flex; flex-direction: column; gap: 0.5rem; border-radius: 20px; }
+    .stat-tile span { font-size: 0.85rem; color: var(--text-muted); font-weight: 800; }
+    .stat-tile strong { font-size: 2.2rem; line-height: 1.2; }
+    
+    .sub-stat-tile { background: var(--bg-surface-elevated); padding: 1rem; border: 1px solid var(--border-light); border-radius: 14px; text-align: center; }
+    .sub-stat-tile span { display: block; font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.35rem; font-weight: 800; }
+    .sub-stat-tile strong { font-size: 1.3rem; }
+
+    .section-title { display: flex; align-items: center; gap: 0.75rem; }
+    .subsection-title { display: flex; align-items: center; gap: 0.5rem; font-size: 1.05rem; font-weight: 800; color: var(--brand-gold); }
+    
+    .report-table { width: 100%; border-collapse: collapse; text-align: right; }
+    .report-table th { background: var(--bg-surface-elevated); padding: 0.9rem 1rem; font-weight: 800; font-size: 0.82rem; color: var(--text-muted); border-bottom: 2px solid var(--border-light); }
+    .report-table td { padding: 0.9rem 1rem; border-bottom: 1px solid var(--border-light); font-size: 0.88rem; vertical-align: middle; }
+    
+    .status-badge { display: inline-block; padding: 0.35rem 0.85rem; background: var(--brand-gold-glow); color: var(--brand-gold); font-size: 0.78rem; font-weight: 900; border-radius: 100px; }
+    
+    .sale-badge { display: inline-block; padding: 0.25rem 0.6rem; border-radius: 6px; font-size: 0.72rem; font-weight: 800; }
+    .sale-badge.sold { background: rgba(16,185,129,0.1); color: var(--success); }
+    .sale-badge.available { background: rgba(59,130,246,0.1); color: #3b82f6; }
+    .sale-badge.free { background: rgba(139,92,246,0.1); color: #8b5cf6; }
+    
+    .chip { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 100px; font-size: 0.72rem; font-weight: 900; }
+    .chip.success { background: rgba(16,185,129,0.15); color: var(--success); }
+    .chip.danger { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+    .print-only-header { display: none; }
+
+    /* Print Styles (Strictly configured for premium physical A4 output) */
+    @media print {
+        body { background: #ffffff !important; color: #000000 !important; font-family: 'Cairo', sans-serif !important; direction: rtl !important; }
+        .no-print, header.no-print, .sidebar, .navbar, .dashboard-nav, .dashboard-sidebar, .header-actions, .no-print-element { display: none !important; }
+        .admin-instructor-report-page { padding: 0 !important; }
+        .premium-card { background: none !important; border: 1px solid #d1d5db !important; box-shadow: none !important; padding: 1.5rem !important; margin-bottom: 2rem !important; page-break-inside: avoid; }
+        .stat-tile { background: none !important; border: 1px solid #d1d5db !important; box-shadow: none !important; }
+        .sub-stat-tile { background: none !important; border: 1px solid #d1d5db !important; }
+        .report-table th { background: #f3f4f6 !important; color: #000000 !important; border-bottom: 2px solid #9ca3af !important; }
+        .report-table td { border-bottom: 1px solid #e5e7eb !important; color: #000000 !important; }
+        .course-print-section { page-break-before: always !important; }
+        .break-avoid { page-break-inside: avoid !important; }
+        .print-only-header { display: block !important; }
+        .badge, .status-badge, .sale-badge, .chip { border: 1px solid #9ca3af !important; color: #000000 !important; background: none !important; }
+    }
+</style>
+{% endblock %}

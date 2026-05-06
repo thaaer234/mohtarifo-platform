@@ -54,9 +54,9 @@
                         <span>{{ courses.count }} دورة منشورة</span>
                     </div>
                     {% if user.is_staff %}
-                        <a href="{% url 'dashboard:admin_instructor_report_export' instructor.id %}" class="btn btn-secondary btn-glow" style="min-height: 40px; padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 0.5rem;">
+                        <a href="{% url 'dashboard:admin_instructor_report' instructor.id %}" class="btn btn-secondary btn-glow" target="_blank" style="min-height: 40px; padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 0.5rem;">
                             <i data-lucide="file-spreadsheet" class="gold" style="width: 16px; height: 16px;"></i>
-                            <span>تصدير التقرير المالي والطلاب</span>
+                            <span>عرض التقرير المالي والطلاب</span>
                         </a>
                     {% endif %}
                 </div>

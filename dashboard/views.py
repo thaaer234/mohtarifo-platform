@@ -2278,6 +2278,76 @@ def admin_course_report_export(request, course_id):
 
 
 @admin_required
+def admin_instructor_report(request, instructor_id):
+    from django.db.models import Sum, Count
+    from billing.models import AccessCode
+    instructor = get_object_or_404(User, id=instructor_id)
+    courses = Course.objects.filter(instructor=instructor).select_related("subject")
+    
+    total_codes = 0
+    total_sold = 0
+    total_activated = 0
+    total_gross = 0
+    
+    course_data = []
+    for course in courses:
+        codes = AccessCode.objects.filter(course=course)
+        cnt_all = codes.count()
+        cnt_sold = codes.filter(sale_status="sold").count()
+        cnt_active = codes.filter(redeemed_count__gt=0).count()
+        sum_gross = (codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0) // 100
+        
+        course_centers = (
+            AccessCode.objects.filter(course=course, sale_status="sold")
+            .select_related("sales_center")
+            .values("sales_center__name")
+            .annotate(sold_count=Count("id"), total_sales=Sum("sold_price_cents"))
+            .order_by("-sold_count")
+        )
+        
+        detailed_codes = codes.select_related("sold_by", "sales_center").order_by("-sold_at")
+        
+        course_data.append({
+            "course": course,
+            "cnt_all": cnt_all,
+            "cnt_sold": cnt_sold,
+            "cnt_active": cnt_active,
+            "cnt_inactive": cnt_all - cnt_active,
+            "sum_gross": sum_gross,
+            "centers": course_centers,
+            "codes": detailed_codes,
+        })
+        
+        total_codes += cnt_all
+        total_sold += cnt_sold
+        total_activated += cnt_active
+        total_gross += sum_gross
+
+    centers_sales = (
+        AccessCode.objects.filter(course__instructor=instructor, sale_status="sold")
+        .select_related("sales_center", "sales_center__institute")
+        .values("sales_center__name", "sales_center__institute__name")
+        .annotate(sold_count=Count("id"), total_sales=Sum("sold_price_cents"))
+        .order_by("-sold_count")
+    )
+    
+    return render(
+        request,
+        "dashboard/admin_instructor_report.html",
+        {
+            "instructor": instructor,
+            "course_data": course_data,
+            "total_codes": total_codes,
+            "total_sold": total_sold,
+            "total_activated": total_activated,
+            "total_inactive": total_codes - total_activated,
+            "total_gross": total_gross,
+            "centers_sales": centers_sales,
+        }
+    )
+
+
+@admin_required
 def admin_instructor_report_export(request, instructor_id):
     from django.db.models import Sum, Count
     from billing.models import AccessCode
