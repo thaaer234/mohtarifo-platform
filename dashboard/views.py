@@ -2277,6 +2277,173 @@ def admin_course_report_export(request, course_id):
     return _workbook_response(workbook, f"course-report-{course.id}-{timezone.now().strftime('%Y%m%d-%H%M')}.xlsx")
 
 
+@admin_required
+def admin_instructor_report_export(request, instructor_id):
+    from django.db.models import Sum, Count
+    from billing.models import AccessCode
+    instructor = get_object_or_404(User, id=instructor_id)
+    courses = Course.objects.filter(instructor=instructor).select_related("subject")
+    
+    workbook = Workbook()
+    
+    # 1. Summary Sheet ("الملخص")
+    summary_sheet = workbook.active
+    summary_sheet.title = "الملخص الشامل"
+    
+    summary_sheet.append([f"التقرير المالي وتفصيل مبيعات المدرس: {instructor.get_full_name() or instructor.username}"])
+    summary_sheet.append([]) # Empty row
+    summary_sheet.append(["الدورة", "المادة", "المسار الأكاديمي", "إجمالي الأكواد", "المباعة", "المفعلة", "غير المفعلة", "إجمالي المبيعات (ل.س)"])
+    
+    total_all_codes = 0
+    total_all_sold = 0
+    total_all_activated = 0
+    total_all_inactive = 0
+    total_all_gross = 0
+    
+    for course in courses:
+        codes = AccessCode.objects.filter(course=course)
+        cnt_all = codes.count()
+        cnt_sold = codes.filter(sale_status="sold").count()
+        cnt_active = codes.filter(redeemed_count__gt=0).count()
+        cnt_inactive = cnt_all - cnt_active
+        sum_gross = (codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0) // 100
+        
+        summary_sheet.append([
+            course.title,
+            course.subject.name if course.subject else "",
+            course.get_academic_track_display(),
+            cnt_all,
+            cnt_sold,
+            cnt_active,
+            cnt_inactive,
+            sum_gross
+        ])
+        
+        total_all_codes += cnt_all
+        total_all_sold += cnt_sold
+        total_all_activated += cnt_active
+        total_all_inactive += cnt_inactive
+        total_all_gross += sum_gross
+        
+    summary_sheet.append([
+        "إجمالي المدرس",
+        "",
+        "",
+        total_all_codes,
+        total_all_sold,
+        total_all_activated,
+        total_all_inactive,
+        total_all_gross
+    ])
+    
+    # 2. Sales Centers Sheet ("مراكز البيع")
+    centers_sheet = workbook.create_sheet("مراكز البيع")
+    centers_sheet.append(["مركز البيع", "المعهد", "عدد الأكواد المباعة", "إجمالي المبيعات (ل.س)"])
+    
+    centers_sales = (
+        AccessCode.objects.filter(course__instructor=instructor, sale_status="sold")
+        .select_related("sales_center", "sales_center__institute")
+        .values("sales_center__name", "sales_center__institute__name")
+        .annotate(sold_count=Count("id"), total_sales=Sum("sold_price_cents"))
+        .order_by("-sold_count")
+    )
+    
+    total_centers_sold = 0
+    total_centers_gross = 0
+    
+    for row in centers_sales:
+        center_name = row["sales_center__name"] or "مبيعات المنصة / مباشرة"
+        institute_name = row["sales_center__institute__name"] or "-"
+        sold_count = row["sold_count"]
+        sales_gross = (row["total_sales"] or 0) // 100
+        
+        centers_sheet.append([
+            center_name,
+            institute_name,
+            sold_count,
+            sales_gross
+        ])
+        total_centers_sold += sold_count
+        total_centers_gross += sales_gross
+        
+    centers_sheet.append([
+        "إجمالي مبيعات المراكز",
+        "",
+        total_centers_sold,
+        total_centers_gross
+    ])
+    
+    # 3. Course sheets ("تفصيل الدورات")
+    for course in courses:
+        sheet_title = course.title
+        for char in "[]*?:/\\":
+            sheet_title = sheet_title.replace(char, "")
+        sheet_title = sheet_title[:30]
+        
+        cs = workbook.create_sheet(sheet_title)
+        
+        # Course Header
+        cs.append([f"تفاصيل دورة: {course.title}"])
+        cs.append([])
+        
+        codes = AccessCode.objects.filter(course=course).select_related("sold_by", "sales_center", "batch")
+        cnt_all = codes.count()
+        cnt_sold = codes.filter(sale_status="sold").count()
+        cnt_active = codes.filter(redeemed_count__gt=0).count()
+        cnt_inactive = cnt_all - cnt_active
+        sum_gross = (codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0) // 100
+        
+        cs.append(["مؤشر الدورة", "القيمة"])
+        cs.append(["المادة", course.subject.name if course.subject else ""])
+        cs.append(["حالة الدورة", course.get_status_display()])
+        cs.append(["إجمالي الأكواد", cnt_all])
+        cs.append(["المباعة", cnt_sold])
+        cs.append(["المفعلة", cnt_active])
+        cs.append(["إجمالي المبيعات (ل.س)", sum_gross])
+        
+        cs.append([])
+        cs.append([])
+        
+        cs.append(["مبيعات مراكز البيع لهذه الدورة"])
+        cs.append(["مركز البيع", "عدد الأكواد المباعة", "إجمالي المبيعات (ل.س)"])
+        
+        course_centers = (
+            AccessCode.objects.filter(course=course, sale_status="sold")
+            .select_related("sales_center")
+            .values("sales_center__name")
+            .annotate(sold_count=Count("id"), total_sales=Sum("sold_price_cents"))
+            .order_by("-sold_count")
+        )
+        
+        for cc in course_centers:
+            cs.append([
+                cc["sales_center__name"] or "مبيعات المنصة / مباشرة",
+                cc["sold_count"],
+                (cc["total_sales"] or 0) // 100
+            ])
+            
+        cs.append([])
+        cs.append([])
+        
+        cs.append(["تفاصيل الأكواد والطلاب"])
+        cs.append(["الكود", "حالة البيع", "اسم الطالب", "هاتف الطالب", "المباع بواسطة", "تاريخ البيع", "السعر (ل.س)", "مفعل", "مركز البيع"])
+        
+        for code in codes.order_by("-sold_at"):
+            cs.append([
+                code.code,
+                code.get_sale_status_display(),
+                code.assigned_student_name,
+                code.assigned_student_phone,
+                code.sold_by.username if code.sold_by else "",
+                code.sold_at.strftime("%Y-%m-%d %H:%M") if code.sold_at else "",
+                (code.sold_price_cents or 0) // 100,
+                "نعم" if code.redeemed_count > 0 else "لا",
+                code.sales_center.name if code.sales_center else ""
+            ])
+            
+    return _workbook_response(workbook, f"instructor-report-{instructor.id}-{timezone.now().strftime('%Y%m%d-%H%M')}.xlsx")
+
+
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 
 def _style_workbook(workbook):

@@ -72,13 +72,16 @@
                     <span><strong>{{ instructor.students_total }}</strong> طالب</span>
                 </div>
                 <div class="instructor-actions">
-                    <a class="btn btn-primary" href="{% url 'dashboard:admin_instructor_edit' instructor.id %}">
+                    <a class="btn btn-primary" href="{% url 'dashboard:admin_instructor_edit' instructor.id %}" title="تعديل">
                         <i data-lucide="edit-3"></i>
                         تعديل
                     </a>
-                    <a class="btn btn-secondary" href="{% url 'dashboard:instructor_courses' instructor.id %}" target="_blank">
+                    <a class="btn btn-secondary" href="{% url 'dashboard:instructor_courses' instructor.id %}" target="_blank" title="عرض">
                         <i data-lucide="eye"></i>
                         عرض
+                    </a>
+                    <a class="btn btn-secondary btn-glow" href="{% url 'dashboard:admin_instructor_report_export' instructor.id %}" title="تحميل التقرير المالي والطلاب" style="padding: 0 0.95rem; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 12px;">
+                        <i data-lucide="file-spreadsheet" class="gold"></i>
                     </a>
                 </div>
             </article>
@@ -152,7 +155,7 @@
     .instructor-card-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem; }
     .instructor-card-stats span { padding: .75rem; border-radius: 12px; background: var(--bg-surface-elevated); color: var(--text-muted); font-size: .85rem; }
     .instructor-card-stats strong { color: var(--text-primary); }
-    .instructor-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; margin-top: auto; }
+    .instructor-actions { display: grid; grid-template-columns: 1fr 1fr auto; gap: .7rem; margin-top: auto; }
     .empty-instructors { grid-column: 1 / -1; padding: 4rem !important; text-align: center; }
     .empty-instructors i { width: 54px; height: 54px; color: var(--brand-gold); }
     @media (max-width: 1100px) {
