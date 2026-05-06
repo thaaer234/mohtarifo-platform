@@ -65,6 +65,7 @@
                     <thead>
                         <tr>
                             <th>الدورة</th>
+                            <th>المسار / الفرع</th>
                             <th class="text-center">إجمالي الأكواد</th>
                             <th class="text-center">المباعة</th>
                             <th class="text-center">المفعلة</th>
@@ -75,6 +76,7 @@
                         {% for data in course_data %}
                             <tr>
                                 <td><strong>{{ data.course.title }}</strong></td>
+                                <td><span class="badge badge-gold">{{ data.course.get_kind_display }} · {{ data.course.get_academic_track_display }}</span></td>
                                 <td class="text-center">{{ data.cnt_all }}</td>
                                 <td class="text-center">{{ data.cnt_sold }}</td>
                                 <td class="text-center">{{ data.cnt_active }}</td>
@@ -124,9 +126,11 @@
     <!-- Course Page Separators for Printing (Page Break on Each Course) -->
     {% for data in course_data %}
         <section class="course-print-section premium-card mb-8">
-            <div class="course-section-header mb-6">
-                <div class="badge badge-gold mb-2">تفصيل الدورة ومبيعاتها</div>
-                <h2>كورس: {{ data.course.title }}</h2>
+            <div class="course-section-header mb-6" style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <div class="badge badge-gold mb-2">{{ data.course.get_kind_display }} · {{ data.course.get_academic_track_display }}</div>
+                    <h2 style="margin: 0;">كورس: {{ data.course.title }}</h2>
+                </div>
                 <span class="status-badge">{{ data.course.get_status_display }}</span>
             </div>
 

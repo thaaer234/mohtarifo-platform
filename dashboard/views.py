@@ -2381,7 +2381,7 @@ def admin_instructor_report_export(request, instructor_id):
         summary_sheet.append([
             course.title,
             course.subject.name if course.subject else "",
-            course.get_academic_track_display(),
+            f"{course.get_kind_display()} - {course.get_academic_track_display()}",
             cnt_all,
             cnt_sold,
             cnt_active,
@@ -2465,6 +2465,7 @@ def admin_instructor_report_export(request, instructor_id):
         
         cs.append(["مؤشر الدورة", "القيمة"])
         cs.append(["المادة", course.subject.name if course.subject else ""])
+        cs.append(["النوع / الفرع", f"{course.get_kind_display()} - {course.get_academic_track_display()}"])
         cs.append(["حالة الدورة", course.get_status_display()])
         cs.append(["إجمالي الأكواد", cnt_all])
         cs.append(["المباعة", cnt_sold])
