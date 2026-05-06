@@ -7,6 +7,7 @@
     <title>{% block title %}محترفو التعليم{% endblock %}</title>
 
     <!-- SEO & PWA -->
+    <meta name="google-site-verification" content="q50dAq7CksliaiAk_nXdVuReEcjG4mMgkL_oKsh54Qk" />
     <meta name="description" content="{% block meta_description %}{{ SEO_DEFAULT_DESCRIPTION }}{% endblock %}">
     <meta name="robots" content="{% block meta_robots %}{{ SEO_ROBOTS }}{% endblock %}">
     <link rel="canonical" href="{% block canonical_url %}{{ SEO_CANONICAL_URL }}{% endblock %}">
@@ -54,6 +55,37 @@
     
     <!-- Design System -->
     <style>{% inline_static 'css/design.css' %}</style>
+    <style>
+        .navbar-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 0 1.5rem;
+        }
+        .navbar-center {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+        .nav-menu-link {
+            color: var(--text-secondary);
+            font-weight: 700;
+            font-size: 0.95rem;
+            transition: var(--transition-smooth);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+        }
+        .nav-menu-link:hover {
+            color: var(--brand-gold);
+            background: rgba(var(--brand-gold-rgb), 0.05);
+        }
+        @media (max-width: 992px) {
+            .navbar-center {
+                display: none;
+            }
+        }
+    </style>
     
     <!-- Lucide Icons -->
     <script>{% inline_static 'vendor/lucide.min.js' %}</script>
@@ -75,6 +107,14 @@
                 <a href="{% url 'dashboard:landing' %}" class="navbar-brand">
                     <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Mohtarifo Logo" class="main-logo">
                 </a>
+            </div>
+            
+            <div class="navbar-center desktop-only">
+                <a href="{% url 'dashboard:landing' %}" class="nav-menu-link">الرئيسية</a>
+                <a href="{% url 'dashboard:shop' %}" class="nav-menu-link">المتجر التعليمي</a>
+                <a href="{% url 'dashboard:instructors_list' %}" class="nav-menu-link">نخبة الأساتذة</a>
+                <a href="{% url 'dashboard:about' %}" class="nav-menu-link">من نحن</a>
+                <a href="{% url 'dashboard:contact' %}" class="nav-menu-link">اتصل بنا</a>
             </div>
             
             <div class="navbar-right">

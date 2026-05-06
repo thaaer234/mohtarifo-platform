@@ -21,6 +21,7 @@ DEFAULT_IMAGE_PATH = "dashboard/images/hero_student.png"
 INDEXABLE_PATHS = {
     "/",
     "/landing/",
+    "/shop/",
     "/about/",
     "/contact/",
     "/departments/",
@@ -91,6 +92,43 @@ def _base_schema(site_url, image_url):
                 "query-input": "required name=search_term_string",
             },
         },
+        {
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            "name": "Site Navigation",
+            "itemListElement": [
+                {
+                    "@type": "SiteNavigationElement",
+                    "position": 1,
+                    "name": "الرئيسية",
+                    "url": f"{site_url}/landing/"
+                },
+                {
+                    "@type": "SiteNavigationElement",
+                    "position": 2,
+                    "name": "المتجر التعليمي",
+                    "url": f"{site_url}/shop/"
+                },
+                {
+                    "@type": "SiteNavigationElement",
+                    "position": 3,
+                    "name": "نخبة الأساتذة",
+                    "url": f"{site_url}/instructors/"
+                },
+                {
+                    "@type": "SiteNavigationElement",
+                    "position": 4,
+                    "name": "من نحن",
+                    "url": f"{site_url}/about/"
+                },
+                {
+                    "@type": "SiteNavigationElement",
+                    "position": 5,
+                    "name": "اتصل بنا",
+                    "url": f"{site_url}/contact/"
+                }
+            ]
+        }
     ]
 
 

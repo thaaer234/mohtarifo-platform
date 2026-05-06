@@ -250,14 +250,15 @@
     
     #video-watermark {
         z-index: 120;
-        color: rgba(255, 255, 255, 0.32);
-        background: rgba(0, 0, 0, 0.18);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 999px;
-        padding: 0.35rem 0.75rem;
-        backdrop-filter: blur(6px);
+        color: rgba(255, 255, 255, 0.15);
+        background: none;
+        border: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
         transform: translate(-50%, -50%);
         pointer-events: none;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.45);
     }
     
     /* Responsive Adaptations */
