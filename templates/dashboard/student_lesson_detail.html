@@ -46,7 +46,7 @@
                         <div id="video-security-overlay" class="flex-center" style="position: absolute; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); display: none; z-index: 150; flex-direction: column; transition: 0.5s;">
                             <div class="text-center">
                                 <div class="mb-6 reveal-up" style="animation-duration: 0.6s;">
-                                    <img src="/static/dashboard/icons/icon.svg" alt="Logo" style="width: 100px; height: 100px; filter: drop-shadow(0 0 20px rgba(var(--brand-gold-rgb), 0.4));">
+                                    <img src="{% static 'dashboard/icons/logo_vertical-removebg-preview.png' %}" alt="محترفو التعليم" style="width: 120px; max-height: 120px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(var(--brand-gold-rgb), 0.4));">
                                 </div>
                                 <h3 class="text-white mb-2" style="font-size: 1.5rem; letter-spacing: 1px;">المحتوى محمي</h3>
                                 <p style="color: rgba(255,255,255,0.6); font-weight: 500;">يرجى العودة للصفحة لمتابعة المشاهدة</p>
@@ -184,35 +184,42 @@
         },
 
         setupInterceptors() {
-            const blockEvent = e => {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                e.stopPropagation();
+            const showBriefWarning = (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                this.toggleCurtain(true, true);
+                window.clearTimeout(this.warningTimer);
+                this.warningTimer = window.setTimeout(() => this.toggleCurtain(false), 1800);
                 return false;
             };
 
-            // حظر شامل على مستوى النافذة والمستند لكافة أنواع الأحداث
-            const eventsToBlock = ['keydown', 'keyup', 'keypress', 'beforeinput', 'contextmenu', 'copy', 'cut', 'paste'];
-            eventsToBlock.forEach(eventType => {
-                window.addEventListener(eventType, blockEvent, true);
-                document.addEventListener(eventType, blockEvent, true);
+            document.addEventListener('contextmenu', showBriefWarning, true);
+            document.addEventListener('keydown', (event) => {
+                const key = (event.key || '').toLowerCase();
+                const blockedShortcut =
+                    event.key === 'F12' ||
+                    (event.ctrlKey && event.shiftKey && ['i', 'j', 'c'].includes(key)) ||
+                    (event.ctrlKey && key === 'u');
+                if (blockedShortcut) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
             });
         },
 
         setupPrivacyTrackers() {
-            const toggleCurtain = (show) => {
-                if (this.curtain) {
-                    this.curtain.style.display = show ? 'flex' : 'none';
-                }
-                if (show && this.video) {
-                    this.video.pause();
-                }
-            };
+            window.addEventListener('blur', () => this.toggleCurtain(true, true));
+            window.addEventListener('focus', () => this.toggleCurtain(false));
+            document.addEventListener('visibilitychange', () => this.toggleCurtain(document.hidden, true));
+        },
 
-            // حجب الشاشة عند محاولة الخروج أو التبديل (Alt+Tab / Fn+Tab / Win+D)
-            window.addEventListener('blur', () => toggleCurtain(true));
-            window.addEventListener('focus', () => toggleCurtain(false));
-            document.addEventListener('visibilitychange', () => toggleCurtain(document.hidden));
+        toggleCurtain(show, pauseVideo = false) {
+            if (this.curtain) {
+                this.curtain.style.display = show ? 'flex' : 'none';
+            }
+            if (show && pauseVideo && this.video) {
+                this.video.pause();
+            }
         },
 
         startWatermarkVoyage() {

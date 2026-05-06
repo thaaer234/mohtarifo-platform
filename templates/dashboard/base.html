@@ -57,6 +57,21 @@
     
     <!-- Lucide Icons -->
     <script>{% inline_static 'vendor/lucide.min.js' %}</script>
+    <style>
+        .navbar-brand .brand-mark {
+            width: 34px;
+            height: 34px;
+            object-fit: contain;
+            flex: 0 0 auto;
+            filter: drop-shadow(0 0 10px rgba(var(--brand-gold-rgb), 0.22));
+        }
+        @media (max-width: 768px) {
+            .navbar-brand .brand-mark {
+                width: 30px;
+                height: 30px;
+            }
+        }
+    </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
@@ -73,6 +88,7 @@
         <div class="navbar-container">
             <div class="navbar-left">
                 <a href="{% url 'dashboard:landing' %}" class="navbar-brand">
+                    <img src="{% static_data_uri 'dashboard/icons/logo_vertical-removebg-preview.png' %}" alt="" class="brand-mark" aria-hidden="true">
                     <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Mohtarifo Logo" class="main-logo">
                 </a>
                 
@@ -144,6 +160,7 @@
     <div class="mobile-menu-overlay" id="mobile-menu">
         <div class="mobile-menu-header">
             <span class="navbar-brand">
+                <img src="{% static_data_uri 'dashboard/icons/logo_vertical-removebg-preview.png' %}" alt="" class="brand-mark" aria-hidden="true">
                 <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Mohtarifo Logo" class="main-logo">
             </span>
             <button class="close-menu" id="menu-close"><i data-lucide="x"></i></button>
