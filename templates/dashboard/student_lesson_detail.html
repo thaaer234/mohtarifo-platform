@@ -24,15 +24,10 @@
         </div>
     </header>
 
-    <div class="grid-3" style="grid-template-columns: 1fr 380px;">
+    <div class="lesson-layout-grid">
         <!-- 2. Primary Learning Area -->
         <main>
-            <div class="premium-card" id="video-wrapper" style="padding: 0; background: #000; border-radius: 35px; box-shadow: 0 40px 100px rgba(0,0,0,0.6); position: relative;">
-                <!-- Security Layer -->
-                <div id="video-watermark" class="watermark">
-                    {{ request.user.get_full_name|default:request.user.username }} • ID: {{ request.user.id }}
-                </div>
-                
+            <div class="premium-card" id="video-wrapper" style="padding: 0; background: #000; border-radius: 35px; box-shadow: 0 40px 100px rgba(0,0,0,0.6); position: relative; overflow: hidden;">
                 <div style="position: relative; width: 100%; aspect-ratio: 16/9;">
                     {% if signed_video_url or video_embed_url %}
                         {% if signed_video_url %}
@@ -42,6 +37,10 @@
                         {% else %}
                             <iframe id="lesson-iframe" src="{{ video_embed_url }}" style="width: 100%; height: 100%; border: none; border-radius: 35px 35px 0 0;" allowfullscreen oncontextmenu="return false;"></iframe>
                         {% endif %}
+
+                        <div id="video-watermark" class="video-watermark">
+                            {{ request.user.get_full_name|default:request.user.username }} • ID: {{ request.user.id }}
+                        </div>
                         
                         <div id="video-security-overlay" class="flex-center" style="position: absolute; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); display: none; z-index: 150; flex-direction: column; transition: 0.5s;">
                             <div class="text-center">
@@ -64,7 +63,7 @@
                 </div>
 
                 <!-- Playback & Controls Overlay -->
-                <div class="flex-between" style="padding: 1.5rem 2.5rem; background: linear-gradient(to top, #080808, #000); border-radius: 0 0 35px 35px;">
+                <div class="lesson-controls-bar">
                     <div class="flex-center gap-6">
                         <span class="text-muted font-bold" style="font-size: 0.8rem;">السرعة:</span>
                         <div class="flex-center gap-2" style="background: rgba(255,255,255,0.03); padding: 0.3rem; border-radius: 12px;">
@@ -86,12 +85,12 @@
 
             <!-- Lesson Resources & Info -->
             <div class="mt-12">
-                <div class="flex-center gap-8 mb-6" style="justify-content: flex-start; padding: 0 1rem;">
+                <div class="flex-center gap-8 mb-6 flex-wrap" style="justify-content: flex-start; padding: 0 1rem;">
                     <button class="tab-trigger active" data-tab="desc">الوصف</button>
                     <button class="tab-trigger" data-tab="files">المرفقات</button>
                     <button class="tab-trigger" data-tab="notes">ملاحظاتك</button>
                 </div>
-                <div class="premium-card" style="padding: 3rem; min-height: 250px;">
+                <div class="premium-card lesson-tabs-card">
                     <div id="tab-desc" class="tab-pane active">
                         <div class="prose" style="color: var(--text-secondary); line-height: 1.8;">
                             {% if lesson.content %}
@@ -155,17 +154,168 @@
 </div>
 
 <style>
-    .s-pill { background: none; border: none; color: var(--text-muted); padding: 0.4rem 1rem; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: 0.3s; }
+    /* Grid & Layout System */
+    .lesson-layout-grid {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 2rem;
+    }
+    
+    .lesson-controls-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.5rem 2.5rem;
+        background: linear-gradient(to top, #080808, #000);
+        border-radius: 0 0 35px 35px;
+        gap: 1.5rem;
+    }
+    
+    .lesson-tabs-card {
+        padding: 3rem;
+        min-height: 250px;
+    }
+
+    .s-pill { 
+        background: none; 
+        border: none; 
+        color: var(--text-muted); 
+        padding: 0.4rem 1rem; 
+        border-radius: 8px; 
+        font-weight: 700; 
+        font-size: 0.8rem; 
+        cursor: pointer; 
+        transition: 0.3s; 
+    }
     .s-pill.active { background: var(--brand-gold); color: #000; }
     
-    .tab-trigger { background: none; border: none; color: var(--text-muted); font-weight: 800; padding-bottom: 1rem; cursor: pointer; position: relative; transition: 0.3s; border-bottom: 3px solid transparent; }
+    .tab-trigger { 
+        background: none; 
+        border: none; 
+        color: var(--text-muted); 
+        font-weight: 800; 
+        padding-bottom: 1rem; 
+        cursor: pointer; 
+        position: relative; 
+        transition: 0.3s; 
+        border-bottom: 3px solid transparent; 
+    }
     .tab-trigger.active { color: var(--brand-gold); border-bottom-color: var(--brand-gold); }
     
     .tab-pane { display: none; }
     .tab-pane.active { display: block; animation: fadeIn 0.4s ease; }
     
-    body.focus-mode .navbar, body.focus-mode aside, body.focus-mode header .h-left, body.focus-mode .mt-12 { display: none !important; }
-    body.focus-mode .grid-3 { grid-template-columns: 1fr !important; max-width: 1200px; margin: 0 auto; }
+    /* Focus Mode Styling */
+    body.focus-mode .navbar, 
+    body.focus-mode aside, 
+    body.focus-mode .mobile-bottom-nav,
+    body.focus-mode .main-footer { 
+        display: none !important; 
+    }
+    
+    body.focus-mode header {
+        margin-bottom: 0 !important;
+        padding: 0 !important;
+        height: 0 !important;
+        position: relative;
+    }
+    
+    body.focus-mode header > div.flex-center:first-child {
+        display: none !important;
+    }
+    
+    body.focus-mode #focus-mode-toggle {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 10000;
+        background: rgba(15, 15, 15, 0.85);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    
+    body.focus-mode .lesson-layout-grid { 
+        grid-template-columns: 1fr !important; 
+        max-width: 1200px; 
+        margin: 0 auto; 
+    }
+    
+    body.focus-mode .main-content {
+        padding-top: 2rem !important;
+        padding-bottom: 2rem !important;
+    }
+    
+    #video-watermark {
+        z-index: 120;
+        color: rgba(255, 255, 255, 0.32);
+        background: rgba(0, 0, 0, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        padding: 0.35rem 0.75rem;
+        backdrop-filter: blur(6px);
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+    }
+    
+    /* Responsive Adaptations */
+    @media (max-width: 1024px) {
+        .lesson-layout-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        #video-wrapper {
+            border-radius: 24px !important;
+        }
+        #lesson-video, #lesson-iframe {
+            border-radius: 24px 24px 0 0 !important;
+        }
+        .lesson-controls-bar {
+            border-radius: 0 0 24px 24px;
+            padding: 1.25rem 1.5rem;
+        }
+        .lesson-tabs-card {
+            padding: 1.5rem !important;
+            min-height: 200px;
+        }
+        .tab-trigger {
+            padding-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        header.flex-between {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 1.25rem;
+        }
+        #focus-mode-toggle {
+            width: 100%;
+            justify-content: center;
+        }
+        .lesson-controls-bar {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1.25rem;
+        }
+        .lesson-controls-bar .flex-center {
+            width: 100%;
+            justify-content: space-between;
+        }
+        #complete-form {
+            width: 100%;
+        }
+        #complete-btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
     
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
@@ -208,8 +358,6 @@
         },
 
         setupPrivacyTrackers() {
-            window.addEventListener('blur', () => this.toggleCurtain(true, true));
-            window.addEventListener('focus', () => this.toggleCurtain(false));
             document.addEventListener('visibilitychange', () => this.toggleCurtain(document.hidden, true));
         },
 
@@ -260,8 +408,17 @@
             });
         });
 
-        document.getElementById('focus-mode-toggle').addEventListener('click', () => {
-            document.body.classList.toggle('focus-mode');
+        const toggleBtn = document.getElementById('focus-mode-toggle');
+        toggleBtn.addEventListener('click', () => {
+            const isFocus = document.body.classList.toggle('focus-mode');
+            if (isFocus) {
+                toggleBtn.innerHTML = '<i data-lucide="minimize-2" style="width: 18px;"></i><span class="font-bold">إلغاء التركيز</span>';
+            } else {
+                toggleBtn.innerHTML = '<i data-lucide="maximize-2" style="width: 18px;"></i><span class="font-bold">وضع التركيز</span>';
+            }
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
         });
     });
 
