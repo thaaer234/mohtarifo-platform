@@ -1729,7 +1729,7 @@ def student_course_detail(request, course_id):
 def student_lesson_detail(request, lesson_id):
     current_device = _current_device_fingerprint(request)
     lesson = get_object_or_404(Lesson.objects.select_related("unit", "unit__course"), id=lesson_id)
-    if lesson.id not in _student_lesson_ids_for_device(request.user, current_device):
+    if not request.user.is_staff and lesson.id not in _student_lesson_ids_for_device(request.user, current_device):
         raise Http404("Lesson not found")
 
     progress, _created = LessonProgress.objects.get_or_create(
@@ -1751,7 +1751,7 @@ def student_lesson_detail(request, lesson_id):
 def signed_lesson_video(request, lesson_id, token):
     lesson = get_object_or_404(Lesson.objects.select_related("unit", "unit__course"), id=lesson_id)
     current_device = _current_device_fingerprint(request)
-    if lesson.id not in _student_lesson_ids_for_device(request.user, current_device):
+    if not request.user.is_staff and lesson.id not in _student_lesson_ids_for_device(request.user, current_device):
         raise Http404("Video not found")
     try:
         payload = signing.TimestampSigner(salt="lesson-video").unsign_object(token, max_age=60 * 10)
