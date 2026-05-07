@@ -1,5 +1,5 @@
 {% extends "dashboard/base.html" %}
-{% load static %}
+{% load static humanize %}
 
 {% block title %}إدارة الحسومات والعروض | محترفو التعليم{% endblock %}
 
@@ -108,7 +108,7 @@
                                 <td><strong>{{ discount.name }}</strong></td>
                                 <td class="text-center">
                                     {% if discount.discount_amount_syp > 0 %}
-                                        <span class="badge badge-gold" style="font-size: 0.9rem; padding: 0.25rem 0.75rem; background-color: var(--brand-gold); color: var(--bg-base);">{{ discount.discount_amount_syp }} ل.س</span>
+                                        <span class="badge badge-gold" style="font-size: 0.9rem; padding: 0.25rem 0.75rem; background-color: var(--brand-gold); color: var(--bg-base);">{{ discount.discount_amount_syp|floatformat:0|intcomma }} ل.س</span>
                                     {% else %}
                                         <span class="badge badge-gold" style="font-size: 0.9rem; padding: 0.25rem 0.75rem;">{{ discount.discount_percent }}%</span>
                                     {% endif %}

@@ -8,244 +8,277 @@
 <div class="admin-billing-hub reveal-up">
     <!-- Header -->
     <header class="hub-header mb-10">
-        <div class="flex-between align-center">
+        <div class="flex-between align-center" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.5rem;">
             <div>
-                <span class="badge mb-2">العمليات المالية</span>
-                <h1 class="page-title">المركز المالي والأكواد</h1>
+                <span class="badge mb-2" style="background: rgba(197, 160, 89, 0.1); color: var(--brand-gold); border: 1px solid rgba(197, 160, 89, 0.2); font-weight: 800; padding: 0.35rem 0.75rem; border-radius: 100px;">العمليات المالية</span>
+                <h1 class="page-title text-3xl font-black text-glow" style="color: var(--text-primary); font-family: 'Cairo', sans-serif; margin-top: 0.25rem;">المركز المالي والأكواد</h1>
             </div>
-            <div class="hub-stats">
-                <div class="mini-stat">
-                    <span class="label">إجمالي الإيرادات (الدولار)</span>
-                    <span class="value">{{ total_revenue|default:0|floatformat:2 }} $</span>
+            <div class="hub-stats" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                <div class="mini-stat" style="text-align: right; background: rgba(197, 160, 89, 0.03); padding: 1rem 1.5rem; border-radius: 16px; border-right: 4px solid var(--brand-gold); border-left: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                    <span class="label" style="display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: 800; margin-bottom: 0.25rem;">إجمالي الإيرادات ($)</span>
+                    <span class="value" style="font-size: 1.6rem; font-weight: 900; color: var(--brand-gold); font-family: 'Cairo', sans-serif;">{{ total_revenue|default:0|floatformat:2 }} $</span>
                 </div>
-                <div class="mini-stat">
-                    <span class="label">صندوق الأكواد العام (ل.س)</span>
-                    <span class="value" style="color: var(--brand-gold);">{{ general_fund_syp|default:0|floatformat:0|intcomma }} ل.س</span>
+                <div class="mini-stat" style="text-align: right; background: rgba(52, 211, 153, 0.03); padding: 1rem 1.5rem; border-radius: 16px; border-right: 4px solid #34d399; border-left: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                    <span class="label" style="display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: 800; margin-bottom: 0.25rem;">صندوق الأكواد العام (ل.س)</span>
+                    <span class="value" style="font-size: 1.6rem; font-weight: 900; color: #34d399; font-family: 'Cairo', sans-serif;">{{ general_fund_syp|default:0|floatformat:0|intcomma }} ل.س</span>
                 </div>
-                <div class="mini-stat">
-                    <span class="label">الاشتراكات النشطة</span>
-                    <span class="value">{{ active_subs_count }}</span>
+                <div class="mini-stat" style="text-align: right; background: rgba(96, 165, 250, 0.03); padding: 1rem 1.5rem; border-radius: 16px; border-right: 4px solid #60a5fa; border-left: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                    <span class="label" style="display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: 800; margin-bottom: 0.25rem;">الاشتراكات النشطة</span>
+                    <span class="value" style="font-size: 1.6rem; font-weight: 900; color: #60a5fa; font-family: 'Cairo', sans-serif;">{{ active_subs_count }}</span>
                 </div>
-                <a href="{% url 'dashboard:admin_discounts' %}" class="btn btn-primary btn-glow" style="background: var(--brand-gold); color: var(--bg-base); border-color: var(--brand-gold); margin-left: 0.5rem;">
-                    <i data-lucide="badge-percent"></i> إدارة الحسومات
-                </a>
-                <a href="{% url 'dashboard:admin_financial_report_export' %}" class="btn btn-primary btn-glow">
-                    <i data-lucide="download"></i> تقرير Excel
-                </a>
+                
+                <div style="display: flex; gap: 0.75rem; margin-right: 0.5rem;">
+                    <a href="{% url 'dashboard:admin_discounts' %}" class="btn btn-primary btn-glow" style="background: var(--brand-gold); color: var(--bg-base); border-color: var(--brand-gold); font-weight: 800; display: flex; align-items: center; gap: 0.5rem; border-radius: 12px; padding: 0.75rem 1.25rem;">
+                        <i data-lucide="badge-percent"></i> إدارة الحسومات
+                    </a>
+                    <a href="{% url 'dashboard:admin_financial_report_export' %}" class="btn btn-secondary" style="font-weight: 800; display: flex; align-items: center; gap: 0.5rem; border-radius: 12px; padding: 0.75rem 1.25rem;">
+                        <i data-lucide="download"></i> تقرير Excel
+                    </a>
+                </div>
             </div>
         </div>
     </header>
 
-    <div class="hub-grid">
+    <div class="hub-grid" style="display: grid; grid-template-columns: 1fr 380px; gap: 2rem;">
         <!-- Main Column: Tables -->
-        <div class="hub-main">
-            <!-- Subscriptions Table -->
-             <section class="premium-card mb-8">
-                <div class="flex-between mb-6">
-                    <h2 class="section-title"><i data-lucide="credit-card"></i> الاشتراكات الأخيرة</h2>
-                    <a href="/admin/billing/subscription/" class="btn-text" target="_blank">المزيد في Admin <i data-lucide="external-link"></i></a>
+        <div class="hub-main" style="display: flex; flex-direction: column; gap: 2rem;">
+            <!-- Sales Centers expected Fund Table -->
+            <section class="premium-card" style="border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden; background: var(--bg-surface);">
+                <div class="flex-between mb-6" style="padding: 1.5rem 1.5rem 0 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                    <h2 class="section-title text-xl font-bold flex align-center gap-2" style="color: var(--text-primary); font-family: 'Cairo', sans-serif; display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="store" style="color: var(--brand-gold);"></i> التقارير المالية التفصيلية لمراكز البيع
+                    </h2>
                 </div>
-                <div class="table-responsive">
-                    <table class="admin-table">
+                <div class="table-responsive" style="padding: 0 1.5rem 1.5rem 1.5rem;">
+                    <table class="admin-table" style="width: 100%; border-collapse: collapse; text-align: right;">
                         <thead>
-                            <tr>
-                                <th>الطالب</th>
-                                <th>الخطة</th>
-                                <th>الحالة</th>
-                                <th>تاريخ البدء</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for sub in subscriptions %}
-                            <tr>
-                                <td><strong>{{ sub.user.get_full_name }}</strong><br><small>{{ sub.user.username }}</small></td>
-                                <td>{{ sub.plan.name }}</td>
-                                <td><span class="status-badge {{ sub.status }}">{{ sub.get_status_display }}</span></td>
-                                <td>{{ sub.created_at|date:"Y-m-d" }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr><td colspan="4" class="text-center p-8">لا توجد اشتراكات حالياً</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-             </section>
-
-             <!-- Payments Table -->
-             <section class="premium-card mb-8">
-                <div class="flex-between mb-6">
-                    <h2 class="section-title"><i data-lucide="dollar-sign"></i> سجل المدفوعات</h2>
-                    <a href="/admin/billing/payment/" class="btn-text" target="_blank">المزيد في Admin <i data-lucide="external-link"></i></a>
-                </div>
-                <div class="table-responsive">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>الطالب</th>
-                                <th>المبلغ</th>
-                                <th>الوسيلة</th>
-                                <th>الحالة</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for p in payments %}
-                            <tr>
-                                <td><strong>{{ p.user.get_full_name }}</strong></td>
-                                <td>{{ p.amount_dollars|default:0|floatformat:2 }} {{ p.currency }}</td>
-                                <td>{{ p.provider }}</td>
-                                <td><span class="status-badge {{ p.status }}">{{ p.get_status_display }}</span></td>
-                            </tr>
-                            {% empty %}
-                            <tr><td colspan="4" class="text-center p-8">لا يوجد سجل مدفوعات</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-             </section>
-
-             <section class="premium-card mb-8">
-                <div class="flex-between mb-6">
-                    <h2 class="section-title"><i data-lucide="bar-chart-3"></i> تقرير الفلاتر</h2>
-                </div>
-                <div class="table-responsive">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>الفلتر</th>
-                                <th>الدورات</th>
-                                <th>الأكواد</th>
-                                <th>المباع</th>
-                                <th>المفعل</th>
-                                <th>غير مفعل</th>
-                                <th>طباعة</th>
-                                <th>الصندوق</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in filter_reports %}
-                            <tr>
-                                <td><strong>{{ row.label }}</strong></td>
-                                <td>{{ row.courses }}</td>
-                                <td>{{ row.codes }}</td>
-                                <td>{{ row.sold }}</td>
-                                <td>{{ row.activated }}</td>
-                                <td>{{ row.inactive }}</td>
-                                <td>{{ row.printed }}</td>
-                                <td>{{ row.gross|default:0|floatformat:0|intcomma }} ل.س</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-             </section>
- 
-             <!-- Sales Centers Expected Fund Table -->
-             <section class="premium-card mb-8">
-                <div class="flex-between mb-6">
-                    <h2 class="section-title"><i data-lucide="store"></i> التقارير المالية التفصيلية لمراكز البيع</h2>
-                </div>
-                <div class="table-responsive">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>مركز البيع</th>
-                                <th>المعهد المرتبط</th>
-                                <th class="text-center">إجمالي الأكواد</th>
-                                <th class="text-center">الأكواد المباعة</th>
-                                <th class="text-center" style="color: var(--brand-gold);">الصندوق المتوقع (الافتراضي)</th>
-                                <th class="text-center" style="color: #60a5fa;">الصندوق الحقيقي (كامل القيمة)</th>
-                                <th class="text-center" style="color: #34d399;">الصندوق الفعلي (بعد الحسومات)</th>
-                                <th class="text-center">الفاتورة والعمولة</th>
+                            <tr style="border-bottom: 2px solid var(--border-light);">
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800;">مركز البيع</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800;">المعهد المرتبط</th>
+                                <th class="text-center" style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">إجمالي الأكواد</th>
+                                <th class="text-center" style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">الأكواد المباعة</th>
+                                <th class="text-center" style="color: var(--brand-gold); padding: 1rem; font-size: 0.85rem; font-weight: 800; text-align: center;">الصندوق المتوقع (الافتراضي)</th>
+                                <th class="text-center" style="color: #60a5fa; padding: 1rem; font-size: 0.85rem; font-weight: 800; text-align: center;">الصندوق الحقيقي (الكامل)</th>
+                                <th class="text-center" style="color: #34d399; padding: 1rem; font-size: 0.85rem; font-weight: 800; text-align: center;">الصندوق الفعلي (بعد الحسومات)</th>
+                                <th class="text-center" style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">العمليات المتاحة</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for item in centers_report %}
-                            <tr>
-                                <td><strong>{{ item.center.name }}</strong></td>
-                                <td>{{ item.center.institute.name|default:"مستقل" }}</td>
-                                <td class="text-center"><strong>{{ item.total_codes }}</strong></td>
-                                <td class="text-center"><span class="status-badge pending" style="padding: 0.35rem 0.75rem; font-size: 0.85rem;">{{ item.sold_codes_count }} مباع</span></td>
-                                <td class="text-center"><strong class="text-glow" style="color: var(--brand-gold); font-size: 1rem;">{{ item.expected_balance|default:0|floatformat:0|intcomma }} ل.س</strong></td>
-                                <td class="text-center"><strong style="color: #60a5fa; font-size: 1rem;">{{ item.real_standard|default:0|floatformat:0|intcomma }} ل.س</strong></td>
-                                <td class="text-center"><strong style="color: #34d399; font-size: 1.05rem; text-shadow: 0 0 10px rgba(52, 211, 153, 0.2);">{{ item.actual_earned|default:0|floatformat:0|intcomma }} ل.س</strong></td>
-                                <td class="text-center">
-                                    <a href="{% url 'dashboard:admin_center_invoice' item.center.id %}" class="btn btn-secondary btn-sm font-semibold" style="padding: 0.4rem 0.8rem; border-color: var(--brand-gold); color: var(--brand-gold); font-size: 0.85rem;">
-                                        <i data-lucide="receipt"></i> الفاتورة والحساب
+                            <tr style="border-bottom: 1px solid var(--border-light); transition: all 0.2s ease;">
+                                <td style="padding: 1.25rem 1rem;"><strong>{{ item.center.name }}</strong></td>
+                                <td style="padding: 1.25rem 1rem; color: var(--text-secondary);">{{ item.center.institute.name|default:"مستقل" }}</td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;"><strong>{{ item.total_codes }}</strong></td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;">
+                                    <span class="status-badge pending" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 800; background: rgba(197, 160, 89, 0.1); border: 1px solid rgba(197, 160, 89, 0.2); border-radius: 8px; color: var(--brand-gold);">{{ item.sold_codes_count }} مباع</span>
+                                </td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;"><strong class="text-glow" style="color: var(--brand-gold); font-size: 0.95rem;">{{ item.expected_balance|default:0|floatformat:0|intcomma }} ل.س</strong></td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;"><strong style="color: #60a5fa; font-size: 0.95rem;">{{ item.real_standard|default:0|floatformat:0|intcomma }} ل.س</strong></td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;"><strong style="color: #34d399; font-size: 1rem;">{{ item.actual_earned|default:0|floatformat:0|intcomma }} ل.س</strong></td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;">
+                                    <a href="{% url 'dashboard:admin_center_invoice' item.center.id %}" class="btn btn-glass btn-sm font-bold" style="padding: 0.45rem 1rem; border: 1px solid rgba(197, 160, 89, 0.3); color: var(--brand-gold); font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.35rem; border-radius: 8px; transition: all 0.2s ease; background: rgba(197, 160, 89, 0.03);">
+                                        <i data-lucide="receipt" style="width: 14px; height: 14px;"></i> الفاتورة والحساب
                                     </a>
                                 </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="8" class="text-center p-8">لا توجد مراكز بيع نشطة</td></tr>
+                            <tr><td colspan="8" class="text-center p-8 text-muted" style="text-align: center; padding: 2.5rem;">لا توجد مراكز بيع نشطة محاسبياً حالياً.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
-             </section>
+            </section>
 
-             <section class="premium-card mb-8">
-                <div class="flex-between mb-6">
-                    <h2 class="section-title"><i data-lucide="book-open"></i> تقرير الدورات</h2>
+            <!-- Subscriptions Table -->
+            <section class="premium-card" style="border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden; background: var(--bg-surface);">
+                <div class="flex-between mb-6" style="padding: 1.5rem 1.5rem 0 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                    <h2 class="section-title text-xl font-bold flex align-center gap-2" style="color: var(--text-primary); font-family: 'Cairo', sans-serif; display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="credit-card" style="color: var(--brand-gold);"></i> الاشتراكات الأخيرة
+                    </h2>
+                    <a href="/admin/billing/subscription/" class="btn-text font-bold text-sm" style="color: var(--brand-gold); display: flex; align-items: center; gap: 0.25rem;" target="_blank">المزيد في الإدارة <i data-lucide="external-link" style="width: 14px; height: 14px;"></i></a>
                 </div>
-                <div class="table-responsive">
-                    <table class="admin-table">
+                <div class="table-responsive" style="padding: 0 1.5rem 1.5rem 1.5rem;">
+                    <table class="admin-table" style="width: 100%; border-collapse: collapse; text-align: right;">
                         <thead>
-                            <tr>
-                                <th>الدورة</th>
-                                <th>الأكواد</th>
-                                <th>المباع</th>
-                                <th>المفعل</th>
-                                <th>غير مفعل</th>
-                                <th>طباعة</th>
-                                <th>الصندوق</th>
-                                <th></th>
+                            <tr style="border-bottom: 2px solid var(--border-light);">
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800;">الطالب</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800;">الخطة الأكاديمية</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">حالة الاشتراك</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800;">تاريخ البدء</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sub in subscriptions %}
+                            <tr style="border-bottom: 1px solid var(--border-light);">
+                                <td style="padding: 1.25rem 1rem;">
+                                    <strong style="color: var(--text-primary);">{{ sub.user.get_full_name }}</strong><br>
+                                    <small class="text-muted" style="color: var(--text-muted);">{{ sub.user.username }}</small>
+                                </td>
+                                <td style="padding: 1.25rem 1rem; color: var(--text-secondary);">{{ sub.plan.name }}</td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;">
+                                    <span class="status-badge {{ sub.status }}" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 800; border-radius: 8px;">{{ sub.get_status_display }}</span>
+                                </td>
+                                <td style="padding: 1.25rem 1rem; color: var(--text-muted);">{{ sub.created_at|date:"Y-m-d" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center p-8 text-muted" style="text-align: center; padding: 2rem;">لا توجد اشتراكات مضافة مؤخراً.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Payments Table -->
+            <section class="premium-card" style="border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden; background: var(--bg-surface);">
+                <div class="flex-between mb-6" style="padding: 1.5rem 1.5rem 0 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                    <h2 class="section-title text-xl font-bold flex align-center gap-2" style="color: var(--text-primary); font-family: 'Cairo', sans-serif; display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="dollar-sign" style="color: var(--brand-gold);"></i> سجل عمليات الدفع الرقمية
+                    </h2>
+                    <a href="/admin/billing/payment/" class="btn-text font-bold text-sm" style="color: var(--brand-gold); display: flex; align-items: center; gap: 0.25rem;" target="_blank">المزيد في الإدارة <i data-lucide="external-link" style="width: 14px; height: 14px;"></i></a>
+                </div>
+                <div class="table-responsive" style="padding: 0 1.5rem 1.5rem 1.5rem;">
+                    <table class="admin-table" style="width: 100%; border-collapse: collapse; text-align: right;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--border-light);">
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800;">الطالب</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800;">المبلغ المدفوع</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800;">وسيلة الدفع والتحويل</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">حالة العملية</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in payments %}
+                            <tr style="border-bottom: 1px solid var(--border-light);">
+                                <td style="padding: 1.25rem 1rem;"><strong style="color: var(--text-primary);">{{ p.user.get_full_name }}</strong></td>
+                                <td style="padding: 1.25rem 1rem; font-weight: 700; color: var(--brand-gold);">{{ p.amount_dollars|default:0|floatformat:2 }} {{ p.currency }}</td>
+                                <td style="padding: 1.25rem 1rem; color: var(--text-secondary);">{{ p.provider }}</td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;">
+                                    <span class="status-badge {{ p.status }}" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 800; border-radius: 8px;">{{ p.get_status_display }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center p-8 text-muted" style="text-align: center; padding: 2rem;">لا توجد عمليات دفع رقمية مسجلة حالياً.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Filters Report Table -->
+            <section class="premium-card" style="border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden; background: var(--bg-surface);">
+                <div class="flex-between mb-6" style="padding: 1.5rem 1.5rem 0 1.5rem;">
+                    <h2 class="section-title text-xl font-bold flex align-center gap-2" style="color: var(--text-primary); font-family: 'Cairo', sans-serif; display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="bar-chart-3" style="color: var(--brand-gold);"></i> خلاصة إيرادات الأكواد حسب الفلاتر والفروع
+                    </h2>
+                </div>
+                <div class="table-responsive" style="padding: 0 1.5rem 1.5rem 1.5rem;">
+                    <table class="admin-table" style="width: 100%; border-collapse: collapse; text-align: right;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--border-light);">
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800;">الفرع المستهدف / الفلتر</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">عدد الدورات</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">إجمالي الأكواد</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">المباعة</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">المفعلة</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">غير مفعلة</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">مطبوعة</th>
+                                <th style="color: var(--brand-gold); padding: 1rem; font-size: 0.85rem; font-weight: 800; text-align: center;">إجمالي مبيعات الصندوق</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in filter_reports %}
+                            <tr style="border-bottom: 1px solid var(--border-light);">
+                                <td style="padding: 1.25rem 1rem;"><strong>{{ row.label }}</strong></td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;">{{ row.courses }}</td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;"><strong>{{ row.codes }}</strong></td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem; color: #34d399; font-weight: 700;">{{ row.sold }}</td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem; color: #60a5fa; font-weight: 700;">{{ row.activated }}</td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem; color: var(--text-muted);">{{ row.inactive }}</td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;">{{ row.printed }}</td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem; color: var(--brand-gold); font-weight: 800;">{{ row.gross|default:0|floatformat:0|intcomma }} ل.س</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Course Reports Table -->
+            <section class="premium-card" style="border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden; background: var(--bg-surface);">
+                <div class="flex-between mb-6" style="padding: 1.5rem 1.5rem 0 1.5rem;">
+                    <h2 class="section-title text-xl font-bold flex align-center gap-2" style="color: var(--text-primary); font-family: 'Cairo', sans-serif; display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="book-open" style="color: var(--brand-gold);"></i> خلاصة وإيرادات مبيعات الدورات التفصيلية
+                    </h2>
+                </div>
+                <div class="table-responsive" style="padding: 0 1.5rem 1.5rem 1.5rem;">
+                    <table class="admin-table" style="width: 100%; border-collapse: collapse; text-align: right;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--border-light);">
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800;">الدورة والفرع الدراسي</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">إجمالي الأكواد</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">المباعة</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">المفعلة</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">غير مفعلة</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">مطبوعة</th>
+                                <th style="color: var(--brand-gold); padding: 1rem; font-size: 0.85rem; font-weight: 800; text-align: center;">المبيعات ل.س</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">تصدير الكشوفات</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for row in course_reports %}
-                            <tr>
-                                <td><strong>{{ row.course.title }}</strong><br><small>{{ row.course.subject.name }}</small></td>
-                                <td>{{ row.codes }}</td>
-                                <td>{{ row.sold }}</td>
-                                <td>{{ row.activated }}</td>
-                                <td>{{ row.inactive }}</td>
-                                <td>{{ row.printed }}</td>
-                                <td>{{ row.gross|default:0|floatformat:0|intcomma }} ل.س</td>
-                                <td><a class="btn-text" href="{% url 'dashboard:admin_course_report_export' row.course.id %}">Excel</a></td>
+                            <tr style="border-bottom: 1px solid var(--border-light);">
+                                <td style="padding: 1.25rem 1rem;">
+                                    <strong style="color: var(--text-primary);">{{ row.course.title }}</strong><br>
+                                    <small class="text-muted" style="color: var(--text-muted);">{{ row.course.subject.name }}</small>
+                                </td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;"><strong>{{ row.codes }}</strong></td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem; color: #34d399; font-weight: 700;">{{ row.sold }}</td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem; color: #60a5fa; font-weight: 700;">{{ row.activated }}</td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem; color: var(--text-muted);">{{ row.inactive }}</td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;">{{ row.printed }}</td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem; color: var(--brand-gold); font-weight: 800;">{{ row.gross|default:0|floatformat:0|intcomma }} ل.س</td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;">
+                                    <a class="btn btn-glass btn-sm font-bold" style="padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.75rem; color: var(--brand-gold); border: 1px solid rgba(197, 160, 89, 0.2); background: rgba(197, 160, 89, 0.02); display: inline-flex; align-items: center; gap: 0.25rem;" href="{% url 'dashboard:admin_course_report_export' row.course.id %}">
+                                        <i data-lucide="file-spreadsheet" style="width: 14px; height: 14px;"></i> Excel
+                                    </a>
+                                </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="8" class="text-center p-8">لا توجد دورات.</td></tr>
+                            <tr><td colspan="8" class="text-center p-8 text-muted" style="text-align: center; padding: 2rem;">لا توجد دورات مسجلة محاسبياً في النظام حالياً.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
-             </section>
+            </section>
         </div>
 
         <!-- Sidebar Column: Batches Hub -->
         <aside class="hub-sidebar">
-            <section class="premium-card">
-                <div class="flex-between mb-6">
-                    <h2 class="section-title"><i data-lucide="barcode"></i> دفعات الأكواد</h2>
+            <section class="premium-card" style="border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-radius: 20px; padding: 1.5rem; background: var(--bg-surface);">
+                <div class="flex-between mb-6" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 class="section-title text-xl font-bold flex align-center gap-2" style="color: var(--text-primary); font-family: 'Cairo', sans-serif; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                        <i data-lucide="barcode" style="color: var(--brand-gold);"></i> دفعات الأكواد الأخيرة
+                    </h2>
                 </div>
-                <div class="batch-cards">
+                <div class="batch-cards" style="display: flex; flex-direction: column; gap: 1rem;">
                     {% for batch in batches %}
-                        <div class="batch-mini-card">
+                        <div class="batch-mini-card" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-light); border-radius: 16px; padding: 1.25rem; transition: all 0.2s ease;">
                             <div class="batch-info">
-                                <strong>{{ batch.name }}</strong>
-                                <span>{{ batch.course.title }}</span>
-                                <div class="batch-meta mt-2">
-                                    <span class="tag"> {% firstof batch.institute.name batch.sales_center.name "مستقل" %} </span>
-                                    <span class="tag gold">{{ batch.codes.count }} كود</span>
+                                <strong style="display: block; color: var(--text-primary); margin-bottom: 0.25rem; font-size: 0.95rem;">{{ batch.name }}</strong>
+                                <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">{{ batch.course.title }}</span>
+                                <div class="batch-meta mt-2" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <span class="tag" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 6px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-light); color: var(--text-secondary);"> {% firstof batch.institute.name batch.sales_center.name "مستقل" %} </span>
+                                    <span class="tag gold" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 6px; background: rgba(197, 160, 89, 0.05); border: 1px solid rgba(197, 160, 89, 0.2); color: var(--brand-gold); font-weight: 700;">{{ batch.codes.count }} كود</span>
                                 </div>
                             </div>
-                            <div class="batch-actions mt-4">
-                                <a href="{% url 'dashboard:admin_print_batch_cards' batch.id %}" class="btn btn-glass btn-sm w-full" target="_blank">
-                                    <i data-lucide="printer"></i> طباعة الكروت
+                            <div class="batch-actions mt-4" style="margin-top: 1rem;">
+                                <a href="{% url 'dashboard:admin_print_batch_cards' batch.id %}" class="btn btn-glass btn-sm w-full" style="width: 100%; padding: 0.5rem; border-radius: 8px; font-weight: 700; font-size: 0.8rem; border-color: rgba(197,160,89,0.2); color: var(--brand-gold); background: rgba(197, 160, 89, 0.02); display: flex; align-items: center; justify-content: center; gap: 0.35rem;" target="_blank">
+                                    <i data-lucide="printer" style="width: 14px; height: 14px;"></i> طباعة الكروت الفاخرة
                                 </a>
                             </div>
                         </div>
                     {% empty %}
-                        <p class="text-center p-8 text-muted">لا توجد دفعات أكواد حالياً</p>
+                        <p class="text-center p-8 text-muted" style="text-align: center; padding: 2rem; color: var(--text-muted);">لا توجد دفعات أكواد حالياً</p>
                     {% endfor %}
                 </div>
             </section>
@@ -254,32 +287,16 @@
 </div>
 
 <style>
-    .hub-grid { display: grid; grid-template-columns: 1fr 360px; gap: 2rem; }
-    .mini-stat { text-align: left; background: rgba(197, 160, 89, 0.05); padding: 1rem 1.5rem; border-radius: 16px; border-left: 3px solid var(--brand-gold); }
-    .hub-stats { display: flex; gap: 1rem; }
-    .mini-stat .label { display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: 700; margin-bottom: 0.25rem; }
-    .mini-stat .value { font-size: 1.5rem; font-weight: 900; color: var(--brand-gold); }
+    .hub-grid { display: grid; grid-template-columns: 1fr 380px; gap: 2rem; }
+    .status-badge { padding: 0.25rem 0.75rem; border-radius: 100px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+    .status-badge.active, .status-badge.paid { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.15); }
+    .status-badge.canceled, .status-badge.failed { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.15); }
+    .status-badge.pending { background: rgba(197, 160, 89, 0.1); color: var(--brand-gold); border: 1px solid rgba(197, 160, 89, 0.15); }
+    
+    .batch-mini-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); border-color: rgba(197,160,89,0.15) !important; }
 
-    .table-responsive { overflow-x: auto; }
-    .admin-table { width: 100%; border-collapse: collapse; text-align: right; }
-    .admin-table th { padding: 1rem; border-bottom: 1px solid var(--border-light); color: var(--text-muted); font-size: 0.85rem; }
-    .admin-table td { padding: 1.25rem 1rem; border-bottom: 1px solid var(--border-light); color: var(--text-primary); }
-
-    .status-badge { padding: 0.25rem 0.75rem; border-radius: 100px; font-size: 0.75rem; font-weight: 700; }
-    .status-badge.active, .status-badge.paid { background: rgba(16, 185, 129, 0.1); color: var(--success); }
-    .status-badge.canceled, .status-badge.failed { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
-    .status-badge.pending { background: rgba(197, 160, 89, 0.1); color: var(--brand-gold); }
-
-    .batch-mini-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border-light); border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; }
-    .batch-info strong { display: block; color: var(--text-primary); margin-bottom: 0.2rem; }
-    .batch-info span { font-size: 0.8rem; color: var(--text-muted); }
-    .batch-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-    .tag { font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 4px; background: var(--bg-base); border: 1px solid var(--border-light); color: var(--text-secondary); }
-    .tag.gold { border-color: var(--brand-gold); color: var(--brand-gold); }
-
-    @media (max-width: 992px) {
+    @media (max-width: 1200px) {
         .hub-grid { grid-template-columns: 1fr; }
-        .hub-header .flex-between { flex-direction: column; align-items: flex-start; gap: 1.5rem; }
     }
 </style>
 {% endblock %}

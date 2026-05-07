@@ -1,5 +1,5 @@
 {% extends "dashboard/base.html" %}
-{% load static %}
+{% load static humanize %}
 
 {% block title %}تقرير المدرس {{ instructor.get_full_name|default:instructor.username }} | الإدارة{% endblock %}
 
@@ -48,7 +48,7 @@
         </div>
         <div class="premium-card stat-tile">
             <span>إجمالي المبيعات (ل.س)</span>
-            <strong class="gold">{{ total_gross }}</strong>
+            <strong class="gold">{{ total_gross|floatformat:0|intcomma }}</strong>
         </div>
     </section>
 
@@ -80,7 +80,7 @@
                                 <td class="text-center">{{ data.cnt_all }}</td>
                                 <td class="text-center">{{ data.cnt_sold }}</td>
                                 <td class="text-center">{{ data.cnt_active }}</td>
-                                <td class="text-right gold"><strong>{{ data.sum_gross }}</strong></td>
+                                <td class="text-right gold"><strong>{{ data.sum_gross|floatformat:0|intcomma }}</strong></td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -215,7 +215,7 @@
                 </div>
                 <div class="sub-stat-tile">
                     <span>مبيعات الدورة</span>
-                    <strong class="gold">{{ data.sum_gross }} ل.س</strong>
+                    <strong class="gold">{{ data.sum_gross|floatformat:0|intcomma }} ل.س</strong>
                 </div>
             </div>
 

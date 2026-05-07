@@ -2,21 +2,21 @@
 {% load static %}
 {% load humanize %}
 
-{% block title %}فاتورة مركز البيع | {{ center.name }}{% endblock %}
+{% block title %}فاتورة محاسبة | {{ center.name }} | منصة محترفو التعليم{% endblock %}
 
 {% block content %}
 <div class="admin-invoice-container reveal-up">
     <!-- Non-printable Actions Header -->
-    <div class="no-print flex-between align-center mb-8 bg-surface p-6 rounded-2xl border border-border">
+    <div class="no-print flex-between align-center mb-8 bg-surface p-6 rounded-2xl border border-border" style="backdrop-filter: blur(12px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); display: flex; justify-content: space-between; align-items: center;">
         <div>
-            <span class="badge mb-2">إدارة الفواتير المالية</span>
-            <h1 class="text-2xl font-bold text-glow" style="color: var(--brand-gold);">فاتورة وحسابات مركز: {{ center.name }}</h1>
+            <span class="badge mb-2" style="background: rgba(197, 160, 89, 0.1); color: var(--brand-gold); border: 1px solid rgba(197, 160, 89, 0.2); font-weight: 800; padding: 0.35rem 0.75rem; border-radius: 100px;">إدارة الفواتير المالية</span>
+            <h1 class="text-2xl font-extrabold text-glow" style="color: var(--brand-gold); margin-top: 0.25rem;">فاتورة وحسابات مركز: {{ center.name }}</h1>
         </div>
-        <div class="flex-center gap-4">
+        <div class="flex-center gap-4" style="display: flex; align-items: center; gap: 1rem;">
             <!-- Commission Modifier Form -->
-            <div class="flex-center gap-2 bg-base px-4 py-2 rounded-xl border border-border">
-                <label for="commissionSelect" class="text-sm font-semibold" style="color: var(--text-muted); white-space: nowrap;">نسبة عمولة المركز (%):</label>
-                <select id="commissionSelect" class="bg-surface text-base border-none rounded px-3 py-1 font-bold" style="color: var(--brand-gold); outline: none; cursor: pointer;" onchange="updateCommission(this.value)">
+            <div class="flex-center gap-2 bg-base px-4 py-2 rounded-xl border border-border" style="background: rgba(255,255,255,0.02); display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 12px; border: 1px solid var(--border-light);">
+                <label for="commissionSelect" class="text-sm font-bold" style="color: var(--text-muted); white-space: nowrap;">نسبة عمولة المركز (%):</label>
+                <select id="commissionSelect" class="bg-surface text-base border border-border rounded px-3 py-1 font-extrabold" style="color: var(--brand-gold); outline: none; cursor: pointer; border-radius: 8px; background-color: var(--bg-surface); border: 1px solid var(--border-light);" onchange="updateCommission(this.value)">
                     <option value="5" {% if commission_percent == 5 %}selected{% endif %}>5%</option>
                     <option value="10" {% if commission_percent == 10 %}selected{% endif %}>10%</option>
                     <option value="15" {% if commission_percent == 15 %}selected{% endif %}>15%</option>
@@ -30,90 +30,102 @@
                 </select>
             </div>
             
-            <button onclick="window.print()" class="btn btn-primary btn-glow" style="background: var(--brand-gold); color: var(--bg-base); border-color: var(--brand-gold);">
+            <button onclick="window.print()" class="btn btn-primary btn-glow" style="background: var(--brand-gold); color: var(--bg-base); border-color: var(--brand-gold); font-weight: 800; display: flex; align-items: center; gap: 0.5rem;">
                 <i data-lucide="printer"></i> طباعة الفاتورة (أو حفظ PDF)
             </button>
-            <a href="{% url 'dashboard:admin_billing' %}" class="btn btn-secondary">
+            <a href="{% url 'dashboard:admin_billing' %}" class="btn btn-secondary" style="font-weight: 800; display: flex; align-items: center; gap: 0.5rem;">
                 <i data-lucide="arrow-left"></i> العودة للمركز المالي
             </a>
         </div>
     </div>
 
     <!-- Printable Invoice Sheet -->
-    <div class="invoice-sheet p-10 bg-surface rounded-3xl border border-border shadow-2xl relative overflow-hidden" id="printable-invoice">
-        <!-- Gold Accent Strip for printable paper -->
-        <div class="invoice-top-accent" style="height: 6px; background: linear-gradient(90deg, #d4af37, #f3e5ab); position: absolute; top: 0; left: 0; right: 0;"></div>
+    <div class="invoice-sheet p-12 bg-surface rounded-3xl border border-border shadow-2xl relative overflow-hidden" id="printable-invoice" style="box-shadow: 0 15px 45px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); padding: 3rem; border-radius: 24px; position: relative; background-color: var(--bg-surface);">
+        <!-- Gold foil-styled premium top accent strip -->
+        <div class="invoice-top-accent" style="height: 8px; background: linear-gradient(90deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); position: absolute; top: 0; left: 0; right: 0;"></div>
         
         <!-- Invoice Header -->
-        <div class="flex-between align-start mb-10 pb-8 border-b border-border">
+        <div class="flex-between align-start mb-10 pb-8 border-b border-border" style="border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 2rem; margin-bottom: 2.5rem;">
             <div>
-                <div class="flex-center gap-3 mb-4 justify-start">
-                    <img src="{% static 'logo.png' %}" alt="Logo" class="invoice-logo" style="height: 55px; filter: drop-shadow(0 0 8px rgba(212,175,55,0.3));">
+                <div class="flex-center gap-4 mb-4 justify-start" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; justify-content: flex-start;">
+                    <img src="{% static 'logo.png' %}" alt="Logo" class="invoice-logo" style="height: 65px; filter: drop-shadow(0 0 12px rgba(212,175,55,0.4));">
                     <div>
-                        <h2 class="text-2xl font-bold" style="color: var(--text-base); margin: 0; letter-spacing: 0.5px;">منصة محترفو التعليم</h2>
-                        <span style="color: var(--brand-gold); font-size: 0.85rem; font-weight: 700; letter-spacing: 1px;">MOHTARIFO PLATFORM</span>
+                        <h2 class="text-3xl font-extrabold" style="color: var(--text-base); margin: 0; letter-spacing: 0.5px; font-family: 'Cairo', sans-serif; font-size: 1.8rem; font-weight: 800;">منصة محترفو التعليم</h2>
+                        <span style="color: var(--brand-gold); font-size: 0.9rem; font-weight: 900; letter-spacing: 2px;">MOHTARIFO PLATFORM</span>
                     </div>
                 </div>
-                <p class="text-sm text-muted" style="max-width: 300px;">المنصة الأكاديمية الأولى في سورية لتقديم الخدمات التعليمية الاحترافية أونلاين.</p>
+                <p class="text-sm text-muted" style="max-width: 350px; line-height: 1.6; font-weight: 500; font-size: 0.85rem; color: var(--text-muted);">المنصة الأكاديمية الأولى في سورية لتقديم الخدمات التعليمية والحلول التكنولوجية الاحترافية أونلاين.</p>
             </div>
-            <div class="text-left">
-                <h1 class="text-4xl font-extrabold mb-2" style="color: var(--brand-gold); letter-spacing: 1px;">فاتورة محاسبة</h1>
-                <p class="text-sm text-muted" style="direction: ltr;"><strong>رقم الفاتورة:</strong> {{ invoice_number }}</p>
-                <p class="text-sm text-muted"><strong>تاريخ الإصدار:</strong> {% now "Y-m-d" %} | {% now "H:i" %}</p>
+            <div class="text-left" style="text-align: left;">
+                <h1 class="text-4xl font-black mb-2" style="color: var(--brand-gold); font-family: 'Cairo', sans-serif; letter-spacing: 1px; text-shadow: 0 0 20px rgba(197, 160, 89, 0.15); font-size: 2.2rem; font-weight: 900; margin-bottom: 0.5rem;">فاتورة محاسبة</h1>
+                <p class="text-sm text-muted" style="direction: ltr; font-weight: 600; font-size: 0.85rem; color: var(--text-muted);"><strong>رقم الفاتورة:</strong> <span style="color: var(--brand-gold);">#{{ invoice_number }}</span></p>
+                <p class="text-sm text-muted" style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted);"><strong>تاريخ الإصدار:</strong> {% now "Y-m-d" %} | {% now "H:i" %}</p>
             </div>
         </div>
 
         <!-- Billing Info Cards -->
-        <div class="grid grid-cols-2 gap-8 mb-10">
-            <div class="p-6 rounded-2xl bg-base border border-border">
-                <h3 class="text-lg font-bold mb-4" style="color: var(--brand-gold);"><i data-lucide="store" class="inline-block mr-1"></i> معلومات مركز البيع (المدين)</h3>
-                <p class="mb-2"><strong style="color: var(--text-base);">اسم المركز:</strong> {{ center.name }}</p>
-                <p class="mb-2"><strong style="color: var(--text-base);">المعهد المرتبط:</strong> {{ center.institute.name|default:"مستقل" }}</p>
-                {% if center.phone %}<p class="mb-2"><strong style="color: var(--text-base);">رقم الهاتف:</strong> {{ center.phone }}</p>{% endif %}
-                {% if center.address %}<p class="mb-2"><strong style="color: var(--text-base);">العنوان الكامل:</strong> {{ center.address }}</p>{% endif %}
+        <div class="grid grid-cols-2 gap-8 mb-10" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem;">
+            <div class="p-6 rounded-2xl bg-base border border-border" style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.04); box-shadow: inset 0 0 20px rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 16px;">
+                <h3 class="text-lg font-extrabold mb-4 flex align-center gap-2" style="color: var(--brand-gold); font-family: 'Cairo', sans-serif; font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                    <i data-lucide="store" style="width: 20px; height: 20px; color: var(--brand-gold);"></i> معلومات مركز البيع (المدين)
+                </h3>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; font-weight: 500; font-size: 0.9rem;">
+                    <p><strong style="color: var(--text-base);">اسم المركز:</strong> {{ center.name }}</p>
+                    <p><strong style="color: var(--text-base);">المعهد المرتبط:</strong> {{ center.institute.name|default:"مستقل" }}</p>
+                    {% if center.phone %}<p><strong style="color: var(--text-base);">رقم الهاتف:</strong> {{ center.phone }}</p>{% endif %}
+                    {% if center.address %}<p><strong style="color: var(--text-base);">العنوان الكامل:</strong> {{ center.address }}</p>{% endif %}
+                </div>
             </div>
-            <div class="p-6 rounded-2xl bg-base border border-border">
-                <h3 class="text-lg font-bold mb-4" style="color: var(--brand-gold);"><i data-lucide="calculator" class="inline-block mr-1"></i> ملخص المحاسبة المالية</h3>
-                <p class="mb-2"><strong>إجمالي الأكواد المستلمة:</strong> {{ total_assigned }} كود</p>
-                <p class="mb-2"><strong>إجمالي الأكواد المباعة:</strong> {{ total_sold }} كود</p>
-                <p class="mb-2"><strong>نسبة عمولة المركز المتفق عليها:</strong> <strong style="color: var(--brand-gold);">{{ commission_percent|floatformat:0 }}%</strong></p>
+            <div class="p-6 rounded-2xl bg-base border border-border" style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.04); box-shadow: inset 0 0 20px rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 16px;">
+                <h3 class="text-lg font-extrabold mb-4 flex align-center gap-2" style="color: var(--brand-gold); font-family: 'Cairo', sans-serif; font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                    <i data-lucide="calculator" style="width: 20px; height: 20px; color: var(--brand-gold);"></i> ملخص المحاسبة المالية
+                </h3>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; font-weight: 500; font-size: 0.9rem;">
+                    <p><strong>إجمالي الأكواد المستلمة:</strong> {{ total_assigned }} كود</p>
+                    <p><strong>إجمالي الأكواد المباعة:</strong> {{ total_sold }} كود</p>
+                    <p><strong>نسبة عمولة المركز المتفق عليها:</strong> <span class="badge" style="background: rgba(197, 160, 89, 0.1); color: var(--brand-gold); border: 1px solid rgba(197, 160, 89, 0.2); font-weight: 800; font-size: 0.9rem; padding: 0.2rem 0.6rem; border-radius: 6px;">{{ commission_percent|floatformat:0 }}%</span></p>
+                </div>
             </div>
         </div>
 
         <!-- Detailed Batches Table -->
-        <h3 class="text-lg font-bold mb-4" style="color: var(--text-base);"><i data-lucide="list-ordered" class="inline-block mr-1"></i> تفاصيل دفعات الأكواد والتحصيلات</h3>
-        <div class="table-responsive mb-10">
-            <table class="admin-table text-sm">
+        <h3 class="text-lg font-extrabold mb-4 flex align-center gap-2" style="color: var(--text-base); font-family: 'Cairo', sans-serif; font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+            <i data-lucide="list-ordered" style="width: 20px; height: 20px; color: var(--brand-gold);"></i> تفاصيل دفعات الأكواد والتحصيلات
+        </h3>
+        <div class="table-responsive mb-10" style="border: 1px solid rgba(255,255,255,0.04); border-radius: 16px; overflow: hidden; background: rgba(0,0,0,0.15); margin-bottom: 2.5rem;">
+            <table class="admin-table text-sm" style="width: 100%; border-collapse: collapse;">
                 <thead>
-                    <tr>
-                        <th>الدفعة الكودية / المادة الأكاديمية</th>
-                        <th class="text-center">إجمالي الأكواد</th>
-                        <th class="text-center">الأكواد المباعة</th>
-                        <th class="text-center">السعر الرسمي</th>
-                        <th class="text-center" style="color: var(--brand-gold);">الصندوق المتوقع</th>
-                        <th class="text-center" style="color: #34d399;">التحصيل الفعلي</th>
-                        <th class="text-center" style="color: #60a5fa;">عمولة المركز ({{ commission_percent|floatformat:0 }}%)</th>
-                        <th class="text-center" style="color: var(--brand-gold);">الصافي للمنصة/المعهد</th>
+                    <tr style="background-color: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <th style="padding: 1rem 1.25rem; font-weight: 800; text-align: right;">الدفعة الكودية / المادة الأكاديمية</th>
+                        <th class="text-center" style="font-weight: 800; text-align: center; padding: 1rem;">إجمالي الأكواد</th>
+                        <th class="text-center" style="font-weight: 800; text-align: center; padding: 1rem;">الأكواد المباعة</th>
+                        <th class="text-center" style="font-weight: 800; text-align: center; padding: 1rem;">السعر الرسمي</th>
+                        <th class="text-center" style="color: var(--brand-gold); font-weight: 800; text-align: center; padding: 1rem;">الصندوق المتوقع</th>
+                        <th class="text-center" style="color: #34d399; font-weight: 800; text-align: center; padding: 1rem;">التحصيل الفعلي</th>
+                        <th class="text-center" style="color: #60a5fa; font-weight: 800; text-align: center; padding: 1rem;">عمولة المركز ({{ commission_percent|floatformat:0 }}%)</th>
+                        <th class="text-center" style="color: var(--brand-gold); font-weight: 800; text-align: center; padding: 1rem;">الصافي للمنصة</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in detailed_batches %}
-                    <tr>
-                        <td>
-                            <strong>{{ item.batch.name }}</strong><br>
-                            <small class="text-muted">المادة: {{ item.batch.target_title }}</small>
+                    <tr style="transition: all 0.2s ease; border-bottom: 1px solid rgba(255,255,255,0.03);">
+                        <td style="padding: 1.25rem;">
+                            <strong style="color: var(--text-primary); font-size: 0.95rem;">{{ item.batch.name }}</strong><br>
+                            <small class="text-muted" style="margin-top: 0.25rem; display: inline-block; color: var(--text-muted);">المادة: {{ item.batch.target_title }}</small>
                         </td>
-                        <td class="text-center"><strong>{{ item.total_codes }}</strong></td>
-                        <td class="text-center"><span class="status-badge pending" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">{{ item.sold_count }} مباع</span></td>
-                        <td class="text-center">{{ item.standard_price|floatformat:0|intcomma }} ل.س</td>
-                        <td class="text-center" style="color: var(--brand-gold);">{{ item.potential_value|floatformat:0|intcomma }} ل.س</td>
-                        <td class="text-center" style="color: #34d399; font-weight: bold;">{{ item.actual_earned|floatformat:0|intcomma }} ل.س</td>
-                        <td class="text-center" style="color: #60a5fa;">{{ item.center_share|floatformat:0|intcomma }} ل.س</td>
-                        <td class="text-center" style="color: var(--brand-gold); font-weight: bold;">{{ item.net_share|floatformat:0|intcomma }} ل.س</td>
+                        <td class="text-center" style="text-align: center; padding: 1.25rem;"><strong>{{ item.total_codes }}</strong></td>
+                        <td class="text-center" style="text-align: center; padding: 1.25rem;">
+                            <span class="status-badge pending" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 800; background: rgba(197, 160, 89, 0.1); border: 1px solid rgba(197, 160, 89, 0.2); border-radius: 8px; color: var(--brand-gold);">{{ item.sold_count }} مباع</span>
+                        </td>
+                        <td class="text-center" style="text-align: center; padding: 1.25rem; font-weight: 600;">{{ item.standard_price|floatformat:0|intcomma }} ل.س</td>
+                        <td class="text-center" style="text-align: center; padding: 1.25rem; color: var(--brand-gold); font-weight: 600;">{{ item.potential_value|floatformat:0|intcomma }} ل.س</td>
+                        <td class="text-center" style="text-align: center; padding: 1.25rem; color: #34d399; font-weight: 800;">{{ item.actual_earned|floatformat:0|intcomma }} ل.س</td>
+                        <td class="text-center" style="text-align: center; padding: 1.25rem; color: #60a5fa; font-weight: 600;">{{ item.center_share|floatformat:0|intcomma }} ل.س</td>
+                        <td class="text-center" style="text-align: center; padding: 1.25rem; color: var(--brand-gold); font-weight: 800;">{{ item.net_share|floatformat:0|intcomma }} ل.س</td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="8" class="text-center p-8">لا توجد دفعات أكواد محاسبة مسجلة لهذا المركز.</td>
+                        <td colspan="8" class="text-center p-8 text-muted" style="text-align: center; padding: 2rem;">لا توجد دفعات أكواد محاسبة مسجلة لهذا المركز.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -121,57 +133,66 @@
         </div>
 
         <!-- Grand Financial Totals Summary -->
-        <div class="flex justify-end mb-12">
-            <div class="w-1/2 p-6 rounded-2xl bg-base border-2 border-border relative overflow-hidden">
-                <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--brand-gold);"></div>
-                <h3 class="text-lg font-extrabold mb-4 border-b border-border pb-2" style="color: var(--brand-gold);">التسوية المالية النهائية</h3>
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 3rem;">
+            <div style="width: 50%; min-width: 400px; background: rgba(255,255,255,0.01); border: 1px solid rgba(197,160,89,0.15); box-shadow: 0 10px 30px rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 16px; position: relative;">
+                <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: linear-gradient(to bottom, #bf953f, #b38728);"></div>
+                <h3 style="color: var(--brand-gold); font-family: 'Cairo', sans-serif; font-size: 1.15rem; font-weight: 800; border-bottom: 1px solid var(--border-light); padding-bottom: 0.5rem; margin-bottom: 1rem;">التسوية المالية النهائية</h3>
                 
-                <div class="flex-between mb-3">
-                    <span class="text-muted">إجمالي تحصيلات الصندوق المتوقع:</span>
-                    <span class="font-bold">{{ total_potential|floatformat:0|intcomma }} ل.س</span>
-                </div>
-                <div class="flex-between mb-3">
-                    <span class="text-muted">إجمالي تحصيلات الصندوق الفعلي:</span>
-                    <span class="font-bold" style="color: #34d399;">{{ total_earned|floatformat:0|intcomma }} ل.س</span>
-                </div>
-                <div class="flex-between mb-3 border-b border-border pb-3">
-                    <span class="text-muted">المستقطع لعمولة المركز ({{ commission_percent|floatformat:0 }}%):</span>
-                    <span class="font-bold" style="color: #60a5fa;">- {{ total_center_commission|floatformat:0|intcomma }} ل.س</span>
-                </div>
-                <div class="flex-between pt-2">
-                    <span class="text-xl font-extrabold" style="color: var(--text-base);">الصافي المستحق للمعهد/المنصة:</span>
-                    <span class="text-2xl font-extrabold text-glow" style="color: var(--brand-gold);">{{ total_net_share|floatformat:0|intcomma }} ل.س</span>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; font-weight: 600; font-size: 0.95rem;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span class="text-muted" style="color: var(--text-muted);">إجمالي تحصيلات الصندوق المتوقع:</span>
+                        <span style="color: var(--text-base);">{{ total_potential|floatformat:0|intcomma }} ل.س</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span class="text-muted" style="color: var(--text-muted);">إجمالي تحصيلات الصندوق الفعلي:</span>
+                        <span style="color: #34d399; font-weight: 800;">{{ total_earned|floatformat:0|intcomma }} ل.س</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 0.75rem;">
+                        <span class="text-muted" style="color: var(--text-muted);">المستقطع لعمولة المركز ({{ commission_percent|floatformat:0 }}%):</span>
+                        <span style="color: #60a5fa;">- {{ total_center_commission|floatformat:0|intcomma }} ل.س</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; padding-top: 0.5rem; align-items: center;">
+                        <span style="color: var(--text-base); font-family: 'Cairo', sans-serif; font-size: 1.2rem; font-weight: 900;">الصافي المستحق للمنصة:</span>
+                        <span style="color: var(--brand-gold); font-family: 'Cairo', sans-serif; font-size: 1.5rem; font-weight: 900; text-shadow: 0 0 15px rgba(197,160,89,0.3);">{{ total_net_share|floatformat:0|intcomma }} ل.س</span>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Signature Block -->
-        <div class="grid grid-cols-3 gap-8 mt-12 pt-10 border-t border-border text-center">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.06); text-align: center;">
             <div>
-                <p class="text-sm font-semibold mb-10 text-muted">توقيع مسؤول مركز البيع</p>
-                <div class="w-48 h-px bg-border mx-auto"></div>
-                <p class="text-xs text-muted mt-2">الاسم والتاريخ</p>
+                <p style="font-size: 0.9rem; font-weight: 800; color: var(--text-muted); margin-bottom: 3rem;">توقيع مسؤول مركز البيع</p>
+                <div style="width: 180px; height: 1px; background-color: rgba(255,255,255,0.1); margin: 0 auto;"></div>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">الاسم والتاريخ</p>
             </div>
             <div>
-                <p class="text-sm font-semibold mb-10 text-muted">توقيع محاسب المعهد المرتبط</p>
-                <div class="w-48 h-px bg-border mx-auto"></div>
-                <p class="text-xs text-muted mt-2">الاسم والتاريخ</p>
+                <p style="font-size: 0.9rem; font-weight: 800; color: var(--text-muted); margin-bottom: 3rem;">توقيع محاسب المعهد المرتبط</p>
+                <div style="width: 180px; height: 1px; background-color: rgba(255,255,255,0.1); margin: 0 auto;"></div>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">الاسم والتاريخ</p>
             </div>
             <div>
-                <p class="text-sm font-semibold mb-10 text-muted">توقيع وختم إدارة المنصة</p>
-                <div class="w-48 h-px bg-border mx-auto"></div>
-                <p class="text-xs text-muted mt-2">الاسم والتاريخ</p>
+                <p style="font-size: 0.9rem; font-weight: 800; color: var(--text-muted); margin-bottom: 3rem;">توقيع وختم إدارة المنصة</p>
+                <div style="width: 180px; height: 1px; background-color: rgba(255,255,255,0.1); margin: 0 auto;"></div>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">الاسم والتاريخ</p>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-    /* Printing stylesheet rules */
+    /* Printing and Professional Layout Style Rules */
     @media print {
+        @page {
+            size: A4 portrait;
+            margin: 15mm 15mm 15mm 15mm;
+        }
         body {
             background: #ffffff !important;
             color: #000000 !important;
+            font-family: 'Cairo', sans-serif !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
         .no-print {
             display: none !important;
@@ -190,31 +211,64 @@
             box-shadow: none !important;
             background: #ffffff !important;
             color: #000000 !important;
-            padding: 20px !important;
-            margin: 0 !important;
+            padding: 0px !important;
+            margin: 0px !important;
             width: 100% !important;
+            border-radius: 0px !important;
         }
         .admin-table {
-            border: 1px solid #ddd !important;
+            border: 1px solid #111827 !important;
+            width: 100% !important;
+            border-collapse: collapse !important;
         }
         .admin-table th {
-            background-color: #f5f5f5 !important;
-            color: #000000 !important;
-            border-bottom: 2px solid #ddd !important;
+            background-color: #f3f4f6 !important;
+            color: #111827 !important;
+            border-bottom: 2px solid #111827 !important;
+            padding: 10px !important;
+            font-weight: 800 !important;
+            font-size: 0.85rem !important;
         }
         .admin-table td {
-            border-bottom: 1px solid #ddd !important;
-            color: #000000 !important;
+            border-bottom: 1px solid #e5e7eb !important;
+            color: #111827 !important;
+            padding: 10px !important;
+            font-size: 0.82rem !important;
+            font-weight: 600 !important;
         }
         .bg-base, .bg-surface {
             background-color: #ffffff !important;
-            border: 1px solid #eee !important;
+            border: 1px solid #e5e7eb !important;
+            box-shadow: none !important;
         }
         .text-glow {
             text-shadow: none !important;
         }
-        strong, h1, h2, h3, .font-bold {
-            color: #000000 !important;
+        strong, h1, h2, h3, h4, .font-bold {
+            color: #111827 !important;
+        }
+        .text-muted {
+            color: #4b5563 !important;
+        }
+        .badge, .status-badge {
+            background: none !important;
+            border: 1px solid #111827 !important;
+            color: #111827 !important;
+            padding: 2px 6px !important;
+            border-radius: 4px !important;
+            font-weight: 800 !important;
+        }
+        /* Page break configurations */
+        tr {
+            page-break-inside: avoid !important;
+        }
+        .grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 20px !important;
+        }
+        .w-1/2 {
+            width: 50% !important;
         }
     }
 </style>
