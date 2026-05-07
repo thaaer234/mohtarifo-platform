@@ -467,27 +467,27 @@
                 const price = btn.getAttribute("data-price") || "";
                 const isAuthenticated = btn.getAttribute("data-authenticated") === "true";
                 
-                let text = "مرحباً منصة محترفو التعليم \u{1F338}\nأود التسجيل في مادة مكثفة جديدة:\n\n";
-                text += `- \u{1F4DA} اسم المكثفة: ${title}\n`;
-                text += `- \u{1F393} مادة: ${subject}\n`;
-                text += `- \u{1F468}\u{200D}\u{1F3EB} بإشراف الأستاذ: ${instructor}\n`;
-                text += `- \u{1F4B0} السعر: ${price} ل.س\n\n`;
-                text += "\u{1F4CB} معلومات الطالب:\n";
+                let text = "مرحباً منصة محترفو التعليم \uD83C\uDF38\nأود التسجيل في مادة مكثفة جديدة:\n\n";
+                text += `- \uD83D\uDCDA اسم المكثفة: ${title}\n`;
+                text += `- \uD83C\uDF93 مادة: ${subject}\n`;
+                text += `- \uD83D\uDC68\u200D\uD83C\uDFEB بإشراف الأستاذ: ${instructor}\n`;
+                text += `- \uD83D\uDCB0 السعر: ${price} ل.س\n\n`;
+                text += "\uD83D\uDCCB معلومات الطالب:\n";
                 
                 if (isAuthenticated) {
                     const name = btn.getAttribute("data-student-name") || "";
                     const phone = btn.getAttribute("data-student-phone") || "";
                     const track = btn.getAttribute("data-student-track") || "غير محدد";
                     const gov = btn.getAttribute("data-student-gov") || "غير محدد";
-                    text += `- \u{1F464} الاسم: ${name}\n`;
-                    text += `- \u{1F4DE} رقم الهاتف: ${phone}\n`;
-                    text += `- \u{1F3EB} الفرع الدراسي: ${track}\n`;
-                    text += `- \u{1F4CD} المحافظة: ${gov}`;
+                    text += `- \uD83D\uDC64 الاسم: ${name}\n`;
+                    text += `- \uD83D\uDCDE رقم الهاتف: ${phone}\n`;
+                    text += `- \uD83C\uDFEB الفرع الدراسي: ${track}\n`;
+                    text += `- \uD83D\uDCCD المحافظة: ${gov}`;
                 } else {
-                    text += "- \u{1F464} الاسم: [يرجى كتابة اسمك الثلاثي هنا]\n";
-                    text += "- \u{1F4DE} رقم الهاتف: [يرجى كتابة رقم هاتفك للتواصل]\n";
-                    text += "- \u{1F3EB} الفرع الدراسي: [علمي / أدبي]\n";
-                    text += "- \u{1F4CD} المحافظة: [اسم محافظتك هنا]";
+                    text += "- \uD83D\uDC64 الاسم: [يرجى كتابة اسمك الثلاثي هنا]\n";
+                    text += "- \uD83D\uDCDE رقم الهاتف: [يرجى كتابة رقم هاتفك للتواصل]\n";
+                    text += "- \uD83C\uDFEB الفرع الدراسي: [علمي / أدبي]\n";
+                    text += "- \uD83D\uDCCD المحافظة: [اسم محافظتك هنا]";
                 }
                 
                 const whatsappUrl = `${baseUrl}?text=${encodeURIComponent(text)}`;
