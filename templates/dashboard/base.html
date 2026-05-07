@@ -9,6 +9,7 @@
     <!-- SEO & PWA -->
     <meta name="google-site-verification" content="5JAcYDswgm702pVuFPZ4VLOu3pFUudMR5C_9MxlaffM" />
     <meta name="description" content="{% block meta_description %}{{ SEO_DEFAULT_DESCRIPTION }}{% endblock %}">
+    <meta name="keywords" content="محترفو, محترفو التعليم, منصة محترفو, منصة التعليم, منصة محترفو التعليم, بكالوريا سوريا, مكثفات سوريا, دمشق, دورات تعليمية">
     <meta name="robots" content="{% block meta_robots %}{{ SEO_ROBOTS }}{% endblock %}">
     <link rel="canonical" href="{% block canonical_url %}{{ SEO_CANONICAL_URL }}{% endblock %}">
     <meta property="og:site_name" content="{{ SEO_SITE_NAME }}">
@@ -24,9 +25,9 @@
     <meta name="twitter:title" content="{% block twitter_title %}محترفو التعليم{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}{{ SEO_DEFAULT_DESCRIPTION }}{% endblock %}">
     <meta name="twitter:image" content="{% block twitter_image %}{{ SEO_DEFAULT_IMAGE_URL }}{% endblock %}">
-    <link rel="icon" type="image/png" href="{% static_data_uri 'dashboard/icons/logo_vertical-removebg-preview.png' %}">
-    <link rel="shortcut icon" type="image/png" href="{% static_data_uri 'dashboard/icons/logo_vertical-removebg-preview.png' %}">
-    <link rel="apple-touch-icon" href="{% static_data_uri 'dashboard/icons/logo_vertical-removebg-preview.png' %}">
+    <link rel="icon" type="image/png" href="{% static 'dashboard/icons/logo_vertical-removebg-preview.png' %}">
+    <link rel="shortcut icon" type="image/png" href="{% static 'dashboard/icons/logo_vertical-removebg-preview.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'dashboard/icons/logo_vertical-removebg-preview.png' %}">
     <link rel="manifest" href="{% url 'dashboard:pwa_manifest' %}">
     <meta name="theme-color" content="#0a0a0a">
     {% if SEO_BASE_SCHEMA %}

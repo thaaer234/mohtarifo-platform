@@ -14,8 +14,12 @@
             </div>
             <div class="hub-stats">
                 <div class="mini-stat">
-                    <span class="label">إجمالي الإيرادات</span>
+                    <span class="label">إجمالي الإيرادات (الدولار)</span>
                     <span class="value">{{ total_revenue|default:0|floatformat:2 }} $</span>
+                </div>
+                <div class="mini-stat">
+                    <span class="label">صندوق الأكواد العام (ل.س)</span>
+                    <span class="value" style="color: var(--brand-gold);">{{ general_fund_syp|default:0|floatformat:0 }} ل.س</span>
                 </div>
                 <div class="mini-stat">
                     <span class="label">الاشتراكات النشطة</span>
@@ -125,6 +129,39 @@
                                 <td>{{ row.printed }}</td>
                                 <td>{{ row.gross|default:0 }} قرش</td>
                             </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+             </section>
+ 
+             <!-- Sales Centers Expected Fund Table -->
+             <section class="premium-card mb-8">
+                <div class="flex-between mb-6">
+                    <h2 class="section-title"><i data-lucide="store"></i> الصناديق المتوقعة لمراكز البيع</h2>
+                </div>
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>مركز البيع</th>
+                                <th>المعهد المرتبط</th>
+                                <th>إجمالي الأكواد</th>
+                                <th>الأكواد المباعة</th>
+                                <th>رصيد الصندوق المتوقع</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in centers_report %}
+                            <tr>
+                                <td><strong>{{ item.center.name }}</strong></td>
+                                <td>{{ item.center.institute.name|default:"مستقل" }}</td>
+                                <td>{{ item.total_codes }}</td>
+                                <td><span class="status-badge pending">{{ item.sold_codes_count }} مباع</span></td>
+                                <td><strong class="text-glow" style="color: var(--brand-gold); font-size: 1.1rem;">{{ item.expected_balance|floatformat:0 }} ل.س</strong></td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="5" class="text-center p-8">لا توجد مراكز بيع نشطة</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>

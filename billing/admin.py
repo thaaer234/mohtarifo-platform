@@ -11,6 +11,7 @@ from .models import (
     Coupon,
     CoursePackage,
     CoursePurchase,
+    DiscountRule,
     Institute,
     Payment,
     Plan,
@@ -155,6 +156,7 @@ class AccessCodeAdmin(ImportExportModelAdmin):
         "sold_by",
         "sold_at",
         "sold_price_cents",
+        "price_reason",
         "is_free_code",
         "status",
         "redeemed_count",
@@ -203,3 +205,10 @@ class StudentCodeImportForm(forms.Form):
         help_text="CSV أو XLSX. الأعمدة المطلوبة: name و phone. يمكن استخدام الاسماء العربية: الاسم، الهاتف.",
     )
     free_codes = forms.BooleanField(label="أكواد مجانية", required=False, initial=True)
+
+
+@admin.register(DiscountRule)
+class DiscountRuleAdmin(admin.ModelAdmin):
+    list_display = ("name", "starts_at", "expires_at", "discount_percent", "is_active")
+    list_filter = ("is_active",)
+    search_fields = ("name",)

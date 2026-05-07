@@ -257,6 +257,7 @@ class AccessCode(models.Model):
     sold_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name="sold_access_codes", null=True, blank=True)
     sold_at = models.DateTimeField(null=True, blank=True)
     sold_price_cents = models.PositiveIntegerField(null=True, blank=True)
+    price_reason = models.CharField(max_length=255, blank=True)
     is_free_code = models.BooleanField(default=False)
     max_redemptions = models.PositiveIntegerField(default=1)
     redeemed_count = models.PositiveIntegerField(default=0)
@@ -332,3 +333,19 @@ class UserDevice(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.label or self.fingerprint[:12]}"
+
+
+class DiscountRule(models.Model):
+    name = models.CharField(max_length=160, verbose_name="اسم الحسم")
+    starts_at = models.DateTimeField(verbose_name="تاريخ البدء")
+    expires_at = models.DateTimeField(verbose_name="تاريخ الانتهاء")
+    discount_percent = models.PositiveIntegerField(default=0, verbose_name="نسبة الحسم (%)")
+    is_active = models.BooleanField(default=True, verbose_name="نشط")
+
+    class Meta:
+        verbose_name = "قاعدة حسم"
+        verbose_name_plural = "قواعد الحسومات"
+        ordering = ["-starts_at"]
+
+    def __str__(self):
+        return f"{self.name} ({self.discount_percent}%)"

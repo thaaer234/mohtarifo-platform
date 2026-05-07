@@ -1206,7 +1206,25 @@ def admin_course_control(request, course_id):
                     access_code.sold_by = request.user
                     access_code.sold_at = timezone.now()
                     price_amount = sale_form.cleaned_data.get("price_amount")
-                    access_code.sold_price_cents = int(price_amount * 100) if price_amount is not None else course.price_cents
+                    if price_amount is not None:
+                        access_code.sold_price_cents = int(price_amount * 100)
+                        access_code.price_reason = "تحديد يدوي من الإدارة"
+                    else:
+                        base_price = course.price_cents or 0
+                        from billing.models import DiscountRule
+                        now = timezone.now()
+                        active_discount = DiscountRule.objects.filter(
+                            is_active=True,
+                            starts_at__lte=now,
+                            expires_at__gte=now
+                        ).order_by("-discount_percent").first()
+                        if active_discount and base_price > 0:
+                            discount_amount = (base_price * active_discount.discount_percent) // 100
+                            access_code.sold_price_cents = base_price - discount_amount
+                            access_code.price_reason = f"حسم {active_discount.discount_percent}% بمناسبة {active_discount.name}"
+                        else:
+                            access_code.sold_price_cents = base_price
+                            access_code.price_reason = "سعر كامل"
                     access_code.save(update_fields=[
                         "assigned_student_name",
                         "assigned_student_phone",
@@ -1214,6 +1232,7 @@ def admin_course_control(request, course_id):
                         "sold_by",
                         "sold_at",
                         "sold_price_cents",
+                        "price_reason",
                         "updated_at",
                     ])
                     AccessGrant.objects.get_or_create(
@@ -1406,7 +1425,23 @@ def _redeem_package_choices(request, access_code, current_device, auto_select=Fa
     access_code.redeemed_count += 1
     if access_code.sale_status in {"available", "reserved"}:
         access_code.sale_status = "free" if access_code.is_free_code else "sold"
-    access_code.save(update_fields=["redeemed_count", "sale_status", "updated_at"])
+        if not access_code.is_free_code and access_code.package:
+            base_price = access_code.package.price_cents or 0
+            if base_price > 0:
+                from billing.models import DiscountRule
+                active_discount = DiscountRule.objects.filter(
+                    is_active=True,
+                    starts_at__lte=now,
+                    expires_at__gte=now
+                ).order_by("-discount_percent").first()
+                if active_discount:
+                    discount_amount = (base_price * active_discount.discount_percent) // 100
+                    access_code.sold_price_cents = base_price - discount_amount
+                    access_code.price_reason = f"حسم {active_discount.discount_percent}% بمناسبة {active_discount.name}"
+                else:
+                    access_code.sold_price_cents = base_price
+                    access_code.price_reason = "سعر كامل"
+    access_code.save(update_fields=["redeemed_count", "sale_status", "sold_price_cents", "price_reason", "updated_at"])
     StudentNotification.objects.create(
         user=request.user,
         notification_type="access",
@@ -1480,7 +1515,29 @@ def student_dashboard(request):
                         access_code.redeemed_count += 1
                         if access_code.sale_status in {"available", "reserved"}:
                             access_code.sale_status = "free" if access_code.is_free_code else "sold"
-                        access_code.save(update_fields=["redeemed_count", "sale_status", "updated_at"])
+                            if not access_code.is_free_code:
+                                base_price = 0
+                                if access_code.course:
+                                    base_price = access_code.course.price_cents or 0
+                                elif access_code.lesson:
+                                    if not base_price and access_code.course:
+                                        base_price = access_code.course.price_cents or 0
+                                if base_price > 0:
+                                    from billing.models import DiscountRule
+                                    now = timezone.now()
+                                    active_discount = DiscountRule.objects.filter(
+                                        is_active=True,
+                                        starts_at__lte=now,
+                                        expires_at__gte=now
+                                    ).order_by("-discount_percent").first()
+                                    if active_discount:
+                                        discount_amount = (base_price * active_discount.discount_percent) // 100
+                                        access_code.sold_price_cents = base_price - discount_amount
+                                        access_code.price_reason = f"حسم {active_discount.discount_percent}% بمناسبة {active_discount.name}"
+                                    else:
+                                        access_code.sold_price_cents = base_price
+                                        access_code.price_reason = "سعر كامل"
+                        access_code.save(update_fields=["redeemed_count", "sale_status", "sold_price_cents", "price_reason", "updated_at"])
                         StudentNotification.objects.create(
                             user=request.user,
                             notification_type="access",
@@ -2100,7 +2157,7 @@ def instructor_courses(request, instructor_id):
 
 @admin_required
 def admin_billing(request):
-    from billing.models import Subscription, Payment, AccessCodeBatch
+    from billing.models import Subscription, Payment, AccessCodeBatch, AccessCode, SalesCenter
     
     # Calculate counts on unsliced querysets
     active_subs_count = Subscription.objects.filter(status="active").count()
@@ -2114,6 +2171,24 @@ def admin_billing(request):
     for p in payments:
         p.amount_dollars = p.amount_cents / 100
 
+    # General fund balance from sold codes
+    general_fund_cents = AccessCode.objects.filter(sale_status="sold").aggregate(total=models.Sum("sold_price_cents"))["total"] or 0
+    general_fund_syp = general_fund_cents / 100
+
+    # Centers expected funds
+    centers_report = []
+    for center in SalesCenter.objects.filter(is_active=True).select_related("institute").order_by("name"):
+        codes = AccessCode.objects.filter(sales_center=center)
+        sold_codes = codes.filter(sale_status="sold")
+        sold_count = sold_codes.count()
+        gross_cents = sold_codes.aggregate(total=models.Sum("sold_price_cents"))["total"] or 0
+        centers_report.append({
+            "center": center,
+            "total_codes": codes.count(),
+            "sold_codes_count": sold_count,
+            "expected_balance": gross_cents / 100,
+        })
+
     context = {
         "subscriptions": subscriptions,
         "payments": payments,
@@ -2122,6 +2197,8 @@ def admin_billing(request):
         "active_subs_count": active_subs_count,
         "filter_reports": _filter_financial_rows(),
         "course_reports": _course_financial_rows()[:30],
+        "general_fund_syp": general_fund_syp,
+        "centers_report": centers_report,
     }
     return render(request, "dashboard/admin_billing.html", context)
 
@@ -2371,6 +2448,24 @@ def admin_instructor_report(request, instructor_id):
         .order_by("-sold_count")
     )
     
+    from billing.models import AccessGrant
+    governorate_sales = (
+        AccessGrant.objects.filter(course__instructor=instructor, source="code")
+        .select_related("user__student_profile")
+        .values("user__student_profile__governorate")
+        .annotate(activated_count=Count("id"))
+        .order_by("-activated_count")
+    )
+
+    discounts_sales = (
+        AccessCode.objects.filter(course__instructor=instructor, sale_status="sold")
+        .exclude(price_reason="")
+        .exclude(price_reason="سعر كامل")
+        .values("price_reason")
+        .annotate(sold_count=Count("id"), total_sales=Sum("sold_price_cents"))
+        .order_by("-sold_count")
+    )
+
     return render(
         request,
         "dashboard/admin_instructor_report.html",
@@ -2383,6 +2478,8 @@ def admin_instructor_report(request, instructor_id):
             "total_inactive": total_codes - total_activated,
             "total_gross": total_gross,
             "centers_sales": centers_sales,
+            "governorate_sales": governorate_sales,
+            "discounts_sales": discounts_sales,
         }
     )
 
@@ -2719,7 +2816,25 @@ def admin_packages(request):
                     access_code.sold_by = request.user
                     access_code.sold_at = timezone.now()
                     price_amount = sale_form.cleaned_data.get("price_amount")
-                    access_code.sold_price_cents = int(price_amount * 100) if price_amount is not None else (access_code.package.price_cents if access_code.package else None)
+                    if price_amount is not None:
+                        access_code.sold_price_cents = int(price_amount * 100)
+                        access_code.price_reason = "تحديد يدوي من الإدارة"
+                    else:
+                        base_price = access_code.package.price_cents if access_code.package else 0
+                        from billing.models import DiscountRule
+                        now = timezone.now()
+                        active_discount = DiscountRule.objects.filter(
+                            is_active=True,
+                            starts_at__lte=now,
+                            expires_at__gte=now
+                        ).order_by("-discount_percent").first()
+                        if active_discount and base_price > 0:
+                            discount_amount = (base_price * active_discount.discount_percent) // 100
+                            access_code.sold_price_cents = base_price - discount_amount
+                            access_code.price_reason = f"حسم {active_discount.discount_percent}% بمناسبة {active_discount.name}"
+                        else:
+                            access_code.sold_price_cents = base_price
+                            access_code.price_reason = "سعر كامل"
                     access_code.save(update_fields=[
                         "assigned_student_name",
                         "assigned_student_phone",
@@ -2727,6 +2842,7 @@ def admin_packages(request):
                         "sold_by",
                         "sold_at",
                         "sold_price_cents",
+                        "price_reason",
                         "updated_at",
                     ])
                 messages.success(request, f"تم بيع كود الباقة {access_code.code} للطالب {student_name}.")

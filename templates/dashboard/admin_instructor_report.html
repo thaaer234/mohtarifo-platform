@@ -122,6 +122,71 @@
             </div>
         </section>
     </div>
+ 
+    <!-- Governorates & Applied Discounts Overview -->
+    <div class="grid-2 gap-8 mb-8 break-avoid">
+        <!-- Governorates Card -->
+        <section class="premium-card">
+            <div class="section-title mb-6">
+                <i data-lucide="map-pin" class="gold"></i>
+                <h2>التفعيلات حسب المحافظات</h2>
+            </div>
+            <div class="table-responsive">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>المحافظة</th>
+                            <th class="text-center">عدد الطلاب المفعّلين</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in governorate_sales %}
+                            <tr>
+                                <td><strong>{{ row.user__student_profile__governorate|default:"غير محدد" }}</strong></td>
+                                <td class="text-center"><span class="badge badge-gold" style="font-size: 0.9rem; padding: 0.25rem 0.75rem;">{{ row.activated_count }}</span></td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="2" class="text-center text-muted">لا توجد تفعيلات جغرافية مسجلة بعد.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+ 
+        <!-- Applied Discounts Card -->
+        <section class="premium-card">
+            <div class="section-title mb-6">
+                <i data-lucide="percent" class="gold"></i>
+                <h2>الحسومات المستخدمة على أكوادك</h2>
+            </div>
+            <div class="table-responsive">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>الحسم النشط / سبب السعر</th>
+                            <th class="text-center">الأكواد المباعة</th>
+                            <th class="text-right">المبيعات المحققة (ل.س)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in discounts_sales %}
+                            <tr>
+                                <td><strong>{{ row.price_reason }}</strong></td>
+                                <td class="text-center"><span class="status-badge" style="background: rgba(197, 160, 89, 0.1);">{{ row.sold_count }} كود</span></td>
+                                <td class="text-right gold"><strong>{{ row.total_sales|default:0|add:0|floatformat:0 }}</strong></td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">لم يتم استخدام أي حسومات على أكوادك بعد.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
 
     <!-- Course Page Separators for Printing (Page Break on Each Course) -->
     {% for data in course_data %}
@@ -195,6 +260,7 @@
                                 <th>اسم الطالب</th>
                                 <th>رقم الهاتف</th>
                                 <th>تاريخ البيع</th>
+                                <th>سبب السعر / الحسم</th>
                                 <th class="text-center">مفعل</th>
                                 <th>الموزع</th>
                             </tr>
@@ -207,6 +273,7 @@
                                     <td><strong>{{ code.assigned_student_name|default:"-" }}</strong></td>
                                     <td>{{ code.assigned_student_phone|default:"-" }}</td>
                                     <td>{{ code.sold_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                                    <td><small class="text-muted">{{ code.price_reason|default:"سعر كامل" }}</small></td>
                                     <td class="text-center">
                                         {% if code.redeemed_count > 0 %}
                                             <span class="chip success">نعم</span>
@@ -218,7 +285,7 @@
                                 </tr>
                             {% empty %}
                                 <tr>
-                                    <td colspan="7" class="text-center text-muted">لا توجد أكواد مسجلة لهذه الدورة بعد.</td>
+                                    <td colspan="8" class="text-center text-muted">لا توجد أكواد مسجلة لهذه الدورة بعد.</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
