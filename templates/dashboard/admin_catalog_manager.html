@@ -91,7 +91,7 @@
                         </div>
                         <div class="course-row-actions">
                             <a href="{% url 'dashboard:admin_course_control' course.id %}" title="لوحة الدورة"><i data-lucide="settings"></i></a>
-                            <a href="/admin/learning/course/{{ course.id }}/change/" target="_blank" title="تعديل سريع"><i data-lucide="edit-3"></i></a>
+                            <a href="{% url 'dashboard:admin_course_control' course.id %}#edit-course-details" title="تعديل سريع"><i data-lucide="edit-3"></i></a>
                             <a href="{% url 'dashboard:public_course_detail' course.id %}" target="_blank" title="عرض"><i data-lucide="eye"></i></a>
                         </div>
                     </div>

@@ -87,7 +87,7 @@
                             <strong>{{ sub.name }}</strong>
                             <span>{{ sub.courses_count }} دورة</span>
                         </div>
-                        <a class="icon-button" href="/admin/learning/subject/{{ sub.id }}/change/" target="_blank" rel="noopener" aria-label="تعديل {{ sub.name }}">
+                        <a class="icon-button" href="{% url 'dashboard:admin_subject_edit' sub.id %}" aria-label="تعديل {{ sub.name }}">
                             <i data-lucide="edit-3"></i>
                         </a>
                     </article>
@@ -117,7 +117,7 @@
                             <a class="icon-button" href="{% url 'dashboard:admin_course_control' course.id %}" aria-label="إدارة {{ course.title }}">
                                 <i data-lucide="settings"></i>
                             </a>
-                            <a class="icon-button" href="/admin/learning/course/{{ course.id }}/change/" target="_blank" rel="noopener" aria-label="تعديل {{ course.title }}">
+                            <a class="icon-button" href="{% url 'dashboard:admin_course_control' course.id %}#edit-course-details" aria-label="تعديل {{ course.title }}">
                                 <i data-lucide="edit-2"></i>
                             </a>
                         </div>
