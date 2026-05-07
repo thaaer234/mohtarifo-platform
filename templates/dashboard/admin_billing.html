@@ -127,7 +127,7 @@
                                 <td>{{ row.activated }}</td>
                                 <td>{{ row.inactive }}</td>
                                 <td>{{ row.printed }}</td>
-                                <td>{{ row.gross|default:0 }} قرش</td>
+                                <td>{{ row.gross|default:0|floatformat:0 }} ل.س</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -195,7 +195,7 @@
                                 <td>{{ row.activated }}</td>
                                 <td>{{ row.inactive }}</td>
                                 <td>{{ row.printed }}</td>
-                                <td>{{ row.gross|default:0 }} قرش</td>
+                                <td>{{ row.gross|default:0|floatformat:0 }} ل.س</td>
                                 <td><a class="btn-text" href="{% url 'dashboard:admin_course_report_export' row.course.id %}">Excel</a></td>
                             </tr>
                             {% empty %}

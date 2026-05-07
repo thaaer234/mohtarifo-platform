@@ -2218,7 +2218,7 @@ def _filter_financial_rows():
             "activated": codes.filter(redeemed_count__gt=0).count(),
             "inactive": codes.filter(redeemed_count=0).count(),
             "printed": prints.aggregate(total=Sum("cards_count"))["total"] or 0,
-            "gross": codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0,
+            "gross": (codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0) / 100,
         })
     return rows
 
@@ -2236,7 +2236,7 @@ def _course_financial_rows():
             "activated": codes.filter(redeemed_count__gt=0).count(),
             "inactive": codes.filter(redeemed_count=0).count(),
             "printed": prints.aggregate(total=Sum("cards_count"))["total"] or 0,
-            "gross": codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0,
+            "gross": (codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0) / 100,
         })
     return rows
 
@@ -2255,7 +2255,7 @@ def _package_financial_rows():
             "sold": codes.filter(sale_status="sold").count(),
             "activated": codes.filter(redeemed_count__gt=0).count(),
             "inactive": codes.filter(redeemed_count=0).count(),
-            "gross": codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0,
+            "gross": (codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0) / 100,
         })
     return rows
 
@@ -2267,7 +2267,7 @@ def admin_financial_report_export(request):
     filters_sheet.title = "filters"
     filters_sheet.append(["filter", "courses", "codes", "sold", "activated", "inactive", "printed_cards", "gross_syp"])
     for row in _filter_financial_rows():
-        filters_sheet.append([row["label"], row["courses"], row["codes"], row["sold"], row["activated"], row["inactive"], row["printed"], row["gross"] // 100])
+        filters_sheet.append([row["label"], row["courses"], row["codes"], row["sold"], row["activated"], row["inactive"], row["printed"], int(row["gross"])])
 
     courses_sheet = workbook.create_sheet("courses")
     courses_sheet.append(["course", "filter", "subject", "instructor", "codes", "sold", "activated", "inactive", "printed_cards", "gross_syp"])
@@ -2283,7 +2283,7 @@ def admin_financial_report_export(request):
             row["activated"],
             row["inactive"],
             row["printed"],
-            row["gross"] // 100,
+            int(row["gross"]),
         ])
     packages_sheet = workbook.create_sheet("packages")
     packages_sheet.append(["package", "track", "subjects", "courses", "codes", "sold", "activated", "inactive", "gross_syp"])
@@ -2298,7 +2298,7 @@ def admin_financial_report_export(request):
             row["sold"],
             row["activated"],
             row["inactive"],
-            row["gross"] // 100,
+            int(row["gross"]),
         ])
     return _workbook_response(workbook, f"financial-report-{timezone.now().strftime('%Y%m%d-%H%M')}.xlsx")
 
@@ -2320,7 +2320,7 @@ def admin_packages_report_export(request):
             row["sold"],
             row["activated"],
             row["inactive"],
-            row["gross"] // 100,
+            int(row["gross"]),
         ])
 
     codes_sheet = workbook.create_sheet("codes")
