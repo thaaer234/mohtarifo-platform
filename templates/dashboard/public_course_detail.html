@@ -119,7 +119,7 @@
                         {% if request.user.is_authenticated %}
                             {% with user_profile=request.user.student_profile %}
                                 <a href="{{ CONTACT_WHATSAPP_URL }}?text={% filter urlencode %}مرحباً منصة محترفو التعليم 🌸
-أود شراء مادة مكثفة جديدة:
+أود التسجيل في مادة مكثفة جديدة:
 
 - 📚 اسم المكثفة: {{ course.title }}
 - 🎓 مادة: {{ course.subject.name }}
@@ -134,7 +134,7 @@
                             {% endwith %}
                         {% else %}
                             <a href="{{ CONTACT_WHATSAPP_URL }}?text={% filter urlencode %}مرحباً منصة محترفو التعليم 🌸
-أود شراء مادة مكثفة جديدة:
+أود التسجيل في مادة مكثفة جديدة:
 
 - 📚 اسم المكثفة: {{ course.title }}
 - 🎓 مادة: {{ course.subject.name }}
@@ -212,7 +212,7 @@
                         {% if request.user.is_authenticated %}
                             {% with user_profile=request.user.student_profile %}
                                 <a class="premium-card" href="{{ CONTACT_WHATSAPP_URL }}?text={% filter urlencode %}مرحباً منصة محترفو التعليم 🌸
-أود شراء مادة مكثفة جديدة:
+أود التسجيل في مادة مكثفة جديدة:
 
 - 📚 اسم المكثفة: {{ course.title }}
 - 🎓 مادة: {{ course.subject.name }}
@@ -231,7 +231,7 @@
                             {% endwith %}
                         {% else %}
                             <a class="premium-card" href="{{ CONTACT_WHATSAPP_URL }}?text={% filter urlencode %}مرحباً منصة محترفو التعليم 🌸
-أود شراء مادة مكثفة جديدة:
+أود التسجيل في مادة مكثفة جديدة:
 
 - 📚 اسم المكثفة: {{ course.title }}
 - 🎓 مادة: {{ course.subject.name }}
