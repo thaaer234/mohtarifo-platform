@@ -1,0 +1,194 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}تعديل مادة | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="admin-subject-edit reveal-up">
+    <header class="edit-hero">
+        <div class="hero-profile">
+            <div class="hero-avatar">
+                <i data-lucide="book-open"></i>
+            </div>
+            <div>
+                <div class="badge badge-gold mb-2">تعديل المادة الدراسية</div>
+                <h1>{{ subject.name }}</h1>
+                <p>الرابط المختصر: {{ subject.slug }} · مضاف بتاريخ: {{ subject.created_at|date:"Y-m-d" }}</p>
+            </div>
+        </div>
+        <div class="hero-actions">
+            <a href="{% url 'dashboard:admin_subjects' %}" class="btn btn-secondary">
+                <i data-lucide="arrow-right"></i>
+                رجوع لقائمة المواد
+            </a>
+        </div>
+    </header>
+
+    <section class="edit-stats">
+        <div class="stat-tile"><span>الدورات التدريبية</span><strong>{{ courses.count }}</strong></div>
+        <div class="stat-tile"><span>إجمالي الوحدات</span><strong>{{ subject.units_count|default:0 }}</strong></div>
+        <div class="stat-tile"><span>إجمالي الدروس</span><strong>{{ subject.lessons_count|default:0 }}</strong></div>
+    </section>
+
+    <div class="edit-layout">
+        <section class="premium-card edit-form-card">
+            <div class="section-title">
+                <i data-lucide="settings-2"></i>
+                <h2>تفاصيل وبيانات المادة</h2>
+            </div>
+            <form method="post" class="subject-edit-form">
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="form-errors mb-4">{{ form.non_field_errors }}</div>
+                {% endif %}
+                <div class="form-grid">
+                    {% for field in form %}
+                        <div class="form-field {% if field.name == 'description' %}wide{% endif %}">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}<small class="text-muted">{{ field.help_text }}</small>{% endif %}
+                            {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="form-actions mt-8">
+                    <button type="submit" class="btn btn-primary btn-glow">
+                        <i data-lucide="save"></i>
+                        حفظ وتحديث التغييرات
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <aside class="premium-card courses-side">
+            <div class="section-title">
+                <i data-lucide="layers"></i>
+                <h2>الدورات المرتبطة بالمادة</h2>
+            </div>
+            <div class="subject-courses-list">
+                {% for course in courses %}
+                    <a class="subject-course-row" href="{% url 'dashboard:admin_course_control' course.id %}">
+                        <span>
+                            <strong>{{ course.title }}</strong>
+                            <small>الأستاذ: {{ course.instructor.get_full_name|default:course.instructor.username }} · {{ course.get_status_display }}</small>
+                        </span>
+                        <i data-lucide="chevron-left"></i>
+                    </a>
+                {% empty %}
+                    <div class="empty-side">
+                        <i data-lucide="book-plus"></i>
+                        <p>لا توجد دورات تابعة لهذه المادة حتى الآن.</p>
+                        <a href="{% url 'dashboard:admin_course_create' %}" class="btn btn-secondary btn-sm mt-2">إنشاء دورة جديدة</a>
+                    </div>
+                {% endfor %}
+            </div>
+        </aside>
+    </div>
+</div>
+
+<style>
+    .admin-subject-edit { padding-bottom: 3rem; }
+    .edit-hero {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.5rem;
+        padding: 2rem;
+        border: 1px solid var(--border-light);
+        border-radius: 24px;
+        background: linear-gradient(135deg, rgba(var(--brand-gold-rgb), .14), transparent 45%), var(--bg-surface);
+        margin-bottom: 1.2rem;
+    }
+    .hero-profile { display: flex; align-items: center; gap: 1.5rem; min-width: 0; }
+    .hero-avatar {
+        width: 80px;
+        height: 80px;
+        display: grid;
+        place-items: center;
+        flex: 0 0 auto;
+        border-radius: 20px;
+        border: 1px solid var(--brand-gold-glow);
+        background: rgba(var(--brand-gold-rgb), .12);
+        color: var(--brand-gold);
+        font-size: 2rem;
+    }
+    .edit-hero h1 { margin: 0 0 .35rem; font-size: clamp(1.7rem, 3.2vw, 2.6rem); overflow-wrap: anywhere; }
+    .edit-hero p { margin: 0; color: var(--text-muted); font-weight: 800; font-size: 0.9rem; }
+    .hero-actions { display: flex; gap: .75rem; flex-wrap: wrap; justify-content: flex-end; }
+    
+    .edit-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1.2rem; }
+    .stat-tile { padding: 1rem 1.25rem; border: 1px solid var(--border-light); border-radius: 16px; background: var(--bg-surface); }
+    .stat-tile span { display: block; color: var(--text-muted); font-size: .78rem; font-weight: 900; margin-bottom: 0.25rem; }
+    .stat-tile strong { color: var(--brand-gold); font-size: 1.8rem; line-height: 1.3; font-weight: 900; }
+    
+    .edit-layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 1.2rem; align-items: start; }
+    .edit-form-card, .courses-side { padding: 1.5rem 2rem !important; }
+    .section-title { display: flex; align-items: center; gap: .6rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem; }
+    .section-title i { color: var(--brand-gold); }
+    .section-title h2 { margin: 0; font-size: 1.25rem; font-weight: 800; }
+    
+    .subject-edit-form input,
+    .subject-edit-form select,
+    .subject-edit-form textarea {
+        width: 100%;
+        min-height: 46px;
+        padding: .85rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-radius: 12px;
+        background: var(--bg-base);
+        color: var(--text-primary);
+        font-family: inherit;
+        transition: border-color 0.2s;
+    }
+    .subject-edit-form input:focus,
+    .subject-edit-form select:focus,
+    .subject-edit-form textarea:focus {
+        border-color: var(--brand-gold);
+        outline: none;
+    }
+    .subject-edit-form textarea { resize: vertical; min-height: 140px; line-height: 1.8; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+    .form-field { display: grid; gap: .5rem; }
+    .form-field.wide { grid-column: 1 / -1; }
+    .form-field label { color: var(--text-secondary); font-size: .85rem; font-weight: 800; }
+    .field-error, .form-errors { color: var(--danger); font-weight: 800; font-size: .8rem; }
+    .form-actions { display: flex; justify-content: flex-end; }
+    
+    .subject-courses-list { display: grid; gap: .75rem; }
+    .subject-course-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .75rem;
+        padding: 1rem;
+        border: 1px solid var(--border-light);
+        border-radius: 14px;
+        background: var(--bg-surface-elevated);
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: transform .18s ease, border-color .18s ease;
+    }
+    .subject-course-row:hover { transform: translateY(-2px); border-color: var(--brand-gold-glow); }
+    .subject-course-row span { min-width: 0; }
+    .subject-course-row strong { display: block; font-size: 0.95rem; font-weight: 700; overflow-wrap: anywhere; }
+    .subject-course-row small { display: block; margin-top: .25rem; color: var(--text-muted); font-size: 0.8rem; }
+    .subject-course-row i { color: var(--brand-gold); flex: 0 0 auto; }
+    
+    .empty-side { text-align: center; padding: 2rem 1rem; color: var(--text-muted); }
+    .empty-side i { width: 42px; height: 42px; color: var(--brand-gold); }
+    
+    @media (max-width: 980px) {
+        .edit-layout { grid-template-columns: 1fr; }
+        .edit-hero { align-items: flex-start; flex-direction: column; }
+        .hero-actions { width: 100%; }
+        .hero-actions .btn { flex: 1; justify-content: center; }
+    }
+    @media (max-width: 640px) {
+        .edit-hero { padding: 1.25rem; }
+        .hero-profile { align-items: flex-start; gap: 1rem; }
+        .hero-avatar { width: 64px; height: 64px; border-radius: 16px; font-size: 1.5rem; }
+        .edit-stats, .form-grid { grid-template-columns: 1fr; }
+        .form-actions .btn { width: 100%; justify-content: center; }
+    }
+</style>
+{% endblock %}

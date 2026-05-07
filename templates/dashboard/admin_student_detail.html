@@ -143,8 +143,16 @@
     <!-- Sidebar Info -->
     <div class="sidebar-column">
         <div class="premium-card mb-6">
-            <h3 class="sidebar-label">معلومات تقنية</h3>
+            <h3 class="sidebar-label">المعلومات الشخصية والتقنية</h3>
             <div class="info-list">
+                <div class="info-item">
+                    <span>المحافظة:</span>
+                    <strong style="color: var(--brand-gold);">{{ student.student_profile.governorate|default:"غير محددة" }}</strong>
+                </div>
+                <div class="info-item">
+                    <span>الفرع الدراسي:</span>
+                    <strong>{{ student.student_profile.track|default:"غير محدد" }}</strong>
+                </div>
                 <div class="info-item">
                     <span>تاريخ التسجيل:</span>
                     <strong>{{ student.date_joined|date:"Y-m-d" }}</strong>

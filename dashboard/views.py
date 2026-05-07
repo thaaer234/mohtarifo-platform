@@ -720,6 +720,26 @@ def admin_students(request):
     grants = AccessGrant.objects.select_related("user", "course", "access_code").order_by("-created_at")[:20]
     devices = UserDevice.objects.select_related("user").order_by("-last_seen_at")[:20]
 
+    # Governorate statistics
+    gov_stats = []
+    from accounts.models import StudentProfile
+    profiles_grouped = StudentProfile.objects.values('governorate').annotate(count=Count('id')).order_by('-count')
+    for p in profiles_grouped:
+        gov_name = p['governorate'].strip() if p['governorate'] else ""
+        if not gov_name:
+            gov_name = "غير محدد"
+        # Combine if "غير محدد" appears multiple times due to spaces
+        existing = next((item for item in gov_stats if item['name'] == gov_name), None)
+        if existing:
+            existing['count'] += p['count']
+        else:
+            gov_stats.append({
+                'name': gov_name,
+                'count': p['count']
+            })
+    # Sort again by count descending
+    gov_stats.sort(key=lambda x: x['count'], reverse=True)
+
     return render(
         request,
         "dashboard/admin_students.html",

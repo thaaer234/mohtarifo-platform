@@ -91,9 +91,35 @@
         </div>
     </form>
 </div>
+<!-- Governorate Distribution Report -->
+<div class="premium-card mb-8 animate-fade-up" style="animation-delay: 0.15s;">
+    <div class="flex-between mb-6">
+        <div>
+            <span class="badge mb-2">التقارير الديموغرافية</span>
+            <h2 class="section-title" style="margin: 0;"><i data-lucide="map" style="color: var(--brand-gold);"></i> توزيع الطلاب حسب المحافظات</h2>
+        </div>
+        <div class="badge gold">{{ gov_stats|length }} محافظات نشطة</div>
+    </div>
+    
+    <div class="gov-distribution-grid">
+        {% for gov in gov_stats %}
+            <div class="gov-stat-item">
+                <div class="flex-between mb-2">
+                    <strong class="gov-name" style="font-size: 0.95rem; color: var(--text-primary);">{{ gov.name }}</strong>
+                    <span class="badge" style="background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold); font-weight: 800; font-size: 0.8rem;">{{ gov.count }} طالب</span>
+                </div>
+                <div class="gov-progress-bar">
+                    {% widthratio gov.count stats.total 100 as percentage %}
+                    <div class="gov-progress-fill" style="width: {{ percentage|default:0 }}%;"></div>
+                </div>
+                <span class="gov-percentage" style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 0.25rem; text-align: left;">{{ percentage|default:0 }}% من الطلاب</span>
+            </div>
+        {% endfor %}
+    </div>
+</div>
 
 <!-- Main Students Table -->
-<div class="animate-fade-up" style="animation-delay: 0.2s;">
+<div class="animate-fade-up" style="animation-delay: 0.25s;">
     <div class="admin-table-wrapper mb-8">
         <table class="admin-table print-table">
             <thead>
@@ -158,6 +184,34 @@
 
 <!-- Print Styles -->
 <style>
+    .gov-distribution-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1.5rem;
+    }
+    .gov-stat-item {
+        background: rgba(255, 255, 255, 0.01);
+        border: 1px solid var(--border-light);
+        padding: 1.25rem;
+        border-radius: 16px;
+        transition: 0.3s ease;
+    }
+    .gov-stat-item:hover {
+        border-color: var(--brand-gold-glow);
+        background: rgba(var(--brand-gold-rgb), 0.02);
+    }
+    .gov-progress-bar {
+        background: rgba(255, 255, 255, 0.05);
+        height: 6px;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    .gov-progress-fill {
+        background: linear-gradient(90deg, var(--brand-gold), #e8c37d);
+        height: 100%;
+        border-radius: 3px;
+    }
+
     @media print {
         body { background: white !important; color: black !important; }
         .print-hidden, .navbar, .admin-sidebar, .mobile-bottom-nav, .ambient-bg { display: none !important; }

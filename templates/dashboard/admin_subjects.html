@@ -44,32 +44,7 @@
         </div>
     </div>
 
-    <!-- Edit Modal -->
-    <div id="edit-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-card animate-scale-up">
-            <div class="modal-header">
-                <h2 class="section-title"><i data-lucide="edit-3"></i> تعديل المادة</h2>
-                <button onclick="closeModals()" class="btn-icon"><i data-lucide="x"></i></button>
-            </div>
-            <form id="edit-form" method="post" class="modal-body">
-                {% csrf_token %}
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">اسم المادة</label>
-                        <input type="text" name="name" id="edit-name" class="form-control" required>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">وصف المادة</label>
-                        <textarea name="description" id="edit-description" class="form-control" rows="3"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer mt-8">
-                    <button type="button" onclick="closeModals()" class="btn btn-glass">إلغاء</button>
-                    <button type="submit" class="btn btn-primary btn-glow">تحديث البيانات</button>
-                </div>
-            </form>
-        </div>
-    </div>
+
 
     <div class="subjects-grid">
         {% for subject in subjects %}
@@ -100,9 +75,9 @@
             </div>
 
             <div class="subject-actions mt-8">
-                <button onclick="openEditModal('{{ subject.id }}', '{{ subject.name|escapejs }}', '{{ subject.description|escapejs }}')" class="btn btn-glass btn-sm w-full">
+                <a href="{% url 'dashboard:admin_subject_edit' subject.id %}" class="btn btn-glass btn-sm w-full">
                     <i data-lucide="edit"></i> تعديل المادة
-                </button>
+                </a>
             </div>
         </div>
         {% empty %}
@@ -118,16 +93,7 @@
         document.getElementById('create-modal').style.display = 'flex';
         document.body.style.overflow = 'hidden';
     }
-    
-    function openEditModal(id, name, description) {
-        const modal = document.getElementById('edit-modal');
-        const form = document.getElementById('edit-form');
-        form.action = `/admin-dashboard/content/subjects/${id}/edit/`;
-        document.getElementById('edit-name').value = name;
-        document.getElementById('edit-description').value = description;
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
+
     
     function closeModals() {
         document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
