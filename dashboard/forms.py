@@ -217,6 +217,70 @@ class CourseCardMediaForm(forms.ModelForm):
         }
 
 
+
+class CourseEditForm(forms.ModelForm):
+    price_amount = forms.DecimalField(label="السعر (ل.س)", min_value=0, max_digits=12, decimal_places=0, required=False)
+
+    class Meta:
+        model = Course
+        fields = [
+            "title",
+            "subject",
+            "instructor",
+            "kind",
+            "academic_track",
+            "term",
+            "status",
+            "price_amount",
+            "description",
+        ]
+        labels = {
+            "title": "اسم الدورة",
+            "subject": "المادة",
+            "instructor": "الأستاذ",
+            "kind": "نوع المحتوى",
+            "academic_track": "الفرع الدراسي",
+            "term": "الفصل الدراسي",
+            "status": "حالة النشر",
+            "price_amount": "السعر (ل.س)",
+            "description": "الوصف المختصر",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["instructor"].queryset = (
+            User.objects.filter(instructor_profile__status="active")
+            .distinct()
+            .order_by("first_name", "last_name", "username")
+        )
+        self.fields["instructor"].label_from_instance = _user_display_label
+        self.fields["subject"].queryset = Subject.objects.order_by("name")
+        self.fields["description"].required = False
+        
+        if self.instance and self.instance.pk:
+            if self.instance.price_cents is not None:
+                self.initial["price_amount"] = self.instance.price_cents / 100
+
+    def save(self, commit=True):
+        course = super().save(commit=False)
+        price_amount = self.cleaned_data.get("price_amount")
+        course.price_cents = int(price_amount * 100) if price_amount is not None else None
+        
+        # Regenerate slug if title changed and keep it unique
+        base_slug = slugify(course.title, allow_unicode=True) or "course"
+        if course.slug != base_slug:
+            slug = base_slug
+            counter = 2
+            while Course.objects.filter(slug=slug).exclude(id=course.id).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            course.slug = slug
+
+        if commit:
+            course.save()
+        return course
+
+
 class CourseCodeBatchForm(forms.ModelForm):
     class Meta:
         model = AccessCodeBatch

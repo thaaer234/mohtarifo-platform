@@ -1127,9 +1127,18 @@ def admin_course_control(request, course_id):
     sale_form = CourseCodeSaleForm(prefix="sale", course=course)
     unit_form = CourseUnitQuickForm(prefix="unit")
     media_form = CourseCardMediaForm(prefix="media", instance=course)
+    edit_form = CourseEditForm(prefix="edit", instance=course)
     if request.method == "POST":
         action = request.POST.get("action")
-        if action == "create_batch":
+        if action == "edit_course_details":
+            edit_form = CourseEditForm(request.POST, prefix="edit", instance=course)
+            if edit_form.is_valid():
+                edit_form.save()
+                messages.success(request, "تم تحديث بيانات الدورة بنجاح.")
+                return redirect("dashboard:admin_course_control", course_id=course.id)
+            else:
+                messages.error(request, "حدث خطأ أثناء حفظ بيانات الدورة، يرجى مراجعة الحقول.")
+        elif action == "create_batch":
             batch_form = CourseCodeBatchForm(request.POST, prefix="batch")
             if batch_form.is_valid():
                 batch = batch_form.save(commit=False)
@@ -1275,6 +1284,7 @@ def admin_course_control(request, course_id):
             "sale_form": sale_form,
             "unit_form": unit_form,
             "media_form": media_form,
+            "edit_form": edit_form,
         },
     )
 

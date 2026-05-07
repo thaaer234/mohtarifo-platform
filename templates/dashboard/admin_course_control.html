@@ -15,6 +15,7 @@
             </p>
         </div>
         <div class="course-admin-actions">
+            <a href="#edit-course-details" class="btn btn-secondary"><i data-lucide="edit-3"></i> تعديل الدورة</a>
             <a href="{% url 'dashboard:admin_course_report_export' course.id %}" class="btn btn-secondary"><i data-lucide="download"></i> تقرير Excel</a>
             <a href="#sell-code" class="btn btn-secondary"><i data-lucide="badge-dollar-sign"></i> بيع كود</a>
             <a href="#upload-lesson" class="btn btn-primary btn-glow"><i data-lucide="upload"></i> رفع قسم</a>
@@ -22,6 +23,7 @@
     </header>
 
     <nav class="course-admin-nav">
+        <a href="#edit-course-details">تعديل الدورة</a>
         <a href="#content-map">المحتوى</a>
         <a href="#operations">العمليات</a>
         <a href="#batches">الأكواد</a>
@@ -119,6 +121,28 @@
                         </div>
                     {% endfor %}
                 </div>
+            </article>
+
+            <article class="premium-card course-panel" id="edit-course-details">
+                <div class="panel-head">
+                    <div>
+                        <div class="badge badge-gold mb-3">تعديل الدورة</div>
+                        <h2>تعديل البيانات الأساسية للدورة</h2>
+                    </div>
+                </div>
+                <form method="post" class="course-form-grid">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="edit_course_details">
+                    {% for field in edit_form %}
+                        <div class="premium-field {% if field.name == 'description' or field.name == 'title' %}span-2{% endif %}">
+                            <label>{{ field.label }}</label>
+                            <div class="input-glow-wrapper">{{ field }}</div>
+                            {% if field.help_text %}<small class="text-muted block mt-2">{{ field.help_text }}</small>{% endif %}
+                            {% for error in field.errors %}<p class="text-danger mt-2">{{ error }}</p>{% endfor %}
+                        </div>
+                    {% endfor %}
+                    <button class="btn btn-primary btn-glow span-2" type="submit"><i data-lucide="save"></i> حفظ تعديلات الدورة</button>
+                </form>
             </article>
 
             <article class="premium-card course-panel" id="upload-lesson">
