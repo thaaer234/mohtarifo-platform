@@ -2198,15 +2198,36 @@ def admin_billing(request):
     # Centers expected funds
     centers_report = []
     for center in SalesCenter.objects.filter(is_active=True).select_related("institute").order_by("name"):
-        codes = AccessCode.objects.filter(sales_center=center)
+        codes = AccessCode.objects.filter(sales_center=center).select_related("course", "package")
         sold_codes = codes.filter(sale_status="sold")
         sold_count = sold_codes.count()
-        gross_cents = sold_codes.aggregate(total=models.Sum("sold_price_cents"))["total"] or 0
+        
+        # 1. الصندوق المتوقع (Expected Fund): Sum of standard prices for ALL assigned codes (total potential)
+        expected_balance_cents = 0
+        for code in codes:
+            if code.course and code.course.price_cents:
+                expected_balance_cents += code.course.price_cents
+            elif code.package and code.package.price_cents:
+                expected_balance_cents += code.package.price_cents
+                
+        # 2. الصندوق الحقيقي الافتراضي (Standard Real Fund): Sum of standard prices for SOLD codes (gross standard value)
+        real_standard_cents = 0
+        for code in sold_codes:
+            if code.course and code.course.price_cents:
+                real_standard_cents += code.course.price_cents
+            elif code.package and code.package.price_cents:
+                real_standard_cents += code.package.price_cents
+                
+        # 3. الصندوق بعد الحسومات (Fund after discounts): Actual money earned (sold_price_cents)
+        actual_earned_cents = sold_codes.aggregate(total=models.Sum("sold_price_cents"))["total"] or 0
+        
         centers_report.append({
             "center": center,
             "total_codes": codes.count(),
             "sold_codes_count": sold_count,
-            "expected_balance": gross_cents / 100,
+            "expected_balance": expected_balance_cents / 100,
+            "real_standard": real_standard_cents / 100,
+            "actual_earned": actual_earned_cents / 100,
         })
 
     context = {

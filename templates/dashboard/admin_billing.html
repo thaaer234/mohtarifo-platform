@@ -141,7 +141,7 @@
              <!-- Sales Centers Expected Fund Table -->
              <section class="premium-card mb-8">
                 <div class="flex-between mb-6">
-                    <h2 class="section-title"><i data-lucide="store"></i> الصناديق المتوقعة لمراكز البيع</h2>
+                    <h2 class="section-title"><i data-lucide="store"></i> التقارير المالية التفصيلية لمراكز البيع</h2>
                 </div>
                 <div class="table-responsive">
                     <table class="admin-table">
@@ -149,9 +149,11 @@
                             <tr>
                                 <th>مركز البيع</th>
                                 <th>المعهد المرتبط</th>
-                                <th>إجمالي الأكواد</th>
-                                <th>الأكواد المباعة</th>
-                                <th>رصيد الصندوق المتوقع</th>
+                                <th class="text-center">إجمالي الأكواد</th>
+                                <th class="text-center">الأكواد المباعة</th>
+                                <th class="text-center" style="color: var(--brand-gold);">الصندوق المتوقع (الافتراضي)</th>
+                                <th class="text-center" style="color: #60a5fa;">الصندوق الحقيقي (كامل القيمة)</th>
+                                <th class="text-center" style="color: #34d399;">الصندوق الفعلي (بعد الحسومات)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -159,12 +161,14 @@
                             <tr>
                                 <td><strong>{{ item.center.name }}</strong></td>
                                 <td>{{ item.center.institute.name|default:"مستقل" }}</td>
-                                <td>{{ item.total_codes }}</td>
-                                <td><span class="status-badge pending">{{ item.sold_codes_count }} مباع</span></td>
-                                <td><strong class="text-glow" style="color: var(--brand-gold); font-size: 1.1rem;">{{ item.expected_balance|floatformat:0 }} ل.س</strong></td>
+                                <td class="text-center"><strong>{{ item.total_codes }}</strong></td>
+                                <td class="text-center"><span class="status-badge pending" style="padding: 0.35rem 0.75rem; font-size: 0.85rem;">{{ item.sold_codes_count }} مباع</span></td>
+                                <td class="text-center"><strong class="text-glow" style="color: var(--brand-gold); font-size: 1rem;">{{ item.expected_balance|default:0|floatformat:0 }} ل.س</strong></td>
+                                <td class="text-center"><strong style="color: #60a5fa; font-size: 1rem;">{{ item.real_standard|default:0|floatformat:0 }} ل.س</strong></td>
+                                <td class="text-center"><strong style="color: #34d399; font-size: 1.05rem; text-shadow: 0 0 10px rgba(52, 211, 153, 0.2);">{{ item.actual_earned|default:0|floatformat:0 }} ل.س</strong></td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="5" class="text-center p-8">لا توجد مراكز بيع نشطة</td></tr>
+                            <tr><td colspan="7" class="text-center p-8">لا توجد مراكز بيع نشطة</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
