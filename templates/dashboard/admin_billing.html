@@ -25,6 +25,9 @@
                     <span class="label">الاشتراكات النشطة</span>
                     <span class="value">{{ active_subs_count }}</span>
                 </div>
+                <a href="{% url 'dashboard:admin_discounts' %}" class="btn btn-primary btn-glow" style="background: var(--brand-gold); color: var(--bg-base); border-color: var(--brand-gold); margin-left: 0.5rem;">
+                    <i data-lucide="badge-percent"></i> إدارة الحسومات
+                </a>
                 <a href="{% url 'dashboard:admin_financial_report_export' %}" class="btn btn-primary btn-glow">
                     <i data-lucide="download"></i> تقرير Excel
                 </a>

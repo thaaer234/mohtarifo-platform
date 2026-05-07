@@ -1,0 +1,139 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}إدارة الحسومات والعروض | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="admin-discounts-hub reveal-up">
+    <!-- Header -->
+    <header class="hub-header mb-10">
+        <div class="flex-between align-center">
+            <div>
+                <span class="badge mb-2">العمليات المالية</span>
+                <h1 class="page-title">إدارة الحسومات والعروض الترويجية</h1>
+            </div>
+            <div>
+                <a href="{% url 'dashboard:admin_billing' %}" class="btn btn-secondary">
+                    <i data-lucide="arrow-right"></i> العودة للمركز المالي
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="hub-grid">
+        <!-- Left Column: Add New Discount Form -->
+        <div class="hub-sidebar">
+            <section class="premium-card">
+                <div class="section-title mb-6">
+                    <i data-lucide="badge-percent" class="gold"></i>
+                    <h2>إنشاء حسم جديد</h2>
+                </div>
+                <form action="{% url 'dashboard:admin_discount_add' %}" method="post" class="discount-form">
+                    {% csrf_token %}
+                    <div class="form-group mb-4">
+                        <label for="name" class="form-label">اسم الحسم / العرض</label>
+                        <input type="text" id="name" name="name" class="form-control" placeholder="مثال: حسم عيد الفطر، حسم الفصل الثاني" required>
+                    </div>
+                    
+                    <div class="form-group mb-4">
+                        <label for="discount_percent" class="form-label">نسبة الخصم (%)</label>
+                        <input type="number" id="discount_percent" name="discount_percent" class="form-control" placeholder="مثال: 20، 30، 50" min="1" max="100" required>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label for="starts_at" class="form-label">تاريخ وبداية التفعيل</label>
+                        <input type="datetime-local" id="starts_at" name="starts_at" class="form-control">
+                        <small class="text-muted">اتركه فارغاً لتبدأ الفعالية فوراً</small>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label for="expires_at" class="form-label">تاريخ ووقت انتهاء الحسم</label>
+                        <input type="datetime-local" id="expires_at" name="expires_at" class="form-control">
+                        <small class="text-muted">اتركه فارغاً ليستمر الحسم بدون وقت محدد</small>
+                    </div>
+
+                    <div class="form-group mb-6 flex-align gap-2">
+                        <input type="checkbox" id="is_active" name="is_active" checked style="width: 18px; height: 18px; accent-color: var(--brand-gold);">
+                        <label for="is_active" class="form-label mb-0" style="cursor: pointer; user-select: none;">تفعيل الحسم فوراً كحسم نشط</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-glow w-full">
+                        <i data-lucide="plus-circle"></i> تفعيل ونشر الحسم
+                    </button>
+                </form>
+            </section>
+        </div>
+
+        <!-- Right Column: Active and Past Discounts Table -->
+        <div class="hub-main">
+            <section class="premium-card">
+                <div class="section-title mb-6">
+                    <i data-lucide="percent" class="gold"></i>
+                    <h2>سجل الحسومات والعروض النشطة</h2>
+                </div>
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>اسم الحسم</th>
+                                <th class="text-center">النسبة</th>
+                                <th>تاريخ البدء</th>
+                                <th>تاريخ الانتهاء</th>
+                                <th class="text-center">الحالة</th>
+                                <th class="text-center">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for discount in discounts %}
+                            <tr>
+                                <td><strong>{{ discount.name }}</strong></td>
+                                <td class="text-center"><span class="badge badge-gold" style="font-size: 1rem; padding: 0.25rem 0.75rem;">{{ discount.discount_percent }}%</span></td>
+                                <td>{{ discount.starts_at|date:"Y-m-d H:i"|default:"فوري" }}</td>
+                                <td>{{ discount.expires_at|date:"Y-m-d H:i"|default:"مفتوح" }}</td>
+                                <td class="text-center">
+                                    {% if discount.is_active %}
+                                        <span class="status-badge active">نشط</span>
+                                    {% else %}
+                                        <span class="status-badge canceled">معطل</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="flex-center gap-2">
+                                        <a href="{% url 'dashboard:admin_discount_toggle' discount.id %}" class="btn btn-glass btn-sm" title="تبديل الحالة">
+                                            <i data-lucide="power" style="width:16px;height:16px;"></i>
+                                        </a>
+                                        <a href="{% url 'dashboard:admin_discount_delete' discount.id %}" class="btn btn-glass btn-sm text-danger" title="حذف" onclick="return confirm('هل أنت متأكد من حذف هذا الحسم نهائياً؟');">
+                                            <i data-lucide="trash-2" style="width:16px;height:16px;"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center p-8 text-muted">لا توجد أي حسومات مضافة حالياً. أنشئ حسماً من العمود الأيمن!</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hub-grid { display: grid; grid-template-columns: 360px 1fr; gap: 2rem; }
+    .discount-form .form-label { display: block; font-weight: 700; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+    .discount-form .form-control { width: 100%; padding: 0.75rem 1rem; border-radius: 12px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-light); color: var(--text-primary); outline: none; transition: all 0.3s ease; }
+    .discount-form .form-control:focus { border-color: var(--brand-gold); box-shadow: 0 0 12px rgba(197, 160, 89, 0.15); }
+    .btn-glass { background: rgba(197,160,89,0.1); color: var(--brand-gold); border: 0; padding: 0.5rem; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; text-decoration: none; }
+    .btn-glass:hover { background: var(--brand-gold); color: var(--bg-base); }
+    .btn-glass.text-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
+    .btn-glass.text-danger:hover { background: var(--danger); color: white; }
+    .flex-align { display: flex; align-items: center; }
+    .mb-0 { margin-bottom: 0; }
+    @media (max-width: 992px) {
+        .hub-grid { grid-template-columns: 1fr; }
+    }
+</style>
+{% endblock %}

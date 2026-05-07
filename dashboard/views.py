@@ -599,7 +599,13 @@ def admin_catalog_manager(request):
     selected_track = request.GET.get("track") or (base_tabs[0]["track"] if base_tabs else "")
     tabs = []
     for tab in base_tabs:
-        courses_qs = Course.objects.filter(kind=tab["kind"], academic_track=tab["track"])
+        if tab["track"] in {"scientific", "literary"}:
+            courses_qs = Course.objects.filter(kind=tab["kind"]).filter(
+                models.Q(academic_track=tab["track"]) | models.Q(academic_track="general")
+            )
+        else:
+            courses_qs = Course.objects.filter(kind=tab["kind"], academic_track=tab["track"])
+            
         tab = {
             **tab,
             "courses_count": courses_qs.count(),
@@ -615,16 +621,30 @@ def admin_catalog_manager(request):
     new_section_form = CatalogSectionForm(prefix="new", initial={"sort_order": (CatalogSection.objects.count() + 1) * 10})
     courses = Course.objects.none()
     if selected_tab:
-        courses = (
-            Course.objects.filter(kind=selected_tab["kind"], academic_track=selected_tab["track"])
-            .select_related("subject", "instructor", "instructor__instructor_profile")
-            .annotate(
-                lessons_total=Count("units__lessons", distinct=True),
-                codes_total=Count("access_codes", distinct=True),
-                students_total=Count("access_grants", distinct=True),
+        if selected_tab["track"] in {"scientific", "literary"}:
+            courses = (
+                Course.objects.filter(kind=selected_tab["kind"]).filter(
+                    models.Q(academic_track=selected_tab["track"]) | models.Q(academic_track="general")
+                )
+                .select_related("subject", "instructor", "instructor__instructor_profile")
+                .annotate(
+                    lessons_total=Count("units__lessons", distinct=True),
+                    codes_total=Count("access_codes", distinct=True),
+                    students_total=Count("access_grants", distinct=True),
+                )
+                .order_by("subject__name", "title")
             )
-            .order_by("subject__name", "title")
-        )
+        else:
+            courses = (
+                Course.objects.filter(kind=selected_tab["kind"], academic_track=selected_tab["track"])
+                .select_related("subject", "instructor", "instructor__instructor_profile")
+                .annotate(
+                    lessons_total=Count("units__lessons", distinct=True),
+                    codes_total=Count("access_codes", distinct=True),
+                    students_total=Count("access_grants", distinct=True),
+                )
+                .order_by("subject__name", "title")
+            )
     return render(
         request,
         "dashboard/admin_catalog_manager.html",
@@ -2203,6 +2223,66 @@ def admin_billing(request):
     return render(request, "dashboard/admin_billing.html", context)
 
 
+@admin_required
+def admin_discounts(request):
+    from billing.models import DiscountRule
+    discounts = DiscountRule.objects.all().order_by("-created_at")
+    return render(
+        request,
+        "dashboard/admin_discounts.html",
+        {"discounts": discounts},
+    )
+
+
+@admin_required
+def admin_discount_add(request):
+    if request.method == "POST":
+        from billing.models import DiscountRule
+        from django.utils.dateparse import parse_datetime
+        
+        name = request.POST.get("name")
+        percent = request.POST.get("discount_percent")
+        starts_at = parse_datetime(request.POST.get("starts_at"))
+        expires_at = parse_datetime(request.POST.get("expires_at"))
+        is_active = request.POST.get("is_active") in ["on", "true", "1"]
+        
+        if name and percent:
+            try:
+                DiscountRule.objects.create(
+                    name=name,
+                    discount_percent=int(percent),
+                    starts_at=starts_at,
+                    expires_at=expires_at,
+                    is_active=is_active,
+                )
+                messages.success(request, "تم إضافة حسم جديد بنجاح.")
+            except Exception as e:
+                messages.error(request, f"خطأ أثناء إضافة الحسم: {str(e)}")
+        else:
+            messages.error(request, "يرجى ملء جميع الحقول المطلوبة.")
+    return redirect("dashboard:admin_discounts")
+
+
+@admin_required
+def admin_discount_toggle(request, discount_id):
+    from billing.models import DiscountRule
+    discount = get_object_or_404(DiscountRule, id=discount_id)
+    discount.is_active = not discount.is_active
+    discount.save()
+    messages.success(request, f"تم تغيير حالة الحسم '{discount.name}' بنجاح.")
+    return redirect("dashboard:admin_discounts")
+
+
+@admin_required
+def admin_discount_delete(request, discount_id):
+    from billing.models import DiscountRule
+    discount = get_object_or_404(DiscountRule, id=discount_id)
+    name = discount.name
+    discount.delete()
+    messages.success(request, f"تم حذف الحسم '{name}' بنجاح.")
+    return redirect("dashboard:admin_discounts")
+
+
 def _filter_financial_rows():
     rows = []
     for tab in _catalog_tabs():
@@ -2905,7 +2985,7 @@ def admin_content_hub(request):
             return redirect("dashboard:admin_content_hub")
 
     subjects = Subject.objects.annotate(courses_count=Count("courses")).order_by("name")
-    recent_courses = Course.objects.select_related("subject", "instructor", "instructor__instructor_profile").order_by("-created_at")[:20]
+    recent_courses = Course.objects.select_related("subject", "instructor", "instructor__instructor_profile").order_by("-created_at")
     
     return render(
         request,
