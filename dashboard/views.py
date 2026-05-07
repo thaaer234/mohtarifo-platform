@@ -2218,8 +2218,16 @@ def admin_billing(request):
     for p in payments:
         p.amount_dollars = p.amount_cents / 100
 
-    # General fund balance from sold codes
-    general_fund_cents = AccessCode.objects.filter(sale_status="sold").aggregate(total=models.Sum("sold_price_cents"))["total"] or 0
+    # General fund balance from sold codes with standard price fallback for Null sold_price_cents
+    general_fund_cents = 0
+    for code in AccessCode.objects.filter(sale_status="sold").select_related("course", "package"):
+        if code.sold_price_cents is not None:
+            general_fund_cents += code.sold_price_cents
+        else:
+            if code.course and code.course.price_cents:
+                general_fund_cents += code.course.price_cents
+            elif code.package and code.package.price_cents:
+                general_fund_cents += code.package.price_cents
     general_fund_syp = general_fund_cents / 100
 
     # Centers expected funds
@@ -2245,8 +2253,16 @@ def admin_billing(request):
             elif code.package and code.package.price_cents:
                 real_standard_cents += code.package.price_cents
                 
-        # 3. الصندوق بعد الحسومات (Fund after discounts): Actual money earned (sold_price_cents)
-        actual_earned_cents = sold_codes.aggregate(total=models.Sum("sold_price_cents"))["total"] or 0
+        # 3. الصندوق بعد الحسومات (Fund after discounts): Actual money earned (sold_price_cents with fallback to standard)
+        actual_earned_cents = 0
+        for code in sold_codes:
+            if code.sold_price_cents is not None:
+                actual_earned_cents += code.sold_price_cents
+            else:
+                if code.course and code.course.price_cents:
+                    actual_earned_cents += code.course.price_cents
+                elif code.package and code.package.price_cents:
+                    actual_earned_cents += code.package.price_cents
         
         centers_report.append({
             "center": center,
@@ -2257,11 +2273,15 @@ def admin_billing(request):
             "actual_earned": actual_earned_cents / 100,
         })
 
+    # Total digital payments revenue on unsliced queryset
+    total_revenue_cents = Payment.objects.filter(status="paid").aggregate(total=models.Sum("amount_cents"))["total"] or 0
+    total_revenue = total_revenue_cents / 100
+
     context = {
         "subscriptions": subscriptions,
         "payments": payments,
         "batches": batches,
-        "total_revenue": sum(p.amount_cents for p in payments if p.status == "paid") / 100,
+        "total_revenue": total_revenue,
         "active_subs_count": active_subs_count,
         "filter_reports": _filter_financial_rows(),
         "course_reports": _course_financial_rows()[:30],

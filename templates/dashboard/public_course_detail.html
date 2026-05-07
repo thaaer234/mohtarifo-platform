@@ -103,10 +103,26 @@
                     {% endif %}
                     
                     <div class="text-center mb-8">
+                        {% load inline_static %}
+                        {% course_discount_info course as discount %}
                         <span class="text-muted block mb-1" style="font-size: 0.85rem;">سعر الدورة</span>
-                        <div style="font-size: 2.5rem; font-weight: 900; color: var(--text-primary);">
-                            {{ course.price_display }} <small class="gold" style="font-size: 1rem;">ل.س</small>
-                        </div>
+                        {% if discount.has_discount %}
+                            <div style="font-size: 1.5rem; text-decoration: line-through; color: rgba(255,255,255,0.4); font-weight: 700; margin-bottom: 0.25rem;">
+                                {{ discount.original_price|currency_format }} <small style="font-size: 0.85rem;">ل.س</small>
+                            </div>
+                            <div style="font-size: 2.5rem; font-weight: 900; color: var(--text-primary); line-height: 1.1;">
+                                {{ discount.discounted_price|currency_format }} <small class="gold" style="font-size: 1rem;">ل.س</small>
+                            </div>
+                            <div style="margin-top: 0.5rem;">
+                                <span class="badge" style="background: rgba(197,160,89,0.15); color: var(--brand-gold); font-size: 0.85rem; padding: 0.35rem 0.75rem; border-radius: 8px; font-weight: 700; border: 1px solid rgba(197,160,89,0.25);">
+                                    {{ discount.discount_name }}
+                                </span>
+                            </div>
+                        {% else %}
+                            <div style="font-size: 2.5rem; font-weight: 900; color: var(--text-primary);">
+                                {{ course.price_display }} <small class="gold" style="font-size: 1rem;">ل.س</small>
+                            </div>
+                        {% endif %}
                     </div>
 
                     {% if has_access %}

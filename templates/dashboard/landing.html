@@ -179,10 +179,20 @@
                         <div class="course-body">
                             <span class="course-subject">{{ course.subject.name }}</span>
                             <h3 class="course-title">{{ course.title }}</h3>
-                            <div class="course-price-row">
-                                <span>السعر</span>
+                            <div class="course-price-row" style="flex-wrap: wrap; gap: 0.5rem; height: auto;">
+                                <span style="margin-left: auto;">السعر</span>
                                 {% if course.price_display %}
-                                    <strong>{{ course.price_display }} ل.س</strong>
+                                    {% course_discount_info course as discount %}
+                                    {% if discount.has_discount %}
+                                        <strong style="text-decoration: line-through; color: rgba(255,255,255,0.4); font-size: 0.85rem; font-weight: 500;">
+                                            {{ discount.original_price|currency_format }} ل.س
+                                        </strong>
+                                        <strong style="color: var(--brand-gold); font-size: 1.05rem; font-weight: 900;">
+                                            {{ discount.discounted_price|currency_format }} ل.س
+                                        </strong>
+                                    {% else %}
+                                        <strong>{{ course.price_display }} ل.س</strong>
+                                    {% endif %}
                                 {% else %}
                                     <strong>يحدد لاحقاً</strong>
                                 {% endif %}
