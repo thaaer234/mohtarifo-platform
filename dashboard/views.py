@@ -40,6 +40,7 @@ from .forms import (
     CourseCodeBatchForm,
     CourseCodeSaleForm,
     CourseCreateForm,
+    CourseEditForm,
     CourseLessonUploadForm,
     CourseUnitQuickForm,
     CoursePackageForm,
