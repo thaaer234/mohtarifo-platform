@@ -116,7 +116,37 @@
                         </div>
                         <a href="{% url 'dashboard:student_course_detail' course.id %}" class="btn btn-primary btn-glow w-full" style="padding: 1.25rem; font-size: 1.1rem;">دخول الدورة الآن</a>
                     {% else %}
-                        <a href="{{ CONTACT_WHATSAPP_URL }}?text={{ 'مرحبا، أريد شراء دورة: '|add:course.title|urlencode }}" class="btn btn-primary btn-glow w-full mb-4" style="padding: 1.25rem; font-size: 1.1rem;" target="_blank" rel="noopener">شراء عبر واتساب</a>
+                        {% if request.user.is_authenticated %}
+                            {% with user_profile=request.user.student_profile %}
+                                <a href="{{ CONTACT_WHATSAPP_URL }}?text={% filter urlencode %}مرحباً منصة محترفو التعليم 🌸
+أود شراء مادة مكثفة جديدة:
+
+- 📚 اسم المكثفة: {{ course.title }}
+- 🎓 مادة: {{ course.subject.name }}
+- 👨‍🏫 بإشراف الأستاذ: {{ course.instructor.get_full_name|default:course.instructor.username }}
+- 💰 السعر: {{ course.price_display }} ل.س
+
+📋 معلومات الطالب:
+- 👤 الاسم: {{ request.user.get_full_name|default:request.user.username }}
+- 📞 رقم الهاتف: {{ user_profile.phone|default:request.user.username }}
+- 🏫 الفرع الدراسي: {{ user_profile.track|default:"غير محدد" }}
+- 📍 المحافظة: {{ user_profile.governorate|default:"غير محدد" }}{% endfilter %}" class="btn btn-primary btn-glow w-full mb-4" style="padding: 1.25rem; font-size: 1.1rem;" target="_blank" rel="noopener">شراء عبر واتساب</a>
+                            {% endwith %}
+                        {% else %}
+                            <a href="{{ CONTACT_WHATSAPP_URL }}?text={% filter urlencode %}مرحباً منصة محترفو التعليم 🌸
+أود شراء مادة مكثفة جديدة:
+
+- 📚 اسم المكثفة: {{ course.title }}
+- 🎓 مادة: {{ course.subject.name }}
+- 👨‍🏫 بإشراف الأستاذ: {{ course.instructor.get_full_name|default:course.instructor.username }}
+- 💰 السعر: {{ course.price_display }} ل.س
+
+📋 معلومات الطالب:
+- 👤 الاسم: [يرجى كتابة اسمك الثلاثي هنا]
+- 📞 رقم الهاتف: [يرجى كتابة رقم هاتفك للتواصل]
+- 🏫 الفرع الدراسي: [علمي / أدبي]
+- 📍 المحافظة: [اسم محافظتك هنا]{% endfilter %}" class="btn btn-primary btn-glow w-full mb-4" style="padding: 1.25rem; font-size: 1.1rem;" target="_blank" rel="noopener">شراء عبر واتساب</a>
+                        {% endif %}
                         <a href="{% url 'dashboard:shop' %}#sales-centers" class="btn btn-secondary w-full mb-4" style="padding: 1rem;">مراكز البيع وطرق الدفع</a>
                         <p class="text-muted text-center" style="font-size: 0.8rem;">بعد الحصول على الكود، سجّل الدخول وأدخله من لوحة الطالب.</p>
                     {% endif %}
@@ -179,11 +209,45 @@
                 </h3>
                 <div class="premium-card" style="padding: 2.5rem !important;">
                     <div class="grid-3 gap-6">
-                        <a class="premium-card" href="{{ CONTACT_WHATSAPP_URL }}?text={{ 'مرحبا، أريد شراء دورة: '|add:course.title|urlencode }}" target="_blank" rel="noopener" style="padding: 1.5rem; text-decoration:none; background: var(--bg-surface-elevated);">
-                            <i data-lucide="message-circle" class="gold mb-3"></i>
-                            <strong class="block mb-2" style="color: var(--text-primary);">واتساب المنصة</strong>
-                            <span class="text-muted">{{ CONTACT_WHATSAPP_LOCAL }}</span>
-                        </a>
+                        {% if request.user.is_authenticated %}
+                            {% with user_profile=request.user.student_profile %}
+                                <a class="premium-card" href="{{ CONTACT_WHATSAPP_URL }}?text={% filter urlencode %}مرحباً منصة محترفو التعليم 🌸
+أود شراء مادة مكثفة جديدة:
+
+- 📚 اسم المكثفة: {{ course.title }}
+- 🎓 مادة: {{ course.subject.name }}
+- 👨‍🏫 بإشراف الأستاذ: {{ course.instructor.get_full_name|default:course.instructor.username }}
+- 💰 السعر: {{ course.price_display }} ل.س
+
+📋 معلومات الطالب:
+- 👤 الاسم: {{ request.user.get_full_name|default:request.user.username }}
+- 📞 رقم الهاتف: {{ user_profile.phone|default:request.user.username }}
+- 🏫 الفرع الدراسي: {{ user_profile.track|default:"غير محدد" }}
+- 📍 المحافظة: {{ user_profile.governorate|default:"غير محدد" }}{% endfilter %}" target="_blank" rel="noopener" style="padding: 1.5rem; text-decoration:none; background: var(--bg-surface-elevated);">
+                                    <i data-lucide="message-circle" class="gold mb-3"></i>
+                                    <strong class="block mb-2" style="color: var(--text-primary);">واتساب المنصة</strong>
+                                    <span class="text-muted">{{ CONTACT_WHATSAPP_LOCAL }}</span>
+                                </a>
+                            {% endwith %}
+                        {% else %}
+                            <a class="premium-card" href="{{ CONTACT_WHATSAPP_URL }}?text={% filter urlencode %}مرحباً منصة محترفو التعليم 🌸
+أود شراء مادة مكثفة جديدة:
+
+- 📚 اسم المكثفة: {{ course.title }}
+- 🎓 مادة: {{ course.subject.name }}
+- 👨‍🏫 بإشراف الأستاذ: {{ course.instructor.get_full_name|default:course.instructor.username }}
+- 💰 السعر: {{ course.price_display }} ل.س
+
+📋 معلومات الطالب:
+- 👤 الاسم: [يرجى كتابة اسمك الثلاثي هنا]
+- 📞 رقم الهاتف: [يرجى كتابة رقم هاتفك للتواصل]
+- 🏫 الفرع الدراسي: [علمي / أدبي]
+- 📍 المحافظة: [اسم محافظتك هنا]{% endfilter %}" target="_blank" rel="noopener" style="padding: 1.5rem; text-decoration:none; background: var(--bg-surface-elevated);">
+                                <i data-lucide="message-circle" class="gold mb-3"></i>
+                                <strong class="block mb-2" style="color: var(--text-primary);">واتساب المنصة</strong>
+                                <span class="text-muted">{{ CONTACT_WHATSAPP_LOCAL }}</span>
+                            </a>
+                        {% endif %}
                         {% for center in sales_centers %}
                             <div class="premium-card" style="padding: 1.5rem; background: var(--bg-surface-elevated);">
                                 <strong class="block mb-2" style="color: var(--text-primary);">{{ center.name }}</strong>
