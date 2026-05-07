@@ -2247,7 +2247,7 @@ def admin_billing(request):
 @admin_required
 def admin_discounts(request):
     from billing.models import DiscountRule
-    discounts = DiscountRule.objects.all().order_by("-created_at")
+    discounts = DiscountRule.objects.all().order_by("-id")
     return render(
         request,
         "dashboard/admin_discounts.html",
@@ -2302,6 +2302,71 @@ def admin_discount_delete(request, discount_id):
     discount.delete()
     messages.success(request, f"تم حذف الحسم '{name}' بنجاح.")
     return redirect("dashboard:admin_discounts")
+
+
+@admin_required
+def admin_center_invoice(request, center_id):
+    from billing.models import SalesCenter, AccessCodeBatch, AccessCode
+    from django.db.models import Sum
+    from django.utils import timezone
+    
+    center = get_object_or_404(SalesCenter.objects.select_related("institute"), id=center_id)
+    commission_percent = float(request.GET.get("commission", 15))
+    
+    batches = AccessCodeBatch.objects.filter(sales_center=center).select_related("course", "package").order_by("-created_at")
+    
+    detailed_batches = []
+    total_assigned = 0
+    total_sold = 0
+    total_potential = 0
+    total_earned = 0
+    
+    for batch in batches:
+        codes = AccessCode.objects.filter(batch=batch)
+        sold_codes = codes.filter(sale_status="sold")
+        sold_cnt = sold_codes.count()
+        earned_syp = (sold_codes.aggregate(total=Sum("sold_price_cents"))["total"] or 0) / 100
+        
+        std_price = 0
+        if batch.course and batch.course.price_cents:
+            std_price = batch.course.price_cents / 100
+        elif batch.package and batch.package.price_cents:
+            std_price = batch.package.price_cents / 100
+            
+        pot_val = batch.allocated_count * std_price
+        
+        detailed_batches.append({
+            "batch": batch,
+            "total_codes": batch.allocated_count,
+            "sold_count": sold_cnt,
+            "standard_price": std_price,
+            "potential_value": pot_val,
+            "actual_earned": earned_syp,
+            "center_share": earned_syp * commission_percent / 100,
+            "net_share": earned_syp * (100 - commission_percent) / 100,
+        })
+        
+        total_assigned += batch.allocated_count
+        total_sold += sold_cnt
+        total_potential += pot_val
+        total_earned += earned_syp
+        
+    total_center_commission = total_earned * commission_percent / 100
+    total_net_share = total_earned - total_center_commission
+    
+    context = {
+        "center": center,
+        "commission_percent": commission_percent,
+        "detailed_batches": detailed_batches,
+        "total_assigned": total_assigned,
+        "total_sold": total_sold,
+        "total_potential": total_potential,
+        "total_earned": total_earned,
+        "total_center_commission": total_center_commission,
+        "total_net_share": total_net_share,
+        "invoice_number": f"INV-{center.id}-{timezone.now().strftime('%Y%m%d')}",
+    }
+    return render(request, "dashboard/admin_center_invoice.html", context)
 
 
 def _filter_financial_rows():

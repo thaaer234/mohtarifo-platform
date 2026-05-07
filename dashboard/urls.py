@@ -56,6 +56,7 @@ urlpatterns = [
     path("admin-dashboard/billing/discounts/add/", views.admin_discount_add, name="admin_discount_add"),
     path("admin-dashboard/billing/discounts/<int:discount_id>/toggle/", views.admin_discount_toggle, name="admin_discount_toggle"),
     path("admin-dashboard/billing/discounts/<int:discount_id>/delete/", views.admin_discount_delete, name="admin_discount_delete"),
+    path("admin-dashboard/billing/centers/<int:center_id>/invoice/", views.admin_center_invoice, name="admin_center_invoice"),
     path("admin-dashboard/reports.xlsx", views.admin_financial_report_export, name="admin_financial_report_export"),
     path("admin-dashboard/packages/report.xlsx", views.admin_packages_report_export, name="admin_packages_report_export"),
     path("admin-dashboard/courses/<int:course_id>/report.xlsx", views.admin_course_report_export, name="admin_course_report_export"),

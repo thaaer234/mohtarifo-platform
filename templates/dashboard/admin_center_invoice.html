@@ -1,0 +1,229 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}فاتورة مركز البيع | {{ center.name }}{% endblock %}
+
+{% block content %}
+<div class="admin-invoice-container reveal-up">
+    <!-- Non-printable Actions Header -->
+    <div class="no-print flex-between align-center mb-8 bg-surface p-6 rounded-2xl border border-border">
+        <div>
+            <span class="badge mb-2">إدارة الفواتير المالية</span>
+            <h1 class="text-2xl font-bold text-glow" style="color: var(--brand-gold);">فاتورة وحسابات مركز: {{ center.name }}</h1>
+        </div>
+        <div class="flex-center gap-4">
+            <!-- Commission Modifier Form -->
+            <div class="flex-center gap-2 bg-base px-4 py-2 rounded-xl border border-border">
+                <label for="commissionSelect" class="text-sm font-semibold" style="color: var(--text-muted); white-space: nowrap;">نسبة عمولة المركز (%):</label>
+                <select id="commissionSelect" class="bg-surface text-base border-none rounded px-3 py-1 font-bold" style="color: var(--brand-gold); outline: none; cursor: pointer;" onchange="updateCommission(this.value)">
+                    <option value="5" {% if commission_percent == 5 %}selected{% endif %}>5%</option>
+                    <option value="10" {% if commission_percent == 10 %}selected{% endif %}>10%</option>
+                    <option value="15" {% if commission_percent == 15 %}selected{% endif %}>15%</option>
+                    <option value="20" {% if commission_percent == 20 %}selected{% endif %}>20%</option>
+                    <option value="25" {% if commission_percent == 25 %}selected{% endif %}>25%</option>
+                    <option value="30" {% if commission_percent == 30 %}selected{% endif %}>30%</option>
+                    <option value="35" {% if commission_percent == 35 %}selected{% endif %}>35%</option>
+                    <option value="40" {% if commission_percent == 40 %}selected{% endif %}>40%</option>
+                    <option value="45" {% if commission_percent == 45 %}selected{% endif %}>45%</option>
+                    <option value="50" {% if commission_percent == 50 %}selected{% endif %}>50%</option>
+                </select>
+            </div>
+            
+            <button onclick="window.print()" class="btn btn-primary btn-glow" style="background: var(--brand-gold); color: var(--bg-base); border-color: var(--brand-gold);">
+                <i data-lucide="printer"></i> طباعة الفاتورة (أو حفظ PDF)
+            </button>
+            <a href="{% url 'dashboard:admin_billing' %}" class="btn btn-secondary">
+                <i data-lucide="arrow-left"></i> العودة للمركز المالي
+            </a>
+        </div>
+    </div>
+
+    <!-- Printable Invoice Sheet -->
+    <div class="invoice-sheet p-10 bg-surface rounded-3xl border border-border shadow-2xl relative overflow-hidden" id="printable-invoice">
+        <!-- Gold Accent Strip for printable paper -->
+        <div class="invoice-top-accent" style="height: 6px; background: linear-gradient(90deg, #d4af37, #f3e5ab); position: absolute; top: 0; left: 0; right: 0;"></div>
+        
+        <!-- Invoice Header -->
+        <div class="flex-between align-start mb-10 pb-8 border-b border-border">
+            <div>
+                <div class="flex-center gap-3 mb-4 justify-start">
+                    <img src="{% static 'logo.png' %}" alt="Logo" class="invoice-logo" style="height: 55px; filter: drop-shadow(0 0 8px rgba(212,175,55,0.3));">
+                    <div>
+                        <h2 class="text-2xl font-bold" style="color: var(--text-base); margin: 0; letter-spacing: 0.5px;">منصة محترفو التعليم</h2>
+                        <span style="color: var(--brand-gold); font-size: 0.85rem; font-weight: 700; letter-spacing: 1px;">MOHTARIFO PLATFORM</span>
+                    </div>
+                </div>
+                <p class="text-sm text-muted" style="max-width: 300px;">المنصة الأكاديمية الأولى في سورية لتقديم الخدمات التعليمية الاحترافية أونلاين.</p>
+            </div>
+            <div class="text-left">
+                <h1 class="text-4xl font-extrabold mb-2" style="color: var(--brand-gold); letter-spacing: 1px;">فاتورة محاسبة</h1>
+                <p class="text-sm text-muted" style="direction: ltr;"><strong>رقم الفاتورة:</strong> {{ invoice_number }}</p>
+                <p class="text-sm text-muted"><strong>تاريخ الإصدار:</strong> {% now "Y-m-d" %} | {% now "H:i" %}</p>
+            </div>
+        </div>
+
+        <!-- Billing Info Cards -->
+        <div class="grid grid-cols-2 gap-8 mb-10">
+            <div class="p-6 rounded-2xl bg-base border border-border">
+                <h3 class="text-lg font-bold mb-4" style="color: var(--brand-gold);"><i data-lucide="store" class="inline-block mr-1"></i> معلومات مركز البيع (المدين)</h3>
+                <p class="mb-2"><strong style="color: var(--text-base);">اسم المركز:</strong> {{ center.name }}</p>
+                <p class="mb-2"><strong style="color: var(--text-base);">المعهد المرتبط:</strong> {{ center.institute.name|default:"مستقل" }}</p>
+                {% if center.phone %}<p class="mb-2"><strong style="color: var(--text-base);">رقم الهاتف:</strong> {{ center.phone }}</p>{% endif %}
+                {% if center.address %}<p class="mb-2"><strong style="color: var(--text-base);">العنوان الكامل:</strong> {{ center.address }}</p>{% endif %}
+            </div>
+            <div class="p-6 rounded-2xl bg-base border border-border">
+                <h3 class="text-lg font-bold mb-4" style="color: var(--brand-gold);"><i data-lucide="calculator" class="inline-block mr-1"></i> ملخص المحاسبة المالية</h3>
+                <p class="mb-2"><strong>إجمالي الأكواد المستلمة:</strong> {{ total_assigned }} كود</p>
+                <p class="mb-2"><strong>إجمالي الأكواد المباعة:</strong> {{ total_sold }} كود</p>
+                <p class="mb-2"><strong>نسبة عمولة المركز المتفق عليها:</strong> <strong style="color: var(--brand-gold);">{{ commission_percent|floatformat:0 }}%</strong></p>
+            </div>
+        </div>
+
+        <!-- Detailed Batches Table -->
+        <h3 class="text-lg font-bold mb-4" style="color: var(--text-base);"><i data-lucide="list-ordered" class="inline-block mr-1"></i> تفاصيل دفعات الأكواد والتحصيلات</h3>
+        <div class="table-responsive mb-10">
+            <table class="admin-table text-sm">
+                <thead>
+                    <tr>
+                        <th>الدفعة الكودية / المادة الأكاديمية</th>
+                        <th class="text-center">إجمالي الأكواد</th>
+                        <th class="text-center">الأكواد المباعة</th>
+                        <th class="text-center">السعر الرسمي</th>
+                        <th class="text-center" style="color: var(--brand-gold);">الصندوق المتوقع</th>
+                        <th class="text-center" style="color: #34d399;">التحصيل الفعلي</th>
+                        <th class="text-center" style="color: #60a5fa;">عمولة المركز ({{ commission_percent|floatformat:0 }}%)</th>
+                        <th class="text-center" style="color: var(--brand-gold);">الصافي للمنصة/المعهد</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in detailed_batches %}
+                    <tr>
+                        <td>
+                            <strong>{{ item.batch.name }}</strong><br>
+                            <small class="text-muted">المادة: {{ item.batch.target_title }}</small>
+                        </td>
+                        <td class="text-center"><strong>{{ item.total_codes }}</strong></td>
+                        <td class="text-center"><span class="status-badge pending" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">{{ item.sold_count }} مباع</span></td>
+                        <td class="text-center">{{ item.standard_price|floatformat:0|intcomma }} ل.س</td>
+                        <td class="text-center" style="color: var(--brand-gold);">{{ item.potential_value|floatformat:0|intcomma }} ل.س</td>
+                        <td class="text-center" style="color: #34d399; font-weight: bold;">{{ item.actual_earned|floatformat:0|intcomma }} ل.س</td>
+                        <td class="text-center" style="color: #60a5fa;">{{ item.center_share|floatformat:0|intcomma }} ل.س</td>
+                        <td class="text-center" style="color: var(--brand-gold); font-weight: bold;">{{ item.net_share|floatformat:0|intcomma }} ل.س</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center p-8">لا توجد دفعات أكواد محاسبة مسجلة لهذا المركز.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Grand Financial Totals Summary -->
+        <div class="flex justify-end mb-12">
+            <div class="w-1/2 p-6 rounded-2xl bg-base border-2 border-border relative overflow-hidden">
+                <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--brand-gold);"></div>
+                <h3 class="text-lg font-extrabold mb-4 border-b border-border pb-2" style="color: var(--brand-gold);">التسوية المالية النهائية</h3>
+                
+                <div class="flex-between mb-3">
+                    <span class="text-muted">إجمالي تحصيلات الصندوق المتوقع:</span>
+                    <span class="font-bold">{{ total_potential|floatformat:0|intcomma }} ل.س</span>
+                </div>
+                <div class="flex-between mb-3">
+                    <span class="text-muted">إجمالي تحصيلات الصندوق الفعلي:</span>
+                    <span class="font-bold" style="color: #34d399;">{{ total_earned|floatformat:0|intcomma }} ل.س</span>
+                </div>
+                <div class="flex-between mb-3 border-b border-border pb-3">
+                    <span class="text-muted">المستقطع لعمولة المركز ({{ commission_percent|floatformat:0 }}%):</span>
+                    <span class="font-bold" style="color: #60a5fa;">- {{ total_center_commission|floatformat:0|intcomma }} ل.س</span>
+                </div>
+                <div class="flex-between pt-2">
+                    <span class="text-xl font-extrabold" style="color: var(--text-base);">الصافي المستحق للمعهد/المنصة:</span>
+                    <span class="text-2xl font-extrabold text-glow" style="color: var(--brand-gold);">{{ total_net_share|floatformat:0|intcomma }} ل.س</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Signature Block -->
+        <div class="grid grid-cols-3 gap-8 mt-12 pt-10 border-t border-border text-center">
+            <div>
+                <p class="text-sm font-semibold mb-10 text-muted">توقيع مسؤول مركز البيع</p>
+                <div class="w-48 h-px bg-border mx-auto"></div>
+                <p class="text-xs text-muted mt-2">الاسم والتاريخ</p>
+            </div>
+            <div>
+                <p class="text-sm font-semibold mb-10 text-muted">توقيع محاسب المعهد المرتبط</p>
+                <div class="w-48 h-px bg-border mx-auto"></div>
+                <p class="text-xs text-muted mt-2">الاسم والتاريخ</p>
+            </div>
+            <div>
+                <p class="text-sm font-semibold mb-10 text-muted">توقيع وختم إدارة المنصة</p>
+                <div class="w-48 h-px bg-border mx-auto"></div>
+                <p class="text-xs text-muted mt-2">الاسم والتاريخ</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Printing stylesheet rules */
+    @media print {
+        body {
+            background: #ffffff !important;
+            color: #000000 !important;
+        }
+        .no-print {
+            display: none !important;
+        }
+        .sidebar, .navbar, .admin-sidebar, .hub-header, .app-header {
+            display: none !important;
+        }
+        .admin-layout, .main-layout, .container, .admin-invoice-container {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        .invoice-sheet {
+            border: none !important;
+            box-shadow: none !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            padding: 20px !important;
+            margin: 0 !important;
+            width: 100% !important;
+        }
+        .admin-table {
+            border: 1px solid #ddd !important;
+        }
+        .admin-table th {
+            background-color: #f5f5f5 !important;
+            color: #000000 !important;
+            border-bottom: 2px solid #ddd !important;
+        }
+        .admin-table td {
+            border-bottom: 1px solid #ddd !important;
+            color: #000000 !important;
+        }
+        .bg-base, .bg-surface {
+            background-color: #ffffff !important;
+            border: 1px solid #eee !important;
+        }
+        .text-glow {
+            text-shadow: none !important;
+        }
+        strong, h1, h2, h3, .font-bold {
+            color: #000000 !important;
+        }
+    }
+</style>
+
+<script>
+    function updateCommission(val) {
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('commission', val);
+        window.location.search = urlParams.toString();
+    }
+</script>
+{% endblock %}
