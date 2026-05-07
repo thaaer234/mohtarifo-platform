@@ -1,5 +1,5 @@
 {% extends "dashboard/base.html" %}
-{% load static %}
+{% load static inline_static %}
 
 {% block title %}دورات الأستاذ {{ instructor.get_full_name }} | محترفو التعليم{% endblock %}
 {% block meta_description %}تصفح دورات الأستاذ {{ instructor.get_full_name|default:instructor.username }} على منصة محترفو التعليم: مكثفات ودروس منظمة لطلاب سوريا.{% endblock %}
@@ -34,13 +34,8 @@
     <header class="instructor-header-premium mb-16">
         <div class="container header-grid">
             <div class="inst-avatar-large">
-                {% if instructor_profile.avatar %}
-                    <img src="{{ instructor_profile.avatar.url }}" alt="{{ instructor.get_full_name }}">
-                {% else %}
-                    <div class="avatar-placeholder">
-                        <i data-lucide="user"></i>
-                    </div>
-                {% endif %}
+                {% instructor_cover_static_path instructor as instructor_cover %}
+                <img src="{% static instructor_cover %}" alt="{{ instructor.get_full_name|default:instructor.username }}">
             </div>
             <div class="inst-details">
                 <h1 class="inst-name-title mb-2">{{ instructor.get_full_name|default:instructor.username }}</h1>

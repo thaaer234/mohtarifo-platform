@@ -29,3 +29,9 @@ def static_data_uri(path):
         encoded = base64.b64encode(static_file.read()).decode('ascii')
 
     return mark_safe(f'data:{mime_type};base64,{encoded}')
+
+
+@register.simple_tag
+def instructor_cover_static_path(instructor):
+    instructor_name = (instructor.get_full_name() or instructor.username).strip()
+    return f"dashboard/course-covers/{instructor_name}.png"

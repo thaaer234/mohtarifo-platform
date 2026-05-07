@@ -1,5 +1,5 @@
 {% extends "dashboard/base.html" %}
-{% load static %}
+{% load static inline_static %}
 
 {% block title %}تعديل مدرس | محترفو التعليم{% endblock %}
 
@@ -8,11 +8,8 @@
     <header class="edit-hero">
         <div class="hero-profile">
             <div class="hero-avatar">
-                {% if instructor.instructor_profile.avatar %}
-                    <img src="{{ instructor.instructor_profile.avatar.url }}" alt="{{ instructor.get_full_name|default:instructor.username }}">
-                {% else %}
-                    <i data-lucide="user"></i>
-                {% endif %}
+                {% instructor_cover_static_path instructor as instructor_cover %}
+                <img src="{% static instructor_cover %}" alt="{{ instructor.get_full_name|default:instructor.username }}">
             </div>
             <div>
                 <div class="badge badge-gold mb-2">ملف المدرس</div>
