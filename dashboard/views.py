@@ -36,6 +36,7 @@ from learning.models import Course, CourseProgress, Lesson, LessonAttendance, Le
 
 from .forms import (
     CatalogSectionForm,
+    CourseCardMediaForm,
     CourseCodeBatchForm,
     CourseCodeSaleForm,
     CourseCreateForm,
@@ -134,7 +135,7 @@ def landing_page(request):
         
     courses = (
         courses_query
-        .select_related("subject", "instructor")
+        .select_related("subject", "instructor", "instructor__instructor_profile")
         .annotate(lessons_total=Count("units__lessons", distinct=True))
         .order_by("subject__name", "title")
     )
@@ -155,7 +156,7 @@ def landing_page(request):
 def shop_page(request):
     selected_kind = request.GET.get("kind", "")
     selected_track = request.GET.get("track", "")
-    courses_query = Course.objects.filter(status="published").select_related("subject", "instructor")
+    courses_query = Course.objects.filter(status="published").select_related("subject", "instructor", "instructor__instructor_profile")
     if selected_kind:
         courses_query = courses_query.filter(kind=selected_kind)
     if selected_track:
@@ -192,7 +193,7 @@ def device_logged_out_page(request):
 def public_course_detail(request, course_id):
     course = get_object_or_404(
         Course.objects.filter(status="published")
-        .select_related("subject", "instructor")
+        .select_related("subject", "instructor", "instructor__instructor_profile")
         .prefetch_related("units__lessons"),
         id=course_id,
     )
@@ -227,7 +228,7 @@ def public_course_detail(request, course_id):
 def thaaer_review(request):
     courses = (
         Course.objects.filter(status="published")
-        .select_related("subject", "instructor")
+        .select_related("subject", "instructor", "instructor__instructor_profile")
         .annotate(lessons_total=Count("units__lessons", distinct=True))
         .order_by("subject__name", "title")[:8]
     )
@@ -510,7 +511,7 @@ def register_view(request):
 @admin_required
 def admin_dashboard(request):
     courses = (
-        Course.objects.select_related("subject", "instructor")
+        Course.objects.select_related("subject", "instructor", "instructor__instructor_profile")
         .annotate(
             lessons_total=Count("units__lessons", distinct=True),
             codes_total=Count("access_codes", distinct=True),
@@ -615,7 +616,7 @@ def admin_catalog_manager(request):
     if selected_tab:
         courses = (
             Course.objects.filter(kind=selected_tab["kind"], academic_track=selected_tab["track"])
-            .select_related("subject", "instructor")
+            .select_related("subject", "instructor", "instructor__instructor_profile")
             .annotate(
                 lessons_total=Count("units__lessons", distinct=True),
                 codes_total=Count("access_codes", distinct=True),
@@ -1099,12 +1100,13 @@ def admin_system_backup(request):
 
 @admin_required
 def admin_course_control(request, course_id):
-    course = get_object_or_404(Course.objects.select_related("subject", "instructor").prefetch_related("units__lessons"), id=course_id)
+    course = get_object_or_404(Course.objects.select_related("subject", "instructor", "instructor__instructor_profile").prefetch_related("units__lessons"), id=course_id)
     batch_form = CourseCodeBatchForm(prefix="batch")
     import_form = CourseStudentImportForm(prefix="import", course=course)
     lesson_form = CourseLessonUploadForm(prefix="lesson", course=course)
     sale_form = CourseCodeSaleForm(prefix="sale", course=course)
     unit_form = CourseUnitQuickForm(prefix="unit")
+    media_form = CourseCardMediaForm(prefix="media", instance=course)
     if request.method == "POST":
         action = request.POST.get("action")
         if action == "create_batch":
@@ -1140,6 +1142,12 @@ def admin_course_control(request, course_id):
                 unit.course = course
                 unit.save()
                 messages.success(request, f"تم إنشاء الجلسة {unit.title}.")
+                return redirect("dashboard:admin_course_control", course_id=course.id)
+        elif action == "update_course_media":
+            media_form = CourseCardMediaForm(request.POST, request.FILES, prefix="media", instance=course)
+            if media_form.is_valid():
+                media_form.save()
+                messages.success(request, "تم تحديث غلاف كرت الدورة.")
                 return redirect("dashboard:admin_course_control", course_id=course.id)
         elif action == "sell_code":
             sale_form = CourseCodeSaleForm(request.POST, prefix="sale", course=course)
@@ -1246,6 +1254,7 @@ def admin_course_control(request, course_id):
             "lesson_form": lesson_form,
             "sale_form": sale_form,
             "unit_form": unit_form,
+            "media_form": media_form,
         },
     )
 
@@ -1283,7 +1292,7 @@ def instructor_dashboard(request):
 def _package_subject_groups(access_code, user, current_device):
     courses = (
         access_code.package.eligible_courses_queryset()
-        .select_related("subject", "instructor")
+        .select_related("subject", "instructor", "instructor__instructor_profile")
         .order_by("subject__name", "instructor__first_name", "title", "id")
     )
     groups_map = defaultdict(list)
@@ -1501,7 +1510,7 @@ def student_device_ping(request):
 def my_courses_page(request):
     current_device = _current_device_fingerprint(request)
     grants = _device_grants(request.user, current_device).select_related(
-        "course", "course__subject", "course__instructor", "lesson", "access_code"
+        "course", "course__subject", "course__instructor", "course__instructor__instructor_profile", "lesson", "access_code"
     ).order_by("-created_at")
     progress_map = {}
     for cp in CourseProgress.objects.filter(user=request.user):
@@ -1706,7 +1715,7 @@ def _available_sessions_for_user(user, device_fingerprint=None):
 @login_required
 def student_course_detail(request, course_id):
     current_device = _current_device_fingerprint(request)
-    course = get_object_or_404(Course.objects.select_related("subject", "instructor").prefetch_related("units__lessons"), id=course_id)
+    course = get_object_or_404(Course.objects.select_related("subject", "instructor", "instructor__instructor_profile").prefetch_related("units__lessons"), id=course_id)
     if not _device_grants(request.user, current_device).filter(course=course).exists():
         raise Http404("Course not found")
 
@@ -2108,7 +2117,7 @@ def _filter_financial_rows():
 
 def _course_financial_rows():
     rows = []
-    courses = Course.objects.select_related("subject", "instructor").order_by("academic_track", "kind", "subject__name", "title")
+    courses = Course.objects.select_related("subject", "instructor", "instructor__instructor_profile").order_by("academic_track", "kind", "subject__name", "title")
     for course in courses:
         codes = AccessCode.objects.filter(course=course)
         prints = AccessCodePrintLog.objects.filter(batch__course=course)
@@ -2235,7 +2244,7 @@ def admin_packages_report_export(request):
 
 @admin_required
 def admin_course_report_export(request, course_id):
-    course = get_object_or_404(Course.objects.select_related("subject", "instructor"), id=course_id)
+    course = get_object_or_404(Course.objects.select_related("subject", "instructor", "instructor__instructor_profile"), id=course_id)
     workbook = Workbook()
     summary = workbook.active
     summary.title = "summary"
@@ -2749,7 +2758,7 @@ def admin_content_hub(request):
             return redirect("dashboard:admin_content_hub")
 
     subjects = Subject.objects.annotate(courses_count=Count("courses")).order_by("name")
-    recent_courses = Course.objects.select_related("subject", "instructor").order_by("-created_at")[:20]
+    recent_courses = Course.objects.select_related("subject", "instructor", "instructor__instructor_profile").order_by("-created_at")[:20]
     
     return render(
         request,

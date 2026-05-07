@@ -81,6 +81,11 @@ class Course(models.Model):
         return f"{self.title} - {instructor}"
 
     @property
+    def instructor_cover_static_path(self):
+        instructor_name = (self.instructor.get_full_name() or self.instructor.username).strip()
+        return f"dashboard/course-covers/{instructor_name}.png"
+
+    @property
     def price_display(self):
         if not self.price_cents:
             return ""

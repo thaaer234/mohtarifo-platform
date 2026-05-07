@@ -145,6 +145,35 @@
         </div>
 
         <aside class="course-admin-side">
+            <article class="premium-card course-panel compact-panel" id="course-card-media">
+                <div class="badge badge-gold mb-3">غلاف الكرت</div>
+                <h3>غلاف الدورة</h3>
+                <div class="course-media-preview">
+                    <div>
+                        <span>الغلاف الحالي</span>
+                        {% if course.cover %}
+                            <img src="{{ course.cover.url }}" alt="{{ course.title }}">
+                        {% else %}
+                            <img src="{% static course.instructor_cover_static_path %}" alt="{{ course.title }}">
+                            <small class="text-muted">يتم استخدام ملف باسم الأستاذ من static/dashboard/course-covers/</small>
+                        {% endif %}
+                    </div>
+                </div>
+                <form method="post" enctype="multipart/form-data" class="stack-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_course_media">
+                    {% for field in media_form %}
+                        <div class="premium-field">
+                            <label>{{ field.label }}</label>
+                            <div class="input-glow-wrapper">{{ field }}</div>
+                            {% if field.help_text %}<small class="text-muted block mt-2">{{ field.help_text }}</small>{% endif %}
+                            {% for error in field.errors %}<p class="text-danger mt-2">{{ error }}</p>{% endfor %}
+                        </div>
+                    {% endfor %}
+                    <button class="btn btn-secondary w-full" type="submit">حفظ الغلاف</button>
+                </form>
+            </article>
+
             <article class="premium-card course-panel compact-panel" id="create-unit">
                 <div class="badge badge-gold mb-3">جلسة جديدة</div>
                 <h3>إنشاء جلسة</h3>
@@ -379,6 +408,33 @@
     }
     .course-panel { padding: 1.7rem !important; border-radius: 22px !important; }
     .compact-panel h3 { font-size: 1.2rem; margin: 0 0 1rem; }
+    .course-media-preview {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: .8rem;
+        margin-bottom: 1rem;
+    }
+    .course-media-preview div {
+        display: grid;
+        gap: .5rem;
+        min-height: 118px;
+        padding: .75rem;
+        border: 1px solid var(--border-light);
+        border-radius: 16px;
+        background: var(--bg-surface-elevated);
+    }
+    .course-media-preview span {
+        color: var(--text-muted);
+        font-size: .78rem;
+        font-weight: 800;
+    }
+    .course-media-preview img {
+        width: 100%;
+        height: 82px;
+        object-fit: contain;
+        border-radius: 12px;
+        background: rgba(0, 0, 0, .18);
+    }
     .panel-head {
         display: flex;
         align-items: center;

@@ -114,7 +114,6 @@ class CourseCreateForm(forms.ModelForm):
             "title",
             "description",
             "price_amount",
-            "teacher_photo",
             "cover",
             "status",
         ]
@@ -128,7 +127,6 @@ class CourseCreateForm(forms.ModelForm):
             "new_instructor_specialty": "اختصاص المدرس الجديد",
             "title": "اسم المكثفة أو الدورة",
             "description": "وصف مختصر",
-            "teacher_photo": "صورة المدرس",
             "cover": "غلاف اختياري",
             "status": "حالة النشر",
         }
@@ -145,7 +143,6 @@ class CourseCreateForm(forms.ModelForm):
         self.fields["instructor"].empty_label = "اختر مدرس موجود أو أضف مدرس جديد"
         self.fields["description"].required = False
         self.fields["cover"].required = False
-        self.fields["teacher_photo"].required = False
         self.fields["status"].initial = "draft"
 
     def clean(self):
@@ -206,6 +203,18 @@ class CourseCreateForm(forms.ModelForm):
             course.save()
             Unit.objects.get_or_create(course=course, title="الوحدة الأولى", defaults={"sort_order": 1})
         return course
+
+
+class CourseCardMediaForm(forms.ModelForm):
+    class Meta:
+        model = Course
+        fields = ["cover"]
+        labels = {
+            "cover": "غلاف كرت الدورة",
+        }
+        help_texts = {
+            "cover": "اختياري. إذا تركته فارغا سيتم استخدام صورة باسم الأستاذ من static/dashboard/course-covers/.",
+        }
 
 
 class CourseCodeBatchForm(forms.ModelForm):

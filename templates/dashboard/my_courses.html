@@ -31,14 +31,7 @@
                 {% if grant.course.cover %}
                     <img class="library-cover-img" src="{{ grant.course.cover.url }}" alt="Course">
                 {% else %}
-                    <div class="flex-center" style="width: 100%; height: 100%; background: var(--bg-surface-elevated); color: var(--text-muted);">
-                        <i data-lucide="book" style="width: 48px; height: 48px;"></i>
-                    </div>
-                {% endif %}
-                {% if grant.course.teacher_photo %}
-                    <img class="library-teacher-cutout" src="{{ grant.course.teacher_photo.url }}" alt="{{ grant.course.instructor.get_full_name|default:grant.course.instructor.username }}">
-                {% else %}
-                    <img class="library-teacher-cutout" src="{% static 'dashboard/images/teacher_labcoat.png' %}" alt="{{ grant.course.instructor.get_full_name|default:grant.course.instructor.username }}">
+                    <img class="library-cover-img" src="{% static grant.course.instructor_cover_static_path %}" alt="Course">
                 {% endif %}
                 <div class="badge badge-gold" style="position: absolute; top: 1.5rem; right: 1.5rem; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
                     {{ grant.get_source_display }}
@@ -93,7 +86,7 @@
         transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s ease, box-shadow 0.25s ease !important;
     }
     .premium-card:hover {
-        transform: translateY(-6px);
+        transform: none;
         border-color: var(--brand-gold-glow) !important;
         box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 0 20px rgba(var(--brand-gold-rgb), 0.1);
     }
@@ -111,14 +104,9 @@
         pointer-events: none;
     }
 
-    .library-cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .25s ease, filter .25s ease; z-index: 0; border-radius: var(--radius-md) var(--radius-md) 0 0; }
-    .library-teacher-cutout { position: absolute; left: 6%; bottom: -3px; z-index: 2; width: 42%; height: 112%; object-fit: contain; object-position: bottom center; filter: drop-shadow(0 10px 14px rgba(0,0,0,.3)); transition: transform .25s ease, filter .25s ease; pointer-events: none; }
+    .library-cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: none; z-index: 0; border-radius: var(--radius-md) var(--radius-md) 0 0; }
     
-    .premium-card:hover .library-cover-img { transform: scale(1.03); filter: brightness(0.9) saturate(1.05); }
-    .premium-card:hover .library-teacher-cutout { 
-        transform: translateY(-20px) scale(1.22);
-        filter: drop-shadow(0 15px 25px rgba(0,0,0,.45));
-    }
+    .premium-card:hover .library-cover-img { transform: none; filter: none; }
 
     .stretched-link::after {
         content: "";

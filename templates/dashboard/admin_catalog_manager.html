@@ -73,10 +73,7 @@
                             {% if course.cover %}
                                 <img src="{{ course.cover.url }}" alt="{{ course.title }}">
                             {% else %}
-                                <i data-lucide="book-open"></i>
-                            {% endif %}
-                            {% if course.teacher_photo %}
-                                <img class="teacher-mini" src="{{ course.teacher_photo.url }}" alt="{{ course.instructor.get_full_name|default:course.instructor.username }}">
+                                <img src="{% static course.instructor_cover_static_path %}" alt="{{ course.title }}">
                             {% endif %}
                         </div>
                         <div class="course-row-main">
@@ -150,7 +147,7 @@
             <ol>
                 <li>اختر القسم من الأعلى مثل مكثفات العلمي.</li>
                 <li>اضغط إضافة دورة داخل القسم.</li>
-                <li>اختر المادة والمدرس والكفر وصورة المدرس PNG.</li>
+                <li>اختر المادة والمدرس والكفر. إذا لم ترفع كفر للدورة سيتم استخدام صورة باسم المدرس من مجلد course-covers.</li>
                 <li>بعد الحفظ أضف الجلسات والأقسام والأكواد.</li>
             </ol>
             <a href="{% url 'dashboard:shop' %}" target="_blank" class="btn btn-secondary w-full">معاينة صفحة التسوق</a>
@@ -254,15 +251,6 @@
         color: var(--text-muted);
     }
     .course-cover-mini > img:first-child { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
-    .teacher-mini {
-        position: absolute;
-        left: 4px;
-        bottom: 0;
-        width: 42px;
-        height: 72px;
-        object-fit: contain;
-        filter: drop-shadow(0 10px 12px rgba(0,0,0,.35));
-    }
     .course-row-title { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; margin-bottom: .35rem; }
     .course-row-title strong { color: var(--text-primary); font-size: 1rem; }
     .course-row-meta { display: flex; gap: .7rem; flex-wrap: wrap; color: var(--text-muted); font-size: .82rem; }
@@ -313,7 +301,6 @@
         .catalog-course-row,
         .catalog-inline-form { grid-template-columns: 1fr; }
         .course-cover-mini { width: 100%; height: 150px; }
-        .teacher-mini { width: 82px; height: 140px; }
         .course-row-actions { width: 100%; }
         .course-row-actions a { flex: 1; }
     }

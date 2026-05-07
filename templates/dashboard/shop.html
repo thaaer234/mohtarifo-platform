@@ -43,17 +43,12 @@
 
     <section class="shop-course-grid mb-16">
         {% for course in courses %}
-            <article class="course-card-premium course-card-with-teacher reveal-up">
+            <article class="course-card-premium reveal-up">
                 <div class="course-thumb course-layered-thumb">
                     {% if course.cover %}
                         <img class="course-cover-img" src="{{ course.cover.url }}" alt="{{ course.title }}">
                     {% else %}
-                        <img class="course-cover-img" src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=600" alt="{{ course.title }}">
-                    {% endif %}
-                    {% if course.teacher_photo %}
-                        <img class="course-teacher-cutout" src="{{ course.teacher_photo.url }}" alt="{{ course.instructor.get_full_name|default:course.instructor.username }}">
-                    {% else %}
-                        <img class="course-teacher-cutout" src="{% static 'dashboard/images/teacher_labcoat.png' %}" alt="{{ course.instructor.get_full_name|default:course.instructor.username }}">
+                        <img class="course-cover-img" src="{% static course.instructor_cover_static_path %}" alt="{{ course.title }}">
                     {% endif %}
                     <div class="thumb-badges">
                         <span class="badge-type">{{ course.get_kind_display }}</span>
@@ -211,14 +206,14 @@
         background: var(--bg-surface);
         border: 1px solid var(--border-light);
         border-radius: var(--radius-md);
-        overflow: visible; /* To allow teacher cutout animation to pop out */
+        overflow: visible;
         display: flex;
         flex-direction: column;
         min-height: 100%;
         transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s ease, box-shadow 0.25s ease;
     }
     .course-card-premium:hover {
-        transform: translateY(-6px);
+        transform: none;
         border-color: var(--brand-gold-glow);
         box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 0 20px rgba(var(--brand-gold-rgb), 0.1);
     }
@@ -231,7 +226,6 @@
         cursor: pointer;
     }
 
-    .course-card-with-teacher .course-body { border-radius: 0 0 var(--radius-md) var(--radius-md); position: relative; }
     .course-layered-thumb {
         height: 255px;
         overflow: visible;
@@ -245,9 +239,9 @@
         content: "";
         position: absolute;
         inset: auto 0 0;
-        height: 52%;
-        background: linear-gradient(0deg, rgba(0,0,0,.72), transparent);
-        z-index: 1;
+        height: 58%;
+        background: linear-gradient(0deg, rgba(0,0,0,.76), transparent);
+        z-index: 2;
         border-radius: inherit;
         pointer-events: none;
     }
@@ -259,33 +253,15 @@
         width: 100%;
         height: 100%;
         object-fit: cover;
-        transition: transform .25s ease, filter .25s ease;
+        transition: none;
         border-radius: var(--radius-md) var(--radius-md) 0 0;
     }
-    .course-teacher-cutout {
-        position: absolute;
-        left: 4%;
-        bottom: -4px;
-        z-index: 3;
-        width: min(52%, 190px);
-        height: 116%;
-        object-fit: contain;
-        object-position: bottom center;
-        transform-origin: bottom center;
-        filter: drop-shadow(0 10px 14px rgba(0,0,0,.3));
-        transition: transform .25s ease, filter .25s ease;
-        pointer-events: none;
-    }
-    .course-card-with-teacher:hover .course-cover-img { 
-        transform: scale(1.03); 
-        filter: brightness(0.9) saturate(1.05); 
-    }
-    .course-card-with-teacher:hover .course-teacher-cutout { 
-        transform: translateY(-20px) scale(1.22);
-        filter: drop-shadow(0 15px 25px rgba(0,0,0,.45));
+    .course-card-premium:hover .course-cover-img {
+        transform: none;
+        filter: none;
     }
     
-    .course-card-with-teacher .thumb-badges { z-index: 4; }
+    .thumb-badges { z-index: 6; }
     
     .shop-course-body {
         display: flex;
@@ -294,7 +270,7 @@
         padding: 1.8rem;
         background: var(--bg-surface);
         border-radius: 0 0 var(--radius-md) var(--radius-md);
-        z-index: 2; /* Keeps text legible and interactive */
+        z-index: 5;
     }
     .course-subject {
         color: var(--brand-gold-light);
@@ -418,7 +394,6 @@
         .shop-course-grid,
         .shop-contact-grid { grid-template-columns: 1fr; }
         .course-layered-thumb { height: 230px; }
-        .course-teacher-cutout { width: min(50%, 165px); height: 110%; }
         .shop-course-actions { flex-direction: column; }
         .shop-sales-section { padding: 1.5rem; }
     }

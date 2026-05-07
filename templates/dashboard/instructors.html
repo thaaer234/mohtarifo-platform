@@ -17,15 +17,9 @@
                 {% if instructor.instructor_profile.avatar %}
                     <img src="{{ instructor.instructor_profile.avatar.url }}" alt="{{ instructor.get_full_name }}" class="inst-img">
                 {% else %}
-                    {% with first_course=instructor.courses.first %}
-                        {% if first_course.teacher_photo %}
-                            <img src="{{ first_course.teacher_photo.url }}" alt="{{ instructor.get_full_name }}" class="inst-img">
-                        {% else %}
-                            <div class="inst-img-placeholder">
-                                <i data-lucide="user"></i>
-                            </div>
-                        {% endif %}
-                    {% endwith %}
+                    <div class="inst-img-placeholder">
+                        <i data-lucide="user"></i>
+                    </div>
                 {% endif %}
                 <div class="inst-badge">محترف</div>
             </div>
