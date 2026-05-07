@@ -110,7 +110,20 @@
                     <tr style="transition: all 0.2s ease; border-bottom: 1px solid rgba(255,255,255,0.03);">
                         <td style="padding: 1.25rem;">
                             <strong style="color: var(--text-primary); font-size: 0.95rem;">{{ item.batch.name }}</strong><br>
-                            <small class="text-muted" style="margin-top: 0.25rem; display: inline-block; color: var(--text-muted);">المادة: {{ item.batch.target_title }}</small>
+                            <small class="text-muted" style="margin-top: 0.25rem; display: block; color: var(--text-muted); font-weight: 500;">
+                                <strong style="color: var(--brand-gold);">المادة:</strong> {{ item.batch.target_title }}
+                                {% if item.batch.course %}
+                                    <span style="margin: 0 0.5rem; color: rgba(255,255,255,0.15);">|</span>
+                                    <strong style="color: var(--brand-gold);">الفرع:</strong> {{ item.batch.course.get_academic_track_display }}
+                                    <span style="margin: 0 0.5rem; color: rgba(255,255,255,0.15);">|</span>
+                                    <strong style="color: var(--brand-gold);">المدرس:</strong> {{ item.batch.course.instructor.get_full_name|default:item.batch.course.instructor.username }}
+                                {% elif item.batch.package %}
+                                    <span style="margin: 0 0.5rem; color: rgba(255,255,255,0.15);">|</span>
+                                    <strong style="color: var(--brand-gold);">الفرع:</strong> {{ item.batch.package.get_package_track_display }}
+                                    <span style="margin: 0 0.5rem; color: rgba(255,255,255,0.15);">|</span>
+                                    <strong style="color: var(--brand-gold);">المدرس:</strong> باقة مشتركة
+                                {% endif %}
+                            </small>
                         </td>
                         <td class="text-center" style="text-align: center; padding: 1.25rem;"><strong>{{ item.total_codes }}</strong></td>
                         <td class="text-center" style="text-align: center; padding: 1.25rem;">
