@@ -35,3 +35,17 @@ def static_data_uri(path):
 def instructor_cover_static_path(instructor):
     instructor_name = (instructor.get_full_name() or instructor.username).strip()
     return f"dashboard/course-covers/{instructor_name}.png"
+
+
+@register.filter
+def currency_format(value):
+    try:
+        if value is None:
+            return "0"
+        val = float(value)
+        if val.is_integer():
+            return f"{int(val):,}"
+        return f"{val:,.2f}"
+    except (ValueError, TypeError):
+        return value
+
