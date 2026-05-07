@@ -37,7 +37,25 @@
                     
                     <div class="form-group mb-4">
                         <label for="discount_percent" class="form-label">نسبة الخصم (%)</label>
-                        <input type="number" id="discount_percent" name="discount_percent" class="form-control" placeholder="مثال: 20، 30، 50" min="1" max="100" required>
+                        <input type="number" id="discount_percent" name="discount_percent" class="form-control" placeholder="مثال: 20، 30، 50" min="1" max="100">
+                        <small class="text-muted">أو حدد قيمة حسم مالية ثابتة بالأسفل</small>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label for="discount_amount_syp" class="form-label">قيمة الحسم بالليرة السورية (ل.س)</label>
+                        <input type="number" id="discount_amount_syp" name="discount_amount_syp" class="form-control" placeholder="مثال: 10000، 25000">
+                        <small class="text-muted">اتركها فارغة أو 0 إذا كنت تستخدم نسبة الخصم</small>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label for="academic_track" class="form-label">الفرع الدراسي المستهدف</label>
+                        <select id="academic_track" name="academic_track" class="form-control" style="appearance: none; background: rgba(255,255,255,0.02); border: 1px solid var(--border-light); color: var(--text-primary); padding-right: 2.5rem; background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23c5a059%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><polyline points=%226 9 12 15 18 9%22></polyline></svg>'); background-repeat: no-repeat; background-position: left 1rem center; background-size: 1.2rem;">
+                            <option value="all" style="background-color: #1a1a1a;">كافة الفروع والدورات</option>
+                            <option value="scientific" style="background-color: #1a1a1a;">علمي</option>
+                            <option value="literary" style="background-color: #1a1a1a;">أدبي</option>
+                            <option value="ninth" style="background-color: #1a1a1a;">تاسع</option>
+                            <option value="general" style="background-color: #1a1a1a;">مشترك (عام)</option>
+                        </select>
                     </div>
 
                     <div class="form-group mb-4">
@@ -76,7 +94,8 @@
                         <thead>
                             <tr>
                                 <th>اسم الحسم</th>
-                                <th class="text-center">النسبة</th>
+                                <th class="text-center">قيمة / نسبة الحسم</th>
+                                <th class="text-center">الفرع المستهدف</th>
                                 <th>تاريخ البدء</th>
                                 <th>تاريخ الانتهاء</th>
                                 <th class="text-center">الحالة</th>
@@ -87,7 +106,16 @@
                             {% for discount in discounts %}
                             <tr>
                                 <td><strong>{{ discount.name }}</strong></td>
-                                <td class="text-center"><span class="badge badge-gold" style="font-size: 1rem; padding: 0.25rem 0.75rem;">{{ discount.discount_percent }}%</span></td>
+                                <td class="text-center">
+                                    {% if discount.discount_amount_syp > 0 %}
+                                        <span class="badge badge-gold" style="font-size: 0.9rem; padding: 0.25rem 0.75rem; background-color: var(--brand-gold); color: var(--bg-base);">{{ discount.discount_amount_syp }} ل.س</span>
+                                    {% else %}
+                                        <span class="badge badge-gold" style="font-size: 0.9rem; padding: 0.25rem 0.75rem;">{{ discount.discount_percent }}%</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <span class="status-badge" style="background: rgba(197, 160, 89, 0.1); color: var(--brand-gold); font-size: 0.85rem; padding: 0.25rem 0.5rem; border: 1px solid rgba(197, 160, 89, 0.2);">{{ discount.get_academic_track_display }}</span>
+                                </td>
                                 <td>{{ discount.starts_at|date:"Y-m-d H:i"|default:"فوري" }}</td>
                                 <td>{{ discount.expires_at|date:"Y-m-d H:i"|default:"مفتوح" }}</td>
                                 <td class="text-center">
@@ -110,7 +138,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="6" class="text-center p-8 text-muted">لا توجد أي حسومات مضافة حالياً. أنشئ حسماً من العمود الأيمن!</td>
+                                <td colspan="7" class="text-center p-8 text-muted">لا توجد أي حسومات مضافة حالياً. أنشئ حسماً من العمود الأيمن!</td>
                             </tr>
                             {% endfor %}
                         </tbody>

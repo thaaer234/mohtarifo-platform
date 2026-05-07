@@ -336,16 +336,27 @@ class UserDevice(models.Model):
 
 
 class DiscountRule(models.Model):
+    TRACK_CHOICES = [
+        ("all", "كافة الفروع"),
+        ("scientific", "علمي"),
+        ("literary", "أدبي"),
+        ("ninth", "تاسع"),
+        ("general", "مشترك"),
+    ]
     name = models.CharField(max_length=160, verbose_name="اسم الحسم")
-    starts_at = models.DateTimeField(verbose_name="تاريخ البدء")
-    expires_at = models.DateTimeField(verbose_name="تاريخ الانتهاء")
+    starts_at = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ البدء")
+    expires_at = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ الانتهاء")
     discount_percent = models.PositiveIntegerField(default=0, verbose_name="نسبة الحسم (%)")
+    discount_amount_syp = models.PositiveIntegerField(default=0, verbose_name="قيمة الحسم بالليرة (ل.س)")
+    academic_track = models.CharField(max_length=24, choices=TRACK_CHOICES, default="all", verbose_name="الفرع المستهدف")
     is_active = models.BooleanField(default=True, verbose_name="نشط")
 
     class Meta:
         verbose_name = "قاعدة حسم"
         verbose_name_plural = "قواعد الحسومات"
-        ordering = ["-starts_at"]
+        ordering = ["-id"]
 
     def __str__(self):
+        if self.discount_amount_syp > 0:
+            return f"{self.name} ({self.discount_amount_syp} ل.س)"
         return f"{self.name} ({self.discount_percent}%)"

@@ -1231,17 +1231,13 @@ def admin_course_control(request, course_id):
                         access_code.price_reason = "تحديد يدوي من الإدارة"
                     else:
                         base_price = course.price_cents or 0
-                        from billing.models import DiscountRule
-                        now = timezone.now()
-                        active_discount = DiscountRule.objects.filter(
-                            is_active=True,
-                            starts_at__lte=now,
-                            expires_at__gte=now
-                        ).order_by("-discount_percent").first()
-                        if active_discount and base_price > 0:
-                            discount_amount = (base_price * active_discount.discount_percent) // 100
-                            access_code.sold_price_cents = base_price - discount_amount
-                            access_code.price_reason = f"حسم {active_discount.discount_percent}% بمناسبة {active_discount.name}"
+                        best_rule, max_discount = _best_active_discount_for_price(base_price, course=course)
+                        if best_rule and base_price > 0:
+                            access_code.sold_price_cents = base_price - max_discount
+                            if best_rule.discount_percent > 0:
+                                access_code.price_reason = f"حسم {best_rule.discount_percent}% بمناسبة {best_rule.name}"
+                            else:
+                                access_code.price_reason = f"حسم بقيمة {best_rule.discount_amount_syp} ل.س بمناسبة {best_rule.name}"
                         else:
                             access_code.sold_price_cents = base_price
                             access_code.price_reason = "سعر كامل"
@@ -1448,16 +1444,13 @@ def _redeem_package_choices(request, access_code, current_device, auto_select=Fa
         if not access_code.is_free_code and access_code.package:
             base_price = access_code.package.price_cents or 0
             if base_price > 0:
-                from billing.models import DiscountRule
-                active_discount = DiscountRule.objects.filter(
-                    is_active=True,
-                    starts_at__lte=now,
-                    expires_at__gte=now
-                ).order_by("-discount_percent").first()
-                if active_discount:
-                    discount_amount = (base_price * active_discount.discount_percent) // 100
-                    access_code.sold_price_cents = base_price - discount_amount
-                    access_code.price_reason = f"حسم {active_discount.discount_percent}% بمناسبة {active_discount.name}"
+                best_rule, max_discount = _best_active_discount_for_price(base_price, package=access_code.package)
+                if best_rule:
+                    access_code.sold_price_cents = base_price - max_discount
+                    if best_rule.discount_percent > 0:
+                        access_code.price_reason = f"حسم {best_rule.discount_percent}% بمناسبة {best_rule.name}"
+                    else:
+                        access_code.price_reason = f"حسم بقيمة {best_rule.discount_amount_syp} ل.س بمناسبة {best_rule.name}"
                 else:
                     access_code.sold_price_cents = base_price
                     access_code.price_reason = "سعر كامل"
@@ -1543,17 +1536,13 @@ def student_dashboard(request):
                                     if not base_price and access_code.course:
                                         base_price = access_code.course.price_cents or 0
                                 if base_price > 0:
-                                    from billing.models import DiscountRule
-                                    now = timezone.now()
-                                    active_discount = DiscountRule.objects.filter(
-                                        is_active=True,
-                                        starts_at__lte=now,
-                                        expires_at__gte=now
-                                    ).order_by("-discount_percent").first()
-                                    if active_discount:
-                                        discount_amount = (base_price * active_discount.discount_percent) // 100
-                                        access_code.sold_price_cents = base_price - discount_amount
-                                        access_code.price_reason = f"حسم {active_discount.discount_percent}% بمناسبة {active_discount.name}"
+                                    best_rule, max_discount = _best_active_discount_for_price(base_price, course=access_code.course)
+                                    if best_rule:
+                                        access_code.sold_price_cents = base_price - max_discount
+                                        if best_rule.discount_percent > 0:
+                                            access_code.price_reason = f"حسم {best_rule.discount_percent}% بمناسبة {best_rule.name}"
+                                        else:
+                                            access_code.price_reason = f"حسم بقيمة {best_rule.discount_amount_syp} ل.س بمناسبة {best_rule.name}"
                                     else:
                                         access_code.sold_price_cents = base_price
                                         access_code.price_reason = "سعر كامل"
@@ -2098,6 +2087,44 @@ def _active_access_grants(user):
     )
 
 
+def _best_active_discount_for_price(base_price_cents, course=None, package=None):
+    from billing.models import DiscountRule
+    from django.utils import timezone
+    from django.db.models import Q
+    now = timezone.now()
+    
+    target_track = "all"
+    if course:
+        target_track = course.academic_track
+    elif package:
+        target_track = package.package_track
+        
+    rules = DiscountRule.objects.filter(
+        is_active=True,
+    ).filter(
+        Q(starts_at__isnull=True) | Q(starts_at__lte=now),
+        Q(expires_at__isnull=True) | Q(expires_at__gte=now)
+    )
+    if target_track != "all":
+        rules = rules.filter(Q(academic_track="all") | Q(academic_track=target_track))
+        
+    best_rule = None
+    max_discount_cents = 0
+    
+    for rule in rules:
+        discount_cents = 0
+        if rule.discount_percent > 0:
+            discount_cents = (base_price_cents * rule.discount_percent) // 100
+        elif rule.discount_amount_syp > 0:
+            discount_cents = rule.discount_amount_syp * 100
+            
+        if discount_cents > max_discount_cents:
+            max_discount_cents = min(discount_cents, base_price_cents)
+            best_rule = rule
+            
+    return best_rule, max_discount_cents
+
+
 def _access_code_matches_student(access_code, user):
     if not access_code.assigned_student_phone and not access_code.assigned_student_name:
         return True
@@ -2262,16 +2289,20 @@ def admin_discount_add(request):
         from django.utils.dateparse import parse_datetime
         
         name = request.POST.get("name")
-        percent = request.POST.get("discount_percent")
+        percent = request.POST.get("discount_percent") or 0
+        amount_syp = request.POST.get("discount_amount_syp") or 0
+        academic_track = request.POST.get("academic_track") or "all"
         starts_at = parse_datetime(request.POST.get("starts_at"))
         expires_at = parse_datetime(request.POST.get("expires_at"))
         is_active = request.POST.get("is_active") in ["on", "true", "1"]
         
-        if name and percent:
+        if name and (percent or amount_syp):
             try:
                 DiscountRule.objects.create(
                     name=name,
-                    discount_percent=int(percent),
+                    discount_percent=int(percent) if percent else 0,
+                    discount_amount_syp=int(amount_syp) if amount_syp else 0,
+                    academic_track=academic_track,
                     starts_at=starts_at,
                     expires_at=expires_at,
                     is_active=is_active,
@@ -2280,7 +2311,7 @@ def admin_discount_add(request):
             except Exception as e:
                 messages.error(request, f"خطأ أثناء إضافة الحسم: {str(e)}")
         else:
-            messages.error(request, "يرجى ملء جميع الحقول المطلوبة.")
+            messages.error(request, "يرجى كتابة اسم الحسم وتحديد النسبة أو القيمة المالية.")
     return redirect("dashboard:admin_discounts")
 
 
@@ -2987,17 +3018,13 @@ def admin_packages(request):
                         access_code.price_reason = "تحديد يدوي من الإدارة"
                     else:
                         base_price = access_code.package.price_cents if access_code.package else 0
-                        from billing.models import DiscountRule
-                        now = timezone.now()
-                        active_discount = DiscountRule.objects.filter(
-                            is_active=True,
-                            starts_at__lte=now,
-                            expires_at__gte=now
-                        ).order_by("-discount_percent").first()
-                        if active_discount and base_price > 0:
-                            discount_amount = (base_price * active_discount.discount_percent) // 100
-                            access_code.sold_price_cents = base_price - discount_amount
-                            access_code.price_reason = f"حسم {active_discount.discount_percent}% بمناسبة {active_discount.name}"
+                        best_rule, max_discount = _best_active_discount_for_price(base_price, package=access_code.package)
+                        if best_rule and base_price > 0:
+                            access_code.sold_price_cents = base_price - max_discount
+                            if best_rule.discount_percent > 0:
+                                access_code.price_reason = f"حسم {best_rule.discount_percent}% بمناسبة {best_rule.name}"
+                            else:
+                                access_code.price_reason = f"حسم بقيمة {best_rule.discount_amount_syp} ل.س بمناسبة {best_rule.name}"
                         else:
                             access_code.sold_price_cents = base_price
                             access_code.price_reason = "سعر كامل"
