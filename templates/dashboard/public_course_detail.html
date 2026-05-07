@@ -159,8 +159,8 @@
                                 <div style="padding: 0 2.5rem 2rem;">
                                     <div class="flex-column gap-1" style="border-top: 1px solid var(--border-light); padding-top: 1.5rem;">
                                         {% for lesson in unit.lessons.all %}
-                                            <div class="flex-center gap-4 py-3" style="justify-content: flex-start; color: var(--text-muted); font-size: 1rem;">
-                                                <i data-lucide="lock" style="width: 14px; opacity: 0.4;"></i>
+                                            <div class="lesson-item-lock">
+                                                <i data-lucide="lock" style="width: 14px;"></i>
                                                 <span>{{ lesson.title }}</span>
                                             </div>
                                         {% endfor %}
@@ -207,28 +207,220 @@
 </div>
 
 <style>
+    /* Premium Grids and Layouts */
+    .public-course-hero-grid {
+        display: grid;
+        grid-template-columns: 1.6fr 1.4fr;
+        gap: 4rem;
+        align-items: center;
+    }
+
+    .public-course-content-grid {
+        display: grid;
+        grid-template-columns: 1.9fr 1.1fr;
+        gap: 4rem;
+        align-items: start;
+    }
+
+    /* Floating CTA Card Positioning */
+    .public-course-cta-slot {
+        position: sticky;
+        top: 110px;
+        align-self: start;
+        z-index: 100;
+        transition: var(--transition-smooth);
+    }
+
+    .cta-card-floating {
+        background: var(--glass-bg) !important;
+        backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+        -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+        border: 1px solid var(--glass-border) !important;
+        border-radius: 32px !important;
+        padding: 2.5rem !important;
+        box-shadow: var(--shadow-glow) !important;
+        transition: var(--transition-smooth);
+    }
+
+    .cta-card-floating:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 25px 50px rgba(var(--brand-gold-rgb), 0.2) !important;
+        border-color: rgba(var(--brand-gold-rgb), 0.4) !important;
+    }
+
+    /* Course Cover Stylings */
     .public-course-cover {
         position: relative;
         overflow: hidden;
         aspect-ratio: 16 / 9;
-        border-radius: 20px;
+        border-radius: 24px;
         margin-bottom: 2rem;
         border: 1px solid var(--border-light);
         background: var(--bg-surface-elevated);
+        box-shadow: var(--shadow-soft);
+        transition: var(--transition-smooth);
     }
+
+    .public-course-cover::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
+        opacity: 0;
+        transition: var(--transition-smooth);
+    }
+
+    .cta-card-floating:hover .public-course-cover::after {
+        opacity: 1;
+    }
+
     .public-course-cover img {
         width: 100%;
         height: 100%;
         display: block;
         object-fit: cover;
+        transition: var(--transition-smooth);
     }
+
+    .cta-card-floating:hover .public-course-cover img {
+        transform: scale(1.05);
+    }
+
+    /* Video Embed Style */
+    iframe {
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        transition: var(--transition-smooth);
+    }
+
+    /* Premium Typography Glares */
+    h1 {
+        background: linear-gradient(135deg, var(--text-primary) 30%, var(--brand-gold) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: fadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    /* Custom Accordion (Curriculum) */
+    .premium-accordion {
+        background: var(--bg-surface);
+        transition: var(--transition-smooth);
+    }
+
+    .premium-accordion summary {
+        padding: 1.75rem 2.5rem;
+        cursor: pointer;
+        list-style: none;
+        outline: none;
+        user-select: none;
+        transition: var(--transition-smooth);
+        border-radius: var(--radius-md);
+    }
+
+    .premium-accordion summary:hover {
+        background: rgba(var(--brand-gold-rgb), 0.03);
+    }
+
+    .premium-accordion summary strong {
+        font-size: 1.15rem;
+        color: var(--text-primary);
+        transition: var(--transition-smooth);
+    }
+
+    .premium-accordion summary:hover strong {
+        color: var(--brand-gold);
+    }
+
+    .premium-accordion summary i {
+        color: var(--text-muted);
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s;
+    }
+
+    .premium-accordion summary:hover i {
+        color: var(--brand-gold);
+    }
+
+    details[open] .premium-accordion summary {
+        background: rgba(var(--brand-gold-rgb), 0.05);
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    details[open] summary strong {
+        color: var(--brand-gold);
+    }
+
+    details[open] summary i {
+        transform: rotate(180deg);
+        color: var(--brand-gold);
+    }
+
+    /* Lesson Items inside Curriculum */
+    .lesson-item-lock {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+        padding: 1rem 2rem;
+        color: var(--text-secondary);
+        font-size: 1.05rem;
+        border-radius: var(--radius-sm);
+        transition: var(--transition-smooth);
+    }
+
+    .lesson-item-lock:hover {
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text-primary);
+        transform: translateX(-5px);
+    }
+
+    .dark-theme .lesson-item-lock:hover {
+        background: rgba(255, 255, 255, 0.01);
+    }
+
+    .lesson-item-lock i {
+        opacity: 0.5;
+        transition: var(--transition-smooth);
+    }
+
+    .lesson-item-lock:hover i {
+        color: var(--brand-gold);
+        opacity: 1;
+        transform: scale(1.1);
+    }
+
+    /* Glow Badges */
+    .badge-gold {
+        background: linear-gradient(135deg, rgba(var(--brand-gold-rgb), 0.15), rgba(var(--brand-gold-rgb), 0.05)) !important;
+        border: 1px solid rgba(var(--brand-gold-rgb), 0.3) !important;
+        color: var(--brand-gold-light) !important;
+        box-shadow: 0 4px 15px rgba(var(--brand-gold-rgb), 0.1);
+    }
+
+    /* RESPONSIVE BREAKPOINTS */
     @media (max-width: 1100px) {
         .public-course-hero-grid,
-        .public-course-content-grid { grid-template-columns: 1fr !important; gap: 3rem !important; }
-        .cta-card-floating { position: static !important; margin-top: 0; }
+        .public-course-content-grid {
+            grid-template-columns: 1fr !important;
+            gap: 3rem !important;
+        }
+        
+        .public-course-cta-slot {
+            position: static !important;
+            margin-top: 0;
+            width: 100%;
+        }
+
+        .cta-card-floating {
+            border-radius: 24px !important;
+            padding: 2rem !important;
+        }
+
+        h1 {
+            font-size: 2.5rem !important;
+        }
     }
-    
-    details summary::-webkit-details-marker { display: none; }
-    details[open] summary i { transform: rotate(180deg); }
+
+    details summary::-webkit-details-marker {
+        display: none;
+    }
 </style>
 {% endblock %}
