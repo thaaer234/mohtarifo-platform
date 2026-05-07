@@ -2373,8 +2373,8 @@ def admin_center_invoice(request, center_id):
             "standard_price": std_price,
             "potential_value": pot_val,
             "actual_earned": earned_syp,
-            "center_share": earned_syp * commission_percent / 100,
-            "net_share": earned_syp * (100 - commission_percent) / 100,
+            "center_share": pot_val * commission_percent / 100,
+            "net_share": pot_val * (100 - commission_percent) / 100,
         })
         
         total_assigned += batch.allocated_count
@@ -2382,8 +2382,8 @@ def admin_center_invoice(request, center_id):
         total_potential += pot_val
         total_earned += earned_syp
         
-    total_center_commission = total_earned * commission_percent / 100
-    total_net_share = total_earned - total_center_commission
+    total_center_commission = total_potential * commission_percent / 100
+    total_net_share = total_potential - total_center_commission
     
     context = {
         "center": center,
