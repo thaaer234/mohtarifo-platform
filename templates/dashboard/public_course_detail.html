@@ -116,37 +116,22 @@
                         </div>
                         <a href="{% url 'dashboard:student_course_detail' course.id %}" class="btn btn-primary btn-glow w-full" style="padding: 1.25rem; font-size: 1.1rem;">دخول الدورة الآن</a>
                     {% else %}
-                        {% if request.user.is_authenticated %}
-                            {% with user_profile=request.user.student_profile %}
-                                <a href="{{ CONTACT_WHATSAPP_URL }}?text={% filter urlencode %}مرحباً منصة محترفو التعليم.
-أود التسجيل في مادة مكثفة جديدة:
-
-- اسم المكثفة: {{ course.title }}
-- مادة: {{ course.subject.name }}
-- بإشراف الأستاذ: {{ course.instructor.get_full_name|default:course.instructor.username }}
-- السعر: {{ course.price_display }} ل.س
-
-معلومات الطالب:
-- الاسم: {{ request.user.get_full_name|default:request.user.username }}
-- رقم الهاتف: {{ user_profile.phone|default:request.user.username }}
-- الفرع الدراسي: {{ user_profile.track|default:"غير محدد" }}
-- المحافظة: {{ user_profile.governorate|default:"غير محدد" }}{% endfilter %}" class="btn btn-primary btn-glow w-full mb-4" style="padding: 1.25rem; font-size: 1.1rem;" target="_blank" rel="noopener">التسجيل عبر واتساب</a>
-                            {% endwith %}
-                        {% else %}
-                            <a href="{{ CONTACT_WHATSAPP_URL }}?text={% filter urlencode %}مرحباً منصة محترفو التعليم.
-أود التسجيل في مادة مكثفة جديدة:
-
-- اسم المكثفة: {{ course.title }}
-- مادة: {{ course.subject.name }}
-- بإشراف الأستاذ: {{ course.instructor.get_full_name|default:course.instructor.username }}
-- السعر: {{ course.price_display }} ل.س
-
-معلومات الطالب:
-- الاسم: [يرجى كتابة اسمك الثلاثي هنا]
-- رقم الهاتف: [يرجى كتابة رقم هاتفك للتواصل]
-- الفرع الدراسي: [علمي / أدبي]
-- المحافظة: [اسم محافظتك هنا]{% endfilter %}" class="btn btn-primary btn-glow w-full mb-4" style="padding: 1.25rem; font-size: 1.1rem;" target="_blank" rel="noopener">التسجيل عبر واتساب</a>
-                        {% endif %}
+                        <a href="#" class="btn btn-primary btn-glow w-full mb-4 whatsapp-order-btn" 
+                           data-title="{{ course.title }}"
+                           data-subject="{{ course.subject.name }}"
+                           data-instructor="{{ course.instructor.get_full_name|default:course.instructor.username }}"
+                           data-price="{{ course.price_display }}"
+                           {% if request.user.is_authenticated %}
+                           data-authenticated="true"
+                           data-student-name="{{ request.user.get_full_name|default:request.user.username }}"
+                           data-student-phone="{{ request.user.student_profile.phone|default:request.user.username }}"
+                           data-student-track="{{ request.user.student_profile.track|default:'غير محدد' }}"
+                           data-student-gov="{{ request.user.student_profile.governorate|default:'غير محدد' }}"
+                           {% else %}
+                           data-authenticated="false"
+                           {% endif %}>
+                           التسجيل عبر واتساب
+                        </a>
                         <a href="{% url 'dashboard:shop' %}#sales-centers" class="btn btn-secondary w-full mb-4" style="padding: 1rem;">مراكز البيع وطرق الدفع</a>
                         <p class="text-muted text-center" style="font-size: 0.8rem;">بعد الحصول على الكود، سجّل الدخول وأدخله من لوحة الطالب.</p>
                     {% endif %}
@@ -209,45 +194,25 @@
                 </h3>
                 <div class="premium-card" style="padding: 2.5rem !important;">
                     <div class="grid-3 gap-6">
-                        {% if request.user.is_authenticated %}
-                            {% with user_profile=request.user.student_profile %}
-                                <a class="premium-card" href="{{ CONTACT_WHATSAPP_URL }}?text={% filter urlencode %}مرحباً منصة محترفو التعليم.
-أود التسجيل في مادة مكثفة جديدة:
-
-- اسم المكثفة: {{ course.title }}
-- مادة: {{ course.subject.name }}
-- بإشراف الأستاذ: {{ course.instructor.get_full_name|default:course.instructor.username }}
-- السعر: {{ course.price_display }} ل.س
-
-معلومات الطالب:
-- الاسم: {{ request.user.get_full_name|default:request.user.username }}
-- رقم الهاتف: {{ user_profile.phone|default:request.user.username }}
-- الفرع الدراسي: {{ user_profile.track|default:"غير محدد" }}
-- المحافظة: {{ user_profile.governorate|default:"غير محدد" }}{% endfilter %}" target="_blank" rel="noopener" style="padding: 1.5rem; text-decoration:none; background: var(--bg-surface-elevated);">
-                                    <i data-lucide="message-circle" class="gold mb-3"></i>
-                                    <strong class="block mb-2" style="color: var(--text-primary);">واتساب المنصة</strong>
-                                    <span class="text-muted">{{ CONTACT_WHATSAPP_LOCAL }}</span>
-                                </a>
-                            {% endwith %}
-                        {% else %}
-                            <a class="premium-card" href="{{ CONTACT_WHATSAPP_URL }}?text={% filter urlencode %}مرحباً منصة محترفو التعليم.
-أود التسجيل في مادة مكثفة جديدة:
-
-- اسم المكثفة: {{ course.title }}
-- مادة: {{ course.subject.name }}
-- بإشراف الأستاذ: {{ course.instructor.get_full_name|default:course.instructor.username }}
-- السعر: {{ course.price_display }} ل.س
-
-معلومات الطالب:
-- الاسم: [يرجى كتابة اسمك الثلاثي هنا]
-- رقم الهاتف: [يرجى كتابة رقم هاتفك للتواصل]
-- الفرع الدراسي: [علمي / أدبي]
-- المحافظة: [اسم محافظتك هنا]{% endfilter %}" target="_blank" rel="noopener" style="padding: 1.5rem; text-decoration:none; background: var(--bg-surface-elevated);">
-                                <i data-lucide="message-circle" class="gold mb-3"></i>
-                                <strong class="block mb-2" style="color: var(--text-primary);">واتساب المنصة</strong>
-                                <span class="text-muted">{{ CONTACT_WHATSAPP_LOCAL }}</span>
-                            </a>
-                        {% endif %}
+                        <a class="premium-card whatsapp-order-btn" href="#" 
+                           data-title="{{ course.title }}"
+                           data-subject="{{ course.subject.name }}"
+                           data-instructor="{{ course.instructor.get_full_name|default:course.instructor.username }}"
+                           data-price="{{ course.price_display }}"
+                           {% if request.user.is_authenticated %}
+                           data-authenticated="true"
+                           data-student-name="{{ request.user.get_full_name|default:request.user.username }}"
+                           data-student-phone="{{ request.user.student_profile.phone|default:request.user.username }}"
+                           data-student-track="{{ request.user.student_profile.track|default:'غير محدد' }}"
+                           data-student-gov="{{ request.user.student_profile.governorate|default:'غير محدد' }}"
+                           {% else %}
+                           data-authenticated="false"
+                           {% endif %}
+                           style="padding: 1.5rem; text-decoration:none; background: var(--bg-surface-elevated);">
+                            <i data-lucide="message-circle" class="gold mb-3"></i>
+                            <strong class="block mb-2" style="color: var(--text-primary);">واتساب المنصة</strong>
+                            <span class="text-muted">{{ CONTACT_WHATSAPP_LOCAL }}</span>
+                        </a>
                         {% for center in sales_centers %}
                             <div class="premium-card" style="padding: 1.5rem; background: var(--bg-surface-elevated);">
                                 <strong class="block mb-2" style="color: var(--text-primary);">{{ center.name }}</strong>
@@ -487,4 +452,53 @@
         display: none;
     }
 </style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const baseUrl = "{{ CONTACT_WHATSAPP_URL }}";
+        
+        const authTemplate = decodeURIComponent("%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%20%D9%85%D9%86%D8%B5%D8%A9%20%D9%85%D8%AD%D8%AA%D8%B1%D9%81%D9%88%20%D8%A7%D9%84%D8%AA%D8%B9%D9%84%D9%8A%D9%85.%0A%D8%A3%D9%88%D8%AF%20%D8%A7%D9%84%D8%AA%D8%B3%D8%AC%D9%8A%D9%84%20%D9%81%D9%8A%20%D9%85%D8%A7%D8%AF%D8%A9%20%D9%85%D9%83%D8%AB%D9%81%D8%A9%20%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9%3A%0A%0A-%20%D8%A7%D8%B3%D9%85%20%D8%A7%D9%84%D9%85%D9%83%D8%AB%D9%81%D8%A9%3A%20%7Btitle%7D%0A-%20%D9%85%D8%A7%D8%AF%D8%A9%3A%20%7Bsubject%7D%0A-%20%D8%A8%D8%A5%D8%B4%D8%B1%D8%A7%D9%81%20%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%3A%20%7Binstructor%7D%0A-%20%D8%A7%D9%84%D8%B3%D8%B9%D8%B1%3A%20%7Bprice%7D%20%D9%84.%D8%B3%0A%0A%D9%85%D8%B9%D9%84%D9%88%D9%85%D8%A7%D8%AA%20%D8%A7%D9%84%D8%B7%D8%A7%D9%84%D8%A8%3A%0A-%20%D8%A7%D9%84%D8%A7%D8%B3%D9%85%3A%20%7Bname%7D%0A-%20%D8%B1%D9%82%D9%85%20%D8%A7%D9%84%D9%87%D8%A7%D8%AA%D9%81%3A%20%7Bphone%7D%0A-%20%D8%A7%D9%84%D9%81%D8%B1%D8%B9%20%D8%A7%D9%84%D8%AF%D8%B1%D8%A7%D8%B3%D9%8A%3A%20%7Btrack%7D%0A-%20%D8%A7%D9%84%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%A9%3A%20%7Bgov%7D");
+        
+        const anonTemplate = decodeURIComponent("%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%20%D9%85%D9%86%D8%B5%D8%A9%20%D9%85%D8%AD%D8%AA%D8%B1%D9%81%D9%88%20%D8%A7%D9%84%D8%AA%D8%B9%D9%84%D9%8A%D9%85.%0A%D8%A3%D9%88%D8%AF%20%D8%A7%D9%84%D8%AA%D8%B3%D8%AC%D9%8A%D9%84%20%D9%81%D9%8A%20%D9%85%D8%A7%D8%AF%D8%A9%20%D9%85%D9%83%D8%AB%D9%81%D8%A9%20%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9%3A%0A%0A-%20%D8%A7%D8%B3%D9%85%20%D8%A7%D9%84%D9%85%D9%83%D8%AB%D9%81%D8%A9%3A%20%7Btitle%7D%0A-%20%D9%85%D8%A7%D8%AF%D8%A9%3A%20%7Bsubject%7D%0A-%20%D8%A8%D8%A5%D8%B4%D8%B1%D8%A7%D9%81%20%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%3A%20%7Binstructor%7D%0A-%20%D8%A7%D9%84%D8%B3%D8%B9%D8%B1%3A%20%7Bprice%7D%20%D9%84.%D8%B3%0A%0A%D9%85%D8%B9%D9%84%D9%88%D9%85%D8%A7%D8%AA%20%D8%A7%D9%84%D8%B7%D8%A7%D9%84%D8%A8%3A%0A-%20%D8%A7%D9%84%D8%A7%D8%B3%D9%85%3A%20%5B%D9%8A%D8%B1%D8%AC%D9%89%20%D9%83%D8%AA%D8%A7%D8%A8%D8%A9%20%D8%A7%D8%B3%D9%85%D9%83%20%D8%A7%D9%84%D8%AB%D9%84%D8%A7%D8%AB%D9%8A%20%D9%87%D9%86%D8%A7%5D%0A-%20%D8%B1%D9%82%D9%85%20%D8%A7%D9%84%D9%87%D8%A7%D8%AA%D9%81%3A%20%5B%D9%8A%D8%B1%D8%AC%D9%89%20%D9%83%D8%AA%D8%A7%D8%A8%D8%A9%20%D8%B1%D9%82%D9%85%20%D9%87%D8%A7%D8%AA%D9%81%D9%83%20%D9%84%D9%84%D8%AA%D9%88%D8%A7%D8%B5%D9%84%5D%0A-%20%D8%A7%D9%84%D9%81%D8%B1%D8%B9%20%D8%A7%D9%84%D8%AF%D8%B1%D8%A7%D8%B3%D9%8A%3A%20%5B%D8%B9%D9%84%D9%85%D9%8A%20%2F%20%D8%A3%D8%AF%D8%A8%D9%8A%5D%0A-%20%D8%A7%D9%84%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%A9%3A%20%5B%D8%A7%D8%B3%D9%85%20%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%AA%D9%83%20%D9%87%D9%86%D8%A7%5D");
+
+        document.querySelectorAll(".whatsapp-order-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.preventDefault();
+                
+                const title = btn.getAttribute("data-title") || "";
+                const subject = btn.getAttribute("data-subject") || "";
+                const instructor = btn.getAttribute("data-instructor") || "";
+                const price = btn.getAttribute("data-price") || "";
+                const isAuthenticated = btn.getAttribute("data-authenticated") === "true";
+                
+                let text = "";
+                if (isAuthenticated) {
+                    const name = btn.getAttribute("data-student-name") || "";
+                    const phone = btn.getAttribute("data-student-phone") || "";
+                    const track = btn.getAttribute("data-student-track") || "غير محدد";
+                    const gov = btn.getAttribute("data-student-gov") || "غير محدد";
+                    
+                    text = authTemplate
+                        .replace("{title}", title)
+                        .replace("{subject}", subject)
+                        .replace("{instructor}", instructor)
+                        .replace("{price}", price)
+                        .replace("{name}", name)
+                        .replace("{phone}", phone)
+                        .replace("{track}", track)
+                        .replace("{gov}", gov);
+                } else {
+                    text = anonTemplate
+                        .replace("{title}", title)
+                        .replace("{subject}", subject)
+                        .replace("{instructor}", instructor)
+                        .replace("{price}", price);
+                }
+                
+                const whatsappUrl = `${baseUrl}?text=${encodeURIComponent(text)}`;
+                window.open(whatsappUrl, "_blank", "noopener");
+            });
+        });
+    });
+</script>
 {% endblock %}
