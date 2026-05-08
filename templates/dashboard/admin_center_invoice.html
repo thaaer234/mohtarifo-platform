@@ -1,74 +1,86 @@
 {% extends "dashboard/base.html" %}
 {% load static humanize inline_static %}
 
-{% block title %}فاتورة محاسبية فاخرة | {{ center.name }} | منصة محترفو التعليم{% endblock %}
+{% block title %}نظام الفواتير والتحصيلات المالية المعتمد | {{ center.name }} | منصة محترفو التعليم{% endblock %}
 
 {% block content %}
-<!-- Premium Design Style Sheet -->
+<!-- Premium Enterprise-Grade Invoice & Printing Stylesheet -->
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800;900&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
 
     :root {
-        /* Premium Corporate Financial Palette */
-        --inv-primary: #0f172a;
-        --inv-primary-light: #1e293b;
-        --inv-accent-gold: #c5a059;
-        --inv-gold-gradient: linear-gradient(135deg, #bf953f 0%, #d4af37 30%, #b38728 70%, #aa771c 100%);
-        --inv-gold-soft: rgba(197, 160, 89, 0.08);
-        --inv-gold-border: rgba(197, 160, 89, 0.2);
-        --inv-bg-invoice: #ffffff;
-        --inv-bg-card: #f8fafc;
-        --inv-bg-card-hover: #f1f5f9;
-        --inv-border: #e2e8f0;
-        --inv-text-main: #0f172a;
-        --inv-text-muted: #64748b;
-        --inv-emerald: #059669;
-        --inv-emerald-light: rgba(5, 150, 105, 0.08);
-        --inv-blue: #2563eb;
-        --inv-blue-light: rgba(37, 99, 235, 0.08);
-        --inv-card-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
-        --inv-glow: 0 0 20px rgba(197, 160, 89, 0.15);
-        --font-cairo: 'Cairo', 'Tajawal', sans-serif;
+        /* Enterprise Colors - Light Scheme by Default */
+        --erp-bg-body: #f1f5f9;
+        --erp-bg-sheet: #ffffff;
+        --erp-bg-card: #f8fafc;
+        --erp-bg-card-hover: #f1f5f9;
+        --erp-border: #e2e8f0;
+        --erp-border-gold: rgba(197, 160, 89, 0.25);
+        
+        --erp-text-main: #0f172a;
+        --erp-text-muted: #64748b;
+        
+        --erp-gold: #c5a059;
+        --erp-gold-gradient: linear-gradient(135deg, #bf953f 0%, #d4af37 30%, #b38728 70%, #aa771c 100%);
+        --erp-gold-soft: rgba(197, 160, 89, 0.08);
+        
+        --erp-blue: #2563eb;
+        --erp-blue-soft: rgba(37, 99, 235, 0.06);
+        --erp-emerald: #059669;
+        --erp-emerald-soft: rgba(5, 150, 105, 0.06);
+        --erp-red: #dc2626;
+        --erp-red-soft: rgba(220, 38, 38, 0.06);
+
+        --erp-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.02);
+        --erp-shadow-md: 0 10px 25px rgba(15, 23, 42, 0.04);
+        --erp-shadow-lg: 0 20px 40px rgba(15, 23, 42, 0.06);
+        --erp-shadow-glow: 0 0 20px rgba(197, 160, 89, 0.15);
+        
+        --font-family: 'Cairo', 'IBM Plex Sans Arabic', sans-serif;
     }
 
-    /* Seamless Dark Mode Integration matching Mohtarifo Platform */
+    /* Enterprise Colors - Dark Scheme Integration */
     .dark-theme :root {
-        --inv-primary: #f8fafc;
-        --inv-primary-light: #e2e8f0;
-        --inv-bg-invoice: #0b0f19;
-        --inv-bg-card: #111827;
-        --inv-bg-card-hover: #1f2937;
-        --inv-border: rgba(255, 255, 255, 0.06);
-        --inv-text-main: #f1f5f9;
-        --inv-text-muted: #94a3b8;
-        --inv-emerald: #10b981;
-        --inv-emerald-light: rgba(16, 185, 129, 0.1);
-        --inv-blue: #3b82f6;
-        --inv-blue-light: rgba(59, 130, 246, 0.1);
-        --inv-card-shadow: 0 15px 45px rgba(0, 0, 0, 0.35);
-        --inv-gold-soft: rgba(197, 160, 89, 0.05);
+        --erp-bg-body: #070a13;
+        --erp-bg-sheet: #0b0f19;
+        --erp-bg-card: #111827;
+        --erp-bg-card-hover: #1f2937;
+        --erp-border: rgba(255, 255, 255, 0.06);
+        --erp-border-gold: rgba(197, 160, 89, 0.15);
+        
+        --erp-text-main: #f1f5f9;
+        --erp-text-muted: #94a3b8;
+        
+        --erp-gold-soft: rgba(197, 160, 89, 0.05);
+        --erp-blue-soft: rgba(59, 130, 246, 0.08);
+        --erp-emerald-soft: rgba(16, 185, 129, 0.08);
+        --erp-red-soft: rgba(239, 68, 68, 0.08);
+
+        --erp-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+        --erp-shadow-md: 0 15px 35px rgba(0, 0, 0, 0.4);
+        --erp-shadow-lg: 0 25px 50px rgba(0, 0, 0, 0.55);
     }
 
-    /* Core Layout Styles */
+    /* Layout Wrapper */
     .admin-invoice-container {
-        font-family: var(--font-cairo);
-        color: var(--inv-text-main);
+        font-family: var(--font-family);
+        color: var(--erp-text-main);
         direction: rtl;
-        margin: 2rem auto;
-        max-width: 1300px;
+        margin: 2.5rem auto;
+        max-width: 1250px;
         padding: 0 1.5rem;
     }
 
-    /* Action Bar (Top Dashboard Controls) */
+    /* Top Action Bar (Glassmorphism + Soft Glow) */
     .invoice-action-bar {
-        background: rgba(255, 255, 255, 0.01);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid var(--inv-border);
-        box-shadow: var(--inv-card-shadow);
+        background: rgba(255, 255, 255, 0.02);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--erp-border);
+        box-shadow: var(--erp-shadow-md);
         border-radius: 20px;
-        padding: 1.25rem 2rem;
-        margin-bottom: 2rem;
+        padding: 1.5rem 2rem;
+        margin-bottom: 2.5rem;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -77,9 +89,9 @@
     }
 
     .action-bar-title h1 {
-        font-size: 1.4rem;
-        font-weight: 850;
-        color: var(--inv-primary);
+        font-size: 1.5rem;
+        font-weight: 900;
+        color: var(--erp-text-main);
         margin: 0;
         display: flex;
         align-items: center;
@@ -87,662 +99,679 @@
     }
 
     .action-bar-title p {
-        font-size: 0.8rem;
-        color: var(--inv-text-muted);
-        margin: 0.25rem 0 0 0;
+        font-size: 0.82rem;
+        color: var(--erp-text-muted);
+        margin: 0.35rem 0 0 0;
         font-weight: 500;
     }
 
     .action-bar-controls {
         display: flex;
         align-items: center;
-        gap: 1rem;
+        gap: 1.25rem;
         flex-wrap: wrap;
     }
 
-    /* Custom Premium Selector */
-    .commission-selector-wrap {
+    /* Elegant Commission Pill Selector */
+    .commission-selector-pill {
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        background: var(--inv-bg-card);
-        border: 1px solid var(--inv-border);
-        padding: 0.5rem 1rem;
-        border-radius: 12px;
-        transition: all 0.3s ease;
+        background: var(--erp-bg-card);
+        border: 1px solid var(--erp-border);
+        padding: 0.6rem 1.2rem;
+        border-radius: 14px;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .commission-selector-wrap:hover {
-        border-color: var(--inv-accent-gold);
+    .commission-selector-pill:hover {
+        border-color: var(--erp-gold);
+        box-shadow: var(--erp-shadow-sm);
     }
 
-    .commission-selector-wrap label {
+    .commission-selector-pill label {
         font-size: 0.85rem;
         font-weight: 700;
-        color: var(--inv-text-muted);
+        color: var(--erp-text-muted);
         white-space: nowrap;
     }
 
-    .commission-select {
+    .commission-select-element {
         background: transparent;
         border: none;
-        color: var(--inv-accent-gold);
+        color: var(--erp-gold);
         font-weight: 800;
-        font-size: 0.95rem;
+        font-size: 1rem;
         outline: none;
         cursor: pointer;
-        padding-left: 0.5rem;
-        font-family: var(--font-cairo);
+        font-family: var(--font-family);
     }
 
-    .commission-select option {
-        background: var(--inv-bg-card);
-        color: var(--inv-text-main);
+    .commission-select-element option {
+        background: var(--erp-bg-card);
+        color: var(--erp-text-main);
     }
 
-    /* Action Buttons */
-    .btn-invoice {
+    /* Universal Button Class */
+    .btn-erp {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 0.5rem;
-        padding: 0.75rem 1.5rem;
-        font-size: 0.9rem;
+        gap: 0.6rem;
+        padding: 0.8rem 1.75rem;
+        font-size: 0.88rem;
         font-weight: 800;
-        border-radius: 12px;
+        border-radius: 14px;
         transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         cursor: pointer;
         border: 1px solid transparent;
         text-decoration: none;
     }
 
-    .btn-invoice-print {
-        background: var(--inv-gold-gradient);
-        color: #0f172a !important;
-        box-shadow: var(--inv-glow);
+    .btn-erp-primary {
+        background: var(--erp-gold-gradient);
+        color: #070a13 !important;
+        box-shadow: var(--erp-shadow-glow);
     }
 
-    .btn-invoice-print:hover {
+    .btn-erp-primary:hover {
         transform: translateY(-2px);
-        box-shadow: 0 12px 25px rgba(197, 160, 89, 0.3);
+        box-shadow: 0 12px 28px rgba(197, 160, 89, 0.3);
     }
 
-    .btn-invoice-back {
-        background: var(--inv-bg-card);
-        border-color: var(--inv-border);
-        color: var(--inv-text-main) !important;
+    .btn-erp-secondary {
+        background: var(--erp-bg-card);
+        border-color: var(--erp-border);
+        color: var(--erp-text-main) !important;
     }
 
-    .btn-invoice-back:hover {
-        background: var(--inv-bg-card-hover);
+    .btn-erp-secondary:hover {
+        background: var(--erp-bg-card-hover);
+        border-color: var(--erp-gold);
         transform: translateY(-2px);
     }
 
-    /* Main Invoice Sheet Card */
-    .invoice-sheet {
-        background: var(--inv-bg-invoice);
-        border: 1px solid var(--inv-border);
-        box-shadow: var(--inv-card-shadow);
+    /* Main Invoice Card Sheet */
+    .invoice-sheet-container {
+        background: var(--erp-bg-sheet);
+        border: 1px solid var(--erp-border);
+        box-shadow: var(--erp-shadow-lg);
         border-radius: 28px;
-        padding: 3.5rem;
+        padding: 4rem;
         position: relative;
         overflow: hidden;
     }
 
-    /* Top Premium Foil Accent Strip */
-    .invoice-top-foil {
-        height: 6px;
-        background: var(--inv-gold-gradient);
+    /* Top Luxury Gold Strip */
+    .invoice-gold-strip {
+        height: 8px;
+        background: var(--erp-gold-gradient);
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
     }
 
-    /* Header Section */
-    .invoice-header-grid {
+    /* Luxury Header Block (Glassmorphism Style) */
+    .invoice-glass-header {
+        background: rgba(255, 255, 255, 0.01);
+        border: 1px solid var(--erp-border);
+        border-radius: 22px;
+        padding: 2.5rem;
         display: grid;
         grid-template-columns: 1.2fr 0.8fr;
-        align-items: start;
-        border-bottom: 1px solid var(--inv-border);
-        padding-bottom: 2.5rem;
-        margin-bottom: 2.5rem;
-        gap: 2rem;
+        align-items: center;
+        gap: 2.5rem;
+        margin-bottom: 3rem;
+        background-image: linear-gradient(135deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.02) 100%);
     }
 
-    .brand-logo-container {
+    .brand-logo-wrap {
         display: flex;
         align-items: center;
-        gap: 1.25rem;
+        gap: 1.5rem;
     }
 
-    .invoice-brand-logo {
-        height: 70px;
+    .brand-logo-img {
+        height: 75px;
         width: auto;
         filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.35));
     }
 
-    .brand-text h2 {
-        font-size: 1.75rem;
+    .brand-titles h2 {
+        font-size: 1.85rem;
         font-weight: 900;
-        color: var(--inv-primary);
+        color: var(--erp-text-main);
         margin: 0;
         letter-spacing: -0.5px;
     }
 
-    .brand-text span {
-        font-size: 0.85rem;
-        color: var(--inv-accent-gold);
+    .brand-titles span {
+        font-size: 0.88rem;
+        color: var(--erp-gold);
         font-weight: 800;
-        letter-spacing: 2.5px;
+        letter-spacing: 3px;
         display: block;
-        margin-top: 0.15rem;
+        margin-top: 0.2rem;
     }
 
-    .brand-tagline {
+    .brand-brief {
         font-size: 0.85rem;
-        color: var(--inv-text-muted);
+        color: var(--erp-text-muted);
         line-height: 1.6;
-        margin: 0.75rem 0 0 0;
-        max-width: 420px;
+        margin: 1rem 0 0 0;
+        max-width: 480px;
         font-weight: 500;
     }
 
-    .invoice-meta-card {
-        background: var(--inv-bg-card);
-        border: 1px solid var(--inv-border);
+    /* Meta Details Card */
+    .invoice-metadata-box {
+        background: var(--erp-bg-card);
+        border: 1px solid var(--erp-border);
         border-radius: 18px;
-        padding: 1.5rem;
+        padding: 1.75rem;
         display: grid;
         grid-template-columns: 1fr;
-        gap: 0.75rem;
+        gap: 0.8rem;
     }
 
-    .invoice-meta-title {
-        font-size: 1.8rem;
-        font-weight: 900;
-        color: var(--inv-accent-gold);
+    .metadata-invoice-title {
+        font-size: 1.85rem;
+        font-weight: 950;
+        color: var(--erp-gold);
         margin: 0 0 0.5rem 0;
         text-align: left;
+        letter-spacing: -0.5px;
     }
 
-    .meta-row {
+    .metadata-line {
         display: flex;
         justify-content: space-between;
-        font-size: 0.85rem;
+        align-items: center;
+        font-size: 0.88rem;
         font-weight: 600;
     }
 
-    .meta-label {
-        color: var(--inv-text-muted);
+    .metadata-label {
+        color: var(--erp-text-muted);
     }
 
-    .meta-value {
-        color: var(--inv-text-main);
-        font-weight: 700;
-    }
-
-    .meta-value.gold-badge {
-        color: #0f172a;
-        background: var(--inv-gold-gradient);
-        padding: 0.15rem 0.5rem;
-        border-radius: 6px;
-        font-size: 0.8rem;
+    .metadata-value {
+        color: var(--erp-text-main);
         font-weight: 800;
     }
 
-    /* Billing Info Section (Parties Block) */
-    .invoice-parties-grid {
+    .metadata-value.id-hash {
+        direction: ltr;
+        color: var(--erp-gold);
+        font-family: monospace;
+        font-size: 0.95rem;
+    }
+
+    .metadata-value.badge-status {
+        background: var(--erp-gold-gradient);
+        color: #070a13;
+        padding: 0.2rem 0.6rem;
+        border-radius: 8px;
+        font-size: 0.78rem;
+        font-weight: 900;
+    }
+
+    /* Billing Center Cards */
+    .invoice-billing-cards {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 2rem;
         margin-bottom: 3rem;
     }
 
-    .party-card {
-        background: var(--inv-bg-card);
-        border: 1px solid var(--inv-border);
+    .billing-party-card {
+        background: var(--erp-bg-card);
+        border: 1px solid var(--erp-border);
         border-radius: 20px;
-        padding: 2rem;
+        padding: 2.25rem;
         position: relative;
-        transition: all 0.3s ease;
     }
 
-    .party-card::before {
+    .billing-party-card::before {
         content: '';
         position: absolute;
         top: 0;
         right: 0;
         bottom: 0;
-        width: 4px;
-        background: var(--inv-gold-gradient);
+        width: 5px;
+        background: var(--erp-gold-gradient);
         border-radius: 0 20px 20px 0;
     }
 
-    .party-card-title {
-        font-size: 1.05rem;
-        font-weight: 850;
-        color: var(--inv-accent-gold);
+    .billing-card-title {
+        font-size: 1.1rem;
+        font-weight: 900;
+        color: var(--erp-gold);
         margin-top: 0;
-        margin-bottom: 1.25rem;
+        margin-bottom: 1.5rem;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.6rem;
     }
 
-    .party-info-list {
+    .billing-card-list {
         display: flex;
         flex-direction: column;
-        gap: 0.75rem;
+        gap: 0.85rem;
         font-size: 0.9rem;
     }
 
-    .party-info-item {
+    .billing-list-row {
         display: flex;
         align-items: flex-start;
         gap: 0.5rem;
-        line-height: 1.5;
+        line-height: 1.6;
     }
 
-    .party-info-item strong {
-        color: var(--inv-text-muted);
-        min-width: 100px;
+    .billing-list-row strong {
+        color: var(--erp-text-muted);
+        min-width: 110px;
         font-weight: 600;
     }
 
-    .party-info-item span {
-        color: var(--inv-text-main);
+    .billing-list-row span {
+        color: var(--erp-text-main);
         font-weight: 700;
     }
 
-    /* Summary KPI Cards Section */
-    .summary-kpi-grid {
+    /* Modern Dashboard Statistics Grid */
+    .invoice-dashboard-kpis {
         display: grid;
         grid-template-columns: repeat(6, 1fr);
         gap: 1rem;
-        margin-bottom: 3rem;
+        margin-bottom: 3.5rem;
     }
 
     @media (max-width: 1200px) {
-        .summary-kpi-grid {
+        .invoice-dashboard-kpis {
             grid-template-columns: repeat(3, 1fr);
         }
     }
 
     @media (max-width: 768px) {
-        .summary-kpi-grid {
+        .invoice-dashboard-kpis {
             grid-template-columns: repeat(2, 1fr);
         }
     }
 
-    .kpi-card {
-        background: var(--inv-bg-card);
-        border: 1px solid var(--inv-border);
+    .dashboard-kpi-card {
+        background: var(--erp-bg-card);
+        border: 1px solid var(--erp-border);
         border-radius: 18px;
-        padding: 1.25rem;
+        padding: 1.5rem 1.25rem;
         text-align: center;
         transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         display: flex;
         flex-direction: column;
         justify-content: space-between;
         align-items: center;
-        min-height: 135px;
+        min-height: 145px;
+        position: relative;
     }
 
-    .kpi-card:hover {
+    .dashboard-kpi-card:hover {
         transform: translateY(-4px);
-        box-shadow: var(--inv-card-shadow);
-        border-color: var(--inv-accent-gold);
+        box-shadow: var(--erp-shadow-md);
+        border-color: var(--erp-gold);
     }
 
-    .kpi-icon-wrap {
-        width: 38px;
-        height: 38px;
-        border-radius: 10px;
+    .kpi-icon-container {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.6rem;
     }
 
-    .kpi-card.kpi-gold .kpi-icon-wrap {
-        background: var(--inv-gold-soft);
-        color: var(--inv-accent-gold);
-        border: 1px solid var(--inv-gold-border);
+    .dashboard-kpi-card.kpi-gold .kpi-icon-container {
+        background: var(--erp-gold-soft);
+        color: var(--erp-gold);
+        border: 1px solid var(--erp-border-gold);
     }
 
-    .kpi-card.kpi-emerald .kpi-icon-wrap {
-        background: var(--inv-emerald-light);
-        color: var(--inv-emerald);
-        border: 1px solid rgba(16, 185, 129, 0.15);
+    .dashboard-kpi-card.kpi-blue .kpi-icon-container {
+        background: var(--erp-blue-soft);
+        color: var(--erp-blue);
+        border: 1px solid rgba(37, 99, 235, 0.12);
     }
 
-    .kpi-card.kpi-blue .kpi-icon-wrap {
-        background: var(--inv-blue-light);
-        color: var(--inv-blue);
-        border: 1px solid rgba(37, 99, 235, 0.15);
+    .dashboard-kpi-card.kpi-emerald .kpi-icon-container {
+        background: var(--erp-emerald-soft);
+        color: var(--erp-emerald);
+        border: 1px solid rgba(5, 150, 105, 0.12);
     }
 
-    .kpi-title {
+    .kpi-label-text {
         font-size: 0.78rem;
         font-weight: 700;
-        color: var(--inv-text-muted);
-        margin-bottom: 0.25rem;
+        color: var(--erp-text-muted);
+        margin-bottom: 0.35rem;
     }
 
-    .kpi-value {
-        font-size: 1.1rem;
-        font-weight: 900;
-        color: var(--inv-text-main);
-    }
-
-    .kpi-card.kpi-emerald .kpi-value {
-        color: var(--inv-emerald);
-    }
-
-    .kpi-card.kpi-blue .kpi-value {
-        color: var(--inv-blue);
-    }
-
-    .kpi-card.kpi-gold .kpi-value {
-        color: var(--inv-accent-gold);
-        text-shadow: var(--inv-glow);
-    }
-
-    /* ERP Premium Accounting Table Section */
-    .section-title {
+    .kpi-value-text {
         font-size: 1.15rem;
-        font-weight: 850;
-        color: var(--inv-primary);
-        margin-bottom: 1.25rem;
+        font-weight: 900;
+        color: var(--erp-text-main);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .dashboard-kpi-card.kpi-gold .kpi-value-text {
+        color: var(--erp-gold);
+        text-shadow: var(--erp-shadow-glow);
+    }
+
+    .dashboard-kpi-card.kpi-blue .kpi-value-text {
+        color: var(--erp-blue);
+    }
+
+    .dashboard-kpi-card.kpi-emerald .kpi-value-text {
+        color: var(--erp-emerald);
+    }
+
+    /* Enterprise Accounting Table System */
+    .invoice-table-section-heading {
+        font-size: 1.2rem;
+        font-weight: 900;
+        color: var(--erp-text-main);
+        margin-bottom: 1.5rem;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.6rem;
     }
 
-    .table-container {
-        border: 1px solid var(--inv-border);
+    .invoice-table-container {
+        border: 1px solid var(--erp-border);
         border-radius: 20px;
         overflow: hidden;
-        background: var(--inv-bg-card);
+        background: var(--erp-bg-card);
         margin-bottom: 3rem;
-        box-shadow: var(--inv-card-shadow);
+        box-shadow: var(--erp-shadow-md);
     }
 
-    .erp-invoice-table {
+    .invoice-accounting-table {
         width: 100%;
         border-collapse: collapse;
         text-align: right;
-        font-size: 0.82rem;
+        font-size: 0.8rem;
+        table-layout: fixed; /* STRICT COLUMN WIDTH CONTROL */
     }
 
-    .erp-invoice-table th {
-        background-color: var(--inv-bg-card-hover);
-        color: var(--inv-text-main);
+    /* Table Columns Percentages precisely mapping to 100% total */
+    .invoice-accounting-table colgroup col:nth-child(1) { width: 15%; } /* المادة */
+    .invoice-accounting-table colgroup col:nth-child(2) { width: 11%; } /* المدرس */
+    .invoice-accounting-table colgroup col:nth-child(3) { width: 9%; }  /* الفرع */
+    .invoice-accounting-table colgroup col:nth-child(4) { width: 7%; }  /* الأكواد */
+    .invoice-accounting-table colgroup col:nth-child(5) { width: 7%; }  /* المباعة */
+    .invoice-accounting-table colgroup col:nth-child(6) { width: 10%; } /* السعر */
+    .invoice-accounting-table colgroup col:nth-child(7) { width: 10%; } /* المتوقع */
+    .invoice-accounting-table colgroup col:nth-child(8) { width: 10%; } /* الفعلي */
+    .invoice-accounting-table colgroup col:nth-child(9) { width: 10%; } /* العمولة */
+    .invoice-accounting-table colgroup col:nth-child(10) { width: 11%; }/* الصافي */
+
+    .invoice-accounting-table th {
+        background-color: var(--erp-bg-card-hover);
+        color: var(--erp-text-main);
         font-weight: 850;
-        padding: 1.2rem 1rem;
-        border-bottom: 2px solid var(--inv-border);
-        font-size: 0.8rem;
+        padding: 1.25rem 0.8rem;
+        border-bottom: 2px solid var(--erp-border);
+        font-size: 0.78rem;
         letter-spacing: -0.2px;
         white-space: nowrap;
     }
 
-    .erp-invoice-table td {
-        padding: 1.1rem 1rem;
-        border-bottom: 1px solid var(--inv-border);
-        color: var(--inv-text-main);
+    .invoice-accounting-table td {
+        padding: 1.2rem 0.8rem;
+        border-bottom: 1px solid var(--erp-border);
+        color: var(--erp-text-main);
         font-weight: 600;
         vertical-align: middle;
+        /* Dynamic Wrap Engine to prevent overflows */
+        word-break: break-word;
+        overflow-wrap: break-word;
+        white-space: normal !important;
     }
 
-    .erp-invoice-table tbody tr {
+    .invoice-accounting-table tbody tr {
         transition: all 0.2s ease;
     }
 
-    .erp-invoice-table tbody tr:nth-child(even) {
+    .invoice-accounting-table tbody tr:nth-child(even) {
         background-color: rgba(255, 255, 255, 0.015);
     }
 
-    .erp-invoice-table tbody tr:hover {
-        background-color: var(--inv-bg-card-hover);
+    .invoice-accounting-table tbody tr:hover {
+        background-color: var(--erp-bg-card-hover);
     }
 
-    /* Table Column Specific Styles */
-    .col-batch-info {
-        max-width: 250px;
+    /* Specific Table Layout Helpers */
+    .align-center {
+        text-align: center !important;
     }
 
-    .batch-primary-name {
-        font-size: 0.88rem;
+    .align-left {
+        text-align: left !important;
+    }
+
+    .text-primary-emphasis {
+        font-size: 0.85rem;
         font-weight: 800;
-        color: var(--inv-primary);
+        color: var(--erp-text-main);
         display: block;
         margin-bottom: 0.25rem;
     }
 
-    .batch-sub-details {
-        font-size: 0.72rem;
-        color: var(--inv-text-muted);
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        align-items: center;
+    .badge-sub-info {
+        background: var(--erp-bg-card-hover);
+        padding: 0.15rem 0.45rem;
+        border-radius: 5px;
+        border: 1px solid var(--erp-border);
+        font-size: 0.7rem;
+        color: var(--erp-text-muted);
         font-weight: 600;
+        display: inline-block;
     }
 
-    .batch-sub-badge {
-        background: var(--inv-bg-card-hover);
-        padding: 0.1rem 0.4rem;
-        border-radius: 4px;
-        border: 1px solid var(--inv-border);
-    }
-
-    .text-center {
-        text-align: center !important;
-    }
-
-    .text-left-align {
-        text-align: left !important;
-    }
-
-    .badge-sold {
-        background: var(--inv-gold-soft);
-        color: var(--inv-accent-gold);
-        border: 1px solid var(--inv-gold-border);
+    .badge-sold-pill {
+        background: var(--erp-gold-soft);
+        color: var(--erp-gold);
+        border: 1px solid var(--erp-border-gold);
         padding: 0.3rem 0.6rem;
         border-radius: 8px;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
         font-weight: 800;
         display: inline-block;
         white-space: nowrap;
     }
 
-    .amount-val {
+    .cell-numeric-val {
         font-weight: 700;
         font-variant-numeric: tabular-nums;
         white-space: nowrap;
     }
 
-    .amount-potential {
-        color: var(--inv-blue);
-    }
+    .cell-blue { color: var(--erp-blue); }
+    .cell-emerald { color: var(--erp-emerald); }
+    .cell-gold { color: var(--erp-gold); font-weight: 800; }
 
-    .amount-earned {
-        color: var(--inv-emerald);
-    }
-
-    .amount-net {
-        color: var(--inv-accent-gold);
-        font-weight: 800;
-    }
-
-    /* Financial Breakdown Box (Bottom Right Column) */
-    .financial-summary-wrap {
+    /* Bottom Financial Settlement Card */
+    .invoice-financial-settlement {
         display: flex;
         justify-content: flex-end;
-        margin-bottom: 3.5rem;
+        margin-bottom: 4rem;
     }
 
-    .summary-breakdown-card {
+    .settlement-card {
         width: 100%;
-        max-width: 460px;
-        background: var(--inv-bg-card);
-        border: 1px solid var(--inv-border);
+        max-width: 480px;
+        background: var(--erp-bg-card);
+        border: 1px solid var(--erp-border);
         border-radius: 22px;
-        padding: 2rem;
+        padding: 2.25rem;
         position: relative;
-        box-shadow: var(--inv-card-shadow);
+        box-shadow: var(--erp-shadow-md);
         overflow: hidden;
     }
 
-    .summary-breakdown-card::after {
+    .settlement-card::after {
         content: '';
         position: absolute;
         top: 0;
         bottom: 0;
         left: 0;
         width: 6px;
-        background: var(--inv-gold-gradient);
+        background: var(--erp-gold-gradient);
     }
 
-    .breakdown-title {
-        font-size: 1.1rem;
-        font-weight: 850;
-        color: var(--inv-accent-gold);
-        border-bottom: 1px solid var(--inv-border);
-        padding-bottom: 0.75rem;
+    .settlement-card-title {
+        font-size: 1.15rem;
+        font-weight: 900;
+        color: var(--erp-gold);
+        border-bottom: 1px solid var(--erp-border);
+        padding-bottom: 0.85rem;
         margin-top: 0;
-        margin-bottom: 1.25rem;
+        margin-bottom: 1.5rem;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.6rem;
     }
 
-    .breakdown-row {
+    .settlement-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0.6rem 0;
-        font-size: 0.88rem;
+        padding: 0.65rem 0;
+        font-size: 0.9rem;
         font-weight: 600;
     }
 
-    .breakdown-row.border-bottom {
-        border-bottom: 1px solid var(--inv-border);
-        padding-bottom: 1rem;
+    .settlement-row.border-line {
+        border-bottom: 1px solid var(--erp-border);
+        padding-bottom: 1.1rem;
         margin-bottom: 0.5rem;
     }
 
-    .breakdown-label {
-        color: var(--inv-text-muted);
+    .settlement-label {
+        color: var(--erp-text-muted);
     }
 
-    .breakdown-val {
-        color: var(--inv-text-main);
+    .settlement-value {
+        color: var(--erp-text-main);
         font-weight: 700;
     }
 
-    .breakdown-val.blue {
-        color: var(--inv-blue);
-    }
+    .settlement-value.blue { color: var(--erp-blue); }
+    .settlement-value.emerald { color: var(--erp-emerald); font-weight: 800; }
+    .settlement-value.red { color: var(--erp-red); }
 
-    .breakdown-val.emerald {
-        color: var(--inv-emerald);
-        font-weight: 800;
-    }
-
-    .final-net-row {
+    .final-net-box {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-top: 1rem;
-        padding-top: 1rem;
-        background: var(--inv-gold-soft);
-        border: 1px solid var(--inv-gold-border);
-        border-radius: 12px;
-        padding: 1.25rem;
+        margin-top: 1.25rem;
+        background: var(--erp-gold-soft);
+        border: 1px solid var(--erp-border-gold);
+        border-radius: 14px;
+        padding: 1.4rem;
     }
 
     .final-net-label {
         font-weight: 900;
-        font-size: 1.05rem;
-        color: var(--inv-primary);
+        font-size: 1.1rem;
+        color: var(--erp-text-main);
     }
 
-    .final-net-val {
-        font-size: 1.4rem;
-        font-weight: 900;
-        color: var(--inv-accent-gold);
-        text-shadow: var(--inv-glow);
+    .final-net-value {
+        font-size: 1.5rem;
+        font-weight: 950;
+        color: var(--erp-gold);
+        text-shadow: var(--erp-shadow-glow);
     }
 
-    /* Signatures Section */
-    .signatures-block {
+    /* Professional Signature Cards Section */
+    .invoice-signatures-wrap {
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
         gap: 2.5rem;
-        margin-top: 4rem;
-        padding-top: 2.5rem;
-        border-top: 1px solid var(--inv-border);
-        text-align: center;
+        margin-top: 5rem;
+        padding-top: 3rem;
+        border-top: 1px solid var(--erp-border);
     }
 
-    .signature-slot {
+    .signature-card-item {
+        background: var(--erp-bg-card);
+        border: 1px solid var(--erp-border);
+        border-radius: 18px;
+        padding: 2rem 1.5rem;
+        text-align: center;
         display: flex;
         flex-direction: column;
         align-items: center;
     }
 
-    .signature-title {
-        font-size: 0.9rem;
-        font-weight: 850;
-        color: var(--inv-accent-gold);
-        margin-bottom: 4rem;
+    .sig-title {
+        font-size: 0.92rem;
+        font-weight: 900;
+        color: var(--erp-gold);
+        margin-bottom: 4.5rem;
     }
 
-    .signature-line {
-        width: 80%;
-        border-bottom: 1px dashed var(--inv-border);
-        margin-bottom: 0.5rem;
+    .sig-dotted-line {
+        width: 85%;
+        border-bottom: 1px dashed var(--erp-border);
+        margin-bottom: 0.75rem;
     }
 
-    .signature-sub {
-        font-size: 0.72rem;
-        color: var(--inv-text-muted);
+    .sig-metadata {
+        font-size: 0.75rem;
+        color: var(--erp-text-muted);
         font-weight: 600;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        width: 100%;
     }
 
-    /* Premium Micro-Animations inside Screen Mode */
-    .reveal-up {
-        animation: revealUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    .sig-metadata-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 0 0.5rem;
     }
 
-    @keyframes revealUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    /* Premium Micro-Animations */
+    .reveal-anim {
+        animation: revealFadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 
-    /* Perfect Printing and A4 Optimization Rules */
+    @keyframes revealFadeUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ═════════════════════════════════════════
+       PERFECT A4 PRINT OPTIMIZATIONS
+       ═════════════════════════════════════════ */
     @media print {
         @page {
             size: A4 portrait;
-            margin: 12mm 15mm !important;
+            margin: 12mm 15mm 15mm 15mm !important;
         }
 
-        /* 1. Eliminate any non-invoice layout elements from base.html */
+        /* 1. Eliminate non-printable web structures completely */
         nav, footer, .navbar, .footer, .no-print, .sidebar, .admin-sidebar, 
         .hub-header, .app-header, .messages-container, .breadcrumbs, 
         #theme-toggle, #menu-toggle, .mobile-bottom-nav, .invoice-action-bar {
             display: none !important;
         }
 
-        /* 2. Flatten containers & ignore parent layout styles completely */
+        /* 2. Overwrite body structures to avoid any parent constraints */
         body, html, main, .container, .main-content, .admin-invoice-container {
             background: #ffffff !important;
             color: #000000 !important;
@@ -753,12 +782,12 @@
             min-width: 100% !important;
             border: none !important;
             box-shadow: none !important;
-            font-size: 11pt !important;
+            font-size: 9.5pt !important;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
 
-        .invoice-sheet {
+        .invoice-sheet-container {
             background: #ffffff !important;
             border: none !important;
             box-shadow: none !important;
@@ -767,94 +796,95 @@
             border-radius: 0 !important;
         }
 
-        .invoice-top-foil {
-            height: 4px !important;
-            background: #b45309 !important; /* Pristine solid print gold */
+        .invoice-gold-strip {
+            height: 5px !important;
+            background: #b45309 !important; /* High contrast printer gold */
         }
 
-        /* 3. High-Contrast Print Typography */
-        h1, h2, h3, h4, strong, .brand-text h2, .invoice-meta-title {
-            color: #111827 !important;
+        /* 3. High-Contrast Enterprise Printing Colors */
+        h1, h2, h3, h4, strong, .brand-titles h2, .metadata-invoice-title {
+            color: #000000 !important;
             text-shadow: none !important;
         }
 
-        .brand-text span, .invoice-meta-title, .party-card-title, .breakdown-title, .signature-title {
-            color: #b45309 !important; /* Corporate dark gold for high readability */
+        .brand-titles span, .metadata-invoice-title, .billing-card-title, .settlement-card-title, .sig-title {
+            color: #b45309 !important; /* Dark solid corporate gold */
         }
 
-        .brand-tagline, .meta-label, .party-info-item strong, .kpi-title, .breakdown-label, .signature-sub {
+        .brand-brief, .metadata-label, .billing-list-row strong, .kpi-label-text, .settlement-label, .sig-metadata {
             color: #475569 !important;
         }
 
-        /* 4. Formatting Side-By-Side Structures safely without overlap */
-        .invoice-header-grid {
-            display: grid !important;
-            grid-template-columns: 1.3fr 0.7fr !important;
-            gap: 20px !important;
-            border-bottom: 2px solid #cbd5e1 !important;
-            padding-bottom: 1.5rem !important;
-            margin-bottom: 1.5rem !important;
-        }
-
-        .invoice-meta-card {
+        /* 4. Glassmorphism to flat corporate borders */
+        .invoice-glass-header {
             background: #f8fafc !important;
             border: 1px solid #cbd5e1 !important;
-            border-radius: 10px !important;
-            padding: 1rem !important;
-        }
-
-        .invoice-parties-grid {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr !important;
-            gap: 20px !important;
+            padding: 1.5rem !important;
             margin-bottom: 2rem !important;
+            border-radius: 12px !important;
         }
 
-        .party-card {
+        .brand-logo-img {
+            height: 55px !important;
+        }
+
+        .invoice-metadata-box {
             background: #f8fafc !important;
             border: 1px solid #cbd5e1 !important;
             border-radius: 12px !important;
             padding: 1.25rem !important;
         }
 
-        .party-card::before {
+        /* 5. Safe Billing Layout spacing */
+        .invoice-billing-cards {
+            gap: 15px !important;
+            margin-bottom: 2rem !important;
+        }
+
+        .billing-party-card {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 12px !important;
+            padding: 1.5rem !important;
+        }
+
+        .billing-party-card::before {
             width: 3px !important;
             background: #b45309 !important;
         }
 
-        /* 5. Summary Cards Grid Layout */
-        .summary-kpi-grid {
-            display: grid !important;
+        /* 6. High-Contrast Summary KPI Cards */
+        .invoice-dashboard-kpis {
             grid-template-columns: repeat(6, 1fr) !important;
             gap: 8px !important;
             margin-bottom: 2rem !important;
         }
 
-        .kpi-card {
+        .dashboard-kpi-card {
             background: #f8fafc !important;
             border: 1px solid #cbd5e1 !important;
             border-radius: 10px !important;
-            padding: 0.75rem 0.5rem !important;
-            min-height: 95px !important;
+            padding: 0.75rem 0.4rem !important;
+            min-height: 85px !important;
             box-shadow: none !important;
             transform: none !important;
         }
 
-        .kpi-icon-wrap {
-            display: none !important; /* Simplify design for clean printing */
+        .kpi-icon-container {
+            display: none !important; /* Simplify print layout */
         }
 
-        .kpi-title {
-            font-size: 0.68rem !important;
+        .kpi-label-text {
+            font-size: 0.65rem !important;
         }
 
-        .kpi-value {
-            font-size: 0.88rem !important;
-            color: #111827 !important;
+        .kpi-value-text {
+            font-size: 0.85rem !important;
+            color: #000000 !important;
         }
 
-        /* 6. High Precision Print Table (Stripe/ERP style) */
-        .table-container {
+        /* 7. STRICT Table print layout to avoid clipping */
+        .invoice-table-container {
             border: 1px solid #cbd5e1 !important;
             border-radius: 12px !important;
             background: #ffffff !important;
@@ -862,147 +892,161 @@
             box-shadow: none !important;
         }
 
-        .erp-invoice-table th {
+        .invoice-accounting-table th {
             background-color: #f1f5f9 !important;
-            color: #0f172a !important;
+            color: #000000 !important;
             border-bottom: 2px solid #cbd5e1 !important;
-            padding: 10px 8px !important;
-            font-size: 0.72rem !important;
-        }
-
-        .erp-invoice-table td {
-            border-bottom: 1px solid #e2e8f0 !important;
-            padding: 9px 8px !important;
-            font-size: 0.7rem !important;
-            color: #1e293b !important;
-        }
-
-        .badge-sold {
-            background: #f1f5f9 !important;
-            border: 1px solid #94a3b8 !important;
-            color: #0f172a !important;
-            padding: 0.15rem 0.4rem !important;
-            border-radius: 4px !important;
+            padding: 8px 6px !important;
             font-size: 0.68rem !important;
         }
 
-        /* Accent Colors on Amounts in Print */
-        .amount-potential {
-            color: #1e3a8a !important; /* Dark Blue */
+        .invoice-accounting-table td {
+            border-bottom: 1px solid #cbd5e1 !important;
+            padding: 8px 6px !important;
+            font-size: 0.65rem !important;
+            color: #000000 !important;
         }
 
-        .amount-earned {
-            color: #15803d !important; /* Dark Green */
+        .badge-sold-pill {
+            background: #f1f5f9 !important;
+            border: 1px solid #94a3b8 !important;
+            color: #000000 !important;
+            padding: 0.15rem 0.35rem !important;
+            border-radius: 4px !important;
+            font-size: 0.62rem !important;
         }
 
-        .amount-net {
-            color: #b45309 !important; /* Solid gold-brown */
-            font-weight: bold !important;
-        }
+        .cell-blue { color: #1e3a8a !important; }
+        .cell-emerald { color: #15803d !important; }
+        .cell-gold { color: #b45309 !important; }
 
-        /* 7. Bottom Financial Breakdown Card */
-        .financial-summary-wrap {
-            display: flex !important;
-            justify-content: flex-end !important;
+        /* 8. Settlement Card Spacing */
+        .invoice-financial-settlement {
             margin-bottom: 2rem !important;
             page-break-inside: avoid !important;
         }
 
-        .summary-breakdown-card {
-            width: 45% !important;
+        .settlement-card {
+            width: 42% !important;
             background: #f8fafc !important;
             border: 1px solid #cbd5e1 !important;
             border-radius: 12px !important;
-            padding: 1.25rem !important;
+            padding: 1.5rem !important;
             box-shadow: none !important;
         }
 
-        .summary-breakdown-card::after {
+        .settlement-card::after {
             width: 4px !important;
             background: #b45309 !important;
         }
 
-        .breakdown-title {
-            font-size: 0.9rem !important;
+        .settlement-card-title {
+            font-size: 0.85rem !important;
             padding-bottom: 0.5rem !important;
-            margin-bottom: 0.75rem !important;
+            margin-bottom: 1rem !important;
             border-bottom: 1px solid #cbd5e1 !important;
         }
 
-        .breakdown-row {
+        .settlement-row {
             padding: 0.4rem 0 !important;
-            font-size: 0.78rem !important;
+            font-size: 0.75rem !important;
         }
 
-        .breakdown-val.blue {
-            color: #1e3a8a !important;
-        }
+        .settlement-value.blue { color: #1e3a8a !important; }
+        .settlement-value.emerald { color: #15803d !important; }
 
-        .breakdown-val.emerald {
-            color: #15803d !important;
-        }
-
-        .final-net-row {
-            padding: 0.75rem 1rem !important;
+        .final-net-box {
+            padding: 0.85rem 1rem !important;
             border-radius: 8px !important;
             background: #fffbeb !important;
             border: 1px solid #fde68a !important;
         }
 
         .final-net-label {
-            font-size: 0.9rem !important;
+            font-size: 0.82rem !important;
         }
 
-        .final-net-val {
+        .final-net-value {
             font-size: 1.15rem !important;
             color: #b45309 !important;
             text-shadow: none !important;
         }
 
-        /* 8. Signatures Layout */
-        .signatures-block {
-            grid-template-columns: 1fr 1fr 1fr !important;
-            gap: 20px !important;
-            margin-top: 2.5rem !important;
+        /* 9. Signatures Block Placement */
+        .invoice-signatures-wrap {
+            gap: 15px !important;
+            margin-top: 2rem !important;
             padding-top: 1.5rem !important;
             border-top: 1px solid #cbd5e1 !important;
             page-break-inside: avoid !important;
         }
 
-        .signature-title {
-            font-size: 0.8rem !important;
+        .signature-card-item {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 10px !important;
+            padding: 1.25rem 1rem !important;
+        }
+
+        .sig-title {
+            font-size: 0.78rem !important;
             margin-bottom: 2.5rem !important;
         }
 
-        .signature-line {
+        .sig-dotted-line {
             width: 90% !important;
-            border-color: #cbd5e1 !important;
         }
 
-        /* 9. Smart Multi-Page Management */
+        /* 10. Multi-Page Safety Breaks */
         tr {
             page-break-inside: avoid !important;
+            break-inside: avoid !important;
         }
+
+        /* Dynamic Printed Footer (Page numbering X of Y) */
+        .print-only-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex !important;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 7.5pt !important;
+            color: #64748b !important;
+            border-top: 1px solid #cbd5e1 !important;
+            padding-top: 8px !important;
+            font-family: var(--font-family) !important;
+        }
+
+        .print-page-num::after {
+            content: "صفحة " counter(page);
+        }
+    }
+
+    /* Print only element helper */
+    .print-only-footer {
+        display: none;
     }
 </style>
 
-<div class="admin-invoice-container reveal-up">
-    <!-- Non-printable Top Dashboard Action Bar -->
+<div class="admin-invoice-container reveal-anim">
+    <!-- Non-printable Premium ERP Action Bar -->
     <div class="invoice-action-bar no-print">
         <div class="action-bar-title">
             <h1>
-                <i data-lucide="file-spreadsheet" style="color: var(--inv-accent-gold); width: 26px; height: 26px;"></i>
-                <span>إدارة الفواتير المالية</span>
+                <i data-lucide="file-spreadsheet" style="color: var(--erp-gold); width: 28px; height: 28px;"></i>
+                <span>نظام الحسابات والفوترة الموحد</span>
             </h1>
-            <p>التسوية المالية الشاملة وإعدادات عمولة المركز</p>
+            <p>لوحة التحكم وإصدار التسوية المالية والمطابقات لمركز البيع المعتمد</p>
         </div>
         
         <div class="action-bar-controls">
-            <!-- Commission Selection Control -->
-            <div class="commission-selector-wrap">
-                <i data-lucide="percent" style="width: 16px; color: var(--inv-accent-gold);"></i>
+            <!-- Dynamic Commission Selector Pill -->
+            <div class="commission-selector-pill">
+                <i data-lucide="percent" style="width: 16px; color: var(--erp-gold);"></i>
                 <label for="commissionSelect">عمولة المركز المتفق عليها:</label>
-                <select id="commissionSelect" class="commission-select" onchange="updateCommission(this.value)">
+                <select id="commissionSelect" class="commission-select-element" onchange="updateCommission(this.value)">
                     <option value="5" {% if commission_percent == 5 %}selected{% endif %}>5%</option>
                     <option value="10" {% if commission_percent == 10 %}selected{% endif %}>10%</option>
                     <option value="15" {% if commission_percent == 15 %}selected{% endif %}>15%</option>
@@ -1016,282 +1060,328 @@
                 </select>
             </div>
             
-            <button onclick="window.print()" class="btn-invoice btn-invoice-print">
+            <button onclick="window.print()" class="btn-erp btn-erp-primary">
                 <i data-lucide="printer" style="width: 18px;"></i>
-                <span>طباعة الفاتورة والتقارير</span>
+                <span>طباعة الفاتورة والتقارير (A4)</span>
             </button>
             
-            <a href="{% url 'dashboard:admin_billing' %}" class="btn-invoice btn-invoice-back">
+            <a href="{% url 'dashboard:admin_billing' %}" class="btn-erp btn-erp-secondary">
                 <i data-lucide="arrow-left" style="width: 18px;"></i>
                 <span>العودة للمركز المالي</span>
             </a>
         </div>
     </div>
 
-    <!-- Printable Invoice Sheet (Pristine High-End Design) -->
-    <div class="invoice-sheet" id="printable-invoice">
-        <!-- Gold foil-styled premium top accent strip -->
-        <div class="invoice-top-foil"></div>
+    <!-- Printable Invoice Sheet (Enterprise SAP & Stripe style) -->
+    <div class="invoice-sheet-container" id="printable-invoice">
+        <div class="invoice-gold-strip"></div>
         
-        <!-- Header Block -->
-        <div class="invoice-header-grid">
+        <!-- Luxury Glass Header Block -->
+        <div class="invoice-glass-header">
             <div>
-                <div class="brand-logo-container">
-                    <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo" class="invoice-brand-logo">
-                    <div class="brand-text">
+                <div class="brand-logo-wrap">
+                    <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo" class="brand-logo-img">
+                    <div class="brand-titles">
                         <h2>منصة محترفو التعليم</h2>
                         <span>MOHTARIFO PLATFORM</span>
                     </div>
                 </div>
-                <p class="brand-tagline">
-                    المنصة التعليمية والأكاديمية الأولى في سورية لتقديم خدمات التعليم التفاعلي والحلول البرمجية المتكاملة لطلاب البكالوريا والمراكز التعليمية أونلاين.
+                <p class="brand-brief">
+                    المنصة التعليمية الأولى والحلول الأكاديمية التفاعلية الأرقى في سورية لتقديم خدمات التعليم التفاعلي والمطبوعات والخدمات المالية المتكاملة أونلاين.
                 </p>
             </div>
             <div>
-                <div class="invoice-meta-card">
-                    <h1 class="invoice-meta-title">فاتورة محاسبة</h1>
+                <div class="invoice-metadata-box">
+                    <h1 class="metadata-invoice-title">فاتورة محاسبة مالية</h1>
                     
-                    <div class="meta-row">
-                        <span class="meta-label">رقم الفاتورة:</span>
-                        <span class="meta-value" style="direction: ltr;">#{{ invoice_number }}</span>
+                    <div class="metadata-line">
+                        <span class="metadata-label">رقم المستند الحسابي:</span>
+                        <span class="metadata-value id-hash">#{{ invoice_number }}</span>
                     </div>
-                    <div class="meta-row">
-                        <span class="meta-label">تاريخ الإصدار:</span>
-                        <span class="meta-value">{% now "Y-m-d" %} | {% now "H:i" %}</span>
+                    <div class="metadata-line">
+                        <span class="metadata-label">تاريخ الإصدار والوقت:</span>
+                        <span class="metadata-value">{% now "Y-m-d" %} | {% now "H:i" %}</span>
                     </div>
-                    <div class="meta-row">
-                        <span class="meta-label">نسبة العمولة:</span>
-                        <span class="meta-value">{{ commission_percent|floatformat:0 }}%</span>
+                    <div class="metadata-line">
+                        <span class="metadata-label">عمولة المركز المطبقة:</span>
+                        <span class="metadata-value">{{ commission_percent|floatformat:0 }}%</span>
                     </div>
-                    <div class="meta-row">
-                        <span class="meta-label">حالة المستند:</span>
-                        <span class="meta-value gold-badge">معتمدة وموثقة</span>
+                    <div class="metadata-line">
+                        <span class="metadata-label">حالة الفاتورة القانونية:</span>
+                        <span class="metadata-value badge-status">معتمدة وموثقة</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Billing Parties Block -->
-        <div class="invoice-parties-grid">
-            <!-- First Party: Platform Info -->
-            <div class="party-card">
-                <h3 class="party-card-title">
-                    <i data-lucide="landmark" style="width: 18px; color: var(--inv-accent-gold);"></i>
-                    <span>الطرف الأول: الجهة المصدّرة</span>
+        <!-- Billing Info Block -->
+        <div class="invoice-billing-cards">
+            <!-- Issuer Party Info Card -->
+            <div class="billing-party-card">
+                <h3 class="billing-card-title">
+                    <i data-lucide="landmark" style="width: 18px; color: var(--erp-gold);"></i>
+                    <span>الطرف الأول: الجهة المصدّرة للخدمات</span>
                 </h3>
-                <div class="party-info-list">
-                    <div class="party-info-item">
-                        <strong>اسم المؤسسة:</strong>
+                <div class="billing-card-list">
+                    <div class="billing-list-row">
+                        <strong>اسم الشركة:</strong>
                         <span>إدارة منصة محترفو التعليم الأكاديمية</span>
                     </div>
-                    <div class="party-info-item">
+                    <div class="billing-list-row">
                         <strong>المقر الرئيسي:</strong>
                         <span>دمشق، الجمهورية العربية السورية</span>
                     </div>
-                    <div class="party-info-item">
-                        <strong>البريد الإلكتروني:</strong>
+                    <div class="billing-list-row">
+                        <strong>بريد الدعم:</strong>
                         <span>support@pro-academy.pro</span>
                     </div>
-                    <div class="party-info-item">
+                    <div class="billing-list-row">
                         <strong>الموقع الإلكتروني:</strong>
                         <span>pro-academy.pro</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Second Party: Sales Center Info -->
-            <div class="party-card">
-                <h3 class="party-card-title">
-                    <i data-lucide="store" style="width: 18px; color: var(--inv-accent-gold);"></i>
-                    <span>الطرف الثاني: مركز البيع (المدين)</span>
+            <!-- Recipient Party Info Card -->
+            <div class="billing-party-card">
+                <h3 class="billing-card-title">
+                    <i data-lucide="store" style="width: 18px; color: var(--erp-gold);"></i>
+                    <span>الطرف الثاني: مركز البيع (المدين المعتمد)</span>
                 </h3>
-                <div class="party-info-list">
-                    <div class="party-info-item">
+                <div class="billing-card-list">
+                    <div class="billing-list-row">
                         <strong>اسم المركز:</strong>
                         <span>{{ center.name }}</span>
                     </div>
-                    <div class="party-info-item">
+                    <div class="billing-list-row">
                         <strong>المعهد المرتبط:</strong>
-                        <span>{{ center.institute.name|default:"مستقل" }}</span>
+                        <span>{{ center.institute.name|default:"مركز مستقل" }}</span>
                     </div>
-                    <div class="party-info-item">
+                    <div class="billing-list-row">
                         <strong>رقم الهاتف:</strong>
                         <span>{{ center.phone|default:"غير متوفر" }}</span>
                     </div>
-                    <div class="party-info-item">
-                        <strong>العنوان الكامل:</strong>
+                    <div class="billing-list-row">
+                        <strong>العنوان الموثق:</strong>
                         <span>{{ center.address|default:"غير متوفر" }}</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- KPI Financial Summary Cards -->
-        <div class="summary-kpi-grid">
-            <div class="kpi-card kpi-blue">
-                <div class="kpi-icon-wrap">
-                    <i data-lucide="layers" style="width: 18px;"></i>
+        <!-- Dashboard KPI Summary Grid -->
+        <div class="invoice-dashboard-kpis">
+            <div class="dashboard-kpi-card kpi-blue">
+                <div class="kpi-icon-container">
+                    <i data-lucide="layers" style="width: 20px; height: 20px;"></i>
                 </div>
-                <span class="kpi-title">إجمالي الأكواد المستلمة</span>
-                <span class="kpi-value">{{ total_assigned }} كود</span>
+                <span class="kpi-label-text">الأكواد المستلمة</span>
+                <span class="kpi-value-text">{{ total_assigned }} كود</span>
             </div>
             
-            <div class="kpi-card kpi-gold">
-                <div class="kpi-icon-wrap">
-                    <i data-lucide="shopping-cart" style="width: 18px;"></i>
+            <div class="dashboard-kpi-card kpi-gold">
+                <div class="kpi-icon-container">
+                    <i data-lucide="shopping-cart" style="width: 20px; height: 20px;"></i>
                 </div>
-                <span class="kpi-title">إجمالي الأكواد المباعة</span>
-                <span class="kpi-value">{{ total_sold }} كود</span>
+                <span class="kpi-label-text">الأكواد المباعة</span>
+                <span class="kpi-value-text">{{ total_sold }} كود</span>
             </div>
 
-            <div class="kpi-card kpi-blue">
-                <div class="kpi-icon-wrap">
-                    <i data-lucide="trending-up" style="width: 18px;"></i>
+            <div class="dashboard-kpi-card kpi-blue">
+                <div class="kpi-icon-container">
+                    <i data-lucide="trending-up" style="width: 20px; height: 20px;"></i>
                 </div>
-                <span class="kpi-title">إجمالي الصندوق المتوقع</span>
-                <span class="kpi-value">{{ total_potential|currency_format }} ل.س</span>
+                <span class="kpi-label-text">الصندوق المتوقع</span>
+                <span class="kpi-value-text">{{ total_potential|currency_format }} ل.س</span>
             </div>
 
-            <div class="kpi-card kpi-emerald">
-                <div class="kpi-icon-wrap">
-                    <i data-lucide="wallet" style="width: 18px;"></i>
+            <div class="dashboard-kpi-card kpi-emerald">
+                <div class="kpi-icon-container">
+                    <i data-lucide="wallet" style="width: 20px; height: 20px;"></i>
                 </div>
-                <span class="kpi-title">إجمالي التحصيل الفعلي</span>
-                <span class="kpi-value">{{ total_earned|currency_format }} ل.س</span>
+                <span class="kpi-label-text">التحصيل الفعلي</span>
+                <span class="kpi-value-text">{{ total_earned|currency_format }} ل.س</span>
             </div>
 
-            <div class="kpi-card kpi-blue">
-                <div class="kpi-icon-wrap">
-                    <i data-lucide="percent" style="width: 18px;"></i>
+            <div class="dashboard-kpi-card kpi-blue">
+                <div class="kpi-icon-container">
+                    <i data-lucide="percent" style="width: 20px; height: 20px;"></i>
                 </div>
-                <span class="kpi-title">المستقطع لعمولة المركز</span>
-                <span class="kpi-value">{{ total_center_commission|currency_format }} ل.س</span>
+                <span class="kpi-label-text">عمولة المركز</span>
+                <span class="kpi-value-text">{{ total_center_commission|currency_format }} ل.س</span>
             </div>
 
-            <div class="kpi-card kpi-gold">
-                <div class="kpi-icon-wrap">
-                    <i data-lucide="badge-dollar-sign" style="width: 18px;"></i>
+            <div class="dashboard-kpi-card kpi-gold">
+                <div class="kpi-icon-container">
+                    <i data-lucide="award" style="width: 20px; height: 20px;"></i>
                 </div>
-                <span class="kpi-title">الصافي النهائي للمنصة</span>
-                <span class="kpi-value">{{ total_net_share|currency_format }} ل.س</span>
+                <span class="kpi-label-text">الصافي للمنصة</span>
+                <span class="kpi-value-text">{{ total_net_share|currency_format }} ل.س</span>
             </div>
         </div>
 
-        <!-- Detailed ERP Accounting Table -->
-        <h3 class="section-title">
-            <i data-lucide="list-ordered" style="width: 20px; height: 20px; color: var(--inv-accent-gold);"></i>
-            <span>بيانات المحاسبة التفصيلية لدفعات الأكواد والتحصيلات</span>
+        <!-- Enterprise Financial Accounting Table -->
+        <h3 class="invoice-table-section-heading">
+            <i data-lucide="list-ordered" style="width: 22px; height: 22px; color: var(--erp-gold);"></i>
+            <span>تفاصيل حركة مبيعات الأكواد والتحصيلات الحسابية والعمولات</span>
         </h3>
         
-        <div class="table-container">
-            <table class="erp-invoice-table">
+        <div class="invoice-table-container">
+            <table class="invoice-accounting-table">
+                <!-- Precision Table Column Sizing Control -->
+                <colgroup>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                </colgroup>
                 <thead>
                     <tr>
-                        <th style="padding-right: 1.5rem;">الدفعة الكودية / المادة الأكاديمية</th>
-                        <th class="text-center">المدرس</th>
-                        <th class="text-center">الفرع</th>
-                        <th class="text-center">الأكواد المستلمة</th>
-                        <th class="text-center">الأكواد المباعة</th>
-                        <th class="text-center">السعر الرسمي</th>
-                        <th class="text-left-align">الصندوق المتوقع</th>
-                        <th class="text-left-align">التحصيل الفعلي</th>
-                        <th class="text-left-align">عمولة المركز ({{ commission_percent|floatformat:0 }}%)</th>
-                        <th class="text-left-align" style="padding-left: 1.5rem;">الصافي المستحق للمنصة</th>
+                        <th style="padding-right: 1.25rem;">الدفعة الكودية والمادة</th>
+                        <th class="align-center">المدرس</th>
+                        <th class="align-center">الفرع</th>
+                        <th class="align-center">الأكواد</th>
+                        <th class="align-center">المباعة</th>
+                        <th class="align-center">السعر</th>
+                        <th class="align-left">المتوقع</th>
+                        <th class="align-left">الفعلي</th>
+                        <th class="align-left">العمولة</th>
+                        <th class="align-left" style="padding-left: 1.25rem;">الصافي للمنصة</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in detailed_batches %}
                     <tr>
-                        <td class="col-batch-info" style="padding-right: 1.5rem;">
-                            <span class="batch-primary-name">{{ item.batch.name }}</span>
-                            <div class="batch-sub-details">
-                                <span class="batch-sub-badge"><strong style="color: var(--inv-accent-gold);">المادة:</strong> {{ item.batch.target_title }}</span>
-                            </div>
+                        <!-- 1. المادة والدفعة -->
+                        <td style="padding-right: 1.25rem;">
+                            <span class="text-primary-emphasis">{{ item.batch.name }}</span>
+                            <span class="badge-sub-info">المادة: {{ item.batch.target_title }}</span>
                         </td>
-                        <td class="text-center">
+                        
+                        <!-- 2. المدرس -->
+                        <td class="align-center">
                             {% if item.batch.course %}
                                 <span style="font-weight: 700;">{{ item.batch.course.instructor.get_full_name|default:item.batch.course.instructor.username }}</span>
                             {% elif item.batch.package %}
-                                <span style="color: var(--inv-accent-gold); font-weight: 800;">باقة مشتركة</span>
+                                <span style="color: var(--erp-gold); font-weight: 800;">باقة مشتركة</span>
                             {% else %}
-                                <span style="color: var(--inv-text-muted);">غير محدد</span>
+                                <span style="color: var(--erp-text-muted); font-size: 0.75rem;">غير محدد</span>
                             {% endif %}
                         </td>
-                        <td class="text-center">
+                        
+                        <!-- 3. الفرع الدراسي -->
+                        <td class="align-center">
                             {% if item.batch.course %}
-                                <span class="batch-sub-badge" style="background: rgba(37, 99, 235, 0.05); color: var(--inv-blue); border-color: rgba(37, 99, 235, 0.1);">{{ item.batch.course.get_academic_track_display }}</span>
+                                <span class="badge-sub-info" style="background: var(--erp-blue-soft); color: var(--erp-blue); border-color: rgba(37, 99, 235, 0.08);">{{ item.batch.course.get_academic_track_display }}</span>
                             {% elif item.batch.package %}
-                                <span class="batch-sub-badge" style="background: rgba(197, 160, 89, 0.05); color: var(--inv-accent-gold); border-color: rgba(197, 160, 89, 0.1);">{{ item.batch.package.get_package_track_display }}</span>
+                                <span class="badge-sub-info" style="background: var(--erp-gold-soft); color: var(--erp-gold); border-color: var(--erp-border-gold);">{{ item.batch.package.get_package_track_display }}</span>
                             {% else %}
-                                <span style="color: var(--inv-text-muted);">-</span>
+                                <span style="color: var(--erp-text-muted); font-size: 0.75rem;">-</span>
                             {% endif %}
                         </td>
-                        <td class="text-center amount-val" style="font-size: 0.9rem;">{{ item.total_codes }}</td>
-                        <td class="text-center">
-                            <span class="badge-sold">{{ item.sold_count }} مباع</span>
+                        
+                        <!-- 4. الأكواد المستلمة -->
+                        <td class="align-center cell-numeric-val">{{ item.total_codes }}</td>
+                        
+                        <!-- 5. الأكواد المباعة -->
+                        <td class="align-center">
+                            <span class="badge-sold-pill">{{ item.sold_count }} مباع</span>
                         </td>
-                        <td class="text-center amount-val" style="font-size: 0.85rem;">{{ item.standard_price|currency_format }} ل.س</td>
-                        <td class="text-left-align amount-val amount-potential">{{ item.potential_value|currency_format }} ل.س</td>
-                        <td class="text-left-align amount-val amount-earned">{{ item.actual_earned|currency_format }} ل.s</td>
-                        <td class="text-left-align amount-val" style="color: var(--inv-text-muted);">{{ item.center_share|currency_format }} ل.س</td>
-                        <td class="text-left-align amount-val amount-net" style="padding-left: 1.5rem; font-size: 0.9rem;">{{ item.net_share|currency_format }} ل.س</td>
+                        
+                        <!-- 6. السعر الرسمي -->
+                        <td class="align-center cell-numeric-val" style="font-size: 0.75rem;">{{ item.standard_price|currency_format }} ل.س</td>
+                        
+                        <!-- 7. التحصيل المتوقع -->
+                        <td class="align-left cell-numeric-val cell-blue">{{ item.potential_value|currency_format }} ل.س</td>
+                        
+                        <!-- 8. التحصيل الفعلي -->
+                        <td class="align-left cell-numeric-val cell-emerald">{{ item.actual_earned|currency_format }} ل.س</td>
+                        
+                        <!-- 9. عمولة المركز المستقطعة -->
+                        <td class="align-left cell-numeric-val" style="color: var(--erp-text-muted);">{{ item.center_share|currency_format }} ل.س</td>
+                        
+                        <!-- 10. الصافي للمنصة -->
+                        <td class="align-left cell-numeric-val cell-gold" style="padding-left: 1.25rem;">{{ item.net_share|currency_format }} ل.س</td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="10" class="text-center" style="padding: 3rem; color: var(--inv-text-muted); font-weight: 700;">لا توجد دفعات أكواد أو قيود مالية مسجلة في كشف حساب هذا المركز حالياً.</td>
+                        <td colspan="10" class="align-center" style="padding: 4rem; color: var(--erp-text-muted); font-weight: 700; font-size: 0.9rem;">
+                            لا توجد قيود مالية أو دفعات أكواد مسجلة لهذا المركز المالي حالياً.
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
 
-        <!-- Grand Financial Summary Section -->
-        <div class="financial-summary-wrap">
-            <div class="summary-breakdown-card">
-                <h3 class="breakdown-title">
-                    <i data-lucide="calculator" style="width: 18px; color: var(--inv-accent-gold);"></i>
-                    <span>التسوية والمطابقة المالية النهائية</span>
+        <!-- Financial Summary Breakdown Card Block -->
+        <div class="invoice-financial-settlement">
+            <div class="settlement-card">
+                <h3 class="settlement-card-title">
+                    <i data-lucide="calculator" style="width: 18px; color: var(--erp-gold);"></i>
+                    <span>التسوية الحسابية والمطابقة المالية</span>
                 </h3>
                 
-                <div class="breakdown-row">
-                    <span class="breakdown-label">إجمالي قيمة الأكواد المتوقعة:</span>
-                    <span class="breakdown-val blue">{{ total_potential|currency_format }} ل.س</span>
+                <div class="settlement-row">
+                    <span class="settlement-label">قيمة الأكواد الإجمالية المتوقعة:</span>
+                    <span class="settlement-value blue">{{ total_potential|currency_format }} ل.س</span>
                 </div>
                 
-                <div class="breakdown-row">
-                    <span class="breakdown-label">إجمالي تحصيلات الصندوق الفعلي:</span>
-                    <span class="breakdown-val emerald">{{ total_earned|currency_format }} ل.س</span>
+                <div class="settlement-row">
+                    <span class="settlement-label">تحصيلات الصندوق الفعلي للمبيعات:</span>
+                    <span class="settlement-value emerald">{{ total_earned|currency_format }} ل.س</span>
                 </div>
                 
-                <div class="breakdown-row border-bottom">
-                    <span class="breakdown-label">المستقطع لعمولة المركز المعتمدة ({{ commission_percent|floatformat:0 }}%):</span>
-                    <span class="breakdown-val" style="color: #ef4444; font-weight: 700;">- {{ total_center_commission|currency_format }} ل.س</span>
+                <div class="settlement-row border-line">
+                    <span class="settlement-label">خصم عمولة مركز البيع ({{ commission_percent|floatformat:0 }}%):</span>
+                    <span class="settlement-value red">- {{ total_center_commission|currency_format }} ل.س</span>
                 </div>
                 
-                <div class="final-net-row">
+                <div class="final-net-box">
                     <span class="final-net-label">الصافي النهائي المستحق للمنصة:</span>
                     <span class="final-net-val">{{ total_net_share|currency_format }} ل.س</span>
                 </div>
             </div>
         </div>
 
-        <!-- Official Signatures Section -->
-        <div class="signatures-block">
-            <div class="signature-slot">
-                <span class="signature-title">توقيع مسؤول مركز البيع</span>
-                <div class="signature-line"></div>
-                <span class="signature-sub">الاسم والتاريخ</span>
+        <!-- High-End Signature Cards (3 Signatories) -->
+        <div class="invoice-signatures-wrap">
+            <div class="signature-card-item">
+                <span class="sig-title">مسؤول مركز البيع المعتمد</span>
+                <div class="sig-dotted-line"></div>
+                <div class="sig-metadata">
+                    <div class="sig-metadata-row"><span>الاسم:</span><span>........................................</span></div>
+                    <div class="sig-metadata-row"><span>التاريخ والتوقيع:</span><span>.... / .... / 2026</span></div>
+                </div>
             </div>
-            <div class="signature-slot">
-                <span class="signature-title">توقيع محاسب المعهد المرتبط</span>
-                <div class="signature-line"></div>
-                <span class="signature-sub">الاسم والتاريخ</span>
+            <div class="signature-card-item">
+                <span class="sig-title">المحاسب المالي المفوّض</span>
+                <div class="sig-dotted-line"></div>
+                <div class="sig-metadata">
+                    <div class="sig-metadata-row"><span>الاسم:</span><span>........................................</span></div>
+                    <div class="sig-metadata-row"><span>التاريخ والتوقيع:</span><span>.... / .... / 2026</span></div>
+                </div>
             </div>
-            <div class="signature-slot">
-                <span class="signature-title">توقيع وختم إدارة المنصة</span>
-                <div class="signature-line"></div>
-                <span class="signature-sub">الاسم والتاريخ</span>
+            <div class="signature-card-item">
+                <span class="sig-title">إدارة منصة محترفو التعليم</span>
+                <div class="sig-dotted-line"></div>
+                <div class="sig-metadata">
+                    <div class="sig-metadata-row"><span>الاسم والختم الرسمي:</span><span>........................................</span></div>
+                    <div class="sig-metadata-row"><span>التاريخ والاعتماد:</span><span>.... / .... / 2026</span></div>
+                </div>
             </div>
+        </div>
+        
+        <!-- Fixed Printed Footer Structure -->
+        <div class="print-only-footer">
+            <span>منصة محترفو التعليم © 2026 - نظام الحسابات والفوترة السحابي الموحد</span>
+            <span class="print-page-num"></span>
         </div>
     </div>
 </div>
