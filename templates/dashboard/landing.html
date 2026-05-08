@@ -184,9 +184,9 @@
                                 {% if course.price_display %}
                                     {% course_discount_info course as discount %}
                                     {% if discount.has_discount %}
-                                        <strong style="text-decoration: line-through; color: rgba(255,255,255,0.4); font-size: 0.85rem; font-weight: 500;">
+                                        <del class="text-muted" style="font-size: 0.85rem; font-weight: 500; margin-left: 0.25rem;">
                                             {{ discount.original_price|currency_format }} ل.س
-                                        </strong>
+                                        </del>
                                         <strong style="color: var(--brand-gold); font-size: 1.05rem; font-weight: 900;">
                                             {{ discount.discounted_price|currency_format }} ل.س
                                         </strong>
