@@ -197,19 +197,16 @@
     @media print {
         @page {
             size: A4 portrait;
-            margin: 15mm 15mm 15mm 15mm;
+            margin: 10mm 12mm 10mm 12mm; /* Compact margins to maximize printable area and avoid overflow */
         }
         body {
             background: #ffffff !important;
-            color: #000000 !important;
+            color: #111827 !important;
             font-family: 'Cairo', sans-serif !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
-        .no-print {
-            display: none !important;
-        }
-        .sidebar, .navbar, .admin-sidebar, .hub-header, .app-header {
+        .no-print, .sidebar, .navbar, .admin-sidebar, .hub-header, .app-header {
             display: none !important;
         }
         .admin-layout, .main-layout, .container, .admin-invoice-container {
@@ -222,65 +219,145 @@
             border: none !important;
             box-shadow: none !important;
             background: #ffffff !important;
-            color: #000000 !important;
-            padding: 0px !important;
-            margin: 0px !important;
+            color: #111827 !important;
+            padding: 0 !important;
+            margin: 0 !important;
             width: 100% !important;
             border-radius: 0px !important;
         }
-        .admin-table {
-            border: 1px solid #111827 !important;
-            width: 100% !important;
-            border-collapse: collapse !important;
+        .invoice-top-accent {
+            height: 6px !important;
+            background: linear-gradient(90deg, #bf953f, #b38728, #bf953f) !important;
         }
-        .admin-table th {
-            background-color: #f3f4f6 !important;
-            color: #111827 !important;
-            border-bottom: 2px solid #111827 !important;
-            padding: 10px !important;
-            font-weight: 800 !important;
-            font-size: 0.85rem !important;
+        
+        /* Make sure the logo is visible with no shadows or filters */
+        .invoice-logo {
+            display: block !important;
+            height: 55px !important;
+            width: auto !important;
+            filter: none !important; /* Remove drop shadows that break print rendering */
+            -webkit-filter: none !important;
         }
-        .admin-table td {
-            border-bottom: 1px solid #e5e7eb !important;
-            color: #111827 !important;
-            padding: 10px !important;
-            font-size: 0.82rem !important;
-            font-weight: 600 !important;
-        }
-        .bg-base, .bg-surface {
-            background-color: #ffffff !important;
-            border: 1px solid #e5e7eb !important;
-            box-shadow: none !important;
-        }
-        .text-glow {
-            text-shadow: none !important;
-        }
-        strong, h1, h2, h3, h4, .font-bold {
-            color: #111827 !important;
-        }
-        .text-muted {
-            color: #4b5563 !important;
-        }
-        .badge, .status-badge {
-            background: none !important;
-            border: 1px solid #111827 !important;
-            color: #111827 !important;
-            padding: 2px 6px !important;
-            border-radius: 4px !important;
-            font-weight: 800 !important;
-        }
-        /* Page break configurations */
-        tr {
-            page-break-inside: avoid !important;
-        }
+        
+        /* Billing cards side by side layout */
         .grid {
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
             gap: 20px !important;
+            margin-bottom: 20px !important;
         }
-        .w-1/2 {
+        .bg-base, .bg-surface {
+            background-color: #f9fafb !important;
+            border: 1px solid #e5e7eb !important;
+            box-shadow: none !important;
+            padding: 15px !important;
+            border-radius: 12px !important;
+        }
+        
+        /* Detailed Batches Table compact styling during print */
+        .table-responsive {
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 12px !important;
+            overflow: visible !important; /* Avoid clipping */
+            background: #ffffff !important;
+            margin-bottom: 20px !important;
+        }
+        .admin-table {
+            border: none !important;
+            width: 100% !important;
+            border-collapse: collapse !important;
+        }
+        .admin-table th {
+            background-color: #f1f5f9 !important;
+            color: #1e293b !important;
+            border-bottom: 2px solid #cbd5e1 !important;
+            padding: 8px 6px !important;
+            font-weight: 800 !important;
+            font-size: 0.72rem !important; /* Compact to fit A4 width perfectly */
+            text-align: center !important;
+        }
+        .admin-table th:first-child {
+            text-align: right !important;
+        }
+        .admin-table td {
+            border-bottom: 1px solid #e2e8f0 !important;
+            color: #334155 !important;
+            padding: 8px 6px !important;
+            font-size: 0.7rem !important; /* Compact to fit A4 width perfectly */
+            font-weight: 600 !important;
+            text-align: center !important;
+        }
+        .admin-table td:first-child {
+            text-align: right !important;
+        }
+        
+        /* Forces all text colors to be perfectly dark and visible on white paper */
+        strong, h1, h2, h3, h4, .font-bold, .text-primary, [style*="color: var(--text-primary)"] {
+            color: #0f172a !important;
+        }
+        .text-muted, small, .text-muted *, [style*="color: var(--text-muted)"] {
+            color: #475569 !important;
+        }
+        
+        /* Custom badges */
+        .badge, .status-badge {
+            background-color: #f8fafc !important;
+            border: 1px solid #94a3b8 !important;
+            color: #1e293b !important;
+            padding: 2px 6px !important;
+            border-radius: 6px !important;
+            font-weight: 800 !important;
+            font-size: 0.68rem !important;
+            display: inline-block !important;
+        }
+        
+        /* Financial Summary Block compact layout */
+        div[style*="justify-content: flex-end"] {
+            display: flex !important;
+            justify-content: flex-end !important;
+            margin-bottom: 25px !important;
+        }
+        div[style*="width: 50%"] {
             width: 50% !important;
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            padding: 15px !important;
+            border-radius: 12px !important;
+        }
+        div[style*="width: 50%"] h3 {
+            border-bottom: 1px solid #cbd5e1 !important;
+            color: #b45309 !important; /* Deep rich bronze/gold for heading on paper */
+        }
+        span[style*="color: var(--brand-gold)"] {
+            color: #b45309 !important;
+        }
+        span[style*="color: #34d399"] {
+            color: #15803d !important; /* Darker visible green for printing */
+        }
+        span[style*="color: #60a5fa"] {
+            color: #1d4ed8 !important; /* Darker visible blue for printing */
+        }
+        
+        /* Signature Blocks */
+        div[style*="grid-template-columns: 1fr 1fr 1fr"] {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr 1fr !important;
+            gap: 15px !important;
+            margin-top: 25px !important;
+            padding-top: 15px !important;
+            border-top: 1px solid #e2e8f0 !important;
+        }
+        div[style*="grid-template-columns: 1fr 1fr 1fr"] p {
+            color: #334155 !important;
+            font-size: 0.78rem !important;
+            margin-bottom: 2rem !important;
+        }
+        div[style*="background-color: rgba(255,255,255,0.1)"] {
+            background-color: #cbd5e1 !important;
+        }
+        
+        tr {
+            page-break-inside: avoid !important;
         }
     }
 </style>
