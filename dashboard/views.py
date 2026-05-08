@@ -2147,6 +2147,7 @@ def _default_catalog_tabs():
         {"label": "منهاج الأدبي", "kind": "curriculum", "track": "literary"},
         {"label": "التاسع", "kind": "material", "track": "ninth"},
         {"label": "القسم المشترك", "kind": "intensive", "track": "general"},
+        {"label": "امتحانيات المشترك", "kind": "exam_camp", "track": "general"},
     ]
 
 
