@@ -2427,9 +2427,15 @@ def admin_center_invoice(request, center_id):
 
 def _filter_financial_rows():
     rows = []
-    for tab in _catalog_tabs():
+    sections = [
+        {"label": "امتحانيات علمي", "kind": "exam_camp", "track": "scientific"},
+        {"label": "امتحانيات أدبي", "kind": "exam_camp", "track": "literary"},
+        {"label": "امتحانيات التاسع", "kind": "exam_camp", "track": "ninth"},
+        {"label": "القسم المشترك", "kind": "intensive", "track": "general"},
+        {"label": "امتحانيات المشترك", "kind": "exam_camp", "track": "general"},
+    ]
+    for tab in sections:
         codes = AccessCode.objects.filter(course__kind=tab["kind"], course__academic_track=tab["track"])
-        prints = AccessCodePrintLog.objects.filter(batch__course__kind=tab["kind"], batch__course__academic_track=tab["track"])
         rows.append({
             "label": tab["label"],
             "kind": tab["kind"],
@@ -2439,7 +2445,6 @@ def _filter_financial_rows():
             "sold": codes.filter(sale_status="sold").count(),
             "activated": codes.filter(redeemed_count__gt=0).count(),
             "inactive": codes.filter(redeemed_count=0).count(),
-            "printed": prints.aggregate(total=Sum("cards_count"))["total"] or 0,
             "gross": (codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0) / 100,
         })
     return rows
