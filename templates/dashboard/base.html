@@ -356,6 +356,12 @@
                         <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem; font-weight: 700; letter-spacing: 0.5px;">
                             الفرع المستهدف: {{ popup_discount.get_academic_track_display }}
                         </div>
+                        {% if popup_discount.expires_at %}
+                        <div style="font-size: 0.9rem; color: #ff5252; margin-top: 0.75rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+                            <i data-lucide="clock" style="width: 14px; height: 14px;"></i>
+                            <span>صالح لغاية: {{ popup_discount.expires_at|date:"Y-m-d H:i" }}</span>
+                        </div>
+                        {% endif %}
                     </div>
 
                     <button id="accept-discount-modal" class="btn btn-primary btn-glow w-full" style="padding: 1.2rem; font-size: 1.1rem; font-weight: 800; border-radius: 14px;">

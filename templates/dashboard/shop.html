@@ -1,5 +1,5 @@
 {% extends "dashboard/base.html" %}
-{% load static %}
+{% load static inline_static %}
 
 {% block title %}تسوق الدورات | محترفو التعليم{% endblock %}
 {% block meta_description %}تصفح دورات ومكثفات محترفو التعليم واختر طريقة الشراء عبر واتساب أو مراكز البيع المعتمدة.{% endblock %}
@@ -60,7 +60,13 @@
                     <div class="shop-course-meta text-muted">
                         <span><i data-lucide="video"></i> {{ course.lessons_total }} جلسة/قسم</span>
                         <span><i data-lucide="user"></i> {{ course.instructor.get_full_name|default:course.instructor.username }}</span>
-                        {% if course.price_display %}<strong class="gold">{{ course.price_display }} ل.س</strong>{% endif %}
+                        {% course_discount_info course as discount %}
+                        {% if discount.has_discount %}
+                            <strong class="gold">{{ discount.discounted_price|currency_format }} ل.س</strong>
+                            <del class="text-muted" style="font-size:0.85rem;">{{ discount.original_price|currency_format }} ل.س</del>
+                        {% else %}
+                            {% if course.price_display %}<strong class="gold">{{ course.price_display }} ل.س</strong>{% endif %}
+                        {% endif %}
                     </div>
                     <div class="course-footer shop-course-actions">
                         <a href="{% url 'dashboard:public_course_detail' course.id %}" class="btn btn-secondary stretched-link">التفاصيل</a>

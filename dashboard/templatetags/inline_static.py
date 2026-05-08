@@ -144,7 +144,10 @@ def active_discount_for_popup(user):
         if specific_rule:
             return specific_rule
             
-    return rules.filter(academic_track="all").first()
+    all_rule = rules.filter(academic_track="all").first()
+    if all_rule:
+        return all_rule
+    return rules.first()
 
 
 
