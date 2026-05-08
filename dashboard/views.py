@@ -2431,7 +2431,6 @@ def _filter_financial_rows():
         {"label": "امتحانيات علمي", "kind": "exam_camp", "track": "scientific"},
         {"label": "امتحانيات أدبي", "kind": "exam_camp", "track": "literary"},
         {"label": "امتحانيات التاسع", "kind": "exam_camp", "track": "ninth"},
-        {"label": "القسم المشترك", "kind": "intensive", "track": "general"},
         {"label": "امتحانيات المشترك", "kind": "exam_camp", "track": "general"},
     ]
     for tab in sections:
