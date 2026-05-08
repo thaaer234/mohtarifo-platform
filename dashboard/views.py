@@ -2106,7 +2106,10 @@ def _best_active_discount_for_price(base_price_cents, course=None, package=None)
         Q(expires_at__isnull=True) | Q(expires_at__gte=now)
     )
     if target_track != "all":
-        rules = rules.filter(Q(academic_track="all") | Q(academic_track=target_track))
+        if target_track == "general":
+            rules = rules.filter(Q(academic_track="all") | Q(academic_track="general") | Q(academic_track="scientific") | Q(academic_track="literary"))
+        else:
+            rules = rules.filter(Q(academic_track="all") | Q(academic_track=target_track))
         
     best_rule = None
     max_discount_cents = 0
@@ -2143,6 +2146,7 @@ def _default_catalog_tabs():
         {"label": "منهاج العلمي", "kind": "curriculum", "track": "scientific"},
         {"label": "منهاج الأدبي", "kind": "curriculum", "track": "literary"},
         {"label": "التاسع", "kind": "material", "track": "ninth"},
+        {"label": "القسم المشترك", "kind": "intensive", "track": "general"},
     ]
 
 

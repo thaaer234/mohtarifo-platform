@@ -76,7 +76,10 @@ def course_discount_info(course_or_package):
         Q(expires_at__isnull=True) | Q(expires_at__gte=now)
     )
     if target_track != "all":
-        rules = rules.filter(Q(academic_track="all") | Q(academic_track=target_track))
+        if target_track == "general":
+            rules = rules.filter(Q(academic_track="all") | Q(academic_track="general") | Q(academic_track="scientific") | Q(academic_track="literary"))
+        else:
+            rules = rules.filter(Q(academic_track="all") | Q(academic_track=target_track))
         
     best_rule = None
     max_discount_cents = 0
