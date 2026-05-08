@@ -180,7 +180,6 @@
                                 <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">المباعة</th>
                                 <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">المفعلة</th>
                                 <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">غير مفعلة</th>
-                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">مطبوعة</th>
                                 <th style="color: var(--brand-gold); padding: 1rem; font-size: 0.85rem; font-weight: 800; text-align: center;">إجمالي مبيعات الصندوق</th>
                             </tr>
                         </thead>
@@ -193,7 +192,6 @@
                                 <td class="text-center" style="text-align: center; padding: 1.25rem 1rem; color: #34d399; font-weight: 700;">{{ row.sold }}</td>
                                 <td class="text-center" style="text-align: center; padding: 1.25rem 1rem; color: #60a5fa; font-weight: 700;">{{ row.activated }}</td>
                                 <td class="text-center" style="text-align: center; padding: 1.25rem 1rem; color: var(--text-muted);">{{ row.inactive }}</td>
-                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;">{{ row.printed }}</td>
                                 <td class="text-center" style="text-align: center; padding: 1.25rem 1rem; color: var(--brand-gold); font-weight: 800;">{{ row.gross|currency_format }} ل.س</td>
                             </tr>
                             {% endfor %}
@@ -218,7 +216,6 @@
                                 <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">المباعة</th>
                                 <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">المفعلة</th>
                                 <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">غير مفعلة</th>
-                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">مطبوعة</th>
                                 <th style="color: var(--brand-gold); padding: 1rem; font-size: 0.85rem; font-weight: 800; text-align: center;">المبيعات ل.س</th>
                                 <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">تصدير الكشوفات</th>
                             </tr>
@@ -234,7 +231,6 @@
                                 <td class="text-center" style="text-align: center; padding: 1.25rem 1rem; color: #34d399; font-weight: 700;">{{ row.sold }}</td>
                                 <td class="text-center" style="text-align: center; padding: 1.25rem 1rem; color: #60a5fa; font-weight: 700;">{{ row.activated }}</td>
                                 <td class="text-center" style="text-align: center; padding: 1.25rem 1rem; color: var(--text-muted);">{{ row.inactive }}</td>
-                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;">{{ row.printed }}</td>
                                 <td class="text-center" style="text-align: center; padding: 1.25rem 1rem; color: var(--brand-gold); font-weight: 800;">{{ row.gross|currency_format }} ل.س</td>
                                 <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;">
                                     <a class="btn btn-glass btn-sm font-bold" style="padding: 0.35rem 0.75rem; border-radius: 8px; font-size: 0.75rem; color: var(--brand-gold); border: 1px solid rgba(197, 160, 89, 0.2); background: rgba(197, 160, 89, 0.02); display: inline-flex; align-items: center; gap: 0.25rem;" href="{% url 'dashboard:admin_course_report_export' row.course.id %}">
@@ -243,7 +239,7 @@
                                 </td>
                             </tr>
                             {% empty %}
-                            <tr><td colspan="8" class="text-center p-8 text-muted" style="text-align: center; padding: 2rem;">لا توجد دورات مسجلة محاسبياً في النظام حالياً.</td></tr>
+                            <tr><td colspan="7" class="text-center p-8 text-muted" style="text-align: center; padding: 2rem;">لا توجد دورات مسجلة محاسبياً في النظام حالياً.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
