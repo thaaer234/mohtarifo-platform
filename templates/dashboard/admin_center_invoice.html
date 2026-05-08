@@ -197,70 +197,83 @@
     @media print {
         @page {
             size: A4 portrait;
-            margin: 10mm 12mm 10mm 12mm; /* Compact margins to maximize printable area and avoid overflow */
+            margin: 10mm 15mm !important;
         }
-        body {
-            background: #ffffff !important;
-            color: #111827 !important;
-            font-family: 'Cairo', sans-serif !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-        }
-        .no-print, .sidebar, .navbar, .admin-sidebar, .hub-header, .app-header {
+        /* Hide all page layouts, menus, footers, navbars */
+        nav, footer, .navbar, .footer, .no-print, .sidebar, .admin-sidebar, .hub-header, .app-header, .messages-container, .breadcrumbs, #theme-toggle, #menu-toggle {
             display: none !important;
         }
-        .admin-layout, .main-layout, .container, .admin-invoice-container {
+        /* Flatten body and wrappers to completely avoid parent margins/paddings from base.html */
+        body, html, main, .container, .main-content, .admin-invoice-container, .invoice-sheet {
+            background: #ffffff !important;
+            color: #111827 !important;
             margin: 0 !important;
             padding: 0 !important;
             width: 100% !important;
             max-width: 100% !important;
-        }
-        .invoice-sheet {
+            min-width: 100% !important;
             border: none !important;
             box-shadow: none !important;
-            background: #ffffff !important;
-            color: #111827 !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            width: 100% !important;
-            border-radius: 0px !important;
-        }
-        .invoice-top-accent {
-            height: 6px !important;
-            background: linear-gradient(90deg, #bf953f, #b38728, #bf953f) !important;
+            font-family: 'Cairo', sans-serif !important;
         }
         
-        /* Make sure the logo is visible with no shadows or filters */
+        /* Premium top gold strip */
+        .invoice-top-accent {
+            height: 6px !important;
+            background: #b45309 !important; /* Elegant corporate gold */
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+        }
+
+        /* Invoice Logo */
         .invoice-logo {
             display: block !important;
             height: 55px !important;
             width: auto !important;
-            filter: none !important; /* Remove drop shadows that break print rendering */
+            filter: none !important;
             -webkit-filter: none !important;
         }
-        
-        /* Billing cards side by side layout */
+
+        /* Title & Headers */
+        h1, h2, h3, h4, strong, .font-extrabold, .font-black {
+            color: #111827 !important;
+            text-shadow: none !important;
+        }
+        .text-muted, small, .text-muted * {
+            color: #475569 !important;
+        }
+
+        /* Billing side-by-side cards */
         .grid {
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
             gap: 20px !important;
-            margin-bottom: 20px !important;
+            margin-bottom: 25px !important;
         }
-        .bg-base, .bg-surface {
-            background-color: #f9fafb !important;
-            border: 1px solid #e5e7eb !important;
-            box-shadow: none !important;
+        .grid > div {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
             padding: 15px !important;
-            border-radius: 12px !important;
+            border-radius: 8px !important;
+            box-shadow: none !important;
         }
-        
-        /* Detailed Batches Table compact styling during print */
+        .grid > div h3 {
+            color: #b45309 !important;
+        }
+        .grid > div p, .grid > div span {
+            color: #334155 !important;
+            font-size: 0.85rem !important;
+        }
+
+        /* Table Styling */
         .table-responsive {
             border: 1px solid #cbd5e1 !important;
-            border-radius: 12px !important;
-            overflow: visible !important; /* Avoid clipping */
+            border-radius: 8px !important;
+            overflow: visible !important;
             background: #ffffff !important;
-            margin-bottom: 20px !important;
+            margin-bottom: 25px !important;
         }
         .admin-table {
             border: none !important;
@@ -271,9 +284,10 @@
             background-color: #f1f5f9 !important;
             color: #1e293b !important;
             border-bottom: 2px solid #cbd5e1 !important;
-            padding: 8px 6px !important;
-            font-weight: 800 !important;
-            font-size: 0.72rem !important; /* Compact to fit A4 width perfectly */
+            border-left: 1px solid #cbd5e1 !important;
+            padding: 10px 8px !important;
+            font-weight: bold !important;
+            font-size: 0.72rem !important;
             text-align: center !important;
         }
         .admin-table th:first-child {
@@ -281,40 +295,40 @@
         }
         .admin-table td {
             border-bottom: 1px solid #e2e8f0 !important;
+            border-left: 1px solid #e2e8f0 !important;
             color: #334155 !important;
-            padding: 8px 6px !important;
-            font-size: 0.7rem !important; /* Compact to fit A4 width perfectly */
-            font-weight: 600 !important;
+            padding: 10px 8px !important;
+            font-size: 0.72rem !important;
+            font-weight: 500 !important;
             text-align: center !important;
         }
         .admin-table td:first-child {
             text-align: right !important;
         }
-        
-        /* Forces all text colors to be perfectly dark and visible on white paper */
-        strong, h1, h2, h3, h4, .font-bold, .text-primary, [style*="color: var(--text-primary)"] {
+        .admin-table strong {
             color: #0f172a !important;
         }
-        .text-muted, small, .text-muted *, [style*="color: var(--text-muted)"] {
+        .admin-table small, .admin-table small * {
             color: #475569 !important;
+            font-size: 0.65rem !important;
         }
-        
-        /* Custom badges */
-        .badge, .status-badge {
-            background-color: #f8fafc !important;
+
+        /* Status Badge */
+        .status-badge {
+            background-color: #f1f5f9 !important;
             border: 1px solid #94a3b8 !important;
             color: #1e293b !important;
-            padding: 2px 6px !important;
-            border-radius: 6px !important;
-            font-weight: 800 !important;
-            font-size: 0.68rem !important;
-            display: inline-block !important;
+            padding: 3px 8px !important;
+            border-radius: 4px !important;
+            font-size: 0.65rem !important;
+            font-weight: bold !important;
         }
-        
-        /* Financial Summary Block compact layout */
+
+        /* Financial summary block */
         div[style*="justify-content: flex-end"] {
             display: flex !important;
             justify-content: flex-end !important;
+            margin-top: 25px !important;
             margin-bottom: 25px !important;
         }
         div[style*="width: 50%"] {
@@ -322,40 +336,55 @@
             background: #f8fafc !important;
             border: 1px solid #cbd5e1 !important;
             padding: 15px !important;
-            border-radius: 12px !important;
+            border-radius: 8px !important;
+            box-shadow: none !important;
         }
         div[style*="width: 50%"] h3 {
             border-bottom: 1px solid #cbd5e1 !important;
-            color: #b45309 !important; /* Deep rich bronze/gold for heading on paper */
+            color: #b45309 !important;
+            font-size: 1rem !important;
+            padding-bottom: 6px !important;
+            margin-bottom: 12px !important;
         }
-        span[style*="color: var(--brand-gold)"] {
+        div[style*="width: 50%"] div {
+            font-size: 0.82rem !important;
+            color: #334155 !important;
+        }
+        div[style*="width: 50%"] span[style*="color: var(--brand-gold)"] {
             color: #b45309 !important;
         }
-        span[style*="color: #34d399"] {
-            color: #15803d !important; /* Darker visible green for printing */
+        div[style*="width: 50%"] span[style*="color: #34d399"] {
+            color: #15803d !important;
+            font-weight: bold !important;
         }
-        span[style*="color: #60a5fa"] {
-            color: #1d4ed8 !important; /* Darker visible blue for printing */
+        div[style*="width: 50%"] span[style*="color: #60a5fa"] {
+            color: #1d4ed8 !important;
         }
-        
-        /* Signature Blocks */
+        div[style*="width: 50%"] span[style*="font-size: 1.5rem"] {
+            font-size: 1.15rem !important;
+            color: #b45309 !important;
+            font-weight: 900 !important;
+        }
+
+        /* Signatures Grid */
         div[style*="grid-template-columns: 1fr 1fr 1fr"] {
             display: grid !important;
             grid-template-columns: 1fr 1fr 1fr !important;
-            gap: 15px !important;
-            margin-top: 25px !important;
+            gap: 20px !important;
+            margin-top: 40px !important;
             padding-top: 15px !important;
-            border-top: 1px solid #e2e8f0 !important;
+            border-top: 1px solid #cbd5e1 !important;
         }
         div[style*="grid-template-columns: 1fr 1fr 1fr"] p {
             color: #334155 !important;
-            font-size: 0.78rem !important;
-            margin-bottom: 2rem !important;
+            font-size: 0.8rem !important;
+            margin-bottom: 2.5rem !important;
         }
         div[style*="background-color: rgba(255,255,255,0.1)"] {
             background-color: #cbd5e1 !important;
+            height: 1px !important;
         }
-        
+
         tr {
             page-break-inside: avoid !important;
         }

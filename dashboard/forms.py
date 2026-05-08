@@ -61,7 +61,31 @@ class StudentRegistrationForm(UserCreationForm):
         self.fields["governorate"].choices = governorate_choices
 
     def clean_first_name(self):
-        return sanitize_plain_text(self.cleaned_data["first_name"], max_length=120)
+        value = sanitize_plain_text(self.cleaned_data["first_name"], max_length=120)
+        if not value:
+            raise ValidationError("الرجاء إدخال الاسم الكامل.")
+        
+        # 1. Ensure only Arabic letters and spaces are allowed
+        import re
+        arabic_pattern = re.compile(r'^[\u0621-\u064A\u0622\u0623\u0624\u0625\u0626\u0629\u0649\s]+$')
+        if not arabic_pattern.match(value):
+            raise ValidationError("يجب كتابة الاسم الكامل باللغة العربية فقط وبدون أرقام أو رموز.")
+        
+        # 2. Prevent consecutive letter repetitions (e.g., "ببب", "سسس", "هههه")
+        if re.search(r'(.)\1\1', value):
+            raise ValidationError("الرجاء إدخال اسم حقيقي وتجنب تكرار الأحرف بشكل عشوائي.")
+            
+        # 3. Ensure the name contains at least two words (First Name and Family Name)
+        parts = [p.strip() for p in value.split() if p.strip()]
+        if len(parts) < 2:
+            raise ValidationError("الرجاء إدخال الاسم الكامل ثنائياً على الأقل (الاسم والكنية).")
+            
+        # 4. Ensure each part/word is at least 2 characters long to avoid single letters
+        for part in parts:
+            if len(part) < 2:
+                raise ValidationError("يجب أن يتكون كل جزء من الاسم من حرفين على الأقل لتأكيد مصداقيته.")
+                
+        return value
 
     def clean_username(self):
         return validate_syrian_mobile(self.cleaned_data["username"])
