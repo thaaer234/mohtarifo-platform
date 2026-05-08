@@ -456,29 +456,21 @@
                     const closeBtn = document.getElementById("close-discount-modal");
                     const acceptBtn = document.getElementById("accept-discount-modal");
 
-                    // Only show once per 24 hours per discount rule ID
-                    const discountRuleId = "discount_popup_{{ popup_discount.id }}";
-                    const lastShown = localStorage.getItem(discountRuleId);
-                    const now = new Date().getTime();
-
-                    if (!lastShown || (now - parseInt(lastShown)) > 24 * 60 * 60 * 1000) {
-                        setTimeout(() => {
-                            overlay.style.opacity = "1";
-                            overlay.style.pointerEvents = "auto";
-                            content.style.transform = "scale(1)";
-                            
-                            // Initialize new lucide icons in modal
-                            if (window.lucide) {
-                                window.lucide.createIcons();
-                            }
-                        }, 1200);
-                    }
+                    setTimeout(() => {
+                        overlay.style.opacity = "1";
+                        overlay.style.pointerEvents = "auto";
+                        content.style.transform = "scale(1)";
+                        
+                        // Initialize new lucide icons in modal
+                        if (window.lucide) {
+                            window.lucide.createIcons();
+                        }
+                    }, 1200);
 
                     const closeModal = () => {
                         overlay.style.opacity = "0";
                         overlay.style.pointerEvents = "none";
                         content.style.transform = "scale(0.9)";
-                        localStorage.setItem(discountRuleId, now.toString());
                     };
 
                     closeBtn.addEventListener("click", closeModal);
