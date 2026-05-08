@@ -1,21 +1,1008 @@
 {% extends "dashboard/base.html" %}
 {% load static humanize inline_static %}
 
-{% block title %}فاتورة محاسبة | {{ center.name }} | منصة محترفو التعليم{% endblock %}
+{% block title %}فاتورة محاسبية فاخرة | {{ center.name }} | منصة محترفو التعليم{% endblock %}
 
 {% block content %}
+<!-- Premium Design Style Sheet -->
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800;900&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+
+    :root {
+        /* Premium Corporate Financial Palette */
+        --inv-primary: #0f172a;
+        --inv-primary-light: #1e293b;
+        --inv-accent-gold: #c5a059;
+        --inv-gold-gradient: linear-gradient(135deg, #bf953f 0%, #d4af37 30%, #b38728 70%, #aa771c 100%);
+        --inv-gold-soft: rgba(197, 160, 89, 0.08);
+        --inv-gold-border: rgba(197, 160, 89, 0.2);
+        --inv-bg-invoice: #ffffff;
+        --inv-bg-card: #f8fafc;
+        --inv-bg-card-hover: #f1f5f9;
+        --inv-border: #e2e8f0;
+        --inv-text-main: #0f172a;
+        --inv-text-muted: #64748b;
+        --inv-emerald: #059669;
+        --inv-emerald-light: rgba(5, 150, 105, 0.08);
+        --inv-blue: #2563eb;
+        --inv-blue-light: rgba(37, 99, 235, 0.08);
+        --inv-card-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+        --inv-glow: 0 0 20px rgba(197, 160, 89, 0.15);
+        --font-cairo: 'Cairo', 'Tajawal', sans-serif;
+    }
+
+    /* Seamless Dark Mode Integration matching Mohtarifo Platform */
+    .dark-theme :root {
+        --inv-primary: #f8fafc;
+        --inv-primary-light: #e2e8f0;
+        --inv-bg-invoice: #0b0f19;
+        --inv-bg-card: #111827;
+        --inv-bg-card-hover: #1f2937;
+        --inv-border: rgba(255, 255, 255, 0.06);
+        --inv-text-main: #f1f5f9;
+        --inv-text-muted: #94a3b8;
+        --inv-emerald: #10b981;
+        --inv-emerald-light: rgba(16, 185, 129, 0.1);
+        --inv-blue: #3b82f6;
+        --inv-blue-light: rgba(59, 130, 246, 0.1);
+        --inv-card-shadow: 0 15px 45px rgba(0, 0, 0, 0.35);
+        --inv-gold-soft: rgba(197, 160, 89, 0.05);
+    }
+
+    /* Core Layout Styles */
+    .admin-invoice-container {
+        font-family: var(--font-cairo);
+        color: var(--inv-text-main);
+        direction: rtl;
+        margin: 2rem auto;
+        max-width: 1300px;
+        padding: 0 1.5rem;
+    }
+
+    /* Action Bar (Top Dashboard Controls) */
+    .invoice-action-bar {
+        background: rgba(255, 255, 255, 0.01);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--inv-border);
+        box-shadow: var(--inv-card-shadow);
+        border-radius: 20px;
+        padding: 1.25rem 2rem;
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+
+    .action-bar-title h1 {
+        font-size: 1.4rem;
+        font-weight: 850;
+        color: var(--inv-primary);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .action-bar-title p {
+        font-size: 0.8rem;
+        color: var(--inv-text-muted);
+        margin: 0.25rem 0 0 0;
+        font-weight: 500;
+    }
+
+    .action-bar-controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    /* Custom Premium Selector */
+    .commission-selector-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: var(--inv-bg-card);
+        border: 1px solid var(--inv-border);
+        padding: 0.5rem 1rem;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .commission-selector-wrap:hover {
+        border-color: var(--inv-accent-gold);
+    }
+
+    .commission-selector-wrap label {
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--inv-text-muted);
+        white-space: nowrap;
+    }
+
+    .commission-select {
+        background: transparent;
+        border: none;
+        color: var(--inv-accent-gold);
+        font-weight: 800;
+        font-size: 0.95rem;
+        outline: none;
+        cursor: pointer;
+        padding-left: 0.5rem;
+        font-family: var(--font-cairo);
+    }
+
+    .commission-select option {
+        background: var(--inv-bg-card);
+        color: var(--inv-text-main);
+    }
+
+    /* Action Buttons */
+    .btn-invoice {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        font-size: 0.9rem;
+        font-weight: 800;
+        border-radius: 12px;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        cursor: pointer;
+        border: 1px solid transparent;
+        text-decoration: none;
+    }
+
+    .btn-invoice-print {
+        background: var(--inv-gold-gradient);
+        color: #0f172a !important;
+        box-shadow: var(--inv-glow);
+    }
+
+    .btn-invoice-print:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 25px rgba(197, 160, 89, 0.3);
+    }
+
+    .btn-invoice-back {
+        background: var(--inv-bg-card);
+        border-color: var(--inv-border);
+        color: var(--inv-text-main) !important;
+    }
+
+    .btn-invoice-back:hover {
+        background: var(--inv-bg-card-hover);
+        transform: translateY(-2px);
+    }
+
+    /* Main Invoice Sheet Card */
+    .invoice-sheet {
+        background: var(--inv-bg-invoice);
+        border: 1px solid var(--inv-border);
+        box-shadow: var(--inv-card-shadow);
+        border-radius: 28px;
+        padding: 3.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Top Premium Foil Accent Strip */
+    .invoice-top-foil {
+        height: 6px;
+        background: var(--inv-gold-gradient);
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+    }
+
+    /* Header Section */
+    .invoice-header-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        align-items: start;
+        border-bottom: 1px solid var(--inv-border);
+        padding-bottom: 2.5rem;
+        margin-bottom: 2.5rem;
+        gap: 2rem;
+    }
+
+    .brand-logo-container {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+    }
+
+    .invoice-brand-logo {
+        height: 70px;
+        width: auto;
+        filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.35));
+    }
+
+    .brand-text h2 {
+        font-size: 1.75rem;
+        font-weight: 900;
+        color: var(--inv-primary);
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+
+    .brand-text span {
+        font-size: 0.85rem;
+        color: var(--inv-accent-gold);
+        font-weight: 800;
+        letter-spacing: 2.5px;
+        display: block;
+        margin-top: 0.15rem;
+    }
+
+    .brand-tagline {
+        font-size: 0.85rem;
+        color: var(--inv-text-muted);
+        line-height: 1.6;
+        margin: 0.75rem 0 0 0;
+        max-width: 420px;
+        font-weight: 500;
+    }
+
+    .invoice-meta-card {
+        background: var(--inv-bg-card);
+        border: 1px solid var(--inv-border);
+        border-radius: 18px;
+        padding: 1.5rem;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .invoice-meta-title {
+        font-size: 1.8rem;
+        font-weight: 900;
+        color: var(--inv-accent-gold);
+        margin: 0 0 0.5rem 0;
+        text-align: left;
+    }
+
+    .meta-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .meta-label {
+        color: var(--inv-text-muted);
+    }
+
+    .meta-value {
+        color: var(--inv-text-main);
+        font-weight: 700;
+    }
+
+    .meta-value.gold-badge {
+        color: #0f172a;
+        background: var(--inv-gold-gradient);
+        padding: 0.15rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 800;
+    }
+
+    /* Billing Info Section (Parties Block) */
+    .invoice-parties-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .party-card {
+        background: var(--inv-bg-card);
+        border: 1px solid var(--inv-border);
+        border-radius: 20px;
+        padding: 2rem;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .party-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 4px;
+        background: var(--inv-gold-gradient);
+        border-radius: 0 20px 20px 0;
+    }
+
+    .party-card-title {
+        font-size: 1.05rem;
+        font-weight: 850;
+        color: var(--inv-accent-gold);
+        margin-top: 0;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .party-info-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        font-size: 0.9rem;
+    }
+
+    .party-info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        line-height: 1.5;
+    }
+
+    .party-info-item strong {
+        color: var(--inv-text-muted);
+        min-width: 100px;
+        font-weight: 600;
+    }
+
+    .party-info-item span {
+        color: var(--inv-text-main);
+        font-weight: 700;
+    }
+
+    /* Summary KPI Cards Section */
+    .summary-kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 1rem;
+        margin-bottom: 3rem;
+    }
+
+    @media (max-width: 1200px) {
+        .summary-kpi-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .summary-kpi-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    .kpi-card {
+        background: var(--inv-bg-card);
+        border: 1px solid var(--inv-border);
+        border-radius: 18px;
+        padding: 1.25rem;
+        text-align: center;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        min-height: 135px;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--inv-card-shadow);
+        border-color: var(--inv-accent-gold);
+    }
+
+    .kpi-icon-wrap {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .kpi-card.kpi-gold .kpi-icon-wrap {
+        background: var(--inv-gold-soft);
+        color: var(--inv-accent-gold);
+        border: 1px solid var(--inv-gold-border);
+    }
+
+    .kpi-card.kpi-emerald .kpi-icon-wrap {
+        background: var(--inv-emerald-light);
+        color: var(--inv-emerald);
+        border: 1px solid rgba(16, 185, 129, 0.15);
+    }
+
+    .kpi-card.kpi-blue .kpi-icon-wrap {
+        background: var(--inv-blue-light);
+        color: var(--inv-blue);
+        border: 1px solid rgba(37, 99, 235, 0.15);
+    }
+
+    .kpi-title {
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: var(--inv-text-muted);
+        margin-bottom: 0.25rem;
+    }
+
+    .kpi-value {
+        font-size: 1.1rem;
+        font-weight: 900;
+        color: var(--inv-text-main);
+    }
+
+    .kpi-card.kpi-emerald .kpi-value {
+        color: var(--inv-emerald);
+    }
+
+    .kpi-card.kpi-blue .kpi-value {
+        color: var(--inv-blue);
+    }
+
+    .kpi-card.kpi-gold .kpi-value {
+        color: var(--inv-accent-gold);
+        text-shadow: var(--inv-glow);
+    }
+
+    /* ERP Premium Accounting Table Section */
+    .section-title {
+        font-size: 1.15rem;
+        font-weight: 850;
+        color: var(--inv-primary);
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .table-container {
+        border: 1px solid var(--inv-border);
+        border-radius: 20px;
+        overflow: hidden;
+        background: var(--inv-bg-card);
+        margin-bottom: 3rem;
+        box-shadow: var(--inv-card-shadow);
+    }
+
+    .erp-invoice-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: right;
+        font-size: 0.82rem;
+    }
+
+    .erp-invoice-table th {
+        background-color: var(--inv-bg-card-hover);
+        color: var(--inv-text-main);
+        font-weight: 850;
+        padding: 1.2rem 1rem;
+        border-bottom: 2px solid var(--inv-border);
+        font-size: 0.8rem;
+        letter-spacing: -0.2px;
+        white-space: nowrap;
+    }
+
+    .erp-invoice-table td {
+        padding: 1.1rem 1rem;
+        border-bottom: 1px solid var(--inv-border);
+        color: var(--inv-text-main);
+        font-weight: 600;
+        vertical-align: middle;
+    }
+
+    .erp-invoice-table tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    .erp-invoice-table tbody tr:nth-child(even) {
+        background-color: rgba(255, 255, 255, 0.015);
+    }
+
+    .erp-invoice-table tbody tr:hover {
+        background-color: var(--inv-bg-card-hover);
+    }
+
+    /* Table Column Specific Styles */
+    .col-batch-info {
+        max-width: 250px;
+    }
+
+    .batch-primary-name {
+        font-size: 0.88rem;
+        font-weight: 800;
+        color: var(--inv-primary);
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .batch-sub-details {
+        font-size: 0.72rem;
+        color: var(--inv-text-muted);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+        font-weight: 600;
+    }
+
+    .batch-sub-badge {
+        background: var(--inv-bg-card-hover);
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+        border: 1px solid var(--inv-border);
+    }
+
+    .text-center {
+        text-align: center !important;
+    }
+
+    .text-left-align {
+        text-align: left !important;
+    }
+
+    .badge-sold {
+        background: var(--inv-gold-soft);
+        color: var(--inv-accent-gold);
+        border: 1px solid var(--inv-gold-border);
+        padding: 0.3rem 0.6rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        display: inline-block;
+        white-space: nowrap;
+    }
+
+    .amount-val {
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .amount-potential {
+        color: var(--inv-blue);
+    }
+
+    .amount-earned {
+        color: var(--inv-emerald);
+    }
+
+    .amount-net {
+        color: var(--inv-accent-gold);
+        font-weight: 800;
+    }
+
+    /* Financial Breakdown Box (Bottom Right Column) */
+    .financial-summary-wrap {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 3.5rem;
+    }
+
+    .summary-breakdown-card {
+        width: 100%;
+        max-width: 460px;
+        background: var(--inv-bg-card);
+        border: 1px solid var(--inv-border);
+        border-radius: 22px;
+        padding: 2rem;
+        position: relative;
+        box-shadow: var(--inv-card-shadow);
+        overflow: hidden;
+    }
+
+    .summary-breakdown-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 6px;
+        background: var(--inv-gold-gradient);
+    }
+
+    .breakdown-title {
+        font-size: 1.1rem;
+        font-weight: 850;
+        color: var(--inv-accent-gold);
+        border-bottom: 1px solid var(--inv-border);
+        padding-bottom: 0.75rem;
+        margin-top: 0;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .breakdown-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.6rem 0;
+        font-size: 0.88rem;
+        font-weight: 600;
+    }
+
+    .breakdown-row.border-bottom {
+        border-bottom: 1px solid var(--inv-border);
+        padding-bottom: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .breakdown-label {
+        color: var(--inv-text-muted);
+    }
+
+    .breakdown-val {
+        color: var(--inv-text-main);
+        font-weight: 700;
+    }
+
+    .breakdown-val.blue {
+        color: var(--inv-blue);
+    }
+
+    .breakdown-val.emerald {
+        color: var(--inv-emerald);
+        font-weight: 800;
+    }
+
+    .final-net-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        background: var(--inv-gold-soft);
+        border: 1px solid var(--inv-gold-border);
+        border-radius: 12px;
+        padding: 1.25rem;
+    }
+
+    .final-net-label {
+        font-weight: 900;
+        font-size: 1.05rem;
+        color: var(--inv-primary);
+    }
+
+    .final-net-val {
+        font-size: 1.4rem;
+        font-weight: 900;
+        color: var(--inv-accent-gold);
+        text-shadow: var(--inv-glow);
+    }
+
+    /* Signatures Section */
+    .signatures-block {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 2.5rem;
+        margin-top: 4rem;
+        padding-top: 2.5rem;
+        border-top: 1px solid var(--inv-border);
+        text-align: center;
+    }
+
+    .signature-slot {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .signature-title {
+        font-size: 0.9rem;
+        font-weight: 850;
+        color: var(--inv-accent-gold);
+        margin-bottom: 4rem;
+    }
+
+    .signature-line {
+        width: 80%;
+        border-bottom: 1px dashed var(--inv-border);
+        margin-bottom: 0.5rem;
+    }
+
+    .signature-sub {
+        font-size: 0.72rem;
+        color: var(--inv-text-muted);
+        font-weight: 600;
+    }
+
+    /* Premium Micro-Animations inside Screen Mode */
+    .reveal-up {
+        animation: revealUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes revealUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Perfect Printing and A4 Optimization Rules */
+    @media print {
+        @page {
+            size: A4 portrait;
+            margin: 12mm 15mm !important;
+        }
+
+        /* 1. Eliminate any non-invoice layout elements from base.html */
+        nav, footer, .navbar, .footer, .no-print, .sidebar, .admin-sidebar, 
+        .hub-header, .app-header, .messages-container, .breadcrumbs, 
+        #theme-toggle, #menu-toggle, .mobile-bottom-nav, .invoice-action-bar {
+            display: none !important;
+        }
+
+        /* 2. Flatten containers & ignore parent layout styles completely */
+        body, html, main, .container, .main-content, .admin-invoice-container {
+            background: #ffffff !important;
+            color: #000000 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 100% !important;
+            border: none !important;
+            box-shadow: none !important;
+            font-size: 11pt !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .invoice-sheet {
+            background: #ffffff !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+        }
+
+        .invoice-top-foil {
+            height: 4px !important;
+            background: #b45309 !important; /* Pristine solid print gold */
+        }
+
+        /* 3. High-Contrast Print Typography */
+        h1, h2, h3, h4, strong, .brand-text h2, .invoice-meta-title {
+            color: #111827 !important;
+            text-shadow: none !important;
+        }
+
+        .brand-text span, .invoice-meta-title, .party-card-title, .breakdown-title, .signature-title {
+            color: #b45309 !important; /* Corporate dark gold for high readability */
+        }
+
+        .brand-tagline, .meta-label, .party-info-item strong, .kpi-title, .breakdown-label, .signature-sub {
+            color: #475569 !important;
+        }
+
+        /* 4. Formatting Side-By-Side Structures safely without overlap */
+        .invoice-header-grid {
+            display: grid !important;
+            grid-template-columns: 1.3fr 0.7fr !important;
+            gap: 20px !important;
+            border-bottom: 2px solid #cbd5e1 !important;
+            padding-bottom: 1.5rem !important;
+            margin-bottom: 1.5rem !important;
+        }
+
+        .invoice-meta-card {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 10px !important;
+            padding: 1rem !important;
+        }
+
+        .invoice-parties-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 20px !important;
+            margin-bottom: 2rem !important;
+        }
+
+        .party-card {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 12px !important;
+            padding: 1.25rem !important;
+        }
+
+        .party-card::before {
+            width: 3px !important;
+            background: #b45309 !important;
+        }
+
+        /* 5. Summary Cards Grid Layout */
+        .summary-kpi-grid {
+            display: grid !important;
+            grid-template-columns: repeat(6, 1fr) !important;
+            gap: 8px !important;
+            margin-bottom: 2rem !important;
+        }
+
+        .kpi-card {
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 10px !important;
+            padding: 0.75rem 0.5rem !important;
+            min-height: 95px !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+
+        .kpi-icon-wrap {
+            display: none !important; /* Simplify design for clean printing */
+        }
+
+        .kpi-title {
+            font-size: 0.68rem !important;
+        }
+
+        .kpi-value {
+            font-size: 0.88rem !important;
+            color: #111827 !important;
+        }
+
+        /* 6. High Precision Print Table (Stripe/ERP style) */
+        .table-container {
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 12px !important;
+            background: #ffffff !important;
+            margin-bottom: 2rem !important;
+            box-shadow: none !important;
+        }
+
+        .erp-invoice-table th {
+            background-color: #f1f5f9 !important;
+            color: #0f172a !important;
+            border-bottom: 2px solid #cbd5e1 !important;
+            padding: 10px 8px !important;
+            font-size: 0.72rem !important;
+        }
+
+        .erp-invoice-table td {
+            border-bottom: 1px solid #e2e8f0 !important;
+            padding: 9px 8px !important;
+            font-size: 0.7rem !important;
+            color: #1e293b !important;
+        }
+
+        .badge-sold {
+            background: #f1f5f9 !important;
+            border: 1px solid #94a3b8 !important;
+            color: #0f172a !important;
+            padding: 0.15rem 0.4rem !important;
+            border-radius: 4px !important;
+            font-size: 0.68rem !important;
+        }
+
+        /* Accent Colors on Amounts in Print */
+        .amount-potential {
+            color: #1e3a8a !important; /* Dark Blue */
+        }
+
+        .amount-earned {
+            color: #15803d !important; /* Dark Green */
+        }
+
+        .amount-net {
+            color: #b45309 !important; /* Solid gold-brown */
+            font-weight: bold !important;
+        }
+
+        /* 7. Bottom Financial Breakdown Card */
+        .financial-summary-wrap {
+            display: flex !important;
+            justify-content: flex-end !important;
+            margin-bottom: 2rem !important;
+            page-break-inside: avoid !important;
+        }
+
+        .summary-breakdown-card {
+            width: 45% !important;
+            background: #f8fafc !important;
+            border: 1px solid #cbd5e1 !important;
+            border-radius: 12px !important;
+            padding: 1.25rem !important;
+            box-shadow: none !important;
+        }
+
+        .summary-breakdown-card::after {
+            width: 4px !important;
+            background: #b45309 !important;
+        }
+
+        .breakdown-title {
+            font-size: 0.9rem !important;
+            padding-bottom: 0.5rem !important;
+            margin-bottom: 0.75rem !important;
+            border-bottom: 1px solid #cbd5e1 !important;
+        }
+
+        .breakdown-row {
+            padding: 0.4rem 0 !important;
+            font-size: 0.78rem !important;
+        }
+
+        .breakdown-val.blue {
+            color: #1e3a8a !important;
+        }
+
+        .breakdown-val.emerald {
+            color: #15803d !important;
+        }
+
+        .final-net-row {
+            padding: 0.75rem 1rem !important;
+            border-radius: 8px !important;
+            background: #fffbeb !important;
+            border: 1px solid #fde68a !important;
+        }
+
+        .final-net-label {
+            font-size: 0.9rem !important;
+        }
+
+        .final-net-val {
+            font-size: 1.15rem !important;
+            color: #b45309 !important;
+            text-shadow: none !important;
+        }
+
+        /* 8. Signatures Layout */
+        .signatures-block {
+            grid-template-columns: 1fr 1fr 1fr !important;
+            gap: 20px !important;
+            margin-top: 2.5rem !important;
+            padding-top: 1.5rem !important;
+            border-top: 1px solid #cbd5e1 !important;
+            page-break-inside: avoid !important;
+        }
+
+        .signature-title {
+            font-size: 0.8rem !important;
+            margin-bottom: 2.5rem !important;
+        }
+
+        .signature-line {
+            width: 90% !important;
+            border-color: #cbd5e1 !important;
+        }
+
+        /* 9. Smart Multi-Page Management */
+        tr {
+            page-break-inside: avoid !important;
+        }
+    }
+</style>
+
 <div class="admin-invoice-container reveal-up">
-    <!-- Non-printable Actions Header -->
-    <div class="no-print flex-between align-center mb-8 bg-surface p-6 rounded-2xl border border-border" style="backdrop-filter: blur(12px); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); display: flex; justify-content: space-between; align-items: center;">
-        <div>
-            <span class="badge mb-2" style="background: rgba(197, 160, 89, 0.1); color: var(--brand-gold); border: 1px solid rgba(197, 160, 89, 0.2); font-weight: 800; padding: 0.35rem 0.75rem; border-radius: 100px;">إدارة الفواتير المالية</span>
-            <h1 class="text-2xl font-extrabold text-glow" style="color: var(--brand-gold); margin-top: 0.25rem;">فاتورة وحسابات مركز: {{ center.name }}</h1>
+    <!-- Non-printable Top Dashboard Action Bar -->
+    <div class="invoice-action-bar no-print">
+        <div class="action-bar-title">
+            <h1>
+                <i data-lucide="file-spreadsheet" style="color: var(--inv-accent-gold); width: 26px; height: 26px;"></i>
+                <span>إدارة الفواتير المالية</span>
+            </h1>
+            <p>التسوية المالية الشاملة وإعدادات عمولة المركز</p>
         </div>
-        <div class="flex-center gap-4" style="display: flex; align-items: center; gap: 1rem;">
-            <!-- Commission Modifier Form -->
-            <div class="flex-center gap-2 bg-base px-4 py-2 rounded-xl border border-border" style="background: rgba(255,255,255,0.02); display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 12px; border: 1px solid var(--border-light);">
-                <label for="commissionSelect" class="text-sm font-bold" style="color: var(--text-muted); white-space: nowrap;">نسبة عمولة المركز (%):</label>
-                <select id="commissionSelect" class="bg-surface text-base border border-border rounded px-3 py-1 font-extrabold" style="color: var(--brand-gold); outline: none; cursor: pointer; border-radius: 8px; background-color: var(--bg-surface); border: 1px solid var(--border-light);" onchange="updateCommission(this.value)">
+        
+        <div class="action-bar-controls">
+            <!-- Commission Selection Control -->
+            <div class="commission-selector-wrap">
+                <i data-lucide="percent" style="width: 16px; color: var(--inv-accent-gold);"></i>
+                <label for="commissionSelect">عمولة المركز المتفق عليها:</label>
+                <select id="commissionSelect" class="commission-select" onchange="updateCommission(this.value)">
                     <option value="5" {% if commission_percent == 5 %}selected{% endif %}>5%</option>
                     <option value="10" {% if commission_percent == 10 %}selected{% endif %}>10%</option>
                     <option value="15" {% if commission_percent == 15 %}selected{% endif %}>15%</option>
@@ -29,373 +1016,299 @@
                 </select>
             </div>
             
-            <button onclick="window.print()" class="btn btn-primary btn-glow" style="background: var(--brand-gold); color: var(--bg-base); border-color: var(--brand-gold); font-weight: 800; display: flex; align-items: center; gap: 0.5rem;">
-                <i data-lucide="printer"></i> طباعة الفاتورة (أو حفظ PDF)
+            <button onclick="window.print()" class="btn-invoice btn-invoice-print">
+                <i data-lucide="printer" style="width: 18px;"></i>
+                <span>طباعة الفاتورة والتقارير</span>
             </button>
-            <a href="{% url 'dashboard:admin_billing' %}" class="btn btn-secondary" style="font-weight: 800; display: flex; align-items: center; gap: 0.5rem;">
-                <i data-lucide="arrow-left"></i> العودة للمركز المالي
+            
+            <a href="{% url 'dashboard:admin_billing' %}" class="btn-invoice btn-invoice-back">
+                <i data-lucide="arrow-left" style="width: 18px;"></i>
+                <span>العودة للمركز المالي</span>
             </a>
         </div>
     </div>
 
-    <!-- Printable Invoice Sheet -->
-    <div class="invoice-sheet p-12 bg-surface rounded-3xl border border-border shadow-2xl relative overflow-hidden" id="printable-invoice" style="box-shadow: 0 15px 45px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); padding: 3rem; border-radius: 24px; position: relative; background-color: var(--bg-surface);">
+    <!-- Printable Invoice Sheet (Pristine High-End Design) -->
+    <div class="invoice-sheet" id="printable-invoice">
         <!-- Gold foil-styled premium top accent strip -->
-        <div class="invoice-top-accent" style="height: 8px; background: linear-gradient(90deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c); position: absolute; top: 0; left: 0; right: 0;"></div>
+        <div class="invoice-top-foil"></div>
         
-        <!-- Invoice Header -->
-        <div class="flex-between align-start mb-10 pb-8 border-b border-border" style="border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 2rem; margin-bottom: 2.5rem;">
+        <!-- Header Block -->
+        <div class="invoice-header-grid">
             <div>
-                <div class="flex-center gap-4 mb-4 justify-start" style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; justify-content: flex-start;">
-                    <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo" class="invoice-logo" style="height: 65px; filter: drop-shadow(0 0 12px rgba(212,175,55,0.4));">
-                    <div>
-                        <h2 class="text-3xl font-extrabold" style="color: var(--text-base); margin: 0; letter-spacing: 0.5px; font-family: 'Cairo', sans-serif; font-size: 1.8rem; font-weight: 800;">منصة محترفو التعليم</h2>
-                        <span style="color: var(--brand-gold); font-size: 0.9rem; font-weight: 900; letter-spacing: 2px;">MOHTARIFO PLATFORM</span>
+                <div class="brand-logo-container">
+                    <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo" class="invoice-brand-logo">
+                    <div class="brand-text">
+                        <h2>منصة محترفو التعليم</h2>
+                        <span>MOHTARIFO PLATFORM</span>
                     </div>
                 </div>
-                <p class="text-sm text-muted" style="max-width: 350px; line-height: 1.6; font-weight: 500; font-size: 0.85rem; color: var(--text-muted);">المنصة الأكاديمية الأولى في سورية لتقديم الخدمات التعليمية والحلول التكنولوجية الاحترافية أونلاين.</p>
+                <p class="brand-tagline">
+                    المنصة التعليمية والأكاديمية الأولى في سورية لتقديم خدمات التعليم التفاعلي والحلول البرمجية المتكاملة لطلاب البكالوريا والمراكز التعليمية أونلاين.
+                </p>
             </div>
-            <div class="text-left" style="text-align: left;">
-                <h1 class="text-4xl font-black mb-2" style="color: var(--brand-gold); font-family: 'Cairo', sans-serif; letter-spacing: 1px; text-shadow: 0 0 20px rgba(197, 160, 89, 0.15); font-size: 2.2rem; font-weight: 900; margin-bottom: 0.5rem;">فاتورة محاسبة</h1>
-                <p class="text-sm text-muted" style="direction: ltr; font-weight: 600; font-size: 0.85rem; color: var(--text-muted);"><strong>رقم الفاتورة:</strong> <span style="color: var(--brand-gold);">#{{ invoice_number }}</span></p>
-                <p class="text-sm text-muted" style="font-weight: 600; font-size: 0.85rem; color: var(--text-muted);"><strong>تاريخ الإصدار:</strong> {% now "Y-m-d" %} | {% now "H:i" %}</p>
-            </div>
-        </div>
-
-        <!-- Billing Info Cards -->
-        <div class="grid grid-cols-2 gap-8 mb-10" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem;">
-            <div class="p-6 rounded-2xl bg-base border border-border" style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.04); box-shadow: inset 0 0 20px rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 16px;">
-                <h3 class="text-lg font-extrabold mb-4 flex align-center gap-2" style="color: var(--brand-gold); font-family: 'Cairo', sans-serif; font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
-                    <i data-lucide="store" style="width: 20px; height: 20px; color: var(--brand-gold);"></i> معلومات مركز البيع (المدين)
-                </h3>
-                <div style="display: flex; flex-direction: column; gap: 0.5rem; font-weight: 500; font-size: 0.9rem;">
-                    <p><strong style="color: var(--text-base);">اسم المركز:</strong> {{ center.name }}</p>
-                    <p><strong style="color: var(--text-base);">المعهد المرتبط:</strong> {{ center.institute.name|default:"مستقل" }}</p>
-                    {% if center.phone %}<p><strong style="color: var(--text-base);">رقم الهاتف:</strong> {{ center.phone }}</p>{% endif %}
-                    {% if center.address %}<p><strong style="color: var(--text-base);">العنوان الكامل:</strong> {{ center.address }}</p>{% endif %}
-                </div>
-            </div>
-            <div class="p-6 rounded-2xl bg-base border border-border" style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.04); box-shadow: inset 0 0 20px rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 16px;">
-                <h3 class="text-lg font-extrabold mb-4 flex align-center gap-2" style="color: var(--brand-gold); font-family: 'Cairo', sans-serif; font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
-                    <i data-lucide="calculator" style="width: 20px; height: 20px; color: var(--brand-gold);"></i> ملخص المحاسبة المالية
-                </h3>
-                <div style="display: flex; flex-direction: column; gap: 0.5rem; font-weight: 500; font-size: 0.9rem;">
-                    <p><strong>إجمالي الأكواد المستلمة:</strong> {{ total_assigned }} كود</p>
-                    <p><strong>إجمالي الأكواد المباعة:</strong> {{ total_sold }} كود</p>
-                    <p><strong>نسبة عمولة المركز المتفق عليها:</strong> <span class="badge" style="background: rgba(197, 160, 89, 0.1); color: var(--brand-gold); border: 1px solid rgba(197, 160, 89, 0.2); font-weight: 800; font-size: 0.9rem; padding: 0.2rem 0.6rem; border-radius: 6px;">{{ commission_percent|floatformat:0 }}%</span></p>
+            <div>
+                <div class="invoice-meta-card">
+                    <h1 class="invoice-meta-title">فاتورة محاسبة</h1>
+                    
+                    <div class="meta-row">
+                        <span class="meta-label">رقم الفاتورة:</span>
+                        <span class="meta-value" style="direction: ltr;">#{{ invoice_number }}</span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-label">تاريخ الإصدار:</span>
+                        <span class="meta-value">{% now "Y-m-d" %} | {% now "H:i" %}</span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-label">نسبة العمولة:</span>
+                        <span class="meta-value">{{ commission_percent|floatformat:0 }}%</span>
+                    </div>
+                    <div class="meta-row">
+                        <span class="meta-label">حالة المستند:</span>
+                        <span class="meta-value gold-badge">معتمدة وموثقة</span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Detailed Batches Table -->
-        <h3 class="text-lg font-extrabold mb-4 flex align-center gap-2" style="color: var(--text-base); font-family: 'Cairo', sans-serif; font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
-            <i data-lucide="list-ordered" style="width: 20px; height: 20px; color: var(--brand-gold);"></i> تفاصيل دفعات الأكواد والتحصيلات
+        <!-- Billing Parties Block -->
+        <div class="invoice-parties-grid">
+            <!-- First Party: Platform Info -->
+            <div class="party-card">
+                <h3 class="party-card-title">
+                    <i data-lucide="landmark" style="width: 18px; color: var(--inv-accent-gold);"></i>
+                    <span>الطرف الأول: الجهة المصدّرة</span>
+                </h3>
+                <div class="party-info-list">
+                    <div class="party-info-item">
+                        <strong>اسم المؤسسة:</strong>
+                        <span>إدارة منصة محترفو التعليم الأكاديمية</span>
+                    </div>
+                    <div class="party-info-item">
+                        <strong>المقر الرئيسي:</strong>
+                        <span>دمشق، الجمهورية العربية السورية</span>
+                    </div>
+                    <div class="party-info-item">
+                        <strong>البريد الإلكتروني:</strong>
+                        <span>support@pro-academy.pro</span>
+                    </div>
+                    <div class="party-info-item">
+                        <strong>الموقع الإلكتروني:</strong>
+                        <span>pro-academy.pro</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Second Party: Sales Center Info -->
+            <div class="party-card">
+                <h3 class="party-card-title">
+                    <i data-lucide="store" style="width: 18px; color: var(--inv-accent-gold);"></i>
+                    <span>الطرف الثاني: مركز البيع (المدين)</span>
+                </h3>
+                <div class="party-info-list">
+                    <div class="party-info-item">
+                        <strong>اسم المركز:</strong>
+                        <span>{{ center.name }}</span>
+                    </div>
+                    <div class="party-info-item">
+                        <strong>المعهد المرتبط:</strong>
+                        <span>{{ center.institute.name|default:"مستقل" }}</span>
+                    </div>
+                    <div class="party-info-item">
+                        <strong>رقم الهاتف:</strong>
+                        <span>{{ center.phone|default:"غير متوفر" }}</span>
+                    </div>
+                    <div class="party-info-item">
+                        <strong>العنوان الكامل:</strong>
+                        <span>{{ center.address|default:"غير متوفر" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KPI Financial Summary Cards -->
+        <div class="summary-kpi-grid">
+            <div class="kpi-card kpi-blue">
+                <div class="kpi-icon-wrap">
+                    <i data-lucide="layers" style="width: 18px;"></i>
+                </div>
+                <span class="kpi-title">إجمالي الأكواد المستلمة</span>
+                <span class="kpi-value">{{ total_assigned }} كود</span>
+            </div>
+            
+            <div class="kpi-card kpi-gold">
+                <div class="kpi-icon-wrap">
+                    <i data-lucide="shopping-cart" style="width: 18px;"></i>
+                </div>
+                <span class="kpi-title">إجمالي الأكواد المباعة</span>
+                <span class="kpi-value">{{ total_sold }} كود</span>
+            </div>
+
+            <div class="kpi-card kpi-blue">
+                <div class="kpi-icon-wrap">
+                    <i data-lucide="trending-up" style="width: 18px;"></i>
+                </div>
+                <span class="kpi-title">إجمالي الصندوق المتوقع</span>
+                <span class="kpi-value">{{ total_potential|currency_format }} ل.س</span>
+            </div>
+
+            <div class="kpi-card kpi-emerald">
+                <div class="kpi-icon-wrap">
+                    <i data-lucide="wallet" style="width: 18px;"></i>
+                </div>
+                <span class="kpi-title">إجمالي التحصيل الفعلي</span>
+                <span class="kpi-value">{{ total_earned|currency_format }} ل.س</span>
+            </div>
+
+            <div class="kpi-card kpi-blue">
+                <div class="kpi-icon-wrap">
+                    <i data-lucide="percent" style="width: 18px;"></i>
+                </div>
+                <span class="kpi-title">المستقطع لعمولة المركز</span>
+                <span class="kpi-value">{{ total_center_commission|currency_format }} ل.س</span>
+            </div>
+
+            <div class="kpi-card kpi-gold">
+                <div class="kpi-icon-wrap">
+                    <i data-lucide="badge-dollar-sign" style="width: 18px;"></i>
+                </div>
+                <span class="kpi-title">الصافي النهائي للمنصة</span>
+                <span class="kpi-value">{{ total_net_share|currency_format }} ل.س</span>
+            </div>
+        </div>
+
+        <!-- Detailed ERP Accounting Table -->
+        <h3 class="section-title">
+            <i data-lucide="list-ordered" style="width: 20px; height: 20px; color: var(--inv-accent-gold);"></i>
+            <span>بيانات المحاسبة التفصيلية لدفعات الأكواد والتحصيلات</span>
         </h3>
-        <div class="table-responsive mb-10" style="border: 1px solid rgba(255,255,255,0.04); border-radius: 16px; overflow: hidden; background: rgba(0,0,0,0.15); margin-bottom: 2.5rem;">
-            <table class="admin-table text-sm" style="width: 100%; border-collapse: collapse;">
+        
+        <div class="table-container">
+            <table class="erp-invoice-table">
                 <thead>
-                    <tr style="background-color: rgba(255,255,255,0.02); border-bottom: 1px solid rgba(255,255,255,0.05);">
-                        <th style="padding: 1rem 1.25rem; font-weight: 800; text-align: right;">الدفعة الكودية / المادة الأكاديمية</th>
-                        <th class="text-center" style="font-weight: 800; text-align: center; padding: 1rem;">إجمالي الأكواد</th>
-                        <th class="text-center" style="font-weight: 800; text-align: center; padding: 1rem;">الأكواد المباعة</th>
-                        <th class="text-center" style="font-weight: 800; text-align: center; padding: 1rem;">السعر الرسمي</th>
-                        <th class="text-center" style="color: var(--brand-gold); font-weight: 800; text-align: center; padding: 1rem;">الصندوق المتوقع</th>
-                        <th class="text-center" style="color: #34d399; font-weight: 800; text-align: center; padding: 1rem;">التحصيل الفعلي</th>
-                        <th class="text-center" style="color: #60a5fa; font-weight: 800; text-align: center; padding: 1rem;">عمولة المركز ({{ commission_percent|floatformat:0 }}%)</th>
-                        <th class="text-center" style="color: var(--brand-gold); font-weight: 800; text-align: center; padding: 1rem;">الصافي للمنصة</th>
+                    <tr>
+                        <th style="padding-right: 1.5rem;">الدفعة الكودية / المادة الأكاديمية</th>
+                        <th class="text-center">المدرس</th>
+                        <th class="text-center">الفرع</th>
+                        <th class="text-center">الأكواد المستلمة</th>
+                        <th class="text-center">الأكواد المباعة</th>
+                        <th class="text-center">السعر الرسمي</th>
+                        <th class="text-left-align">الصندوق المتوقع</th>
+                        <th class="text-left-align">التحصيل الفعلي</th>
+                        <th class="text-left-align">عمولة المركز ({{ commission_percent|floatformat:0 }}%)</th>
+                        <th class="text-left-align" style="padding-left: 1.5rem;">الصافي المستحق للمنصة</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in detailed_batches %}
-                    <tr style="transition: all 0.2s ease; border-bottom: 1px solid rgba(255,255,255,0.03);">
-                        <td style="padding: 1.25rem;">
-                            <strong style="color: var(--text-primary); font-size: 0.95rem;">{{ item.batch.name }}</strong><br>
-                            <small class="text-muted" style="margin-top: 0.25rem; display: block; color: var(--text-muted); font-weight: 500;">
-                                <strong style="color: var(--brand-gold);">المادة:</strong> {{ item.batch.target_title }}
-                                {% if item.batch.course %}
-                                    <span style="margin: 0 0.5rem; color: rgba(255,255,255,0.15);">|</span>
-                                    <strong style="color: var(--brand-gold);">الفرع:</strong> {{ item.batch.course.get_academic_track_display }}
-                                    <span style="margin: 0 0.5rem; color: rgba(255,255,255,0.15);">|</span>
-                                    <strong style="color: var(--brand-gold);">المدرس:</strong> {{ item.batch.course.instructor.get_full_name|default:item.batch.course.instructor.username }}
-                                {% elif item.batch.package %}
-                                    <span style="margin: 0 0.5rem; color: rgba(255,255,255,0.15);">|</span>
-                                    <strong style="color: var(--brand-gold);">الفرع:</strong> {{ item.batch.package.get_package_track_display }}
-                                    <span style="margin: 0 0.5rem; color: rgba(255,255,255,0.15);">|</span>
-                                    <strong style="color: var(--brand-gold);">المدرس:</strong> باقة مشتركة
-                                {% endif %}
-                            </small>
+                    <tr>
+                        <td class="col-batch-info" style="padding-right: 1.5rem;">
+                            <span class="batch-primary-name">{{ item.batch.name }}</span>
+                            <div class="batch-sub-details">
+                                <span class="batch-sub-badge"><strong style="color: var(--inv-accent-gold);">المادة:</strong> {{ item.batch.target_title }}</span>
+                            </div>
                         </td>
-                        <td class="text-center" style="text-align: center; padding: 1.25rem;"><strong>{{ item.total_codes }}</strong></td>
-                        <td class="text-center" style="text-align: center; padding: 1.25rem;">
-                            <span class="status-badge pending" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 800; background: rgba(197, 160, 89, 0.1); border: 1px solid rgba(197, 160, 89, 0.2); border-radius: 8px; color: var(--brand-gold);">{{ item.sold_count }} مباع</span>
+                        <td class="text-center">
+                            {% if item.batch.course %}
+                                <span style="font-weight: 700;">{{ item.batch.course.instructor.get_full_name|default:item.batch.course.instructor.username }}</span>
+                            {% elif item.batch.package %}
+                                <span style="color: var(--inv-accent-gold); font-weight: 800;">باقة مشتركة</span>
+                            {% else %}
+                                <span style="color: var(--inv-text-muted);">غير محدد</span>
+                            {% endif %}
                         </td>
-                        <td class="text-center" style="text-align: center; padding: 1.25rem; font-weight: 600;">{{ item.standard_price|currency_format }} ل.س</td>
-                        <td class="text-center" style="text-align: center; padding: 1.25rem; color: var(--brand-gold); font-weight: 600;">{{ item.potential_value|currency_format }} ل.س</td>
-                        <td class="text-center" style="text-align: center; padding: 1.25rem; color: #34d399; font-weight: 800;">{{ item.actual_earned|currency_format }} ل.س</td>
-                        <td class="text-center" style="text-align: center; padding: 1.25rem; color: #60a5fa; font-weight: 600;">{{ item.center_share|currency_format }} ل.س</td>
-                        <td class="text-center" style="text-align: center; padding: 1.25rem; color: var(--brand-gold); font-weight: 800;">{{ item.net_share|currency_format }} ل.س</td>
+                        <td class="text-center">
+                            {% if item.batch.course %}
+                                <span class="batch-sub-badge" style="background: rgba(37, 99, 235, 0.05); color: var(--inv-blue); border-color: rgba(37, 99, 235, 0.1);">{{ item.batch.course.get_academic_track_display }}</span>
+                            {% elif item.batch.package %}
+                                <span class="batch-sub-badge" style="background: rgba(197, 160, 89, 0.05); color: var(--inv-accent-gold); border-color: rgba(197, 160, 89, 0.1);">{{ item.batch.package.get_package_track_display }}</span>
+                            {% else %}
+                                <span style="color: var(--inv-text-muted);">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center amount-val" style="font-size: 0.9rem;">{{ item.total_codes }}</td>
+                        <td class="text-center">
+                            <span class="badge-sold">{{ item.sold_count }} مباع</span>
+                        </td>
+                        <td class="text-center amount-val" style="font-size: 0.85rem;">{{ item.standard_price|currency_format }} ل.س</td>
+                        <td class="text-left-align amount-val amount-potential">{{ item.potential_value|currency_format }} ل.س</td>
+                        <td class="text-left-align amount-val amount-earned">{{ item.actual_earned|currency_format }} ل.s</td>
+                        <td class="text-left-align amount-val" style="color: var(--inv-text-muted);">{{ item.center_share|currency_format }} ل.س</td>
+                        <td class="text-left-align amount-val amount-net" style="padding-left: 1.5rem; font-size: 0.9rem;">{{ item.net_share|currency_format }} ل.س</td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="8" class="text-center p-8 text-muted" style="text-align: center; padding: 2rem;">لا توجد دفعات أكواد محاسبة مسجلة لهذا المركز.</td>
+                        <td colspan="10" class="text-center" style="padding: 3rem; color: var(--inv-text-muted); font-weight: 700;">لا توجد دفعات أكواد أو قيود مالية مسجلة في كشف حساب هذا المركز حالياً.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
 
-        <!-- Grand Financial Totals Summary -->
-        <div style="display: flex; justify-content: flex-end; margin-bottom: 3rem;">
-            <div style="width: 50%; min-width: 400px; background: rgba(255,255,255,0.01); border: 1px solid rgba(197,160,89,0.15); box-shadow: 0 10px 30px rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 16px; position: relative;">
-                <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: linear-gradient(to bottom, #bf953f, #b38728);"></div>
-                <h3 style="color: var(--brand-gold); font-family: 'Cairo', sans-serif; font-size: 1.15rem; font-weight: 800; border-bottom: 1px solid var(--border-light); padding-bottom: 0.5rem; margin-bottom: 1rem;">التسوية المالية النهائية</h3>
+        <!-- Grand Financial Summary Section -->
+        <div class="financial-summary-wrap">
+            <div class="summary-breakdown-card">
+                <h3 class="breakdown-title">
+                    <i data-lucide="calculator" style="width: 18px; color: var(--inv-accent-gold);"></i>
+                    <span>التسوية والمطابقة المالية النهائية</span>
+                </h3>
                 
-                <div style="display: flex; flex-direction: column; gap: 0.75rem; font-weight: 600; font-size: 0.95rem;">
-                    <div style="display: flex; justify-content: space-between;">
-                        <span class="text-muted" style="color: var(--text-muted);">إجمالي تحصيلات الصندوق المتوقع:</span>
-                        <span style="color: var(--text-base);">{{ total_potential|currency_format }} ل.س</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between;">
-                        <span class="text-muted" style="color: var(--text-muted);">إجمالي تحصيلات الصندوق الفعلي:</span>
-                        <span style="color: #34d399; font-weight: 800;">{{ total_earned|currency_format }} ل.س</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 0.75rem;">
-                        <span class="text-muted" style="color: var(--text-muted);">المستقطع لعمولة المركز ({{ commission_percent|floatformat:0 }}%):</span>
-                        <span style="color: #60a5fa;">- {{ total_center_commission|currency_format }} ل.س</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; padding-top: 0.5rem; align-items: center;">
-                        <span style="color: var(--text-base); font-family: 'Cairo', sans-serif; font-size: 1.2rem; font-weight: 900;">الصافي المستحق للمنصة:</span>
-                        <span style="color: var(--brand-gold); font-family: 'Cairo', sans-serif; font-size: 1.5rem; font-weight: 900; text-shadow: 0 0 15px rgba(197,160,89,0.3);">{{ total_net_share|currency_format }} ل.س</span>
-                    </div>
+                <div class="breakdown-row">
+                    <span class="breakdown-label">إجمالي قيمة الأكواد المتوقعة:</span>
+                    <span class="breakdown-val blue">{{ total_potential|currency_format }} ل.س</span>
+                </div>
+                
+                <div class="breakdown-row">
+                    <span class="breakdown-label">إجمالي تحصيلات الصندوق الفعلي:</span>
+                    <span class="breakdown-val emerald">{{ total_earned|currency_format }} ل.س</span>
+                </div>
+                
+                <div class="breakdown-row border-bottom">
+                    <span class="breakdown-label">المستقطع لعمولة المركز المعتمدة ({{ commission_percent|floatformat:0 }}%):</span>
+                    <span class="breakdown-val" style="color: #ef4444; font-weight: 700;">- {{ total_center_commission|currency_format }} ل.س</span>
+                </div>
+                
+                <div class="final-net-row">
+                    <span class="final-net-label">الصافي النهائي المستحق للمنصة:</span>
+                    <span class="final-net-val">{{ total_net_share|currency_format }} ل.س</span>
                 </div>
             </div>
         </div>
 
-        <!-- Signature Block -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid rgba(255,255,255,0.06); text-align: center;">
-            <div>
-                <p style="font-size: 0.9rem; font-weight: 800; color: var(--text-muted); margin-bottom: 3rem;">توقيع مسؤول مركز البيع</p>
-                <div style="width: 180px; height: 1px; background-color: rgba(255,255,255,0.1); margin: 0 auto;"></div>
-                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">الاسم والتاريخ</p>
+        <!-- Official Signatures Section -->
+        <div class="signatures-block">
+            <div class="signature-slot">
+                <span class="signature-title">توقيع مسؤول مركز البيع</span>
+                <div class="signature-line"></div>
+                <span class="signature-sub">الاسم والتاريخ</span>
             </div>
-            <div>
-                <p style="font-size: 0.9rem; font-weight: 800; color: var(--text-muted); margin-bottom: 3rem;">توقيع محاسب المعهد المرتبط</p>
-                <div style="width: 180px; height: 1px; background-color: rgba(255,255,255,0.1); margin: 0 auto;"></div>
-                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">الاسم والتاريخ</p>
+            <div class="signature-slot">
+                <span class="signature-title">توقيع محاسب المعهد المرتبط</span>
+                <div class="signature-line"></div>
+                <span class="signature-sub">الاسم والتاريخ</span>
             </div>
-            <div>
-                <p style="font-size: 0.9rem; font-weight: 800; color: var(--text-muted); margin-bottom: 3rem;">توقيع وختم إدارة المنصة</p>
-                <div style="width: 180px; height: 1px; background-color: rgba(255,255,255,0.1); margin: 0 auto;"></div>
-                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">الاسم والتاريخ</p>
+            <div class="signature-slot">
+                <span class="signature-title">توقيع وختم إدارة المنصة</span>
+                <div class="signature-line"></div>
+                <span class="signature-sub">الاسم والتاريخ</span>
             </div>
         </div>
     </div>
 </div>
 
-<style>
-    /* Printing and Professional Layout Style Rules */
-    @media print {
-        @page {
-            size: A4 landscape;
-            margin: 10mm 15mm !important;
-        }
-        /* Hide all page layouts, menus, footers, navbars */
-        nav, footer, .navbar, .footer, .no-print, .sidebar, .admin-sidebar, .hub-header, .app-header, .messages-container, .breadcrumbs, #theme-toggle, #menu-toggle {
-            display: none !important;
-        }
-        /* Flatten body and wrappers to completely avoid parent margins/paddings from base.html */
-        body, html, main, .container, .main-content, .admin-invoice-container, .invoice-sheet {
-            background: #ffffff !important;
-            color: #111827 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            min-width: 100% !important;
-            border: none !important;
-            box-shadow: none !important;
-            font-family: 'Cairo', sans-serif !important;
-        }
-        
-        /* Premium top gold strip */
-        .invoice-top-accent {
-            height: 6px !important;
-            background: #b45309 !important; /* Elegant corporate gold */
-            position: absolute !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-        }
-
-        /* Invoice Logo */
-        .invoice-logo {
-            display: block !important;
-            height: 60px !important;
-            width: auto !important;
-            filter: none !important;
-            -webkit-filter: none !important;
-        }
-
-        /* Title & Headers */
-        h1, h2, h3, h4, strong, .font-extrabold, .font-black {
-            color: #111827 !important;
-            text-shadow: none !important;
-        }
-        .text-muted, small, .text-muted * {
-            color: #475569 !important;
-        }
-
-        /* Billing side-by-side cards */
-        .grid {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr !important;
-            gap: 25px !important;
-            margin-bottom: 25px !important;
-        }
-        .grid > div {
-            background: #f8fafc !important;
-            border: 1px solid #cbd5e1 !important;
-            padding: 20px !important;
-            border-radius: 8px !important;
-            box-shadow: none !important;
-        }
-        .grid > div h3 {
-            color: #b45309 !important;
-        }
-        .grid > div p, .grid > div span {
-            color: #334155 !important;
-            font-size: 0.9rem !important;
-        }
-
-        /* Table Styling with spacious padding for Landscape */
-        .table-responsive {
-            border: 1px solid #cbd5e1 !important;
-            border-radius: 8px !important;
-            overflow: visible !important;
-            background: #ffffff !important;
-            margin-bottom: 25px !important;
-        }
-        .admin-table {
-            border: none !important;
-            width: 100% !important;
-            border-collapse: collapse !important;
-        }
-        .admin-table th {
-            background-color: #f1f5f9 !important;
-            color: #1e293b !important;
-            border-bottom: 2px solid #cbd5e1 !important;
-            border-left: 1px solid #cbd5e1 !important;
-            padding: 12px 10px !important;
-            font-weight: bold !important;
-            font-size: 0.82rem !important; /* Larger and comfortable for Landscape */
-            text-align: center !important;
-        }
-        .admin-table th:first-child {
-            text-align: right !important;
-        }
-        .admin-table td {
-            border-bottom: 1px solid #e2e8f0 !important;
-            border-left: 1px solid #e2e8f0 !important;
-            color: #334155 !important;
-            padding: 12px 10px !important;
-            font-size: 0.8rem !important; /* Larger and comfortable for Landscape */
-            font-weight: 500 !important;
-            text-align: center !important;
-        }
-        .admin-table td:first-child {
-            text-align: right !important;
-        }
-        .admin-table strong {
-            color: #0f172a !important;
-        }
-        .admin-table small, .admin-table small * {
-            color: #475569 !important;
-            font-size: 0.72rem !important;
-        }
-
-        /* Status Badge */
-        .status-badge {
-            background-color: #f1f5f9 !important;
-            border: 1px solid #94a3b8 !important;
-            color: #1e293b !important;
-            padding: 4px 10px !important;
-            border-radius: 4px !important;
-            font-size: 0.72rem !important;
-            font-weight: bold !important;
-        }
-
-        /* Financial summary block */
-        div[style*="justify-content: flex-end"] {
-            display: flex !important;
-            justify-content: flex-end !important;
-            margin-top: 25px !important;
-            margin-bottom: 25px !important;
-        }
-        div[style*="width: 50%"] {
-            width: 40% !important; /* Slightly more compact on Landscape to look balanced */
-            background: #f8fafc !important;
-            border: 1px solid #cbd5e1 !important;
-            padding: 20px !important;
-            border-radius: 8px !important;
-            box-shadow: none !important;
-        }
-        div[style*="width: 50%"] h3 {
-            border-bottom: 1px solid #cbd5e1 !important;
-            color: #b45309 !important;
-            font-size: 1.05rem !important;
-            padding-bottom: 8px !important;
-            margin-bottom: 15px !important;
-        }
-        div[style*="width: 50%"] div {
-            font-size: 0.88rem !important;
-            color: #334155 !important;
-        }
-        div[style*="width: 50%"] span[style*="color: var(--brand-gold)"] {
-            color: #b45309 !important;
-        }
-        div[style*="width: 50%"] span[style*="color: #34d399"] {
-            color: #15803d !important;
-            font-weight: bold !important;
-        }
-        div[style*="width: 50%"] span[style*="color: #60a5fa"] {
-            color: #1d4ed8 !important;
-        }
-        div[style*="width: 50%"] span[style*="font-size: 1.5rem"] {
-            font-size: 1.25rem !important;
-            color: #b45309 !important;
-            font-weight: 900 !important;
-        }
-
-        /* Signatures Grid spaced beautifully across Landscape */
-        div[style*="grid-template-columns: 1fr 1fr 1fr"] {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr 1fr !important;
-            gap: 30px !important;
-            margin-top: 50px !important;
-            padding-top: 20px !important;
-            border-top: 1px solid #cbd5e1 !important;
-        }
-        div[style*="grid-template-columns: 1fr 1fr 1fr"] p {
-            color: #334155 !important;
-            font-size: 0.88rem !important;
-            margin-bottom: 3.5rem !important;
-        }
-        div[style*="background-color: rgba(255,255,255,0.1)"] {
-            background-color: #cbd5e1 !important;
-            height: 1px !important;
-        }
-
-        tr {
-            page-break-inside: avoid !important;
-        }
-    }
-</style>
-
 <script>
+    // Handle the dynamic commission rate update by re-querying the page with new parameters
     function updateCommission(val) {
         const urlParams = new URLSearchParams(window.location.search);
         urlParams.set('commission', val);
         window.location.search = urlParams.toString();
     }
+
+    // Force Lucide icons to draw on DOM load to guarantee all icons render flawlessly
+    document.addEventListener("DOMContentLoaded", function() {
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    });
 </script>
 {% endblock %}
