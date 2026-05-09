@@ -89,6 +89,53 @@
     
     <!-- Lucide Icons -->
     <script>{% inline_static 'vendor/lucide.min.js' %}</script>
+    
+    <!-- Anti-Injected Active Protection System -->
+    <style>
+        body [id*="idm_"], 
+        body [class*="idm_"],
+        body [id^="__idm"],
+        body #idm_active_download_bar, 
+        body .idm_active_download_bar,
+        body div[id*="__idm"],
+        body [id*="downloader"] {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            width: 0px !important;
+            height: 0px !important;
+            position: absolute !important;
+            top: -9999px !important;
+            left: -9999px !important;
+            z-index: -9999 !important;
+        }
+    </style>
+    <script>
+        (function() {
+            const cleanup = () => {
+                const selectors = ['[id*="idm_"]', '[class*="idm_"]', '#idm_active_download_bar', '.idm_active_download_bar', '[id*="__idm"]', '[id*="downloader"]'];
+                try {
+                    selectors.forEach(sel => {
+                        document.querySelectorAll(sel).forEach(el => {
+                            if (el && el.parentNode && !el.closest('.navbar') && !el.closest('.main-content')) {
+                                 el.style.display = 'none';
+                                 el.parentNode.removeChild(el);
+                            }
+                        });
+                    });
+                } catch(e){}
+            };
+            const observer = new MutationObserver(cleanup);
+            document.addEventListener("DOMContentLoaded", () => {
+                if (document.body) {
+                    observer.observe(document.body, { childList: true, subtree: true });
+                    cleanup();
+                    setInterval(cleanup, 800);
+                }
+            });
+        })();
+    </script>
     {% block extra_css %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
