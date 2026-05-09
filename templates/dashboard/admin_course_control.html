@@ -146,24 +146,77 @@
             </article>
 
             <article class="premium-card course-panel" id="upload-lesson">
-                <div class="panel-head">
+                <div class="panel-head" style="margin-bottom: 2rem;">
                     <div>
                         <div class="badge badge-gold mb-3">رفع قسم</div>
-                        <h2>إضافة فيديو أو رابط داخل جلسة</h2>
+                        <h2>إضافة جلسة أو قسم جديد</h2>
+                    </div>
+                    
+                    <!-- Tabs to switch between Video and PDF upload completely -->
+                    <div class="flex-center gap-3" style="background: rgba(255,255,255,0.02); padding: 0.35rem; border-radius: 14px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 10px;">
+                        <button type="button" onclick="switchUploadType('video')" id="tab-btn-video" class="btn btn-sm btn-primary" style="border-radius: 10px; font-weight: bold; display: flex; align-items: center; gap: 6px; padding: 0.5rem 1rem;"><i data-lucide="video" style="width: 15px;"></i> درس فيديو</button>
+                        <button type="button" onclick="switchUploadType('pdf')" id="tab-btn-pdf" class="btn btn-sm btn-secondary" style="border-radius: 10px; font-weight: bold; display: flex; align-items: center; gap: 6px; background: transparent; border-color: transparent; padding: 0.5rem 1rem;"><i data-lucide="file-text" style="width: 15px;"></i> ملف PDF</button>
                     </div>
                 </div>
-                <form method="post" enctype="multipart/form-data" class="course-form-grid">
+
+                <form method="post" enctype="multipart/form-data" class="course-form-grid" id="lesson-upload-form">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="upload_lesson">
-                    {% for field in lesson_form %}
-                        <div class="premium-field {% if field.name == 'description' %}span-2{% endif %}">
-                            <label>{{ field.label }}</label>
-                            <div class="input-glow-wrapper">{{ field }}</div>
-                            {% if field.help_text %}<small class="text-muted block mt-2">{{ field.help_text }}</small>{% endif %}
-                            {% for error in field.errors %}<p class="text-danger mt-2">{{ error }}</p>{% endfor %}
-                        </div>
-                    {% endfor %}
-                    <button class="btn btn-primary btn-glow span-2" type="submit">رفع القسم</button>
+                    
+                    <!-- Hidden field for lesson type set dynamically by JS -->
+                    <input type="hidden" name="lesson-lesson_type" id="id_lesson-lesson_type" value="video">
+
+                    <!-- Common Fields (Unit, Title) -->
+                    <div class="premium-field">
+                        <label>{{ lesson_form.unit.label }}</label>
+                        <div class="input-glow-wrapper">{{ lesson_form.unit }}</div>
+                        {% for error in lesson_form.unit.errors %}<p class="text-danger mt-2">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div class="premium-field">
+                        <label>{{ lesson_form.title.label }}</label>
+                        <div class="input-glow-wrapper">{{ lesson_form.title }}</div>
+                        {% for error in lesson_form.title.errors %}<p class="text-danger mt-2">{{ error }}</p>{% endfor %}
+                    </div>
+
+                    <!-- Video Fields (Visible when video tab is selected) -->
+                    <div class="premium-field video-only-field">
+                        <label>{{ lesson_form.video_url.label }}</label>
+                        <div class="input-glow-wrapper">{{ lesson_form.video_url }}</div>
+                        {% for error in lesson_form.video_url.errors %}<p class="text-danger mt-2">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div class="premium-field video-only-field">
+                        <label>{{ lesson_form.video_file.label }}</label>
+                        <div class="input-glow-wrapper">{{ lesson_form.video_file }}</div>
+                        {% for error in lesson_form.video_file.errors %}<p class="text-danger mt-2">{{ error }}</p>{% endfor %}
+                    </div>
+                    <div class="premium-field video-only-field">
+                        <label>{{ lesson_form.duration_seconds.label }}</label>
+                        <div class="input-glow-wrapper">{{ lesson_form.duration_seconds }}</div>
+                        {% for error in lesson_form.duration_seconds.errors %}<p class="text-danger mt-2">{{ error }}</p>{% endfor %}
+                    </div>
+
+                    <!-- PDF Fields (Visible when PDF tab is selected) -->
+                    <div class="premium-field pdf-only-field span-2" style="display: none;">
+                        <label>{{ lesson_form.pdf_file.label }}</label>
+                        <div class="input-glow-wrapper">{{ lesson_form.pdf_file }}</div>
+                        {% for error in lesson_form.pdf_file.errors %}<p class="text-danger mt-2">{{ error }}</p>{% endfor %}
+                    </div>
+
+                    <!-- Common Sort Order -->
+                    <div class="premium-field">
+                        <label>{{ lesson_form.sort_order.label }}</label>
+                        <div class="input-glow-wrapper">{{ lesson_form.sort_order }}</div>
+                        {% for error in lesson_form.sort_order.errors %}<p class="text-danger mt-2">{{ error }}</p>{% endfor %}
+                    </div>
+
+                    <!-- Common Description -->
+                    <div class="premium-field span-2">
+                        <label>{{ lesson_form.description.label }}</label>
+                        <div class="input-glow-wrapper">{{ lesson_form.description }}</div>
+                        {% for error in lesson_form.description.errors %}<p class="text-danger mt-2">{{ error }}</p>{% endfor %}
+                    </div>
+
+                    <button class="btn btn-primary btn-glow span-2" type="submit" id="submit-lesson-btn">رفع درس الفيديو</button>
                 </form>
             </article>
         </div>
@@ -580,4 +633,45 @@
         .activation-row button { width: 100%; justify-content: center; }
     }
 </style>
+
+<script>
+    function switchUploadType(type) {
+        const typeInput = document.getElementById('id_lesson-lesson_type');
+        const videoFields = document.querySelectorAll('.video-only-field');
+        const pdfFields = document.querySelectorAll('.pdf-only-field');
+        const videoBtn = document.getElementById('tab-btn-video');
+        const pdfBtn = document.getElementById('tab-btn-pdf');
+        const submitBtn = document.getElementById('submit-lesson-btn');
+
+        if (type === 'video') {
+            typeInput.value = 'video';
+            videoFields.forEach(el => el.style.display = '');
+            pdfFields.forEach(el => el.style.display = 'none');
+            
+            videoBtn.className = 'btn btn-sm btn-primary';
+            videoBtn.style.background = '';
+            videoBtn.style.borderColor = '';
+            
+            pdfBtn.className = 'btn btn-sm btn-secondary';
+            pdfBtn.style.background = 'transparent';
+            pdfBtn.style.borderColor = 'transparent';
+            
+            submitBtn.innerHTML = 'رفع درس الفيديو';
+        } else {
+            typeInput.value = 'pdf';
+            videoFields.forEach(el => el.style.display = 'none');
+            pdfFields.forEach(el => el.style.display = '');
+            
+            pdfBtn.className = 'btn btn-sm btn-primary';
+            pdfBtn.style.background = '';
+            pdfBtn.style.borderColor = '';
+            
+            videoBtn.className = 'btn btn-sm btn-secondary';
+            videoBtn.style.background = 'transparent';
+            videoBtn.style.borderColor = 'transparent';
+            
+            submitBtn.innerHTML = 'رفع ملف PDF';
+        }
+    }
+</script>
 {% endblock %}
