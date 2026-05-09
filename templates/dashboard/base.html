@@ -92,15 +92,15 @@
             <div class="navbar-center desktop-only">
                 <div class="nav-links">
                     {% if user.is_staff %}
-                        <a href="{% url 'dashboard:admin_dashboard' %}" class="nav-link {% if 'admin' in request.path %}active{% endif %}">الرئيسية</a>
-                        <a href="{% url 'dashboard:admin_content_hub' %}" class="nav-link">المحتوى</a>
-                        <a href="{% url 'dashboard:admin_catalog_manager' %}" class="nav-link">الاستكشاف</a>
-                        <a href="{% url 'dashboard:admin_instructors' %}" class="nav-link">المدرسون</a>
-                        <a href="{% url 'dashboard:admin_students' %}" class="nav-link">الطلاب</a>
-                        <a href="{% url 'dashboard:admin_billing' %}" class="nav-link">المالية</a>
-                        <a href="{% url 'dashboard:admin_sell_codes' %}" class="nav-link" style="color: var(--brand-gold); font-weight: 800; text-shadow: 0 0 10px rgba(var(--brand-gold-rgb), 0.2);"><i data-lucide="sparkles" style="width: 14px; display: inline-block; vertical-align: middle; margin-left: 2px;"></i> بيع أكواد</a>
-                        <a href="{% url 'dashboard:admin_partners' %}" class="nav-link">الشركاء</a>
-                        <a href="{% url 'dashboard:admin_packages' %}" class="nav-link">الباقات</a>
+                        <a href="{% url 'dashboard:admin_dashboard' %}" class="nav-link {% if request.path == '/admin-dashboard/' %}active{% endif %}">الرئيسية</a>
+                        <a href="{% url 'dashboard:admin_content_hub' %}" class="nav-link {% if 'content-hub' in request.path or '/admin-dashboard/courses/' in request.path %}active{% endif %}">المحتوى</a>
+                        <a href="{% url 'dashboard:admin_catalog_manager' %}" class="nav-link {% if 'catalog-manager' in request.path %}active{% endif %}">الاستكشاف</a>
+                        <a href="{% url 'dashboard:admin_instructors' %}" class="nav-link {% if 'instructors' in request.path %}active{% endif %}">المدرسون</a>
+                        <a href="{% url 'dashboard:admin_students' %}" class="nav-link {% if 'students' in request.path %}active{% endif %}">الطلاب</a>
+                        <a href="{% url 'dashboard:admin_billing' %}" class="nav-link {% if 'billing' in request.path and 'sell-codes' not in request.path %}active{% endif %}">المالية</a>
+                        <a href="{% url 'dashboard:admin_sell_codes' %}" class="nav-link {% if 'sell-codes' in request.path %}active{% endif %}" style="color: var(--brand-gold); font-weight: 800; text-shadow: 0 0 10px rgba(var(--brand-gold-rgb), 0.2);"><i data-lucide="sparkles" style="width: 14px; display: inline-block; vertical-align: middle; margin-left: 2px;"></i> بيع أكواد</a>
+                        <a href="{% url 'dashboard:admin_partners' %}" class="nav-link {% if 'partners' in request.path %}active{% endif %}">الشركاء</a>
+                        <a href="{% url 'dashboard:admin_packages' %}" class="nav-link {% if 'packages' in request.path %}active{% endif %}">الباقات</a>
                     {% elif user.is_authenticated %}
                         <a href="{% url 'dashboard:student_dashboard' %}" class="nav-link {% if request.path == '/dashboard/student/' %}active{% endif %}">الرئيسية</a>
                         <a href="{% url 'dashboard:my_courses' %}" class="nav-link {% if 'my-courses' in request.path %}active{% endif %}">مكتبتي</a>
