@@ -717,20 +717,25 @@
 
             document.addEventListener('contextmenu', showBriefWarning, true);
             document.addEventListener('keydown', (event) => {
+                // 1. Allow normal typing ONLY inside inputs or textareas (so users can take notes)
+                const isInput = event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.isContentEditable;
+                if (isInput) return;
+
                 const key = (event.key || '').toLowerCase();
-                const blockedShortcut =
-                    event.key === 'F12' ||
-                    (event.ctrlKey && event.shiftKey && ['i', 'j', 'c'].includes(key)) ||
-                    (event.ctrlKey && key === 'u') ||
-                    (event.ctrlKey && key === 'p') || // Block Ctrl+P (Print)
-                    (event.metaKey && key === 'p') || // Block Cmd+P (Print)
-                    (event.ctrlKey && key === 's') || // Block Ctrl+S (Save)
-                    (event.metaKey && key === 's');   // Block Cmd+S (Save)
-                if (blockedShortcut) {
-                    event.preventDefault();
-                    event.stopPropagation();
+                
+                // 2. Detect MUST-BLOCK keys (PrintScreen, Meta/Function keys, combination keys)
+                const isFunctionKey = /^f\d+/.test(key); // f1, f2, ..., f12
+                const isCombo = event.ctrlKey || event.altKey || event.metaKey; // Any modifier key combination
+                const isPrintScreen = key === 'printscreen' || event.keyCode === 44;
+
+                if (isFunctionKey || isCombo || isPrintScreen) {
+                    showBriefWarning(event);
+                    // Extra layer: clear the clipboard if they pressed PrintScreen to invalidate capture!
+                    if(navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText("⚠️ المحتوى محمي | Protected Content ⚠️").catch(()=>{});
+                    }
                 }
-            });
+            }, true);
         },
 
         setupPrivacyTrackers() {
