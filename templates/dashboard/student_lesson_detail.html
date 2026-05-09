@@ -56,9 +56,7 @@
                     <div style="position: relative; width: 100%; aspect-ratio: 16/9;">
                         {% if signed_video_url or video_embed_url %}
                             {% if signed_video_url %}
-                                <video id="lesson-video" controls style="width: 100%; height: 100%; border-radius: 35px 35px 0 0;" controlsList="nodownload nofullscreen" disablepictureinpicture oncontextmenu="return false;" ondragstart="return false;">
-                                    <source src="{{ signed_video_url }}" type="video/mp4">
-                                </video>
+                                <div id="secure-video-host" style="width: 100%; height: 100%; border-radius: 35px 35px 0 0; overflow: hidden; background: #000;"></div>
                             {% else %}
                                 <iframe id="lesson-iframe" src="{{ video_embed_url }}" style="width: 100%; height: 100%; border: none; border-radius: 35px 35px 0 0;" allowfullscreen oncontextmenu="return false;"></iframe>
                             {% endif %}
@@ -698,11 +696,11 @@
         curtain: document.getElementById('video-security-overlay'),
         
         init() {
+            this.setupAntiSniffer();
             this.setupInterceptors();
             this.setupPrivacyTrackers();
             this.startWatermarkVoyage();
             this.initProgressSync();
-            this.setupAntiSniffer();
         },
 
         setupInterceptors() {
@@ -773,20 +771,44 @@
         },
 
         setupAntiSniffer() {
-            if (!this.video) return;
+            const host = document.getElementById('secure-video-host');
+            if (host) {
+                // Attach closed Shadow DOM to completely hide the video element from IDM and other browser extensions!
+                const shadow = host.attachShadow({ mode: 'closed' });
 
-            // 1. Immediately strip video sources from DOM on loadstart to prevent IDM sniffer from capturing URLs!
-            this.video.addEventListener('loadstart', () => {
-                setTimeout(() => {
-                    const sources = this.video.getElementsByTagName('source');
-                    for (let i = 0; i < sources.length; i++) {
-                        sources[i].removeAttribute('src');
-                    }
-                }, 100);
-            });
+                const video = document.createElement('video');
+                video.id = 'lesson-video';
+                video.controls = true;
+                video.style.width = '100%';
+                video.style.height = '100%';
+                video.style.borderRadius = '35px 35px 0 0';
+                video.setAttribute('controlsList', 'nodownload nofullscreen');
+                video.setAttribute('disablepictureinpicture', 'true');
+                
+                // Add right click and drag preventions directly inside the shadow element
+                video.addEventListener('contextmenu', (e) => e.preventDefault());
+                video.addEventListener('dragstart', (e) => e.preventDefault());
 
-            // 2. Clear element drag capability to prevent drag-sniffing
-            this.video.addEventListener('dragstart', (e) => e.preventDefault());
+                const source = document.createElement('source');
+                source.src = '{{ signed_video_url }}';
+                source.type = 'video/mp4';
+                video.appendChild(source);
+
+                shadow.appendChild(video);
+
+                // Assign the video reference to LessonProtection
+                this.video = video;
+
+                // Strip the source URL inside the Shadow DOM once loadstart triggers to be double safe!
+                video.addEventListener('loadstart', () => {
+                    setTimeout(() => {
+                        const sources = video.getElementsByTagName('source');
+                        for (let i = 0; i < sources.length; i++) {
+                            sources[i].removeAttribute('src');
+                        }
+                    }, 100);
+                });
+            }
         }
     };
 
