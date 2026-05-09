@@ -2,6 +2,8 @@
 {% load static %}
 
 {% block title %}{{ course.title }} | محترفو التعليم{% endblock %}
+
+{% block media_csp %}'self' blob: https: data: mediastream: *{% endblock %}
 {% block meta_description %}{% if course.description %}{{ course.description|striptags|truncatechars:155 }}{% else %}دورة {{ course.title }} على منصة محترفو التعليم بإشراف الأستاذ {{ course.instructor.get_full_name|default:course.instructor.username }}.{% endif %}{% endblock %}
 {% block og_type %}article{% endblock %}
 {% block og_title %}{{ course.title }} | محترفو التعليم{% endblock %}
