@@ -470,7 +470,14 @@
             this.pageIsRendering = true;
 
             this.pdfDoc.getPage(num).then(page => {
-                const viewport = page.getViewport({ scale: this.scale });
+                const container = this.canvas.parentElement;
+                const containerWidth = container.clientWidth - 32;
+                const unscaledViewport = page.getViewport({ scale: 1.0 });
+                
+                let optimalScale = (containerWidth / unscaledViewport.width) * this.scale;
+                if (optimalScale > 1.8) optimalScale = 1.8;
+
+                const viewport = page.getViewport({ scale: optimalScale });
                 this.canvas.height = viewport.height;
                 this.canvas.width = viewport.width;
 
