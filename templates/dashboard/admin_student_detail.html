@@ -144,15 +144,36 @@
     <div class="sidebar-column">
         <div class="premium-card mb-6">
             <h3 class="sidebar-label">المعلومات الشخصية والتقنية</h3>
+            <form method="POST" style="margin-bottom: 1.5rem; padding-bottom: 1.25rem; border-bottom: 1px dashed var(--border-light); display: grid; gap: 0.75rem;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_profile_admin">
+                
+                <div>
+                    <label style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 0.35rem;">المحافظة:</label>
+                    <select name="governorate" class="form-select" style="width: 100%; min-height: 38px; padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.85rem;" required>
+                        <option value="">اختر المحافظة...</option>
+                        {% for gov in all_governorates %}
+                            <option value="{{ gov.name }}" {% if student.student_profile.governorate == gov.name %}selected{% endif %}>{{ gov.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 0.35rem;">الفرع الدراسي:</label>
+                    <select name="track" class="form-select" style="width: 100%; min-height: 38px; padding: 0.4rem 0.8rem; border-radius: 8px; font-size: 0.85rem;" required>
+                        <option value="">اختر الفرع...</option>
+                        {% for track in all_tracks %}
+                            <option value="{{ track.name }}" {% if student.student_profile.track == track.name %}selected{% endif %}>{{ track.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-secondary w-full" style="min-height: 36px; padding: 0.5rem; font-size: 0.82rem; border-radius: 8px; margin-top: 0.25rem;">
+                    <i data-lucide="save" style="width: 14px; height: 14px;"></i> حفظ البيانات الجغرافية
+                </button>
+            </form>
+
             <div class="info-list">
-                <div class="info-item">
-                    <span>المحافظة:</span>
-                    <strong style="color: var(--brand-gold);">{{ student.student_profile.governorate|default:"غير محددة" }}</strong>
-                </div>
-                <div class="info-item">
-                    <span>الفرع الدراسي:</span>
-                    <strong>{{ student.student_profile.track|default:"غير محدد" }}</strong>
-                </div>
                 <div class="info-item">
                     <span>تاريخ التسجيل:</span>
                     <strong>{{ student.date_joined|date:"Y-m-d" }}</strong>
@@ -172,13 +193,23 @@
             <h3 class="sidebar-label">الأجهزة المرتبطة</h3>
             <div class="admin-card-list">
                 {% for device in devices %}
-                    <div class="tool-box" style="background: rgba(255,255,255,0.02); margin-bottom: 0.5rem; padding: 1rem;">
-                        <div class="flex-align gap-3 mb-2">
-                            <i data-lucide="{% if 'Android' in device.user_agent %}smartphone{% else %}monitor{% endif %}" style="width: 16px; color: var(--brand-gold);"></i>
-                            <strong style="font-size: 0.85rem; color: var(--text-primary);">{{ device.device_fingerprint|slice:":12" }}</strong>
+                    <div class="tool-box" style="background: rgba(255,255,255,0.02); margin-bottom: 0.5rem; padding: 1.25rem; position: relative; border-radius: 14px;">
+                        <div class="flex-between mb-2">
+                            <div class="flex-align gap-2">
+                                <i data-lucide="{% if 'Android' in device.user_agent or 'iPhone' in device.user_agent or 'iPad' in device.user_agent %}smartphone{% else %}monitor{% endif %}" style="width: 16px; color: var(--brand-gold);"></i>
+                                <strong style="font-size: 0.85rem; color: var(--text-primary);">{{ device.device_fingerprint|slice:":16" }}</strong>
+                            </div>
+                            <form method="POST" onsubmit="return confirm('هل أنت متأكد من إلغاء ربط وإزالة هذا الجهاز؟ سيمكن هذا الطالب من التسجيل من جهاز جديد بدلاً منه.')" style="margin: 0;">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="delete_device">
+                                <input type="hidden" name="device_id" value="{{ device.id }}">
+                                <button type="submit" style="color: var(--danger); border: none; background: none; cursor: pointer; padding: 2px;" title="حذف وإلغاء ربط هذا الجهاز">
+                                    <i data-lucide="trash" style="width: 15px; height: 15px;"></i>
+                                </button>
+                            </form>
                         </div>
-                        <p style="font-size: 0.7rem; color: var(--text-muted); margin: 0;">آخر ظهور: {{ device.last_seen_at|date:"m-d H:i" }}</p>
-                        <p style="font-size: 0.7rem; color: var(--text-muted); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ device.user_agent }}</p>
+                        <p style="font-size: 0.72rem; color: var(--text-muted); margin: 0 0 0.25rem;">آخر ظهور: <span style="color: var(--text-primary); font-weight: 700;">{{ device.last_seen_at|date:"Y-m-d H:i" }}</span></p>
+                        <p style="font-size: 0.72rem; color: var(--text-muted); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ device.user_agent }}">المتصفح: {{ device.user_agent }}</p>
                     </div>
                 {% empty %}
                     <p class="text-center p-4 color-muted" style="font-size: 0.8rem;">لا توجد أجهزة مرتبطة.</p>

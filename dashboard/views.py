@@ -3385,6 +3385,11 @@ def admin_student_detail(request, user_id):
             student.devices.all().delete()
             messages.success(request, "تم تصفير جميع أجهزة الطالب بنجاح.")
             
+        elif action == "delete_device":
+            device_id = request.POST.get("device_id")
+            UserDevice.objects.filter(id=device_id, user=student).delete()
+            messages.success(request, "تم إزالة الجهاز المحدد بنجاح.")
+            
         elif action == "grant_course":
             course_id = request.POST.get("course_id")
             course = get_object_or_404(Course, id=course_id)
@@ -3399,6 +3404,15 @@ def admin_student_detail(request, user_id):
             grant_id = request.POST.get("grant_id")
             AccessGrant.objects.filter(id=grant_id, user=student).delete()
             messages.success(request, "تم سحب صلاحية المادة من الطالب.")
+            
+        elif action == "update_profile_admin":
+            governorate = request.POST.get("governorate")
+            track = request.POST.get("track")
+            profile = student.student_profile
+            profile.governorate = governorate
+            profile.track = track
+            profile.save()
+            messages.success(request, "تم تحديث الفرع والمحافظة للطالب بنجاح.")
 
         return redirect("dashboard:admin_student_detail", user_id=student.id)
 
@@ -3410,6 +3424,10 @@ def admin_student_detail(request, user_id):
     
     attempts = Attempt.objects.filter(user=student).select_related("exam", "exam__course").order_by("-created_at")[:10]
     devices = UserDevice.objects.filter(user=student).order_by("-last_seen_at")
+    
+    from accounts.models import Governorate, AcademicBranch
+    all_governorates = Governorate.objects.filter(is_active=True).order_by("sort_order", "name")
+    all_tracks = AcademicBranch.objects.filter(is_active=True).order_by("sort_order", "name")
 
     context = {
         "student": student,
@@ -3417,5 +3435,7 @@ def admin_student_detail(request, user_id):
         "student_grants": student_grants,
         "attempts": attempts,
         "devices": devices,
+        "all_governorates": all_governorates,
+        "all_tracks": all_tracks,
     }
     return render(request, "dashboard/admin_student_detail.html", context)
