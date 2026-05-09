@@ -1907,9 +1907,9 @@ def signed_lesson_video(request, lesson_id, token):
         raise Http404("Video not found")
     if not lesson.video_file:
         raise Http404("Video not found")
-    response = FileResponse(lesson.video_file.open("rb"), content_type="video/mp4")
+    response = FileResponse(lesson.video_file.open("rb"), content_type="application/octet-stream")
     response["Cache-Control"] = "no-store"
-    response["Content-Disposition"] = 'inline; filename="lesson-video.mp4"'
+    response["Content-Disposition"] = 'inline; filename="lesson-video.dat"'
     return response
 
 
