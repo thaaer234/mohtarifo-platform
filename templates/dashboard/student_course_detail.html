@@ -463,19 +463,69 @@
             
             // Zoom Controls
             document.getElementById('course-pdf-zoom-in').addEventListener('click', () => {
-                this.scale += 0.2;
+                this.scale = Math.min(this.scale + 0.2, 3.0);
                 this.renderPage(this.pageNum);
                 const el = document.getElementById('course-pdf-zoom-level');
                 if (el) el.textContent = `${Math.round(this.scale * 100)}%`;
             });
             document.getElementById('course-pdf-zoom-out').addEventListener('click', () => {
-                if (this.scale > 0.6) {
-                    this.scale -= 0.2;
-                    this.renderPage(this.pageNum);
-                    const el = document.getElementById('course-pdf-zoom-level');
-                    if (el) el.textContent = `${Math.round(this.scale * 100)}%`;
-                }
+                this.scale = Math.max(this.scale - 0.2, 0.6);
+                this.renderPage(this.pageNum);
+                const el = document.getElementById('course-pdf-zoom-level');
+                if (el) el.textContent = `${Math.round(this.scale * 100)}%`;
             });
+
+            // Adobe Acrobat Style Interaction Suite (Grab and Drag Pan + Ctrl & Scroll Zoom)
+            const viewport = document.getElementById('course-pdf-container-viewport');
+            if (viewport) {
+                viewport.style.cursor = 'grab';
+                let isDown = false;
+                let startX, startY, scrollLeft, scrollTop;
+
+                viewport.addEventListener('mousedown', (e) => {
+                    isDown = true;
+                    viewport.style.cursor = 'grabbing';
+                    startX = e.pageX - viewport.offsetLeft;
+                    startY = e.pageY - viewport.offsetTop;
+                    scrollLeft = viewport.scrollLeft;
+                    scrollTop = viewport.scrollTop;
+                });
+
+                viewport.addEventListener('mouseleave', () => {
+                    isDown = false;
+                    viewport.style.cursor = 'grab';
+                });
+
+                viewport.addEventListener('mouseup', () => {
+                    isDown = false;
+                    viewport.style.cursor = 'grab';
+                });
+
+                viewport.addEventListener('mousemove', (e) => {
+                    if (!isDown) return;
+                    e.preventDefault();
+                    const x = e.pageX - viewport.offsetLeft;
+                    const y = e.pageY - viewport.offsetTop;
+                    const walkX = (x - startX) * 1.5;
+                    const walkY = (y - startY) * 1.5;
+                    viewport.scrollLeft = scrollLeft - walkX;
+                    viewport.scrollTop = scrollTop - walkY;
+                });
+
+                viewport.addEventListener('wheel', (e) => {
+                    if (e.ctrlKey) {
+                        e.preventDefault();
+                        if (e.deltaY < 0) {
+                            this.scale = Math.min(this.scale + 0.1, 3.0);
+                        } else {
+                            this.scale = Math.max(this.scale - 0.1, 0.6);
+                        }
+                        this.renderPage(this.pageNum);
+                        const el = document.getElementById('course-pdf-zoom-level');
+                        if (el) el.textContent = `${Math.round(this.scale * 100)}%`;
+                    }
+                }, { passive: false });
+            }
         },
 
         renderPage(num) {
