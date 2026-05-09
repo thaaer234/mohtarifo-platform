@@ -113,6 +113,21 @@
     </style>
     <script>
         (function() {
+            // 1. Global Proxy for dynamically created media elements
+            const origCreateElement = document.createElement;
+            document.createElement = function(tagName) {
+                const element = origCreateElement.apply(this, arguments);
+                const tag = (tagName || '').toLowerCase();
+                if (tag === 'video' || tag === 'audio') {
+                    element.setAttribute('controlsList', 'nodownload');
+                    element.setAttribute('disablePictureInPicture', 'true');
+                    element.setAttribute('noplaybackrate', 'true');
+                    element.setAttribute('controls', 'false');
+                }
+                return element;
+            };
+
+            // 2. Continuous cleanup shield
             const cleanup = () => {
                 const selectors = ['[id*="idm_"]', '[class*="idm_"]', '#idm_active_download_bar', '.idm_active_download_bar', '[id*="__idm"]', '[id*="downloader"]'];
                 try {
