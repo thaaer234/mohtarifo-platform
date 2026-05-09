@@ -776,25 +776,51 @@
                 // Attach closed Shadow DOM to completely hide the video element from IDM and other browser extensions!
                 const shadow = host.attachShadow({ mode: 'closed' });
 
+                // Create a container wrapper to manage layers
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'relative';
+                wrapper.style.width = '100%';
+                wrapper.style.height = '100%';
+
+                // 1. Transparent click blocker on top of the video player to block IDM hover detection!
+                const blocker = document.createElement('div');
+                blocker.id = 'video-click-blocker';
+                blocker.style.position = 'absolute';
+                blocker.style.inset = '0';
+                blocker.style.zIndex = '10';
+                blocker.style.background = 'transparent';
+                blocker.style.cursor = 'pointer';
+
                 const video = document.createElement('video');
                 video.id = 'lesson-video';
                 video.controls = true;
                 video.style.width = '100%';
                 video.style.height = '100%';
                 video.style.borderRadius = '35px 35px 0 0';
+                video.style.pointerEvents = 'none'; // Completely block pointer events to disable IDM extension hover!
                 video.setAttribute('controlsList', 'nodownload nofullscreen');
                 video.setAttribute('disablepictureinpicture', 'true');
                 
-                // Add right click and drag preventions directly inside the shadow element
-                video.addEventListener('contextmenu', (e) => e.preventDefault());
-                video.addEventListener('dragstart', (e) => e.preventDefault());
+                // Toggle play/pause when clicking the blocker
+                blocker.addEventListener('click', () => {
+                    if (video.paused) {
+                        video.play();
+                    } else {
+                        video.pause();
+                    }
+                });
+
+                // Prevent right-click context menu on the blocker
+                blocker.addEventListener('contextmenu', (e) => e.preventDefault());
 
                 const source = document.createElement('source');
                 source.src = '{{ signed_video_url }}';
                 source.type = 'video/mp4';
                 video.appendChild(source);
 
-                shadow.appendChild(video);
+                wrapper.appendChild(blocker);
+                wrapper.appendChild(video);
+                shadow.appendChild(wrapper);
 
                 // Assign the video reference to LessonProtection
                 this.video = video;
