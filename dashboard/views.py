@@ -3494,3 +3494,120 @@ def admin_student_detail(request, user_id):
         "all_tracks": all_tracks,
     }
     return render(request, "dashboard/admin_student_detail.html", context)
+
+
+@admin_required
+def admin_sell_codes(request):
+    from learning.models import Course
+    from billing.models import CoursePackage, AccessCode
+    from accounts.models import StudentProfile
+    from django.contrib.auth.models import User
+    from django.db import transaction
+    from django.utils import timezone
+    from dashboard.security import sanitize_plain_text
+    
+    if request.method == "POST":
+        code_id = request.POST.get("code_id")
+        student_phone = request.POST.get("student_phone")
+        student_name = request.POST.get("student_name")
+        price_amount = request.POST.get("price_amount")
+        
+        if not code_id or not student_phone or not student_name:
+            messages.error(request, "الرجاء ملء كافة الحقول المطلوبة.")
+            return redirect("dashboard:admin_sell_codes")
+            
+        try:
+            with transaction.atomic():
+                access_code = AccessCode.objects.select_for_update().get(id=code_id, status="active", sale_status__in=["available", "reserved"])
+                
+                # Normalize phone number
+                student_phone = student_phone.strip()
+                student_name = sanitize_plain_text(student_name.strip())
+                
+                student, created = User.objects.get_or_create(
+                    username=student_phone,
+                    defaults={"first_name": student_name, "is_active": True},
+                )
+                if created:
+                    student.set_unusable_password()
+                    student.save(update_fields=["password"])
+                elif student_name and not student.get_full_name():
+                    student.first_name = student_name
+                    student.save(update_fields=["first_name"])
+                    
+                track = ""
+                if access_code.course:
+                    track = access_code.course.get_academic_track_display()
+                elif access_code.package:
+                    track = access_code.package.get_package_track_display()
+                    
+                StudentProfile.objects.get_or_create(
+                    user=student,
+                    defaults={"phone": student_phone, "track": track},
+                )
+                
+                access_code.assigned_student_name = student_name
+                access_code.assigned_student_phone = student_phone
+                access_code.sale_status = "sold"
+                access_code.sold_by = request.user
+                access_code.sold_at = timezone.now()
+                
+                if price_amount:
+                    access_code.sold_price_cents = int(float(price_amount) * 100)
+                    access_code.price_reason = "تحديد يدوي من شاشة المبيعات"
+                else:
+                    base_price = 0
+                    if access_code.course:
+                        base_price = access_code.course.price_cents or 0
+                    elif access_code.package:
+                        base_price = access_code.package.price_cents or 0
+                        
+                    access_code.sold_price_cents = base_price
+                    access_code.price_reason = "سعر كامل"
+                    
+                access_code.save()
+                messages.success(request, f"تم تسجيل بيع الكود بنجاح للطالب {student_name}.")
+                return redirect(f"/admin-dashboard/billing/sell-codes/?sold_id={access_code.id}")
+                    
+        except AccessCode.DoesNotExist:
+            messages.error(request, "الكود المحدد غير موجود أو تم بيعه مسبقاً.")
+        except Exception as e:
+            messages.error(request, f"حدث خطأ أثناء بيع الكود: {str(e)}")
+            
+        return redirect("dashboard:admin_sell_codes")
+        
+    courses = Course.objects.filter(status="published").select_related("instructor").order_by("title")
+    packages = CoursePackage.objects.filter(is_active=True).order_by("name")
+    
+    sold_id = request.GET.get("sold_id")
+    sold_code = None
+    sold_price_syp = 0
+    if sold_id:
+        sold_code = AccessCode.objects.filter(id=sold_id, sale_status="sold").select_related("course", "package", "course__instructor").first()
+        if sold_code and sold_code.sold_price_cents:
+            sold_price_syp = int(sold_code.sold_price_cents / 100)
+        
+    context = {
+        "courses": courses,
+        "packages": packages,
+        "sold_code": sold_code,
+        "sold_price_syp": sold_price_syp,
+    }
+    return render(request, "dashboard/admin_sell_codes.html", context)
+
+
+@admin_required
+def get_available_codes_api(request):
+    from django.http import JsonResponse
+    course_id = request.GET.get("course_id")
+    package_id = request.GET.get("package_id")
+    from billing.models import AccessCode
+    
+    if course_id:
+        codes = AccessCode.objects.filter(course_id=course_id, status="active", sale_status__in=["available", "reserved"]).values("id", "code")[:100]
+    elif package_id:
+        codes = AccessCode.objects.filter(package_id=package_id, status="active", sale_status__in=["available", "reserved"]).values("id", "code")[:100]
+    else:
+        codes = []
+        
+    return JsonResponse({"codes": list(codes)})

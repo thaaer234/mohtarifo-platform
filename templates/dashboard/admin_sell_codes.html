@@ -1,0 +1,385 @@
+{% extends "dashboard/base.html" %}
+{% block title %}شاشة بيع الأكواد الموحدة{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Print styles optimized for thermal receipt / standard card printing */
+    @media print {
+        body {
+            background: #fff !important;
+            color: #000 !important;
+        }
+        /* Hide everything on the page during print except the voucher */
+        body > * {
+            display: none !important;
+        }
+        #print-voucher-overlay {
+            display: block !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            background: #fff !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        #print-voucher-card {
+            border: none !important;
+            box-shadow: none !important;
+            width: 80mm !important; /* Perfect standard width for thermal receipt printers */
+            margin: 0 auto !important;
+            padding: 15px !important;
+            background: #fff !important;
+            color: #000 !important;
+            font-family: 'Cairo', sans-serif !important;
+            text-align: center !important;
+            direction: rtl !important;
+        }
+        .no-print {
+            display: none !important;
+        }
+    }
+
+    /* Style for Copy Feedback */
+    .copy-success {
+        background: #10b981 !important;
+        color: #fff !important;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumb animate-fade-up no-print">
+    <a href="{% url 'dashboard:admin_dashboard' %}">لوحة الإدارة</a>
+    <span class="breadcrumb-separator">/</span>
+    <span style="color: var(--text-primary);">بيع الأكواد</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="admin-main-layout animate-fade-up no-print">
+    <!-- Main Content Form -->
+    <div class="main-column" style="flex: 1.5;">
+        <div class="premium-card" style="position: relative; overflow: hidden; padding: 2.5rem; border: 1px solid rgba(255, 255, 255, 0.05); background: rgba(10, 10, 10, 0.4); backdrop-filter: blur(20px); border-radius: 24px; box-shadow: var(--shadow-glow);">
+            <div style="position: absolute; top: -50px; left: -50px; width: 250px; height: 250px; background: radial-gradient(circle, rgba(var(--brand-gold-rgb), 0.08) 0%, transparent 70%); pointer-events: none;"></div>
+
+            <div class="flex-between mb-8" style="flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 1.5rem;">
+                <div class="flex-align gap-4">
+                    <div style="width: 50px; height: 50px; background: rgba(var(--brand-gold-rgb), 0.1); border: 1px solid rgba(var(--brand-gold-rgb), 0.25); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: var(--brand-gold); box-shadow: 0 0 15px rgba(var(--brand-gold-rgb), 0.1);">
+                        <i data-lucide="shopping-cart" style="width: 24px; height: 24px;"></i>
+                    </div>
+                    <div>
+                        <h1 class="page-title" style="margin: 0; font-size: 1.75rem; font-weight: 900;">شاشة بيع الأكواد</h1>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.25rem;">قم ببيع وتوليد كروت التفعيل للطلاب مباشرة وحساب مبيعاتها للآدمن</p>
+                    </div>
+                </div>
+
+                <!-- Tabs to Choose Code Type -->
+                <div style="display: flex; gap: 0.5rem; background: rgba(0,0,0,0.25); padding: 4px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                    <button id="tab-course" class="btn btn-sm" style="border-radius: 8px; font-weight: bold; padding: 8px 16px; background: var(--brand-gold); color: #000;" onclick="switchType('course')">كود مادة منفردة</button>
+                    <button id="tab-package" class="btn btn-sm" style="border-radius: 8px; font-weight: bold; padding: 8px 16px; background: transparent; color: var(--text-secondary);" onclick="switchType('package')">كود باقة كاملة</button>
+                </div>
+            </div>
+
+            <!-- Unified Form -->
+            <form method="POST" id="sell-code-form" onsubmit="return confirmSale()">
+                {% csrf_token %}
+                
+                <div class="form-grid mb-6" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+                    
+                    <!-- 1. Selection of Course or Package -->
+                    <div id="course-selection-group" class="form-group">
+                        <label class="form-label" style="font-weight: bold; margin-bottom: 0.5rem; display: block; color: var(--text-primary);"><i data-lucide="book-open" style="width: 14px; vertical-align: middle; margin-left: 4px;"></i> اختر المادة:</label>
+                        <select id="course-select" class="form-select" style="border-radius: 12px; padding: 12px; background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.08); color: var(--text-primary);" onchange="loadCodesFor('course', this.value)">
+                            <option value="">-- اختر المادة --</option>
+                            {% for course in courses %}
+                                <option value="{{ course.id }}">{{ course.title }} - أ. {{ course.instructor.get_full_name|default:course.instructor.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div id="package-selection-group" class="form-group" style="display: none;">
+                        <label class="form-label" style="font-weight: bold; margin-bottom: 0.5rem; display: block; color: var(--text-primary);"><i data-lucide="package" style="width: 14px; vertical-align: middle; margin-left: 4px;"></i> اختر الباقة:</label>
+                        <select id="package-select" class="form-select" style="border-radius: 12px; padding: 12px; background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.08); color: var(--text-primary);" onchange="loadCodesFor('package', this.value)">
+                            <option value="">-- اختر الباقة --</option>
+                            {% for package in packages %}
+                                <option value="{{ package.id }}">{{ package.name }} ({{ package.get_package_track_display }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- 2. Selection of Available Code -->
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight: bold; margin-bottom: 0.5rem; display: block; color: var(--text-primary);"><i data-lucide="key" style="width: 14px; vertical-align: middle; margin-left: 4px;"></i> الكود المتاح:</label>
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <select id="code-select" name="code_id" class="form-select" style="border-radius: 12px; padding: 12px; background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.08); color: var(--text-primary); flex: 1;" required disabled>
+                                <option value="">الرجاء اختيار مادة أو باقة أولاً...</option>
+                            </select>
+                            <span id="remaining-count-badge" class="badge" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 0.7rem; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.25); color: var(--brand-gold); display: none;"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Information Card -->
+                <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.04); padding: 1.5rem; border-radius: 16px; margin-bottom: 1.5rem;">
+                    <h3 style="font-size: 1.1rem; color: var(--brand-gold); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;">
+                        <i data-lucide="user-plus"></i> معلومات المشتري (الطالب)
+                    </h3>
+                    
+                    <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem;">
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight: bold; margin-bottom: 0.5rem; display: block; color: var(--text-primary);">رقم الهاتف (الاسم كحساب):</label>
+                            <input type="text" name="student_phone" class="form-control" placeholder="09xxxxxxxx" style="border-radius: 10px; padding: 12px; background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.08); color: var(--text-primary);" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" style="font-weight: bold; margin-bottom: 0.5rem; display: block; color: var(--text-primary);">اسم الطالب الكامل:</label>
+                            <input type="text" name="student_name" class="form-control" placeholder="أدخل اسم الطالب ثلاثياً" style="border-radius: 10px; padding: 12px; background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.08); color: var(--text-primary);" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Price Field with standard value indicator -->
+                <div class="form-grid mb-8" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem;">
+                    <div class="form-group">
+                        <label class="form-label" style="font-weight: bold; margin-bottom: 0.5rem; display: block; color: var(--text-primary);"><i data-lucide="coins" style="width: 14px; vertical-align: middle; margin-left: 4px;"></i> قيمة البيع (ل.س):</label>
+                        <input type="number" name="price_amount" class="form-control" placeholder="اتركه فارغاً للاعتماد على السعر الافتراضي" style="border-radius: 10px; padding: 12px; background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.08); color: var(--text-primary);">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
+                        <button type="submit" class="btn btn-primary btn-glow w-full" style="height: 48px; border-radius: 12px; font-weight: bold; font-size: 1.05rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                            <i data-lucide="check-circle" style="width: 18px; height: 18px;"></i> تسجيل بيع الكود للآدمن
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sidebar Guidelines -->
+    <div class="sidebar-column" style="flex: 0.85;">
+        <div class="premium-card" style="padding: 2rem; border: 1px solid rgba(255, 255, 255, 0.05); background: rgba(10, 10, 10, 0.4); backdrop-filter: blur(20px); border-radius: 24px;">
+            <h3 style="font-size: 1.2rem; color: var(--brand-gold); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;">
+                <i data-lucide="info"></i> إرشادات سريعة للآدمن
+            </h3>
+            
+            <ul style="padding-right: 1.25rem; list-style-type: decimal; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.8; display: flex; flex-direction: column; gap: 0.75rem;">
+                <li><strong>آلية التفعيل الذاتي:</strong> بموجب رغبتك، لن يتم تفعيل المادة تلقائياً للطالب؛ بل سيقوم الآدمن بتسليمه الكود المطبوع ليقوم الطالب بتفعيله بنفسه داخل حسابه.</li>
+                <li><strong>تسجيل المبيعات المالي:</strong> سيتم احتساب هذا الكود بأنه <strong>مباع بواسطة الآدمن الحالي</strong> الذي أجرى العملية، مع توثيق السعر واسم الطالب في التقارير المالية والفوترة.</li>
+                <li><strong>الطباعة الفورية:</strong> بمجرد نجاح العملية، ستظهر لك بطاقة تفعيل مخصصة وجميلة مجهزة للطباعة المباشرة لتسليمها للطالب فوراً.</li>
+            </ul>
+
+            <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px dashed rgba(255,255,255,0.08); text-align: center;">
+                <p style="font-size: 0.78rem; color: var(--text-muted);">هل تريد تصفح الكشوفات المالية التفصيلية؟</p>
+                <a href="{% url 'dashboard:admin_billing' %}" class="btn btn-secondary btn-sm mt-3" style="border-radius: 8px; font-weight: bold; display: inline-flex; align-items: center; gap: 0.4rem;">
+                    <i data-lucide="wallet" style="width: 14px;"></i> الانتقال للمركز المالي
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SUCCESS SOLD MODAL (Card & Printing) -->
+{% if sold_code %}
+<div id="print-voucher-overlay" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 2rem; overflow-y: auto;">
+    <div style="max-width: 480px; width: 100%; display: flex; flex-direction: column; gap: 1.5rem;" class="no-print animate-fade-up">
+        
+        <!-- Header Controls -->
+        <div class="flex-between" style="background: rgba(255,255,255,0.03); padding: 1rem 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
+            <div style="display: flex; align-items: center; gap: 0.5rem; color: #10b981;">
+                <i data-lucide="check-circle-2"></i>
+                <span style="font-weight: 900; font-size: 1.1rem;">تم تسجيل عملية البيع بنجاح!</span>
+            </div>
+            <button onclick="closeModal()" style="background: rgba(255,255,255,0.05); border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); cursor: pointer;"><i data-lucide="x" style="width: 16px;"></i></button>
+        </div>
+
+        <!-- Printable Voucher Card -->
+        <div id="print-voucher-card" style="background: #ffffff; color: #0f172a; border-radius: 24px; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 2px dashed #c5a059; text-align: center; font-family: 'Cairo', sans-serif; direction: rtl; position: relative;">
+            
+            <!-- Branding Header -->
+            <div style="margin-bottom: 1.5rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 1rem;">
+                <h2 style="font-size: 1.5rem; font-weight: 900; color: #000; margin: 0; font-family: 'Cairo', sans-serif;">محترفو التعليم</h2>
+                <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem; font-weight: bold; letter-spacing: 0.5px;">PRO ACADEMY</p>
+            </div>
+
+            <!-- Course Title Details -->
+            <div style="background: #f8fafc; border-radius: 16px; padding: 1.25rem; margin-bottom: 1.5rem; border: 1px solid #e2e8f0;">
+                <span style="font-size: 0.8rem; color: #64748b; font-weight: bold; display: block; margin-bottom: 0.25rem;">بطاقة تفعيل محتوى:</span>
+                <strong style="font-size: 1.25rem; color: #0f172a; font-weight: 900; display: block; line-height: 1.4;">
+                    {% if sold_code.course %}
+                        {{ sold_code.course.title }}
+                        <span style="font-size: 0.95rem; color: #475569; display: block; margin-top: 0.25rem; font-weight: bold;">أ. {{ sold_code.course.instructor.get_full_name|default:sold_code.course.instructor.username }}</span>
+                    {% elif sold_code.package %}
+                        {{ sold_code.package.name }} (باقة كاملة)
+                    {% endif %}
+                </strong>
+            </div>
+
+            <!-- CODE BLOCK (Huge & Stunning) -->
+            <div style="background: #fffbeb; border: 2px solid #fef3c7; border-radius: 16px; padding: 1.5rem 1rem; margin-bottom: 1.5rem; position: relative;">
+                <span style="font-size: 0.8rem; color: #b45309; font-weight: 800; display: block; margin-bottom: 0.5rem; letter-spacing: 1px;">كود التفعيل (أدخله في حسابك)</span>
+                <span id="target-copy-code" style="font-size: 1.85rem; font-weight: 900; color: #d97706; font-family: 'Courier New', Courier, monospace; letter-spacing: 2px; display: block;">{{ sold_code.code }}</span>
+            </div>
+
+            <!-- Student info & receipt footer details -->
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; color: #334155; margin-bottom: 1.5rem; border-top: 1px dashed #cbd5e1; padding-top: 1rem;">
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 8px 0; font-weight: bold; text-align: right; color: #64748b;">اسم الطالب:</td>
+                    <td style="padding: 8px 0; font-weight: 900; text-align: left; color: #0f172a;">{{ sold_code.assigned_student_name }}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 8px 0; font-weight: bold; text-align: right; color: #64748b;">رقم الهاتف:</td>
+                    <td style="padding: 8px 0; font-weight: 900; text-align: left; color: #0f172a;">{{ sold_code.assigned_student_phone }}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 8px 0; font-weight: bold; text-align: right; color: #64748b;">قيمة الدفع:</td>
+                    <td style="padding: 8px 0; font-weight: 900; text-align: left; color: #0f172a;">{{ sold_price_syp }} ل.س</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; font-weight: bold; text-align: right; color: #64748b;">البائع:</td>
+                    <td style="padding: 8px 0; font-weight: 900; text-align: left; color: #0f172a;">{{ sold_code.sold_by.get_full_name|default:sold_code.sold_by.username }}</td>
+                </tr>
+            </table>
+
+            <!-- Quick Instructions -->
+            <div style="background: #f8fafc; border-radius: 12px; padding: 0.75rem; font-size: 0.75rem; color: #64748b; line-height: 1.5; font-weight: bold;">
+                تعليمات التفعيل: سجل دخولك للمنصة، توجه لتبويب التفعيل واكتب الكود أعلاه بدقة لتفعيل محتواك فوراً.
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="no-print">
+            <button id="copy-btn" onclick="copyCode()" class="btn btn-secondary w-full" style="padding: 1rem; border-radius: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 0.5rem; height: 50px;">
+                <i data-lucide="copy"></i> نسخ الكود
+            </button>
+            <button onclick="window.print()" class="btn btn-primary btn-glow w-full" style="padding: 1rem; border-radius: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 0.5rem; height: 50px;">
+                <i data-lucide="printer"></i> طباعة كرت التفعيل
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+    let currentType = 'course';
+
+    function switchType(type) {
+        currentType = type;
+        
+        const tabCourse = document.getElementById('tab-course');
+        const tabPackage = document.getElementById('tab-package');
+        const courseGroup = document.getElementById('course-selection-group');
+        const packageGroup = document.getElementById('package-selection-group');
+        const courseSelect = document.getElementById('course-select');
+        const packageSelect = document.getElementById('package-select');
+        const codeSelect = document.getElementById('code-select');
+        const remainingBadge = document.getElementById('remaining-count-badge');
+
+        codeSelect.innerHTML = '<option value="">الرجاء اختيار مادة أو باقة أولاً...</option>';
+        codeSelect.disabled = true;
+        remainingBadge.style.display = 'none';
+
+        if (type === 'course') {
+            tabCourse.style.background = 'var(--brand-gold)';
+            tabCourse.style.color = '#000';
+            tabPackage.style.background = 'transparent';
+            tabPackage.style.color = 'var(--text-secondary)';
+            
+            courseGroup.style.display = 'block';
+            packageGroup.style.display = 'none';
+            packageSelect.value = '';
+            courseSelect.required = true;
+            packageSelect.required = false;
+        } else {
+            tabPackage.style.background = 'var(--brand-gold)';
+            tabPackage.style.color = '#000';
+            tabCourse.style.background = 'transparent';
+            tabCourse.style.color = 'var(--text-secondary)';
+            
+            packageGroup.style.display = 'block';
+            courseGroup.style.display = 'none';
+            courseSelect.value = '';
+            packageSelect.required = true;
+            courseSelect.required = false;
+        }
+    }
+
+    async function loadCodesFor(type, id) {
+        const codeSelect = document.getElementById('code-select');
+        const remainingBadge = document.getElementById('remaining-count-badge');
+        
+        if (!id) {
+            codeSelect.innerHTML = '<option value="">الرجاء اختيار مادة أو باقة أولاً...</option>';
+            codeSelect.disabled = true;
+            remainingBadge.style.display = 'none';
+            return;
+        }
+
+        codeSelect.innerHTML = '<option value="">جاري تحميل الأكواد المتاحة...</option>';
+        codeSelect.disabled = true;
+        remainingBadge.style.display = 'none';
+
+        try {
+            const url = `{% url 'dashboard:get_available_codes_api' %}?${type === 'course' ? 'course_id' : 'package_id'}=${id}`;
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.codes && data.codes.length > 0) {
+                codeSelect.innerHTML = '';
+                data.codes.forEach(codeObj => {
+                    const opt = document.createElement('option');
+                    opt.value = codeObj.id;
+                    opt.textContent = codeObj.code;
+                    codeSelect.appendChild(opt);
+                });
+                codeSelect.disabled = false;
+                
+                remainingBadge.textContent = `${data.codes.length} كود متاح`;
+                remainingBadge.style.display = 'inline-block';
+            } else {
+                codeSelect.innerHTML = '<option value="">لا توجد أكواد متاحة لهذه المادة/الباقة حالياً!</option>';
+                codeSelect.disabled = true;
+                remainingBadge.style.display = 'none';
+            }
+        } catch (e) {
+            codeSelect.innerHTML = '<option value="">حدث خطأ أثناء تحميل الأكواد، حاول مجدداً.</option>';
+            codeSelect.disabled = true;
+            remainingBadge.style.display = 'none';
+        }
+    }
+
+    function confirmSale() {
+        const codeSelect = document.getElementById('code-select');
+        if (!codeSelect.value) {
+            alert('الرجاء اختيار كود متاح للبيع أولاً.');
+            return false;
+        }
+        
+        const phone = document.getElementsByName('student_phone')[0].value;
+        const name = document.getElementsByName('student_name')[0].value;
+        const selectedCodeText = codeSelect.options[codeSelect.selectedIndex].text;
+
+        return confirm(`هل أنت متأكد من بيع الكود (${selectedCodeText}) وتسليمه للطالب:\nالاسم: ${name}\nرقم الهاتف: ${phone}؟`);
+    }
+
+    function copyCode() {
+        const codeText = document.getElementById('target-copy-code').textContent;
+        const copyBtn = document.getElementById('copy-btn');
+        
+        navigator.clipboard.writeText(codeText).then(() => {
+            const originalHTML = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="lucide-check"></i> تم نسخ الكود!';
+            copyBtn.classList.add('copy-success');
+            
+            setTimeout(() => {
+                copyBtn.innerHTML = originalHTML;
+                copyBtn.classList.remove('copy-success');
+            }, 2000);
+        });
+    }
+
+    function closeModal() {
+        window.location.href = "{% url 'dashboard:admin_sell_codes' %}";
+    }
+</script>
+{% endblock %}

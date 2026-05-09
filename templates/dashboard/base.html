@@ -98,6 +98,7 @@
                         <a href="{% url 'dashboard:admin_instructors' %}" class="nav-link">المدرسون</a>
                         <a href="{% url 'dashboard:admin_students' %}" class="nav-link">الطلاب</a>
                         <a href="{% url 'dashboard:admin_billing' %}" class="nav-link">المالية</a>
+                        <a href="{% url 'dashboard:admin_sell_codes' %}" class="nav-link" style="color: var(--brand-gold); font-weight: 800; text-shadow: 0 0 10px rgba(var(--brand-gold-rgb), 0.2);"><i data-lucide="sparkles" style="width: 14px; display: inline-block; vertical-align: middle; margin-left: 2px;"></i> بيع أكواد</a>
                         <a href="{% url 'dashboard:admin_partners' %}" class="nav-link">الشركاء</a>
                         <a href="{% url 'dashboard:admin_packages' %}" class="nav-link">الباقات</a>
                     {% elif user.is_authenticated %}
@@ -154,20 +155,42 @@
             <button class="close-menu" id="menu-close"><i data-lucide="x"></i></button>
         </div>
         <div class="mobile-nav-links">
-            <a href="{% url 'dashboard:landing' %}" class="mobile-nav-link"><i data-lucide="home"></i> الرئيسية</a>
-            <a href="{% url 'dashboard:shop' %}" class="mobile-nav-link"><i data-lucide="shopping-bag"></i> تسوق</a>
-            <a href="{% url 'dashboard:about' %}" class="mobile-nav-link"><i data-lucide="info"></i> عن المنصة</a>
-            <a href="{% url 'dashboard:contact' %}" class="mobile-nav-link"><i data-lucide="phone"></i> اتصل بنا</a>
-            <div class="mobile-auth-separator"></div>
-            {% if user.is_authenticated %}
-                <a href="{% url 'dashboard:student_dashboard' %}" class="mobile-nav-link gold"><i data-lucide="layout"></i> لوحة التحكم</a>
-                <form action="{% url 'logout' %}" method="post">
+            {% if user.is_staff %}
+                <div class="badge badge-gold mb-4" style="display: inline-flex; width: 100%; justify-content: center; padding: 10px; border-radius: 8px;">
+                    <i data-lucide="shield-check" style="width: 14px; margin-left: 4px;"></i>
+                    <span>لوحة الإدارة</span>
+                </div>
+                <a href="{% url 'dashboard:admin_dashboard' %}" class="mobile-nav-link"><i data-lucide="home"></i> الرئيسية</a>
+                <a href="{% url 'dashboard:admin_content_hub' %}" class="mobile-nav-link"><i data-lucide="book-open"></i> المحتوى</a>
+                <a href="{% url 'dashboard:admin_catalog_manager' %}" class="mobile-nav-link"><i data-lucide="compass"></i> الاستكشاف</a>
+                <a href="{% url 'dashboard:admin_instructors' %}" class="mobile-nav-link"><i data-lucide="users"></i> المدرسون</a>
+                <a href="{% url 'dashboard:admin_students' %}" class="mobile-nav-link"><i data-lucide="users"></i> الطلاب</a>
+                <a href="{% url 'dashboard:admin_billing' %}" class="mobile-nav-link"><i data-lucide="wallet"></i> المالية</a>
+                <a href="{% url 'dashboard:admin_sell_codes' %}" class="mobile-nav-link gold" style="color: var(--brand-gold) !important; font-weight: 800;"><i data-lucide="sparkles"></i> بيع أكواد</a>
+                <a href="{% url 'dashboard:admin_partners' %}" class="mobile-nav-link"><i data-lucide="users"></i> الشركاء</a>
+                <a href="{% url 'dashboard:admin_packages' %}" class="mobile-nav-link"><i data-lucide="package"></i> الباقات</a>
+                
+                <div class="mobile-auth-separator"></div>
+                <form action="{% url 'logout' %}" method="post" style="width: 100%;">
                     {% csrf_token %}
-                    <button type="submit" class="mobile-nav-link text-danger"><i data-lucide="log-out"></i> خروج</button>
+                    <button type="submit" class="mobile-nav-link text-danger" style="background: none; border: none; width: 100%; text-align: right; display: flex; align-items: center; gap: 8px; padding: 12px 16px;"><i data-lucide="log-out"></i> خروج</button>
                 </form>
             {% else %}
-                <a href="{% url 'dashboard:login' %}" class="mobile-nav-link"><i data-lucide="log-in"></i> تسجيل الدخول</a>
-                <a href="{% url 'dashboard:register' %}" class="mobile-nav-link gold"><i data-lucide="user-plus"></i> إنشاء حساب</a>
+                <a href="{% url 'dashboard:landing' %}" class="mobile-nav-link"><i data-lucide="home"></i> الرئيسية</a>
+                <a href="{% url 'dashboard:shop' %}" class="mobile-nav-link"><i data-lucide="shopping-bag"></i> تسوق</a>
+                <a href="{% url 'dashboard:about' %}" class="mobile-nav-link"><i data-lucide="info"></i> عن المنصة</a>
+                <a href="{% url 'dashboard:contact' %}" class="mobile-nav-link"><i data-lucide="phone"></i> اتصل بنا</a>
+                <div class="mobile-auth-separator"></div>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard:student_dashboard' %}" class="mobile-nav-link gold"><i data-lucide="layout"></i> لوحة التحكم</a>
+                    <form action="{% url 'logout' %}" method="post" style="width: 100%;">
+                        {% csrf_token %}
+                        <button type="submit" class="mobile-nav-link text-danger" style="background: none; border: none; width: 100%; text-align: right; display: flex; align-items: center; gap: 8px; padding: 12px 16px;"><i data-lucide="log-out"></i> خروج</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'dashboard:login' %}" class="mobile-nav-link"><i data-lucide="log-in"></i> تسجيل الدخول</a>
+                    <a href="{% url 'dashboard:register' %}" class="mobile-nav-link gold"><i data-lucide="user-plus"></i> إنشاء حساب</a>
+                {% endif %}
             {% endif %}
         </div>
     </div>
