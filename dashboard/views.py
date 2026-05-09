@@ -775,7 +775,8 @@ def admin_students(request):
                 "active": active_students,
                 "new_today": new_students_today,
                 "devices": total_devices,
-            }
+            },
+            "gov_stats": gov_stats,
         },
     )
 

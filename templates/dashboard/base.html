@@ -419,17 +419,13 @@
                         عروض وحسومات خاصة! 🎉
                     </h2>
                     
-                    <p id="discount-modal-text" style="font-size: 1.05rem; line-height: 1.6; margin-bottom: 1.5rem; font-weight: 500;">
-                        بمناسبة <strong style="color: var(--brand-gold); font-weight: 800;">{{ popup_discount.name }}</strong>، يتوفر حسم فعال ومتاح لك الآن:
-                    </p>
-
                     <!-- Discount badge -->
                     <div style="background: rgba(var(--brand-gold-rgb), 0.1); border: 1px dashed var(--brand-gold); border-radius: 16px; padding: 1.25rem; margin-bottom: 2rem; position: relative;">
                         <div style="font-size: 2.2rem; font-weight: 900; color: var(--brand-gold); font-family: 'Cairo', sans-serif; line-height: 1.2;">
                             {% if popup_discount.discount_percent > 0 %}
-                                حسم {{ popup_discount.discount_percent }}%
+                                حسم {{ popup_discount.discount_percent }}% لكل الدورات
                             {% else %}
-                                حسم {{ popup_discount.discount_amount_syp|currency_format }} ل.س
+                                حسم {{ popup_discount.discount_amount_syp|currency_format }} ل.س لكل الدورات
                             {% endif %}
                         </div>
                         <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem; font-weight: 700; letter-spacing: 0.5px;">
