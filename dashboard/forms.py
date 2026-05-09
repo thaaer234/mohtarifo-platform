@@ -381,13 +381,8 @@ class CourseLessonUploadForm(forms.ModelForm):
 
     def clean(self):
         cleaned = super().clean()
-        l_type = cleaned.get("lesson_type")
-        if l_type == "pdf":
-            if not cleaned.get("pdf_file"):
-                raise forms.ValidationError("يجب رفع ملف PDF عندما يكون نوع القسم 'ملف PDF'.")
-        else:
-            if not cleaned.get("video_file") and not cleaned.get("video_url"):
-                raise forms.ValidationError("يجب إدخال رابط فيديو أو رفع ملف.")
+        if not cleaned.get("video_file") and not cleaned.get("video_url") and not cleaned.get("pdf_file"):
+            raise forms.ValidationError("يجب رفع ملف PDF، أو إرفاق فيديو، أو وضع رابط فيديو واحد على الأقل.")
         return cleaned
 
 
