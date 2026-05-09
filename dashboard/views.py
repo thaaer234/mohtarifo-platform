@@ -1472,8 +1472,19 @@ def student_dashboard(request):
     current_device = _current_device_fingerprint(request)
     package_selection = None
 
+    if request.method == "POST" and request.POST.get("action") == "transfer_devices":
+        AccessGrant.objects.filter(user=request.user).update(device_fingerprint=current_device)
+        messages.success(request, "تم نقل تفعيل كافة موادك ودوراتك إلى هذا الجهاز الحالي بنجاح!")
+        return redirect("dashboard:student_dashboard")
+
     if request.method == "POST" and request.POST.get("action") == "complete_package_redeem":
-        code_value = request.POST.get("package_code", "").strip().upper()
+        code_value = request.POST.get("package_code", "").strip()
+        arabic_digits = "٠١٢٣٤٥٦٧٨٩"
+        english_digits = "0123456789"
+        for i in range(10):
+            code_value = code_value.replace(arabic_digits[i], english_digits[i])
+        code_value = "".join(code_value.split()).upper()
+        
         with transaction.atomic():
             access_code = AccessCode.objects.select_for_update().filter(code__iexact=code_value).first()
             if access_code is None or access_code.access_type != "package" or not access_code.package:
@@ -1490,8 +1501,15 @@ def student_dashboard(request):
                         messages.success(request, f"تم تفعيل الباقة وإضافة {result['count']} دورة إلى مكتبتك.")
                         return redirect("dashboard:student_dashboard")
                     messages.error(request, result["message"])
+                    
     elif request.method == "POST" and redeem_form.is_valid():
-        code_value = redeem_form.cleaned_data["code"].strip().upper()
+        code_value = redeem_form.cleaned_data["code"].strip()
+        arabic_digits = "٠١٢٣٤٥٦٧٨٩"
+        english_digits = "0123456789"
+        for i in range(10):
+            code_value = code_value.replace(arabic_digits[i], english_digits[i])
+        code_value = "".join(code_value.split()).upper()
+        
         with transaction.atomic():
             access_code = AccessCode.objects.select_for_update().filter(code__iexact=code_value).first()
             if access_code is None:
@@ -3390,6 +3408,14 @@ def admin_student_detail(request, user_id):
             UserDevice.objects.filter(id=device_id, user=student).delete()
             messages.success(request, "تم إزالة الجهاز المحدد بنجاح.")
             
+        elif action == "toggle_device_active":
+            device_id = request.POST.get("device_id")
+            device = get_object_or_404(UserDevice, id=device_id, user=student)
+            device.is_active = not device.is_active
+            device.save()
+            status = "نشط" if device.is_active else "موقوف (محظور)"
+            messages.success(request, f"تم تغيير حالة الجهاز إلى {status} بنجاح.")
+            
         elif action == "grant_course":
             course_id = request.POST.get("course_id")
             course = get_object_or_404(Course, id=course_id)
@@ -3424,6 +3450,11 @@ def admin_student_detail(request, user_id):
     
     attempts = Attempt.objects.filter(user=student).select_related("exam", "exam__course").order_by("-created_at")[:10]
     devices = UserDevice.objects.filter(user=student).order_by("-last_seen_at")
+    for device in devices:
+        device.associated_grants = AccessGrant.objects.filter(
+            user=student,
+            device_fingerprint=device.fingerprint
+        ).select_related("course", "access_code")
     
     from accounts.models import Governorate, AcademicBranch
     all_governorates = Governorate.objects.filter(is_active=True).order_by("sort_order", "name")
