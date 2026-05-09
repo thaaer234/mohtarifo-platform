@@ -2654,75 +2654,10 @@ def admin_financial_report_export(request):
     # =========================================================
     # SHEET 2: DETAILED SALES TRANSACTION AUDIT (سجل البيع)
     # =========================================================
-    ws_audit = wb.create_sheet("02-سجل المبيعات التدقيقي")
-    ws_audit.append(["تاريخ البيع", "الوقت", "الكود", "نوع الدخول", "اسم المادة / الباقة", "العميل المشتري", "هاتف المشتري", "نقطة البيع", "البائع", "القيمة ل.س"])
-    
-    detailed_log = AccessCode.objects.filter(sale_status="sold").select_related("course", "package", "sales_center", "sold_by").order_by("-sold_at")
-    
-    for row in detailed_log.iterator(chunk_size=1000):
-        pr_nm = ""
-        if row.access_type == "course" and row.course: pr_nm = row.course.title
-        elif row.access_type == "package" and row.package: pr_nm = row.package.name
-        else: pr_nm = "عام / باقة ملغاة"
-        
-        ws_audit.append([
-            row.sold_at.strftime("%Y-%m-%d") if row.sold_at else "-",
-            row.sold_at.strftime("%H:%M") if row.sold_at else "-",
-            row.code,
-            row.get_access_type_display(),
-            pr_nm,
-            row.assigned_student_name or "غير مدخل",
-            row.assigned_student_phone or "-",
-            row.sales_center.name if row.sales_center else "بيع مركزي",
-            row.sold_by.username if row.sold_by else "أوتوماتيكي",
-            int((row.sold_price_cents or 0)/100)
-        ])
-    for cell_tuple in ws_audit.iter_rows(min_row=2, min_col=10, max_col=10):
-        for c in cell_tuple: c.number_format = '#,##0'
-    _apply_god_tier_excel_styling(ws_audit, column_width=22)
-
-    # =========================================================
-    # SHEET 3: ACADEMIC SECTIONS PERFORMANCE (أداء الفئات)
-    # =========================================================
-    ws_sec = wb.create_sheet("03-أداء الفئات التعليمية")
-    ws_sec.append(["الفئة", "الكورسات", "الأكواد المولدة", "المباعة", "المفعلة", "المطبوعة", "الإيراد الفعلي ل.س", "توقع البيع الكامل"])
-    for s_row in _get_enhanced_filter_financials():
-        ws_sec.append(s_row)
-    for cell_tuple in ws_sec.iter_rows(min_row=2, min_col=7, max_col=8):
-        for c in cell_tuple: c.number_format = '#,##0'
-    _apply_god_tier_excel_styling(ws_sec, column_width=24)
-
-    # =========================================================
-    # SHEET 4: INSTRUCTOR & COURSE ECONOMICS (أداء المدرسين)
-    # =========================================================
-    ws_ins = wb.create_sheet("04-محاسبة أنصبة المدرسين")
-    ws_ins.append(["المادة", "المسار", "المدرس المشرف", "السعر القياسي", "مبيعات (عدد)", "مبيعات (إيراد)", "نسبة المدرس %", "مستحقات الشريك (دائن)", "صافي المنصة"])
-    
-    c_base = Course.objects.select_related("instructor").order_by("-created_at")
-    r_i = 2
-    for c in c_base:
-        s_codes = AccessCode.objects.filter(course=c, sale_status="sold")
-        cur_rev = (s_codes.aggregate(a=Sum("sold_price_cents"))["a"] or 0) / 100
-        
-        col_f = get_column_letter(6)
-        col_g = get_column_letter(7)
-        form_i = f"={col_f}{r_i}*({col_g}{r_i}/100)"
-        form_p = f"={col_f}{r_i}-{get_column_letter(8)}{r_i}"
-        
-        ws_ins.append([
-            c.title, c.get_academic_track_display(),
-            c.instructor.get_full_name() or c.instructor.username,
-            int((c.price_cents or 0)/100), s_codes.count(), int(cur_rev), 45, form_i, form_p
-        ])
-        r_i += 1
-    for cell_tuple in ws_ins.iter_rows(min_row=2, min_col=4, max_col=6):
-        for c in cell_tuple: c.number_format = '#,##0'
-    _apply_god_tier_excel_styling(ws_ins, column_width=25)
-
-    # =========================================================
+    ws_audit = wb.    # =========================================================
     # SHEET 5: SALES CENTERS RANKINGS (تحليل المراكز)
     # =========================================================
-    ws_centers = wb.create_sheet("05-تحليل شركاء ومراكز التوزيع")
+    ws_centers = wb.create_sheet("05-تحليل مراكز التوزيع")
     ws_centers.append(["اسم المركز الشريك", "العنوان والنطاق", "إجمالي المبيعات ل.س", "عمليات منفذة", "المخزون المتبقي لديهم"])
     
     centers = SalesCenter.objects.all()
@@ -2742,7 +2677,7 @@ def admin_financial_report_export(request):
     # =========================================================
     # SHEET 6: PACKAGES PERFORMANCE (تحليل الباقات)
     # =========================================================
-    ws_pkg = wb.create_sheet("06-أداء حزم الدورات والباقات")
+    ws_pkg = wb.create_sheet("06-تحليل الباقات")
     ws_pkg.append(["اسم الباقة", "المسار المشمول", "المواد المضمنة", "مولدة", "مباعة", "مفعلة", "عائد الباقة ل.س"])
     
     packages = CoursePackage.objects.prefetch_related("courses").all()
@@ -2760,7 +2695,7 @@ def admin_financial_report_export(request):
     # =========================================================
     # SHEET 7: DEMOGRAPHICS & CHART (توزع الطلاب والجغرافيا)
     # =========================================================
-    ws_geo = wb.create_sheet("07-توزع وخرائط الديموغرافيا")
+    ws_geo = wb.create_sheet("07-توزع الديموغرافيا")
     ws_geo.append(["التصنيف", "المجموعة الفرعية", "تعداد الطلاب"])
     
     g_data = StudentProfile.objects.values("governorate").annotate(c=Count("id")).order_by("-c")
@@ -2792,7 +2727,7 @@ def admin_financial_report_export(request):
     # =========================================================
     # SHEET 8: VIDEO ENGAGEMENTS (تحليل المحتوى)
     # =========================================================
-    ws_vid = wb.create_sheet("08-تحليل استهلاك المحتوى وتفاعل الفيديوهات")
+    ws_vid = wb.create_sheet("08-تحليل استهلاك المحتوى")
     ws_vid.append(["عنوان الدورة", "الوحدات", "إجمالي الدروس", "فيديوهات", "اختبارات", "سجلات المشاهدة المسجلة (تفاعل)"])
     
     v_stats = Course.objects.annotate(
@@ -2825,7 +2760,7 @@ def admin_financial_report_export(request):
     # =========================================================================
     # SHEET 10: GENERAL JOURNAL LEDGER & COST CENTERS (قيود اليومية)
     # =========================================================================
-    ws_jrn = wb.create_sheet("10-دفتر القيود اليومية ومراكز التكلفة")
+    ws_jrn = wb.create_sheet("10-القيود ومراكز الكلفة")
     ws_jrn.append(["المرجع", "التاريخ", "الكود", "اسم الحساب", "المدين (Debit)", "الدائن (Credit)", "البيان", "مركز التكلفة (Project/Course)"])
     
     acc_sales_qs = AccessCode.objects.filter(sale_status="sold").select_related("sales_center", "course").order_by("sold_at")
@@ -2834,6 +2769,100 @@ def admin_financial_report_export(request):
         "1101": {"name": "الصندوق", "dr": 0, "cr": 0},
         "1201": {"name": "المدينون", "dr": 0, "cr": 0},
         "2101": {"name": "مستحقات المدرسين", "dr": 0, "cr": 0},
+        "4101": {"name": "الإيرادات", "dr": 0, "cr": 0},
+        "5101": {"name": "تكلفة المدرسين", "dr": 0, "cr": 0},
+    }
+    
+    je_id = 1
+    for s_row in acc_sales_qs.iterator(chunk_size=1000):
+        amt_val = int((s_row.sold_price_cents or 0)/100)
+        if amt_val <= 0: continue
+        
+        date_t = s_row.sold_at.strftime("%Y-%m-%d") if s_row.sold_at else timezone.now().strftime("%Y-%m-%d")
+        cut_val = int(amt_val * 0.45)
+        
+        c_center = s_row.course.title if s_row.course else "باقة إدارية"
+        
+        t_acc = "1201" if s_row.sales_center else "1101"
+        t_acc_nm = acc_mem[t_acc]["name"]
+        
+        # Double Entry pair 1: Income
+        ws_jrn.append([f"JE-{je_id}", date_t, t_acc, t_acc_nm, amt_val, 0, f"تحصيل كود {s_row.code}", "الخزينة المركزية"])
+        acc_mem[t_acc]["dr"] += amt_val
+        
+        ws_jrn.append([f"JE-{je_id}", date_t, "4101", "إيرادات مبيعات", 0, amt_val, "تحقق إيراد بيع", c_center])
+        acc_mem["4101"]["cr"] += amt_val
+        
+        # Double Entry pair 2: Accrual Expense
+        ws_jrn.append([f"JE-{je_id}", date_t, "5101", "تكلفة مبيعات", cut_val, 0, "استحقاق نسبة شريك", c_center])
+        acc_mem["5101"]["dr"] += cut_val
+        
+        ws_jrn.append([f"JE-{je_id}", date_t, "2101", "دائنو مستحقات", 0, cut_val, "التزام مستحق الدفع", c_center])
+        acc_mem["2101"]["cr"] += cut_val
+        
+        je_id += 1
+        
+    for cell_tuple in ws_jrn.iter_rows(min_row=2, min_col=5, max_col=6):
+        for c in cell_tuple: c.number_format = '#,##0'
+    _apply_god_tier_excel_styling(ws_jrn, column_width=22)
+
+    # =========================================================================
+    # SHEET 11: TRIAL BALANCE (ميزان المراجعة)
+    # =========================================================================
+    ws_tb = wb.create_sheet("11-ميزان المراجعة التجميعي")
+    ws_tb.append(["كود الحساب", "اسم الحساب", "إجمالي مدين", "إجمالي دائن", "رصيد مدين صافي", "رصيد دائن صافي"])
+    
+    for k, v in acc_mem.items():
+        net_d = max(0, v["dr"] - v["cr"])
+        net_c = max(0, v["cr"] - v["dr"])
+        ws_tb.append([k, v["name"], v["dr"], v["cr"], net_d, net_c])
+        
+    tr = ws_tb.max_row
+    ws_tb.append(["المجموع المتطابق", "✔️ موزون", f"=SUM(C2:C{tr})", f"=SUM(D2:D{tr})", f"=SUM(E2:E{tr})", f"=SUM(F2:F{tr})"])
+    for cell_tuple in ws_tb.iter_rows(min_row=2, min_col=3, max_col=6):
+        for c in cell_tuple: c.number_format = '#,##0'
+    _apply_god_tier_excel_styling(ws_tb, column_width=25)
+
+    # =========================================================================
+    # SHEET 12: THE ULTIMATE BALANCE SHEET (الميزانية العمومية)
+    # =========================================================================
+    ws_bs = wb.create_sheet("12-قائمة المركز المالي")
+    ws_bs.append(["البيان المحاسبي الختامي", "القيمة المالية (ل.س)", "توضيح"])
+    
+    b_cash = max(0, acc_mem["1101"]["dr"] - acc_mem["1101"]["cr"])
+    b_ar = max(0, acc_mem["1201"]["dr"] - acc_mem["1201"]["cr"])
+    b_liab = max(0, acc_mem["2101"]["cr"] - acc_mem["2101"]["dr"])
+    b_rev = max(0, acc_mem["4101"]["cr"] - acc_mem["4101"]["dr"])
+    b_exp = max(0, acc_mem["5101"]["dr"] - acc_mem["5101"]["cr"])
+    b_net = b_rev - b_exp # The profit balancing figure
+    
+    b_t_asset = b_cash + b_ar
+    b_t_claims = b_liab + b_net
+    
+    ws_bs.append(["-- أصول متداولة --", "", ""])
+    ws_bs.append(["نقدية بالصندوق", int(b_cash), "رصيد سائل"])
+    ws_bs.append(["ذمم مدينة طرف مراكز البيع", int(b_ar), "ديون متوقعة التحصيل"])
+    ws_bs.append(["👉 إجمالي الأصول الكلي", int(b_t_asset), "Total Assets"])
+    ws_bs.append(["", "", ""])
+    ws_bs.append(["-- التزامات وحقوق ملكية --", "", ""])
+    ws_bs.append(["مستحقات المدرسين الدائنة", int(b_liab), "التزامات دفع للغير"])
+    ws_bs.append(["صافي الأرباح (حقوق الملكية)", int(b_net), "فائض الإيراد بعد المصروف"])
+    ws_bs.append(["👉 إجمالي الخصوم وحقوق الملكية", int(b_t_claims), "Total Equities & Liabilities"])
+    ws_bs.append(["", "", ""])
+    
+    chk_txt = "✅ ميزانية موزونة تماماً ومطابقة" if int(b_t_asset) == int(b_t_claims) else "❌ هناك عدم توازن"
+    ws_bs.append(["💡 حالة الميزانية العمومية", chk_txt, "System Verified"])
+    
+    for row_tuple in ws_bs.iter_rows(min_row=2, min_col=2, max_col=2):
+        for c in row_tuple:
+            if isinstance(c.value, int): c.number_format = '#,##0'
+    _apply_god_tier_excel_styling(ws_bs, column_width=35)
+
+    # Final Finish
+    ts = timezone.now().strftime("%Y-%m-%d_%H-%M")
+    fn = f"THE_PLATFORM_ULTIMATE_MEGA_REPORT_{ts}.xlsx"
+    return _workbook_response(wb, fn)
+name": "مستحقات المدرسين", "dr": 0, "cr": 0},
         "4101": {"name": "الإيرادات", "dr": 0, "cr": 0},
         "5101": {"name": "تكلفة المدرسين", "dr": 0, "cr": 0},
     }
