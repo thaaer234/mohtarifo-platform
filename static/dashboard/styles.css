@@ -1501,4 +1501,16 @@ td a,
   .auth-card {
     padding-inline: 20px;
   }
+
+/* Anti-Downloader & Protection CSS */
+__idm_parent__, [id*="idm_"], [class*="idm_"], #idm_active_download_bar, .idm_active_download_bar, div[id*="idm"], [id^="__idm_"], [class^="__idm_"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    z-index: -9999 !important;
+    position: absolute !important;
+    left: -9999px !important;
 }
