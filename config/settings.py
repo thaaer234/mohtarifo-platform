@@ -248,6 +248,11 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
 X_FRAME_OPTIONS = 'DENY'
+
+# Obfuscate security footprints to blind scanners like Wappalyzer
+CSRF_COOKIE_NAME = 'aws_c_tk' # Generic name resembling AWS/Cloudfront token
+SESSION_COOKIE_NAME = 'site_u_sid' # Generic session identifier
+
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 TESTING = "test" in sys.argv
