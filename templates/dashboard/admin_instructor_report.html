@@ -270,9 +270,35 @@
                                 <tr>
                                     <td class="text-center"><code>{{ code.code }}</code></td>
                                     <td><span class="sale-badge {{ code.sale_status }}">{{ code.get_sale_status_display }}</span></td>
-                                    <td><strong>{{ code.assigned_student_name|default:"-" }}</strong></td>
-                                    <td>{{ code.assigned_student_phone|default:"-" }}</td>
-                                    <td>{{ code.sold_at|date:"Y-m-d H:i"|default:"-" }}</td>
+                                    <td>
+                                        <strong>
+                                            {% if code.assigned_student_name %}
+                                                {{ code.assigned_student_name }}
+                                            {% elif code.grants.all.first %}
+                                                {{ code.grants.all.first.user.get_full_name|default:code.grants.all.first.user.username }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </strong>
+                                    </td>
+                                    <td>
+                                        {% if code.assigned_student_phone %}
+                                            {{ code.assigned_student_phone }}
+                                        {% elif code.grants.all.first %}
+                                            {{ code.grants.all.first.user.student_profile.phone|default:code.grants.all.first.user.username }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if code.sold_at %}
+                                            {{ code.sold_at|date:"Y-m-d H:i" }}
+                                        {% elif code.grants.all.first %}
+                                            {{ code.grants.all.first.created_at|date:"Y-m-d H:i" }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
                                     <td><small class="text-muted">{{ code.price_reason|default:"سعر كامل" }}</small></td>
                                     <td class="text-center">
                                         {% if code.redeemed_count > 0 %}

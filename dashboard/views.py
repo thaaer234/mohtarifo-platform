@@ -2683,7 +2683,7 @@ def admin_instructor_report(request, instructor_id):
             .order_by("-sold_count")
         )
         
-        detailed_codes = codes.select_related("sold_by", "sales_center").order_by("-sold_at")
+        detailed_codes = codes.select_related("sold_by", "sales_center").prefetch_related("grants", "grants__user", "grants__user__student_profile").order_by("-sold_at")
         
         course_data.append({
             "course": course,
