@@ -81,35 +81,52 @@
             </div>
 
             {% if course.pdf_file %}
-            <!-- Collapsible Premium Secured Course PDF Viewer -->
-            <div class="premium-card" id="course-pdf-viewer-section" style="display: none; padding: 0; background: var(--bg-surface-elevated); border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 2rem;">
-                <!-- PDF Controls Toolbar -->
-                <div class="flex-between" style="background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px); padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.06); gap: 1rem; flex-wrap: wrap;">
-                    <div class="flex-align gap-4">
-                        <span style="font-weight: bold; font-size: 0.9rem; color: var(--brand-gold); display: flex; align-items: center; gap: 8px;"><i data-lucide="shield-check" style="width: 16px;"></i> مستند الدورة التدريبية الموحد</span>
-                    </div>
-                    
-                    <!-- Pagination & Zoom Controls -->
-                    <div class="flex-center gap-4" style="background: rgba(255,255,255,0.02); padding: 0.3rem 0.8rem; border-radius: 100px; border: 1px solid rgba(255,255,255,0.05);">
-                        <button id="course-pdf-prev" class="btn btn-sm btn-secondary" style="border-radius: 50%; width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center;"><i data-lucide="chevron-right" style="width: 14px;"></i></button>
-                        <span style="font-size: 0.8rem; font-weight: bold; min-width: 70px; text-align: center; color: var(--text-primary);">صفحة <span id="course-pdf-page-num">1</span> من <span id="course-pdf-page-count">-</span></span>
-                        <button id="course-pdf-next" class="btn btn-sm btn-secondary" style="border-radius: 50%; width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center;"><i data-lucide="chevron-left" style="width: 14px;"></i></button>
-                    </div>
+            <!-- Masterclass Immersive PDF Reader View -->
+            <div class="premium-card" id="course-pdf-viewer-section" style="display: none; padding: 0; background: radial-gradient(circle at center, #1e1e24 0%, #0c0c0e 100%); border-radius: 32px; box-shadow: 0 40px 100px rgba(0,0,0,0.6); position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.04); margin-bottom: 2.5rem; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);">
+                
+                <!-- Top Sleek Status bar -->
+                <div style="padding: 1.25rem 2rem; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                    <span style="font-size: 0.9rem; font-weight: bold; color: var(--brand-gold); display: flex; align-items: center; gap: 10px;">
+                        <span style="display: inline-block; width: 8px; height: 8px; background: var(--brand-gold); border-radius: 50%; box-shadow: 0 0 12px var(--brand-gold);"></span>
+                        مستند المادة التعليمي الشامل (PDF)
+                    </span>
+                    <button onclick="toggleCoursePdfViewer()" class="btn btn-sm" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: var(--text-secondary); padding: 0.5rem 1.2rem; border-radius: 12px; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: 0.3s; cursor: pointer;" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.color='#ef4444';" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.color='var(--text-secondary)';">
+                        <i data-lucide="x" style="width: 14px;"></i> إغلاق القارئ المؤمن
+                    </button>
+                </div>
 
-                    <div class="flex-center gap-2">
-                        <button id="course-pdf-zoom-out" class="btn btn-sm btn-secondary" style="border-radius: 8px; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;" title="تصغير"><i data-lucide="zoom-out" style="width: 14px;"></i></button>
-                        <button id="course-pdf-zoom-in" class="btn btn-sm btn-secondary" style="border-radius: 8px; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;" title="تكبير"><i data-lucide="zoom-in" style="width: 14px;"></i></button>
-                        <button onclick="toggleCoursePdfViewer()" class="btn btn-sm btn-danger" style="border-radius: 8px; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; margin-right: 10px;" title="إغلاق"><i data-lucide="x" style="width: 14px;"></i></button>
+                <!-- Active Viewport Container -->
+                <div id="course-pdf-container-viewport" style="position: relative; width: 100%; min-height: 500px; max-height: 85vh; overflow: auto; display: flex; justify-content: center; align-items: flex-start; padding: 2.5rem 2rem 6.5rem; background: transparent; scrollbar-width: thin;" oncontextmenu="return false;">
+                    
+                    <!-- Canvas with beautiful paper page border -->
+                    <div style="position: relative; background: #ffffff; border-radius: 12px; box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05); overflow: hidden; transition: transform 0.3s ease; padding: 0; max-width: 100%;">
+                        <canvas id="course-pdf-canvas" style="display: block; max-width: 100%; height: auto; background: #fff;"></canvas>
+                        
+                        <!-- Dynamic subtle repeating watermarks inside page context -->
+                        <div id="course-pdf-watermark" style="position: absolute; inset: 0; pointer-events: none; z-index: 10; display: flex; align-items: center; justify-content: center; overflow: hidden; opacity: 0.04; user-select: none;">
+                            <div style="font-size: 1.6rem; font-weight: 900; color: #000; transform: rotate(-30deg); white-space: nowrap; text-align: center; letter-spacing: 2px;">
+                                {{ request.user.get_full_name|default:request.user.username }} • {{ request.user.username }}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- PDF Rendering Canvas with Watermark Overlay -->
-                <div id="course-pdf-container-viewport" style="position: relative; width: 100%; min-height: 400px; max-height: 80vh; overflow: auto; display: flex; justify-content: center; align-items: flex-start; padding: 1.5rem; background: #141414;" oncontextmenu="return false;">
-                    <canvas id="course-pdf-canvas" style="box-shadow: 0 8px 24px rgba(0,0,0,0.4); border-radius: 8px; max-width: 100%; height: auto; background: #fff;"></canvas>
-                    
-                    <!-- Floating Security Watermark overlay -->
-                    <div id="course-pdf-watermark" style="position: absolute; z-index: 999; color: rgba(255,255,255,0.06); font-size: 0.85rem; font-weight: bold; pointer-events: none; white-space: nowrap; transition: all 1.5s ease; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">
-                        {{ request.user.get_full_name|default:request.user.username }} • {{ request.user.username }}
+                <!-- Floating Glassmorphic Control Pill -->
+                <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(15, 15, 20, 0.8); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.08); border-radius: 100px; padding: 0.6rem 1.75rem; display: flex; align-items: center; gap: 1.5rem; box-shadow: 0 25px 60px rgba(0,0,0,0.6); z-index: 100; transition: all 0.3s ease; width: max-content; max-width: 90%;">
+                    <!-- Zoom controls -->
+                    <div class="flex-center gap-1" style="display: flex; align-items: center;">
+                        <button id="course-pdf-zoom-out" class="btn btn-sm" style="background: transparent; border: none; color: #a0aec0; width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#a0aec0';"><i data-lucide="minus" style="width: 16px;"></i></button>
+                        <span style="font-size: 0.85rem; font-weight: bold; color: #a0aec0; min-width: 45px; text-align: center;" id="course-pdf-zoom-level">110%</span>
+                        <button id="course-pdf-zoom-in" class="btn btn-sm" style="background: transparent; border: none; color: #a0aec0; width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#a0aec0';"><i data-lucide="plus" style="width: 16px;"></i></button>
+                    </div>
+
+                    <div style="width: 1px; height: 22px; background: rgba(255,255,255,0.12);"></div>
+
+                    <!-- Page turn controls -->
+                    <div class="flex-center gap-3" style="display: flex; align-items: center;">
+                        <button id="course-pdf-prev" class="btn btn-sm" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: #fff; width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='var(--brand-gold)'; this.style.borderColor='var(--brand-gold)';" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.05)';"><i data-lucide="chevron-right" style="width: 16px;"></i></button>
+                        <span style="font-size: 0.9rem; font-weight: bold; color: #fff; min-width: 90px; text-align: center;">صفحة <span id="course-pdf-page-num" class="gold" style="font-weight: 900;">1</span> من <span id="course-pdf-page-count">-</span></span>
+                        <button id="course-pdf-next" class="btn btn-sm" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: #fff; width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='var(--brand-gold)'; this.style.borderColor='var(--brand-gold)';" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.05)';"><i data-lucide="chevron-left" style="width: 16px;"></i></button>
                     </div>
                 </div>
             </div>
@@ -448,11 +465,15 @@
             document.getElementById('course-pdf-zoom-in').addEventListener('click', () => {
                 this.scale += 0.2;
                 this.renderPage(this.pageNum);
+                const el = document.getElementById('course-pdf-zoom-level');
+                if (el) el.textContent = `${Math.round(this.scale * 100)}%`;
             });
             document.getElementById('course-pdf-zoom-out').addEventListener('click', () => {
                 if (this.scale > 0.6) {
                     this.scale -= 0.2;
                     this.renderPage(this.pageNum);
+                    const el = document.getElementById('course-pdf-zoom-level');
+                    if (el) el.textContent = `${Math.round(this.scale * 100)}%`;
                 }
             });
         },
