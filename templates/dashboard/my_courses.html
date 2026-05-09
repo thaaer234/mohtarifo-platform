@@ -52,10 +52,10 @@
                 <div class="mb-6">
                     <div class="flex-between mb-2" style="font-size: 0.85rem; font-weight: 700;">
                         <span class="text-muted">التقدم الحالي</span>
-                        <strong class="gold">{% if grant.course.id in progress_map %}{{ progress_map|default:"0" }}{% else %}0{% endif %}%</strong>
+                        <strong class="gold">{{ grant.progress_percent }}%</strong>
                     </div>
                     <div class="progress-bar-container">
-                        <div class="progress-bar-fill" style="width: {% if grant.course.id in progress_map %}{{ progress_map|default:"0" }}{% else %}0{% endif %}%;"></div>
+                        <div class="progress-bar-fill" style="width: {{ grant.progress_percent }}%;"></div>
                     </div>
                 </div>
 

@@ -1647,10 +1647,14 @@ def my_courses_page(request):
     ).order_by("-created_at")
     progress_map = {}
     for cp in CourseProgress.objects.filter(user=request.user):
-        progress_map[cp.course_id] = cp
+        progress_map[cp.course_id] = int(cp.completion_percent)
+    for grant in grants:
+        if grant.course:
+            grant.progress_percent = progress_map.get(grant.course.id, 0)
+        else:
+            grant.progress_percent = 0
     context = {
         "grants": grants,
-        "progress_map": progress_map,
     }
     return render(request, "dashboard/my_courses.html", context)
 
