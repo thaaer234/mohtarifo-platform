@@ -56,7 +56,7 @@
                     <div style="position: relative; width: 100%; aspect-ratio: 16/9;">
                         {% if signed_video_url or video_embed_url %}
                             {% if signed_video_url %}
-                                <video id="lesson-video" controls style="width: 100%; height: 100%; border-radius: 35px 35px 0 0;" controlsList="nodownload" oncontextmenu="return false;">
+                                <video id="lesson-video" controls style="width: 100%; height: 100%; border-radius: 35px 35px 0 0;" controlsList="nodownload nofullscreen" disablepictureinpicture oncontextmenu="return false;" ondragstart="return false;">
                                     <source src="{{ signed_video_url }}" type="video/mp4">
                                 </video>
                             {% else %}
@@ -702,6 +702,7 @@
             this.setupPrivacyTrackers();
             this.startWatermarkVoyage();
             this.initProgressSync();
+            this.setupAntiSniffer();
         },
 
         setupInterceptors() {
@@ -769,6 +770,23 @@
                     fetch("{% url 'dashboard:save_lesson_progress' lesson.id %}", { method: 'POST', body: data });
                 }
             }, 15000);
+        },
+
+        setupAntiSniffer() {
+            if (!this.video) return;
+
+            // 1. Immediately strip video sources from DOM on loadstart to prevent IDM sniffer from capturing URLs!
+            this.video.addEventListener('loadstart', () => {
+                setTimeout(() => {
+                    const sources = this.video.getElementsByTagName('source');
+                    for (let i = 0; i < sources.length; i++) {
+                        sources[i].removeAttribute('src');
+                    }
+                }, 100);
+            });
+
+            // 2. Clear element drag capability to prevent drag-sniffing
+            this.video.addEventListener('dragstart', (e) => e.preventDefault());
         }
     };
 
