@@ -355,13 +355,15 @@ class CourseStudentImportForm(forms.Form):
 class CourseLessonUploadForm(forms.ModelForm):
     class Meta:
         model = Lesson
-        fields = ["unit", "title", "description", "video_url", "video_file", "duration_seconds", "sort_order"]
+        fields = ["unit", "lesson_type", "title", "description", "video_url", "video_file", "pdf_file", "duration_seconds", "sort_order"]
         labels = {
             "unit": "الوحدة / الجلسة",
+            "lesson_type": "نوع القسم",
             "title": "عنوان القسم",
             "description": "وصف مختصر",
             "video_url": "رابط Bunny.net (أو رابط خارجي)",
             "video_file": "أو رفع ملف فيديو محمي",
+            "pdf_file": "رفع ملف الدرس (PDF المؤمن)",
             "duration_seconds": "مدة الفيديو بالثواني",
             "sort_order": "الترتيب",
         }
@@ -373,13 +375,19 @@ class CourseLessonUploadForm(forms.ModelForm):
         self.fields["sort_order"].required = False
         self.fields["video_file"].required = False
         self.fields["video_url"].required = False
+        self.fields["pdf_file"].required = False
         if course is not None:
             self.fields["unit"].queryset = course.units.order_by("sort_order", "id")
 
     def clean(self):
         cleaned = super().clean()
-        if not cleaned.get("video_file") and not cleaned.get("video_url"):
-            raise forms.ValidationError("يجب إدخال رابط فيديو أو رفع ملف.")
+        l_type = cleaned.get("lesson_type")
+        if l_type == "pdf":
+            if not cleaned.get("pdf_file"):
+                raise forms.ValidationError("يجب رفع ملف PDF عندما يكون نوع القسم 'ملف PDF'.")
+        else:
+            if not cleaned.get("video_file") and not cleaned.get("video_url"):
+                raise forms.ValidationError("يجب إدخال رابط فيديو أو رفع ملف.")
         return cleaned
 
 

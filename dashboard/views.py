@@ -1182,7 +1182,8 @@ def admin_course_control(request, course_id):
             lesson_form = CourseLessonUploadForm(request.POST, request.FILES, prefix="lesson", course=course)
             if lesson_form.is_valid():
                 lesson = lesson_form.save(commit=False)
-                lesson.lesson_type = "video"
+                if not lesson.lesson_type:
+                    lesson.lesson_type = "video"
                 lesson.save()
                 messages.success(request, "تم تسجيل الدرس بنجاح.")
                 return redirect("dashboard:admin_course_control", course_id=course.id)
