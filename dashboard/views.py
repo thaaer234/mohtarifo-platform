@@ -2555,107 +2555,173 @@ def _get_enhanced_filter_financials():
 def admin_financial_report_export(request):
     from openpyxl import Workbook
     from django.utils import timezone
-    from django.db.models import Sum
-    from billing.models import AccessCode, AccessCodePrintLog, CoursePackage
-    from learning.models import Course
+    from django.db.models import Sum, Count
+    from django.contrib.auth import get_user_model
+    from billing.models import AccessCode, AccessCodePrintLog, CoursePackage, SalesCenter
+    from learning.models import Course, Lesson
+    from accounts.models import StudentProfile, InstructorProfile
     from openpyxl.utils import get_column_letter
     
+    User = get_user_model()
     wb = Workbook()
     
-    # --- Sheet 1: Section Summaries ---
-    ws1 = wb.active
-    ws1.title = "ملخص الأقسام"
-    ws1.append([
+    # --- Sheet 1: Overview Dashboard (لوحة المعلومات الشاملة) ---
+    ws_dash = wb.active
+    ws_dash.title = "01-لوحة الأداء الموحد"
+    ws_dash.append(["مؤشر الأداء الرئيسي (KPI)", "القيمة", "الوحدة / ملاحظات"])
+    
+    total_students = StudentProfile.objects.count()
+    total_instructors = InstructorProfile.objects.count()
+    total_courses = Course.objects.count()
+    published_courses = Course.objects.filter(status="published").count()
+    total_lessons = Lesson.objects.count()
+    
+    # Aggregate Financials overall
+    sold_codes_global = AccessCode.objects.filter(sale_status="sold")
+    all_time_gross = (sold_codes_global.aggregate(t=Sum("sold_price_cents"))["t"] or 0) / 100
+    total_sold_codes = sold_codes_global.count()
+    total_redeemed = AccessCode.objects.filter(redeemed_count__gt=0).count()
+    
+    ws_dash.append(["إجمالي الطلاب المنضمين للمنصة", total_students, "طالب"])
+    ws_dash.append(["إجمالي المدرسين", total_instructors, "مدرس"])
+    ws_dash.append(["إجمالي المواد والدورات", total_courses, "مادة (بما فيها المسودات)"])
+    ws_dash.append(["عدد المواد النشطة المتاحة للبيع", published_courses, "دورة منشورة"])
+    ws_dash.append(["إجمالي حجم المحتوى (الدروس)", total_lessons, "درس"])
+    ws_dash.append(["عدد الأكواد المباعة بالكامل", total_sold_codes, "كود"])
+    ws_dash.append(["إجمالي تفعيلات المنصة الفعلية", total_redeemed, "طالب مفعل"])
+    ws_dash.append(["إجمالي دخل المنصة الإجمالي", int(all_time_gross), "ليرة سورية (صافي تراكمي)"])
+    
+    _apply_premium_excel_styling(ws_dash, column_width=32)
+
+    # --- Sheet 2: Master Sales Audit (نظام محاسبي - سجل المبيعات) ---
+    ws_sales = wb.create_sheet("02-سجل المبيعات التفصيلي")
+    ws_sales.append([
+        "تاريخ العملية", "الوقت", "رقم كود الوصول", "النوع", "المنتج المباع", 
+        "اسم الطالب المستلم", "هاتف الطالب", "المصدر / مركز البيع", "اسم البائع (النظام)", 
+        "السعر الفعلي ل.س", "الحالة المحاسبية"
+    ])
+    
+    # Use iterator for large query performance optimization
+    sales_qs = AccessCode.objects.filter(sale_status="sold").select_related(
+        "course", "package", "sales_center", "sold_by"
+    ).order_by("-sold_at")
+    
+    for sale in sales_qs.iterator(chunk_size=500):
+        prod_name = "غير محدد"
+        if sale.access_type == "course" and sale.course:
+            prod_name = sale.course.title
+        elif sale.access_type == "package" and sale.package:
+            prod_name = sale.package.name
+            
+        ws_sales.append([
+            sale.sold_at.strftime("%Y/%m/%d") if sale.sold_at else "-",
+            sale.sold_at.strftime("%I:%M %p") if sale.sold_at else "-",
+            sale.code,
+            sale.get_access_type_display(),
+            prod_name,
+            sale.assigned_student_name or "غير مسجل",
+            sale.assigned_student_phone or "-",
+            sale.sales_center.name if sale.sales_center else "بيع مباشر",
+            sale.sold_by.get_full_name() or sale.sold_by.username if sale.sold_by else "تلقائي",
+            int((sale.sold_price_cents or 0) / 100),
+            "مقبوض"
+        ])
+    _apply_premium_excel_styling(ws_sales, column_width=22)
+
+    # --- Sheet 3: Performance Sections (أداء الفئات) ---
+    ws_filters = wb.create_sheet("03-أداء الفئات التعليمية")
+    ws_filters.append([
         "القسم التعليمي", "عدد الكورسات", "إجمالي الأكواد المولدة", 
-        "عدد المبيعات", "الأكواد المفعلة", "الكروت المطبوعة", 
-        "إجمالي المبيعات الفعلية (ل.س)", "التوقع المالي الكامل (ل.س)"
+        "المبيعات", "الأكواد المفعلة", "الكروت المطبوعة", 
+        "المبيعات الفعلية (ل.س)", "التوقع المالي الكامل (ل.س)"
     ])
-    
-    for row in _get_enhanced_filter_financials():
-        ws1.append(row)
-        
-    _apply_premium_excel_styling(ws1, column_width=22)
+    for section_row in _get_enhanced_filter_financials():
+        ws_filters.append(section_row)
+    _apply_premium_excel_styling(ws_filters, column_width=24)
 
-    # --- Sheet 2: Detailed Course Performance with LIVE Formulas ---
-    ws2 = wb.create_sheet("تحليل أداء الكورسات")
-    headers2 = [
-        "اسم الكورس", "التصنيف", "المادة", "اسم المدرس", "سعر المادة القياسي", 
-        "إجمالي الأكواد", "الأكواد المباعة", "معدل التفعيل", 
-        "إجمالي المبيعات (ل.س)", "نسبة المدرس الافتراضية %", "صافي حصة المدرس المتوقعة", "صافي أرباح المنصة", "الحد الأقصى للمبيعات (توقعات)"
+    # --- Sheet 4: Instructors Performance with Multi-Profit Calculations ---
+    ws_ins = wb.create_sheet("04-أداء المدرسين والمحاسبة")
+    headers_ins = [
+        "اسم الكورس", "المسار", "المدرس", "السعر القياسي ل.س", "الكمية المباعة", 
+        "إجمالي المبيعات ل.س", "نسبة المدرس الافتراضية (%)", 
+        "صافي مستحقات المدرس (معادلة حية)", "صافي أرباح المنصة (معادلة حية)"
     ]
-    ws2.append(headers2)
+    ws_ins.append(headers_ins)
     
-    courses = Course.objects.select_related("subject", "instructor").order_by("academic_track", "-created_at")
-    row_num = 2 # Starting row for dynamic formulas
+    active_courses = Course.objects.select_related("instructor").order_by("instructor__username", "-created_at")
+    cursor_row = 2
     
-    for course in courses:
-        codes_qs = AccessCode.objects.filter(course=course)
-        sold_qs = codes_qs.filter(sale_status="sold")
+    for crs in active_courses:
+        s_codes = AccessCode.objects.filter(course=crs, sale_status="sold")
+        c_prc = (crs.price_cents or 0) / 100
+        c_cnt = s_codes.count()
+        c_gross = (s_codes.aggregate(sm=Sum("sold_price_cents"))["sm"] or 0) / 100
         
-        standard_price = (course.price_cents or 0) / 100
-        total_codes = codes_qs.count()
-        sold_cnt = sold_qs.count()
-        act_cnt = codes_qs.filter(redeemed_count__gt=0).count()
-        actual_gross = (sold_qs.aggregate(total=Sum("sold_price_cents"))["total"] or 0) / 100
+        # Dynamic Formula Mapping:
+        # F=Gross Sales(6), G=Pct(7), H=Ins Net(8), I=Plat Net(9)
+        gross_letter = get_column_letter(6)
+        pct_letter = get_column_letter(7)
         
-        # Determine letter references for row formulas
-        # G=Sold Cnt, E=Price, I=Sales Gross, J=Instructor %, K=Instructor Net, L=Platform Net, M=Max Possible Forecast
-        i_gross_col = get_column_letter(9)
-        j_pct_col = get_column_letter(10)
-        e_price_col = get_column_letter(5)
-        f_codes_col = get_column_letter(6)
+        f_ins_net = f"={gross_letter}{cursor_row}*({pct_letter}{cursor_row}/100)"
+        f_plat_net = f"={gross_letter}{cursor_row}-{get_column_letter(8)}{cursor_row}"
         
-        instructor_net_formula = f"={i_gross_col}{row_num}*({j_pct_col}{row_num}/100)"
-        platform_net_formula = f"={i_gross_col}{row_num}-{get_column_letter(11)}{row_num}"
-        forecast_formula = f"={e_price_col}{row_num}*{f_codes_col}{row_num}"
-        
-        ws2.append([
-            course.title,
-            f"{course.get_kind_display()} - {course.get_academic_track_display()}",
-            course.subject.name,
-            course.instructor.get_full_name() or course.instructor.username,
-            int(standard_price),
-            total_codes,
-            sold_cnt,
-            f"{act_cnt} تفعيل",
-            int(actual_gross),
-            50,  # User requested "نسبة المدرس" -> we place 50 as a standard default that they can manually type/change
-            instructor_net_formula,
-            platform_net_formula,
-            forecast_formula
+        ws_ins.append([
+            crs.title,
+            crs.get_academic_track_display(),
+            crs.instructor.get_full_name() or crs.instructor.username,
+            int(c_prc),
+            c_cnt,
+            int(c_gross),
+            40,  # Editable default placeholder
+            f_ins_net,
+            f_plat_net
         ])
-        row_num += 1
+        cursor_row += 1
+        
+    _apply_premium_excel_styling(ws_ins, column_width=24)
 
-    _apply_premium_excel_styling(ws2, column_width=23)
-
-    # --- Sheet 3: Package Analysis ---
-    ws3 = wb.create_sheet("تحليل مبيعات الباقات")
-    ws3.append([
-        "اسم الباقة", "المسار الأكاديمي", "عدد المواد المتضمنة", 
-        "الأكواد المولدة للباقة", "الأكواد المباعة", 
-        "الأكواد المفعلة حالياً", "إجمالي المبيعات (ل.س)"
+    # --- Sheet 5: Centers and Partners (مراكز البيع) ---
+    ws_cent = wb.create_sheet("05-تحليل الشركاء والمراكز")
+    ws_cent.append([
+        "اسم مركز البيع / الشريك", "المدينة / العنوان", "إجمالي الأكواد المباعة لديهم", 
+        "حجم المبيعات المحققة ل.س", "المتبقي من الأكواد لم يباع بعد"
     ])
     
-    packages = CoursePackage.objects.prefetch_related("courses").order_by("-created_at")
-    for pkg in packages:
-        codes_qs = AccessCode.objects.filter(access_type="package", package=pkg)
-        sold_qs = codes_qs.filter(sale_status="sold")
-        
-        ws3.append([
-            pkg.name,
-            pkg.get_package_track_display(),
-            pkg.eligible_courses_queryset().count(),
-            codes_qs.count(),
-            sold_qs.count(),
-            codes_qs.filter(redeemed_count__gt=0).count(),
-            int((sold_qs.aggregate(total=Sum("sold_price_cents"))["total"] or 0) / 100)
+    centers_list = SalesCenter.objects.all().order_by("name")
+    for ctr in centers_list:
+        base_qs = AccessCode.objects.filter(sales_center=ctr)
+        ctr_sold = base_qs.filter(sale_status="sold")
+        ws_cent.append([
+            ctr.name,
+            ctr.address or "غير محدد",
+            ctr_sold.count(),
+            int((ctr_sold.aggregate(t=Sum("sold_price_cents"))["t"] or 0) / 100),
+            base_qs.filter(sale_status="available").count()
         ])
-        
-    _apply_premium_excel_styling(ws3, column_width=22)
+    _apply_premium_excel_styling(ws_cent, column_width=26)
+
+    # --- Sheet 6: Demographics and Activity (تحليل الطلاب) ---
+    ws_users = wb.create_sheet("06-تحليل انتشار الطلاب")
+    ws_users.append(["البعد التحليلي (Segment)", "المجموعة", "عدد الطلاب"])
     
-    # Done: Stream directly response file
-    response_filename = f"Detailed_Financial_Report_{timezone.now().strftime('%Y-%m-%d_%H-%M')}.xlsx"
-    return _workbook_response(wb, response_filename)
+    # 1. By Governorate
+    govs = StudentProfile.objects.values("governorate").annotate(cnt=Count("id")).order_by("-cnt")
+    for g in govs:
+        ws_users.append(["حسب المحافظة", g["governorate"] or "غير محدد", g["cnt"]])
+    
+    ws_users.append(["---", "---", "---"])
+    
+    # 2. By Academic Track
+    trks = StudentProfile.objects.values("track").annotate(cnt=Count("id")).order_by("-cnt")
+    for t in trks:
+        ws_users.append(["حسب المسار الدراسي", t["track"] or "غير محدد", t["cnt"]])
+        
+    _apply_premium_excel_styling(ws_users, column_width=30)
+
+    # Done crafting. Finalizing the Workbook response
+    final_timestamp = timezone.now().strftime("%Y-%m-%d_%H-%M")
+    ultimate_filename = f"Ultimate_Platform_Master_Report_{final_timestamp}.xlsx"
+    return _workbook_response(wb, ultimate_filename)
 
 
 @admin_required
