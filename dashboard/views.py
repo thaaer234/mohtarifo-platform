@@ -2465,128 +2465,226 @@ def admin_center_invoice(request, center_id):
     return render(request, "dashboard/admin_center_invoice.html", context)
 
 
-def _filter_financial_rows():
+def _apply_premium_excel_styling(ws, column_width=22):
+    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from openpyxl.utils import get_column_letter
+    
+    header_fill = PatternFill(start_color="8A6D3B", end_color="8A6D3B", fill_type="solid")
+    header_font = Font(color="FFFFFF", bold=True, size=11)
+    center_align = Alignment(horizontal="center", vertical="center", wrap_text=False)
+    thin_border = Border(
+        left=Side(style="thin", color="D3D3D3"),
+        right=Side(style="thin", color="D3D3D3"),
+        top=Side(style="thin", color="D3D3D3"),
+        bottom=Side(style="thin", color="D3D3D3"),
+    )
+
+    # 1. Basic Alignment and Borders for all populated cells
+    for row in ws.iter_rows():
+        for cell in row:
+            cell.alignment = center_align
+            cell.border = thin_border
+
+    # 2. Elegant Styling for the Header Row
+    for cell in ws[1]:
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        
+    # 3. UI Optimizations: Freezing panes & Filter
+    ws.freeze_panes = "A2"
+    if ws.max_column > 0 and ws.max_row > 0:
+        ws.auto_filter.ref = ws.dimensions
+
+    # 4. Proper Sizing for Columns
+    for i in range(1, ws.max_column + 1):
+        ws.column_dimensions[get_column_letter(i)].width = column_width
+
+
+def _get_enhanced_filter_financials():
+    from django.db.models import Sum
+    from billing.models import AccessCode, AccessCodePrintLog
+    from learning.models import Course
+    
     rows = []
     sections = [
-        {"label": "امتحانيات علمي", "kind": "exam_camp", "track": "scientific"},
-        {"label": "امتحانيات أدبي", "kind": "exam_camp", "track": "literary"},
-        {"label": "امتحانيات التاسع", "kind": "exam_camp", "track": "ninth"},
-        {"label": "امتحانيات المشترك", "kind": "exam_camp", "track": "general"},
+        {"label": "امتحانيات - فرع علمي", "kind": "exam_camp", "track": "scientific"},
+        {"label": "امتحانيات - فرع أدبي", "kind": "exam_camp", "track": "literary"},
+        {"label": "امتحانيات - تاسع", "kind": "exam_camp", "track": "ninth"},
+        {"label": "امتحانيات - مواد مشتركة", "kind": "exam_camp", "track": "general"},
+        {"label": "مكثفات - علمي", "kind": "intensive", "track": "scientific"},
+        {"label": "مكثفات - أدبي", "kind": "intensive", "track": "literary"},
     ]
+    
     for tab in sections:
-        codes = AccessCode.objects.filter(course__kind=tab["kind"], course__academic_track=tab["track"])
-        rows.append({
-            "label": tab["label"],
-            "kind": tab["kind"],
-            "track": tab["track"],
-            "courses": Course.objects.filter(kind=tab["kind"], academic_track=tab["track"]).count(),
-            "codes": codes.count(),
-            "sold": codes.filter(sale_status="sold").count(),
-            "activated": codes.filter(redeemed_count__gt=0).count(),
-            "inactive": codes.filter(redeemed_count=0).count(),
-            "gross": (codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0) / 100,
-        })
-    return rows
+        codes_qs = AccessCode.objects.filter(course__kind=tab["kind"], course__academic_track=tab["track"])
+        courses_qs = Course.objects.filter(kind=tab["kind"], academic_track=tab["track"])
+        
+        total_codes = codes_qs.count()
+        sold_codes_qs = codes_qs.filter(sale_status="sold")
+        sold_count = sold_codes_qs.count()
+        
+        gross_earned = (sold_codes_qs.aggregate(total=Sum("sold_price_cents"))["total"] or 0) / 100
+        
+        # Calculate Forecast using standard price * total codes generated
+        potential_forecast = 0
+        for c in courses_qs:
+            c_price = (c.price_cents or 0) / 100
+            c_codes_cnt = AccessCode.objects.filter(course=c).count()
+            potential_forecast += (c_price * c_codes_cnt)
 
-
-def _course_financial_rows():
-    rows = []
-    courses = Course.objects.select_related("subject", "instructor", "instructor__instructor_profile").order_by("academic_track", "kind", "subject__name", "title")
-    for course in courses:
-        codes = AccessCode.objects.filter(course=course)
-        prints = AccessCodePrintLog.objects.filter(batch__course=course)
-        rows.append({
-            "course": course,
-            "codes": codes.count(),
-            "sold": codes.filter(sale_status="sold").count(),
-            "activated": codes.filter(redeemed_count__gt=0).count(),
-            "inactive": codes.filter(redeemed_count=0).count(),
-            "printed": prints.aggregate(total=Sum("cards_count"))["total"] or 0,
-            "gross": (codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0) / 100,
-        })
-    return rows
-
-
-def _package_financial_rows():
-    rows = []
-    packages = CoursePackage.objects.prefetch_related("courses").order_by("name")
-    for package in packages:
-        codes = AccessCode.objects.filter(access_type="package", package=package)
-        eligible_courses = package.eligible_courses_queryset()
-        rows.append({
-            "package": package,
-            "subjects": eligible_courses.values("subject").distinct().count(),
-            "courses": eligible_courses.count(),
-            "codes": codes.count(),
-            "sold": codes.filter(sale_status="sold").count(),
-            "activated": codes.filter(redeemed_count__gt=0).count(),
-            "inactive": codes.filter(redeemed_count=0).count(),
-            "gross": (codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0) / 100,
-        })
+        prints_cnt = AccessCodePrintLog.objects.filter(
+            batch__course__kind=tab["kind"], 
+            batch__course__academic_track=tab["track"]
+        ).aggregate(total=Sum("cards_count"))["total"] or 0
+        
+        rows.append([
+            tab["label"],
+            courses_qs.count(),
+            total_codes,
+            sold_count,
+            codes_qs.filter(redeemed_count__gt=0).count(),
+            prints_cnt,
+            int(gross_earned),
+            int(potential_forecast)
+        ])
     return rows
 
 
 @admin_required
 def admin_financial_report_export(request):
-    workbook = Workbook()
-    filters_sheet = workbook.active
-    filters_sheet.title = "filters"
-    filters_sheet.append(["filter", "courses", "codes", "sold", "activated", "inactive", "printed_cards", "gross_syp"])
-    for row in _filter_financial_rows():
-        filters_sheet.append([row["label"], row["courses"], row["codes"], row["sold"], row["activated"], row["inactive"], row["printed"], int(row["gross"])])
+    from openpyxl import Workbook
+    from django.utils import timezone
+    from django.db.models import Sum
+    from billing.models import AccessCode, AccessCodePrintLog, CoursePackage
+    from learning.models import Course
+    from openpyxl.utils import get_column_letter
+    
+    wb = Workbook()
+    
+    # --- Sheet 1: Section Summaries ---
+    ws1 = wb.active
+    ws1.title = "ملخص الأقسام"
+    ws1.append([
+        "القسم التعليمي", "عدد الكورسات", "إجمالي الأكواد المولدة", 
+        "عدد المبيعات", "الأكواد المفعلة", "الكروت المطبوعة", 
+        "إجمالي المبيعات الفعلية (ل.س)", "التوقع المالي الكامل (ل.س)"
+    ])
+    
+    for row in _get_enhanced_filter_financials():
+        ws1.append(row)
+        
+    _apply_premium_excel_styling(ws1, column_width=22)
 
-    courses_sheet = workbook.create_sheet("courses")
-    courses_sheet.append(["course", "filter", "subject", "instructor", "codes", "sold", "activated", "inactive", "printed_cards", "gross_syp"])
-    for row in _course_financial_rows():
-        course = row["course"]
-        courses_sheet.append([
+    # --- Sheet 2: Detailed Course Performance with LIVE Formulas ---
+    ws2 = wb.create_sheet("تحليل أداء الكورسات")
+    headers2 = [
+        "اسم الكورس", "التصنيف", "المادة", "اسم المدرس", "سعر المادة القياسي", 
+        "إجمالي الأكواد", "الأكواد المباعة", "معدل التفعيل", 
+        "إجمالي المبيعات (ل.س)", "نسبة المدرس الافتراضية %", "صافي حصة المدرس المتوقعة", "صافي أرباح المنصة", "الحد الأقصى للمبيعات (توقعات)"
+    ]
+    ws2.append(headers2)
+    
+    courses = Course.objects.select_related("subject", "instructor").order_by("academic_track", "-created_at")
+    row_num = 2 # Starting row for dynamic formulas
+    
+    for course in courses:
+        codes_qs = AccessCode.objects.filter(course=course)
+        sold_qs = codes_qs.filter(sale_status="sold")
+        
+        standard_price = (course.price_cents or 0) / 100
+        total_codes = codes_qs.count()
+        sold_cnt = sold_qs.count()
+        act_cnt = codes_qs.filter(redeemed_count__gt=0).count()
+        actual_gross = (sold_qs.aggregate(total=Sum("sold_price_cents"))["total"] or 0) / 100
+        
+        # Determine letter references for row formulas
+        # G=Sold Cnt, E=Price, I=Sales Gross, J=Instructor %, K=Instructor Net, L=Platform Net, M=Max Possible Forecast
+        i_gross_col = get_column_letter(9)
+        j_pct_col = get_column_letter(10)
+        e_price_col = get_column_letter(5)
+        f_codes_col = get_column_letter(6)
+        
+        instructor_net_formula = f"={i_gross_col}{row_num}*({j_pct_col}{row_num}/100)"
+        platform_net_formula = f"={i_gross_col}{row_num}-{get_column_letter(11)}{row_num}"
+        forecast_formula = f"={e_price_col}{row_num}*{f_codes_col}{row_num}"
+        
+        ws2.append([
             course.title,
-            f"{course.get_kind_display()} {course.get_academic_track_display()}",
+            f"{course.get_kind_display()} - {course.get_academic_track_display()}",
             course.subject.name,
             course.instructor.get_full_name() or course.instructor.username,
-            row["codes"],
-            row["sold"],
-            row["activated"],
-            row["inactive"],
-            row["printed"],
-            int(row["gross"]),
+            int(standard_price),
+            total_codes,
+            sold_cnt,
+            f"{act_cnt} تفعيل",
+            int(actual_gross),
+            50,  # User requested "نسبة المدرس" -> we place 50 as a standard default that they can manually type/change
+            instructor_net_formula,
+            platform_net_formula,
+            forecast_formula
         ])
-    packages_sheet = workbook.create_sheet("packages")
-    packages_sheet.append(["package", "track", "subjects", "courses", "codes", "sold", "activated", "inactive", "gross_syp"])
-    for row in _package_financial_rows():
-        package = row["package"]
-        packages_sheet.append([
-            package.name,
-            package.get_package_track_display(),
-            row["subjects"],
-            row["courses"],
-            row["codes"],
-            row["sold"],
-            row["activated"],
-            row["inactive"],
-            int(row["gross"]),
+        row_num += 1
+
+    _apply_premium_excel_styling(ws2, column_width=23)
+
+    # --- Sheet 3: Package Analysis ---
+    ws3 = wb.create_sheet("تحليل مبيعات الباقات")
+    ws3.append([
+        "اسم الباقة", "المسار الأكاديمي", "عدد المواد المتضمنة", 
+        "الأكواد المولدة للباقة", "الأكواد المباعة", 
+        "الأكواد المفعلة حالياً", "إجمالي المبيعات (ل.س)"
+    ])
+    
+    packages = CoursePackage.objects.prefetch_related("courses").order_by("-created_at")
+    for pkg in packages:
+        codes_qs = AccessCode.objects.filter(access_type="package", package=pkg)
+        sold_qs = codes_qs.filter(sale_status="sold")
+        
+        ws3.append([
+            pkg.name,
+            pkg.get_package_track_display(),
+            pkg.eligible_courses_queryset().count(),
+            codes_qs.count(),
+            sold_qs.count(),
+            codes_qs.filter(redeemed_count__gt=0).count(),
+            int((sold_qs.aggregate(total=Sum("sold_price_cents"))["total"] or 0) / 100)
         ])
-    return _workbook_response(workbook, f"financial-report-{timezone.now().strftime('%Y%m%d-%H%M')}.xlsx")
+        
+    _apply_premium_excel_styling(ws3, column_width=22)
+    
+    # Done: Stream directly response file
+    response_filename = f"Detailed_Financial_Report_{timezone.now().strftime('%Y-%m-%d_%H-%M')}.xlsx"
+    return _workbook_response(wb, response_filename)
 
 
 @admin_required
 def admin_packages_report_export(request):
+    from openpyxl import Workbook
+    from django.utils import timezone
+    from django.db.models import Sum
+    from billing.models import AccessCode, CoursePackage
+    
     workbook = Workbook()
     summary = workbook.active
     summary.title = "packages"
     summary.append(["package", "track", "subjects", "courses", "codes", "sold", "activated", "inactive", "gross_syp"])
-    for row in _package_financial_rows():
-        package = row["package"]
+    
+    packages = CoursePackage.objects.prefetch_related("courses").order_by("name")
+    for package in packages:
+        codes_qs = AccessCode.objects.filter(access_type="package", package=package)
+        eligible_courses = package.eligible_courses_queryset()
+        
         summary.append([
             package.name,
             package.get_package_track_display(),
-            row["subjects"],
-            row["courses"],
-            row["codes"],
-            row["sold"],
-            row["activated"],
-            row["inactive"],
-            int(row["gross"]),
+            eligible_courses.values("subject").distinct().count(),
+            eligible_courses.count(),
+            codes_qs.count(),
+            codes_qs.filter(sale_status="sold").count(),
+            codes_qs.filter(redeemed_count__gt=0).count(),
+            codes_qs.filter(redeemed_count=0).count(),
+            int((codes_qs.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0) / 100),
         ])
 
     codes_sheet = workbook.create_sheet("codes")
