@@ -232,12 +232,16 @@ class CourseCreateForm(forms.ModelForm):
 class CourseCardMediaForm(forms.ModelForm):
     class Meta:
         model = Course
-        fields = ["cover"]
+        fields = ["cover", "pdf_file", "allow_pdf_download"]
         labels = {
             "cover": "غلاف كرت الدورة",
+            "pdf_file": "ملف الـ PDF الخاص بالدورة كاملة",
+            "allow_pdf_download": "السماح للطلاب بتنزيل الملف (PDF)؟",
         }
         help_texts = {
             "cover": "اختياري. إذا تركته فارغا سيتم استخدام صورة باسم الأستاذ من static/dashboard/course-covers/.",
+            "pdf_file": "قم برفع ملف PDF واحد يشمل كامل الدورة.",
+            "allow_pdf_download": "إذا تم التفعيل، سيتمكن الطالب من تحميل الملف على جهازه، وإلا فسيشاهده فقط داخل المنصة بشكل آمن.",
         }
 
 

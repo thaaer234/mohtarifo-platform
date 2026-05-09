@@ -154,7 +154,7 @@
                                     <canvas id="inline-pdf-canvas" style="box-shadow: 0 8px 24px rgba(0,0,0,0.4); border-radius: 8px; max-width: 100%; height: auto; background: #fff;"></canvas>
                                     
                                     <!-- Floating Security Watermark overlay -->
-                                    <div id="inline-pdf-watermark" style="position: absolute; z-index: 999; color: rgba(255,255,255,0.12); font-size: 1.2rem; font-weight: bold; pointer-events: none; white-space: nowrap; transition: all 1.5s ease; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">
+                                    <div id="inline-pdf-watermark" style="position: absolute; z-index: 999; color: rgba(255,255,255,0.06); font-size: 0.85rem; font-weight: bold; pointer-events: none; white-space: nowrap; transition: all 1.5s ease; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">
                                         {{ request.user.get_full_name|default:request.user.username }} • {{ request.user.username }}
                                     </div>
                                 </div>
@@ -199,7 +199,7 @@
                         <canvas id="modal-pdf-canvas" style="box-shadow: 0 10px 30px rgba(0,0,0,0.5); border-radius: 8px; max-width: 100%; height: auto; background: #fff;"></canvas>
                         
                         <!-- Floating Security Watermark overlay -->
-                        <div id="modal-pdf-watermark" style="position: absolute; z-index: 999; color: rgba(255,255,255,0.12); font-size: 1.4rem; font-weight: bold; pointer-events: none; white-space: nowrap; transition: all 1.5s ease; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">
+                        <div id="modal-pdf-watermark" style="position: absolute; z-index: 999; color: rgba(255,255,255,0.06); font-size: 0.95rem; font-weight: bold; pointer-events: none; white-space: nowrap; transition: all 1.5s ease; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);">
                             {{ request.user.get_full_name|default:request.user.username }} • {{ request.user.username }}
                         </div>
                     </div>

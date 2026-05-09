@@ -64,6 +64,8 @@ class Course(models.Model):
     discount_end_date = models.DateTimeField(null=True, blank=True, help_text="تاريخ انتهاء العرض (إن وجد)")
     students_enrolled = models.PositiveIntegerField(default=0, help_text="لغرض الدليل الاجتماعي (Social Proof)")
     rating = models.DecimalField(max_digits=3, decimal_places=1, default=5.0)
+    pdf_file = models.FileField(upload_to="courses/pdfs/", blank=True, null=True, help_text="ملف الـ PDF الخاص بالدورة كاملة")
+    allow_pdf_download = models.BooleanField(default=False, help_text="هل يسمح للطالب بتنزيل ملف الـ PDF؟")
     published_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
