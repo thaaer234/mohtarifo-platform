@@ -1440,6 +1440,14 @@ def _redeem_package_choices(request, access_code, current_device, auto_select=Fa
         grants.append(grant)
 
     access_code.redeemed_count += 1
+    if not access_code.assigned_student_name:
+        access_code.assigned_student_name = request.user.get_full_name() or request.user.first_name or request.user.username
+    if not access_code.assigned_student_phone:
+        profile = getattr(request.user, "student_profile", None)
+        access_code.assigned_student_phone = profile.phone if profile else request.user.username
+    if not access_code.sold_at:
+        access_code.sold_at = timezone.now()
+
     if access_code.sale_status in {"available", "reserved"}:
         access_code.sale_status = "free" if access_code.is_free_code else "sold"
         if not access_code.is_free_code and access_code.package:
@@ -1455,7 +1463,7 @@ def _redeem_package_choices(request, access_code, current_device, auto_select=Fa
                 else:
                     access_code.sold_price_cents = base_price
                     access_code.price_reason = "سعر كامل"
-    access_code.save(update_fields=["redeemed_count", "sale_status", "sold_price_cents", "price_reason", "updated_at"])
+    access_code.save(update_fields=["redeemed_count", "sale_status", "sold_price_cents", "price_reason", "assigned_student_name", "assigned_student_phone", "sold_at", "updated_at"])
     StudentNotification.objects.create(
         user=request.user,
         notification_type="access",
@@ -1545,6 +1553,14 @@ def student_dashboard(request):
                     )
                     if created:
                         access_code.redeemed_count += 1
+                        if not access_code.assigned_student_name:
+                            access_code.assigned_student_name = request.user.get_full_name() or request.user.first_name or request.user.username
+                        if not access_code.assigned_student_phone:
+                            profile = getattr(request.user, "student_profile", None)
+                            access_code.assigned_student_phone = profile.phone if profile else request.user.username
+                        if not access_code.sold_at:
+                            access_code.sold_at = timezone.now()
+
                         if access_code.sale_status in {"available", "reserved"}:
                             access_code.sale_status = "free" if access_code.is_free_code else "sold"
                             if not access_code.is_free_code:
@@ -1565,7 +1581,7 @@ def student_dashboard(request):
                                     else:
                                         access_code.sold_price_cents = base_price
                                         access_code.price_reason = "سعر كامل"
-                        access_code.save(update_fields=["redeemed_count", "sale_status", "sold_price_cents", "price_reason", "updated_at"])
+                        access_code.save(update_fields=["redeemed_count", "sale_status", "sold_price_cents", "price_reason", "assigned_student_name", "assigned_student_phone", "sold_at", "updated_at"])
                         StudentNotification.objects.create(
                             user=request.user,
                             notification_type="access",
