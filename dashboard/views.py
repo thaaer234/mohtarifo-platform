@@ -283,7 +283,7 @@ def pwa_manifest(_request):
             "categories": ["education", "productivity"],
             "icons": [
                 {
-                    "src": "/static/dashboard/icons/icon.svg",
+                    "src": "/static/dashboard/icons/icon-192.svg",
                     "sizes": "any",
                     "type": "image/svg+xml",
                     "purpose": "any maskable",

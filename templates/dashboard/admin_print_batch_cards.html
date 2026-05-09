@@ -1,4 +1,6 @@
 {% load static %}
+{% load inline_static %}
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -95,6 +97,17 @@
             background-position: 150px 66px;
             background-repeat: no-repeat;
             opacity: .045;
+        }
+
+        .card-logo {
+            position: absolute;
+            left: 42px;
+            top: 16px;
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+            z-index: 20;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08));
         }
 
         .side-pattern {
@@ -552,6 +565,7 @@
         <article class="card front">
             <div class="watermark"></div>
             <div class="side-pattern"></div>
+            <img class="card-logo" src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo">
             <img class="front-hero" src="{% static 'dashboard/img/card_assets/image4.svg' %}" alt="">
 
             <div class="title-frame"></div>
@@ -585,6 +599,7 @@
         <article class="card back">
             <div class="watermark"></div>
             <div class="side-pattern"></div>
+            <img class="card-logo" src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo">
             <img class="back-hero" src="{% static 'dashboard/img/card_assets/image5.svg' %}" alt="">
             <div class="vertical-rule"></div>
 
@@ -614,14 +629,6 @@
             <img class="help-figure" src="{% static 'dashboard/img/card_assets/image6.svg' %}" alt="">
             <div class="socials">
                 <div class="social"><span class="social-icon">☎</span><span>+963 984 011 372</span></div>
-                <div class="social"><span class="social-icon">f</span><span>محترفو التعليم</span></div>
-                <div class="social"><span class="social-icon instagram-icon"></span><span>محترفو التعليم</span></div>
-            </div>
-            <div class="page-num">02</div>
-        </article>
-    </div>
-    {% endfor %}
-</section>
-{% endfor %}
-</body>
-</html>
+                <div class="social"><span class="social-icon">f</span><span>bakaloria.syria</span></div>
+                <div class="social"><span class="social-icon instagram-icon"></span><span>education_pros1</span></div>
+
