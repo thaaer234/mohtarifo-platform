@@ -71,7 +71,7 @@
                 {% for grant in student_grants %}
                     <div class="admin-item-card">
                         <div class="item-info">
-                            <strong>{{ grant.course.title|default:"صلاحية خاصة" }}</strong>
+                            <strong>{{ grant.course.title|default:"صلاحية خاصة" }} - أ. {{ grant.course.instructor.get_full_name|default:grant.course.instructor.username }}</strong>
                             <span>طريقة التفعيل: 
                                 {% if grant.source == "code" %}تفعيل كود ({{ grant.access_code.code }}){% elif grant.source == "purchase" %}شراء مباشر من الموقع{% elif grant.source == "admin_manual" or grant.source == "admin" %}تفعيل يدوي من الإدارة{% else %}{{ grant.source }}{% endif %} 
                                 | {{ grant.created_at|date:"Y-m-d H:i" }}
@@ -101,7 +101,7 @@
                     <select name="course_id" id="manual-course-select" class="form-select" style="flex: 1;" required>
                         <option value="">اختر المادة...</option>
                         {% for course in available_courses %}
-                            <option value="{{ course.id }}">{{ course.title }}</option>
+                            <option value="{{ course.id }}">{{ course.title }} - أ. {{ course.instructor.get_full_name|default:course.instructor.username }}</option>
                         {% endfor %}
                     </select>
                     <button type="submit" class="btn btn-primary" onclick="var select = document.getElementById('manual-course-select'); if (!select.value) { alert('الرجاء اختيار المادة أولاً'); return false; } return confirm('هل أنت متأكد من تفعيل مادة (' + select.options[select.selectedIndex].text + ') يدوياً لهذا الطالب؟')">تفعيل المادة</button>
@@ -193,57 +193,121 @@
         </div>
 
         <div class="premium-card">
-            <h3 class="sidebar-label">الأجهزة المرتبطة</h3>
+            <h3 class="sidebar-label" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;">
+                <i data-lucide="smartphone" class="gold"></i> الأجهزة المرتبطة
+            </h3>
             <div class="admin-card-list">
                 {% for device in devices %}
-                    <div class="tool-box" style="background: rgba(255,255,255,0.02); margin-bottom: 0.75rem; padding: 1.25rem; position: relative; border-radius: 14px; border: 1px solid {% if device.is_active %}rgba(255,255,255,0.05){% else %}rgba(239, 68, 68, 0.25){% endif %};">
-                        <div class="flex-between mb-2">
+                    <div class="tool-box" style="background: rgba(255,255,255,0.01); backdrop-filter: blur(5px); margin-bottom: 1rem; padding: 1.25rem; position: relative; border-radius: 16px; border: 1px solid {% if device.is_active %}rgba(255,255,255,0.06){% else %}rgba(239, 68, 68, 0.3){% endif %}; transition: transform 0.2s, border-color 0.2s;">
+                        <div class="flex-between mb-3" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.75rem;">
                             <div class="flex-align gap-2">
-                                <i data-lucide="{% if 'Android' in device.user_agent or 'iPhone' in device.user_agent or 'iPad' in device.user_agent %}smartphone{% else %}monitor{% endif %}" style="width: 16px; color: {% if device.is_active %}var(--brand-gold){% else %}var(--danger){% endif %};"></i>
-                                <strong style="font-size: 0.85rem; color: var(--text-primary);">
-                                    {{ device.device_fingerprint|slice:":16" }}
+                                <i data-lucide="{% if 'Android' in device.user_agent or 'iPhone' in device.user_agent or 'iPad' in device.user_agent %}smartphone{% else %}monitor{% endif %}" style="width: 18px; color: {% if device.is_active %}var(--brand-gold){% else %}var(--danger){% endif %};"></i>
+                                <span style="font-size: 0.85rem; color: var(--text-primary); font-weight: 700;">
+                                    جهاز #{{ forloop.counter }} - <code style="font-family: monospace; font-size: 0.75rem; color: var(--brand-gold);">{{ device.fingerprint|slice:":12" }}</code>
                                     {% if not device.is_active %}
-                                        <span class="badge badge-danger" style="font-size: 0.65rem; padding: 1px 6px; margin-right: 0.5rem;">محظور</span>
+                                        <span class="badge badge-danger" style="font-size: 0.65rem; padding: 2px 6px; margin-right: 0.5rem; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.3); color: #f87171;">محظور</span>
                                     {% endif %}
-                                </strong>
+                                </span>
                             </div>
-                            <div class="flex-align gap-3" style="margin: 0;">
+                            <div class="flex-align gap-2" style="margin: 0;">
                                 <!-- Toggle active status (block/unblock) -->
-                                <form method="POST" onsubmit="return confirm('هل أنت متأكد من {% if device.is_active %}حظر{% else %}إلغاء حظر{% endif %} هذا الجهاز؟ لن يتمكن من استخدام المنصة طالما أنه محظور.')" style="margin: 0;">
+                                <form method="POST" onsubmit="return confirm('هل أنت متأكد من {% if device.is_active %}حظر{% else %}إلغاء حظر{% endif %} هذا الجهاز؟')" style="margin: 0; display: inline;">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="toggle_device_active">
                                     <input type="hidden" name="device_id" value="{{ device.id }}">
-                                    <button type="submit" style="color: {% if device.is_active %}var(--warning){% else %}var(--success){% endif %}; border: none; background: none; cursor: pointer; padding: 2px;" title="{% if device.is_active %}حظر الجهاز{% else %}تفعيل وإلغاء الحظر{% endif %}">
-                                        <i data-lucide="{% if device.is_active %}shield-alert{% else %}shield-check{% endif %}" style="width: 15px; height: 15px;"></i>
+                                    <button type="submit" class="btn-icon" style="color: {% if device.is_active %}var(--warning){% else %}var(--success){% endif %}; border: 1px solid rgba(255,255,255,0.05); background: rgba(255,255,255,0.02); cursor: pointer; padding: 6px; border-radius: 8px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;" title="{% if device.is_active %}حظر الجهاز{% else %}تفعيل وإلغاء الحظر{% endif %}">
+                                        <i data-lucide="{% if device.is_active %}shield-alert{% else %}shield-check{% endif %}" style="width: 14px; height: 14px;"></i>
                                     </button>
                                 </form>
                                 
                                 <!-- Delete device completely -->
-                                <form method="POST" onsubmit="return confirm('هل أنت متأكد من إلغاء ربط وإزالة هذا الجهاز نهائياً؟')" style="margin: 0;">
+                                <form method="POST" onsubmit="return confirm('هل أنت متأكد من إلغاء ربط وإزالة هذا الجهاز نهائياً؟')" style="margin: 0; display: inline;">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="delete_device">
                                     <input type="hidden" name="device_id" value="{{ device.id }}">
-                                    <button type="submit" style="color: var(--danger); border: none; background: none; cursor: pointer; padding: 2px;" title="حذف وإلغاء ربط هذا الجهاز نهائياً">
-                                        <i data-lucide="trash" style="width: 15px; height: 15px;"></i>
+                                    <button type="submit" class="btn-icon" style="color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.05); cursor: pointer; padding: 6px; border-radius: 8px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;" title="حذف وإلغاء ربط هذا الجهاز نهائياً">
+                                        <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
                                     </button>
                                 </form>
                             </div>
                         </div>
-                        <p style="font-size: 0.72rem; color: var(--text-muted); margin: 0 0 0.25rem;">آخر ظهور: <span style="color: var(--text-primary); font-weight: 700;">{{ device.last_seen_at|date:"Y-m-d H:i" }}</span></p>
-                        <p style="font-size: 0.72rem; color: var(--text-muted); margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ device.user_agent }}">المتصفح: {{ device.user_agent }}</p>
+
+                        <!-- Technical and OS Badge Details -->
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem;">
+                                <span style="color: var(--text-muted);"><i data-lucide="clock" style="width: 12px; vertical-align: middle; margin-left: 2px;"></i> آخر ظهور:</span>
+                                <strong style="color: var(--text-primary);">{{ device.last_seen_at|date:"Y-m-d H:i" }}</strong>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem;">
+                                <span style="color: var(--text-muted);"><i data-lucide="info" style="width: 12px; vertical-align: middle; margin-left: 2px;"></i> نظام التشغيل:</span>
+                                <div>
+                                    {% if "Android" in device.user_agent %}
+                                        <span class="badge" style="background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.2); font-size: 0.65rem; padding: 1px 6px; border-radius: 4px;">Android</span>
+                                    {% elif "iPhone" in device.user_agent or "iPad" in device.user_agent %}
+                                        <span class="badge" style="background: rgba(168, 85, 247, 0.1); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.2); font-size: 0.65rem; padding: 1px 6px; border-radius: 4px;">iOS (Apple)</span>
+                                    {% elif "Windows" in device.user_agent %}
+                                        <span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); font-size: 0.65rem; padding: 1px 6px; border-radius: 4px;">Windows</span>
+                                    {% elif "Macintosh" in device.user_agent %}
+                                        <span class="badge" style="background: rgba(236, 72, 153, 0.1); color: #ec4899; border: 1px solid rgba(236, 72, 153, 0.2); font-size: 0.65rem; padding: 1px 6px; border-radius: 4px;">macOS</span>
+                                    {% else %}
+                                        <span class="badge" style="background: rgba(107, 114, 128, 0.1); color: #9ca3af; border: 1px solid rgba(107, 114, 128, 0.2); font-size: 0.65rem; padding: 1px 6px; border-radius: 4px;">غير معروف</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem;">
+                                <span style="color: var(--text-muted);"><i data-lucide="globe" style="width: 12px; vertical-align: middle; margin-left: 2px;"></i> المتصفح:</span>
+                                <div>
+                                    {% if "SamsungBrowser" in device.user_agent %}
+                                        <span class="badge" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); font-size: 0.65rem; padding: 1px 6px; border-radius: 4px;">Samsung Browser</span>
+                                    {% elif "Chrome" in device.user_agent %}
+                                        <span class="badge" style="background: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.2); font-size: 0.65rem; padding: 1px 6px; border-radius: 4px;">Google Chrome</span>
+                                    {% elif "Safari" in device.user_agent %}
+                                        <span class="badge" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.2); font-size: 0.65rem; padding: 1px 6px; border-radius: 4px;">Safari</span>
+                                    {% elif "Firefox" in device.user_agent %}
+                                        <span class="badge" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); font-size: 0.65rem; padding: 1px 6px; border-radius: 4px;">Firefox</span>
+                                    {% else %}
+                                        <span class="badge" style="background: rgba(107, 114, 128, 0.1); color: #9ca3af; border: 1px solid rgba(107, 114, 128, 0.2); font-size: 0.65rem; padding: 1px 6px; border-radius: 4px;">متصفح ويب</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Associated Grants/Codes Activated on this device -->
                         {% if device.associated_grants.all %}
                             <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed rgba(255,255,255,0.08);">
-                                <strong style="font-size: 0.75rem; color: var(--brand-gold); display: block; margin-bottom: 0.35rem;">
-                                    <i data-lucide="key" style="width: 12px; height: 12px; vertical-align: middle;"></i> الأكواد المفعلة من هذا الجهاز:
+                                <strong style="font-size: 0.75rem; color: var(--brand-gold); display: block; margin-bottom: 0.5rem;">
+                                    <i data-lucide="key" style="width: 12px; height: 12px; vertical-align: middle;"></i> المواد المفعلة على هذا الجهاز:
                                 </strong>
                                 {% for grant in device.associated_grants.all %}
-                                    <div style="font-size: 0.7rem; color: var(--text-primary); margin-bottom: 0.25rem; display: flex; justify-content: space-between; gap: 0.5rem; background: rgba(0,0,0,0.15); padding: 0.35rem 0.5rem; border-radius: 6px;">
-                                        <span>{{ grant.course.title|default:"مادة خاصة" }}</span>
-                                        <span style="color: var(--brand-gold); font-weight: 800;">{% if grant.access_code %}{{ grant.access_code.code }}{% else %}تفعيل يدوي{% endif %}</span>
+                                    <div style="background: rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.03); padding: 0.5rem; border-radius: 10px; margin-bottom: 0.5rem;">
+                                        <div style="font-size: 0.75rem; color: var(--text-primary); display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                                            <span style="font-weight: bold;">{{ grant.course.title|default:"مادة خاصة" }}</span>
+                                            <span style="color: var(--brand-gold); font-weight: 800; font-family: monospace;">{% if grant.access_code %}{{ grant.access_code.code }}{% else %}تفعيل يدوي{% endif %}</span>
+                                        </div>
+                                        <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.15rem;">تاريخ التفعيل: {{ grant.created_at|date:"Y-m-d H:i" }}</div>
+                                        
+                                        <!-- Course Swap Form (Admin only) -->
+                                        {% if devices.count > 1 %}
+                                            <form method="POST" style="margin-top: 0.5rem; display: flex; gap: 0.35rem; align-items: center;" onsubmit="return confirm('هل أنت متأكد من نقل تفعيل هذه المادة إلى الجهاز المختار؟')">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="action" value="transfer_grant_device">
+                                                <input type="hidden" name="grant_id" value="{{ grant.id }}">
+                                                <select name="target_device_fingerprint" class="form-select" style="font-size: 0.65rem; padding: 2px 6px; height: auto; min-height: 24px; border-radius: 6px; background: rgba(0,0,0,0.3); border-color: rgba(255,255,255,0.1); color: var(--text-primary); flex: 1;" required>
+                                                    <option value="">نقل لجهاز آخر...</option>
+                                                    {% for other_dev in devices %}
+                                                        {% if other_dev.fingerprint != device.fingerprint %}
+                                                            <option value="{{ other_dev.fingerprint }}">
+                                                                جهاز #{{ forloop.counter }} ({% if "Android" in other_dev.user_agent %}Android{% elif "iPhone" in other_dev.user_agent or "iPad" in other_dev.user_agent %}iOS{% elif "Windows" in other_dev.user_agent %}Windows{% else %}آخر{% endif %})
+                                                            </option>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </select>
+                                                <button type="submit" class="btn btn-primary" style="font-size: 0.65rem; padding: 2px 8px; min-height: 24px; border-radius: 6px; height: auto; background: var(--brand-gold); color: #000; border: none; font-weight: bold; cursor: pointer;">نقل</button>
+                                            </form>
+                                        {% endif %}
                                     </div>
-                                    <div style="font-size: 0.65rem; color: var(--text-muted); text-align: left; margin-bottom: 0.4rem;">تاريخ التفعيل: {{ grant.created_at|date:"Y-m-d H:i" }}</div>
                                 {% endfor %}
                             </div>
                         {% endif %}

@@ -3447,6 +3447,14 @@ def admin_student_detail(request, user_id):
             AccessGrant.objects.filter(id=grant_id, user=student).delete()
             messages.success(request, "تم سحب صلاحية المادة من الطالب.")
             
+        elif action == "transfer_grant_device":
+            grant_id = request.POST.get("grant_id")
+            target_device_fingerprint = request.POST.get("target_device_fingerprint")
+            grant = get_object_or_404(AccessGrant, id=grant_id, user=student)
+            grant.device_fingerprint = target_device_fingerprint
+            grant.save(update_fields=["device_fingerprint"])
+            messages.success(request, f"تم نقل تفعيل مادة {grant.course.title if grant.course else 'الخاصة'} إلى الجهاز الجديد بنجاح.")
+            
         elif action == "update_profile_admin":
             governorate = request.POST.get("governorate")
             track = request.POST.get("track")
@@ -3459,8 +3467,8 @@ def admin_student_detail(request, user_id):
         return redirect("dashboard:admin_student_detail", user_id=student.id)
 
     # Context data
-    all_courses = Course.objects.filter(status="published").order_by("title")
-    student_grants = AccessGrant.objects.filter(user=student).select_related("course", "access_code")
+    all_courses = Course.objects.filter(status="published").select_related("instructor").order_by("title")
+    student_grants = AccessGrant.objects.filter(user=student).select_related("course", "course__instructor", "access_code")
     enrolled_course_ids = student_grants.values_list("course_id", flat=True)
     available_courses = all_courses.exclude(id__in=enrolled_course_ids)
     
@@ -3470,7 +3478,7 @@ def admin_student_detail(request, user_id):
         device.associated_grants = AccessGrant.objects.filter(
             user=student,
             device_fingerprint=device.fingerprint
-        ).select_related("course", "access_code")
+        ).select_related("course", "course__instructor", "access_code")
     
     from accounts.models import Governorate, AcademicBranch
     all_governorates = Governorate.objects.filter(is_active=True).order_by("sort_order", "name")
