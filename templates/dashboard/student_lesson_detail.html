@@ -781,28 +781,72 @@
                 wrapper.style.position = 'relative';
                 wrapper.style.width = '100%';
                 wrapper.style.height = '100%';
+                wrapper.style.backgroundColor = '#000';
+                wrapper.style.borderRadius = '35px 35px 0 0';
+                wrapper.style.overflow = 'hidden';
 
-                // 1. Transparent click blocker on top of the video player to block IDM hover detection!
-                const blocker = document.createElement('div');
-                blocker.id = 'video-click-blocker';
-                blocker.style.position = 'absolute';
-                blocker.style.inset = '0';
-                blocker.style.zIndex = '10';
-                blocker.style.background = 'transparent';
-                blocker.style.cursor = 'pointer';
+                // 1. Create a beautiful Canvas that will render the video frames
+                const canvas = document.createElement('canvas');
+                canvas.style.width = '100%';
+                canvas.style.height = '100%';
+                canvas.style.display = 'block';
+                canvas.style.cursor = 'pointer';
 
+                // 2. Create the hidden Video element with 1px by 1px dimensions!
                 const video = document.createElement('video');
                 video.id = 'lesson-video';
-                video.controls = true;
-                video.style.width = '100%';
-                video.style.height = '100%';
-                video.style.borderRadius = '35px 35px 0 0';
-                video.style.pointerEvents = 'none'; // Completely block pointer events to disable IDM extension hover!
+                video.style.position = 'absolute';
+                video.style.width = '1px';
+                video.style.height = '1px';
+                video.style.opacity = '0';
+                video.style.pointerEvents = 'none';
                 video.setAttribute('controlsList', 'nodownload nofullscreen');
                 video.setAttribute('disablepictureinpicture', 'true');
-                
-                // Toggle play/pause when clicking the blocker
-                blocker.addEventListener('click', () => {
+
+                const source = document.createElement('source');
+                source.src = '{{ signed_video_url }}';
+                source.type = 'video/mp4';
+                video.appendChild(source);
+
+                wrapper.appendChild(canvas);
+                wrapper.appendChild(video);
+                shadow.appendChild(wrapper);
+
+                // Assign the video reference to LessonProtection
+                this.video = video;
+
+                const ctx = canvas.getContext('2d');
+
+                // Adjust canvas resolution dynamically on play/resize
+                const updateCanvasSize = () => {
+                    canvas.width = video.videoWidth || 1280;
+                    canvas.height = video.videoHeight || 720;
+                    // Draw initial poster frame
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                };
+
+                video.addEventListener('loadedmetadata', updateCanvasSize);
+
+                // Continuous frame rendering loop
+                let animationFrameId;
+                const renderLoop = () => {
+                    if (!video.paused && !video.ended) {
+                        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    }
+                    animationFrameId = requestAnimationFrame(renderLoop);
+                };
+
+                video.addEventListener('play', () => {
+                    renderLoop();
+                });
+
+                video.addEventListener('pause', () => {
+                    cancelAnimationFrame(animationFrameId);
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                });
+
+                // Toggle play/pause when clicking the canvas
+                canvas.addEventListener('click', () => {
                     if (video.paused) {
                         video.play();
                     } else {
@@ -810,20 +854,8 @@
                     }
                 });
 
-                // Prevent right-click context menu on the blocker
-                blocker.addEventListener('contextmenu', (e) => e.preventDefault());
-
-                const source = document.createElement('source');
-                source.src = '{{ signed_video_url }}';
-                source.type = 'video/mp4';
-                video.appendChild(source);
-
-                wrapper.appendChild(blocker);
-                wrapper.appendChild(video);
-                shadow.appendChild(wrapper);
-
-                // Assign the video reference to LessonProtection
-                this.video = video;
+                // Prevent right click on the canvas
+                canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
                 // Strip the source URL inside the Shadow DOM once loadstart triggers to be double safe!
                 video.addEventListener('loadstart', () => {
