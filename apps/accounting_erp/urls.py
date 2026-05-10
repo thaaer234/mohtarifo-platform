@@ -4,7 +4,9 @@ from . import views
 app_name = 'accounting_erp'
 
 urlpatterns = [
+    path('', views.AccountingDashboardView.as_view(), name='dashboard_root'),
     path('chart/', views.ChartOfAccountsView.as_view(), name='chart_tree'),
+
     path('vouchers/', views.JournalVoucherListView.as_view(), name='journal_list'),
     path('vouchers/<uuid:pk>/', views.JournalVoucherDetailView.as_view(), name='voucher_detail'),
     path('trial-balance/', views.TrialBalanceReportView.as_view(), name='trial_balance'),

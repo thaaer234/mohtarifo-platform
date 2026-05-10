@@ -1,0 +1,163 @@
+{% extends 'accounting_erp/base_accounting.html' %}
+{% load static humanize %}
+
+{% block content %}
+<style>
+    .gradient-card {
+        background: linear-gradient(135deg, #1e1e1e 0%, #0f0f0f 100%);
+        border: 1px solid rgba(255,255,255,0.08);
+    }
+    .kpi-bubble {
+        background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), transparent);
+    }
+    .nav-tile {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .nav-tile:hover {
+        transform: translateY(-8px) scale(1.01);
+        box-shadow: 0 20px 40px -10px rgba(0,0,0,0.12);
+    }
+</style>
+
+<div class="container mx-auto px-4 py-12 max-w-7xl" dir="rtl">
+    
+    <!-- Grand Executive Header -->
+    <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-6 text-center md:text-right">
+        <div>
+            <h1 class="text-5xl font-black text-neutral-900 dark:text-white tracking-tight leading-tight mb-2">
+                المركز المالي الموحد
+            </h1>
+            <p class="text-xl text-neutral-500 font-medium">
+                نظرة شاملة على التدفقات النقدية والأداء العام للأكاديمية لحظة بلحظة.
+            </p>
+        </div>
+        
+        <div class="bg-white dark:bg-neutral-800 p-4 rounded-3xl border border-neutral-200 dark:border-neutral-700 shadow-sm text-right min-w-[200px]">
+            <span class="text-xs font-bold text-neutral-400 block mb-1 tracking-widest uppercase">حالة النظام الموحد</span>
+            <div class="flex items-center gap-2 font-black text-emerald-600 dark:text-emerald-400 text-lg">
+                <span class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse shadow-lg shadow-emerald-500/50"></span>
+                متصل وجاهز ✓
+            </div>
+        </div>
+    </div>
+
+    <!-- 💎 THE BIG FOUR KPIS (Numerical Dominance) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+        
+        <!-- Card 1: Liquid Cash -->
+        <div class="gradient-card p-8 rounded-3xl text-white relative overflow-hidden shadow-2xl shadow-black/20 group">
+            <div class="absolute inset-0 kpi-bubble opacity-50 group-hover:scale-150 transition-transform duration-700"></div>
+            <div class="relative z-10">
+                <div class="flex justify-between items-center mb-6">
+                    <span class="font-bold tracking-widest text-neutral-400 text-sm uppercase">النقدية المتاحة (كاش)</span>
+                    <div class="bg-white/10 p-2 rounded-xl"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                </div>
+                <h2 class="text-4xl font-black font-mono tracking-tighter mb-2">{{ available_cash|floatformat:2|intcomma }}</h2>
+                <div class="text-xs font-bold opacity-60">مجموع أرصدة الصناديق الحالية</div>
+            </div>
+        </div>
+
+        <!-- Card 2: Net Profit -->
+        <div class="gradient-card p-8 rounded-3xl text-white relative overflow-hidden shadow-2xl shadow-black/20 group">
+            <div class="absolute inset-0 bg-gradient-to-tr from-emerald-900/20 to-transparent"></div>
+            <div class="relative z-10">
+                <div class="flex justify-between items-center mb-6">
+                    <span class="font-bold tracking-widest text-emerald-400 text-sm uppercase">صافي الأرباح المتراكم</span>
+                    <div class="bg-emerald-500/20 text-emerald-400 p-2 rounded-xl"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg></div>
+                </div>
+                <h2 class="text-4xl font-black font-mono tracking-tighter mb-2 text-emerald-400">{{ net_income|floatformat:2|intcomma }}</h2>
+                <div class="text-xs font-bold opacity-60">الإيرادات ناقص المصاريف</div>
+            </div>
+        </div>
+
+        <!-- Card 3: Receivables (A/R) -->
+        <div class="gradient-card p-8 rounded-3xl text-white relative overflow-hidden shadow-2xl shadow-black/20 group">
+            <div class="relative z-10">
+                <div class="flex justify-between items-center mb-6">
+                    <span class="font-bold tracking-widest text-neutral-400 text-sm uppercase">ذمم مدينة (لنا)</span>
+                    <div class="bg-white/10 p-2 rounded-xl"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg></div>
+                </div>
+                <h2 class="text-4xl font-black font-mono tracking-tighter mb-2">{{ receivables|floatformat:2|intcomma }}</h2>
+                <div class="text-xs font-bold opacity-60">ديون مستحقة من طلاب أو أطراف</div>
+            </div>
+        </div>
+
+        <!-- Card 4: Liabilities -->
+        <div class="gradient-card p-8 rounded-3xl text-white relative overflow-hidden shadow-2xl shadow-black/20 group">
+            <div class="relative z-10">
+                <div class="flex justify-between items-center mb-6">
+                    <span class="font-bold tracking-widest text-red-400 text-sm uppercase">إجمالي الالتزامات (علينا)</span>
+                    <div class="bg-red-500/20 text-red-400 p-2 rounded-xl"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+                </div>
+                <h2 class="text-4xl font-black font-mono tracking-tighter mb-2 text-red-400">{{ liabilities|floatformat:2|intcomma }}</h2>
+                <div class="text-xs font-bold opacity-60">مستحقات مدرسين وديون متداولة</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🗺️ COMMAND GRID (Central Navigation) -->
+    <h3 class="text-2xl font-black text-neutral-900 dark:text-white mb-6 border-r-4 border-indigo-600 pr-3">الوصول السريع للأنظمة</h3>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        
+        <!-- Tile 1: Chart -->
+        <a href="{% url 'accounting_erp:chart_tree' %}" class="nav-tile bg-white dark:bg-neutral-900 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 flex flex-col group">
+            <div class="bg-amber-500/10 text-amber-600 w-14 h-14 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-white transition-all duration-300">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+            </div>
+            <h4 class="text-xl font-black text-neutral-900 dark:text-white mb-2">شجرة الحسابات</h4>
+            <p class="text-neutral-500 text-sm mb-6 flex-grow">الهيكل التنظيمي المالي والأدلة المحاسبية الكاملة.</p>
+            <span class="inline-flex items-center text-amber-600 font-bold text-sm">دخول الآن &larr;</span>
+        </a>
+
+        <!-- Tile 2: Income -->
+        <a href="{% url 'accounting_erp:income_statement' %}" class="nav-tile bg-white dark:bg-neutral-900 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 flex flex-col group">
+            <div class="bg-emerald-500/10 text-emerald-600 w-14 h-14 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+            </div>
+            <h4 class="text-xl font-black text-neutral-900 dark:text-white mb-2">قائمة الدخل</h4>
+            <p class="text-neutral-500 text-sm mb-6 flex-grow">كشف الأرباح والخسائر وتحليل الإيرادات والمصروفات.</p>
+            <span class="inline-flex items-center text-emerald-600 font-bold text-sm">دخول الآن &larr;</span>
+        </a>
+
+        <!-- Tile 3: Balance -->
+        <a href="{% url 'accounting_erp:balance_sheet' %}" class="nav-tile bg-white dark:bg-neutral-900 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 flex flex-col group">
+            <div class="bg-purple-500/10 text-purple-600 w-14 h-14 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all duration-300">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path></svg>
+            </div>
+            <h4 class="text-xl font-black text-neutral-900 dark:text-white mb-2">الميزانية العمومية</h4>
+            <p class="text-neutral-500 text-sm mb-6 flex-grow">المركز المالي الشامل والتوازن الإجمالي للشركة.</p>
+            <span class="inline-flex items-center text-purple-600 font-bold text-sm">دخول الآن &larr;</span>
+        </a>
+
+        <!-- Tile 4: Ledger -->
+        <a href="{% url 'accounting_erp:journal_list' %}" class="nav-tile bg-white dark:bg-neutral-900 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 flex flex-col group">
+            <div class="bg-blue-500/10 text-blue-600 w-14 h-14 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-blue-500 group-hover:text-white transition-all duration-300">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <h4 class="text-xl font-black text-neutral-900 dark:text-white mb-2">دفتر القيود</h4>
+            <p class="text-neutral-500 text-sm mb-6 flex-grow">الأرشيف التاريخي الزمني لكل حركة مالية مسجلة.</p>
+            <span class="inline-flex items-center text-blue-600 font-bold text-sm">دخول الآن &larr;</span>
+        </a>
+
+        <!-- Tile 5: Trial Balance -->
+        <a href="{% url 'accounting_erp:trial_balance' %}" class="nav-tile bg-white dark:bg-neutral-900 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 flex flex-col group">
+            <div class="bg-indigo-500/10 text-indigo-600 w-14 h-14 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-indigo-500 group-hover:text-white transition-all duration-300">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <h4 class="text-xl font-black text-neutral-900 dark:text-white mb-2">ميزان المراجعة</h4>
+            <p class="text-neutral-500 text-sm mb-6 flex-grow">تقرير فني لمراجعة مطابقة الحركات قبل التقفيل.</p>
+            <span class="inline-flex items-center text-indigo-600 font-bold text-sm">دخول الآن &larr;</span>
+        </a>
+
+        <!-- Tile 6: Rebuild Action Call (Urgent Admin) -->
+        <div class="bg-neutral-50 dark:bg-neutral-900/50 p-6 rounded-3xl border border-dashed border-neutral-300 dark:border-neutral-700 flex flex-col justify-center">
+            <h4 class="text-lg font-bold text-neutral-700 dark:text-neutral-300 mb-2">تحديث البيانات التاريخية</h4>
+            <p class="text-neutral-500 text-xs mb-4">توليد قيود جديدة للمبيعات التاريخية التي تمت خارج النظام.</p>
+            <a href="{% url 'accounting_erp:system_rebuild' %}" class="bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 text-center font-black py-3 rounded-xl hover:bg-indigo-600 dark:hover:bg-indigo-100 transition text-sm">
+                ⚡ مزامنة الآن
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

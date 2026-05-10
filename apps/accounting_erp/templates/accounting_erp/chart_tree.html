@@ -53,9 +53,19 @@
                 الهيكل الهرمي الشامل لكافة الحسابات المالية للمنصة التعليمية وفق المعايير الدولية.
             </p>
         </div>
+        <!-- Operational Command Actions -->
+        <div class="flex flex-wrap gap-3 justify-end w-full lg:w-auto print:hidden mb-4 lg:mb-0">
+             <a href="/admin/accounting_erp/account/add/" target="_blank" class="group flex items-center gap-2 bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 px-4 py-3 rounded-xl font-bold border border-neutral-300 dark:border-neutral-600 shadow-sm transition hover:-translate-y-0.5">
+                 ➕ حساب جديد
+             </a>
+             <a href="/admin/accounting_erp/journalentry/add/" target="_blank" class="group flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-xl font-bold shadow-md transition hover:-translate-y-0.5">
+                 ✍️ قيد يدوي
+             </a>
+        </div>
         
         <!-- Tools Cluster -->
         <div class="flex flex-wrap gap-3 justify-end w-full lg:w-auto print:hidden">
+
              <a href="{% url 'accounting_erp:system_rebuild' %}" onclick="return confirm('هل أنت متأكد؟ سيقوم النظام بقراءة كافة المبيعات السابقة وتوليد قيود متوازنة لها آلياً.')" class="group flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-5 py-3 rounded-xl font-black shadow-lg transition-all">
                  ⚡ معالجة البيانات السابقة والترحيل 
              </a>

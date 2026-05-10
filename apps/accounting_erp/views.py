@@ -7,6 +7,41 @@ class BaseAccountingView(LoginRequiredMixin, UserPassesTestMixin):
     def test_func(self):
         return self.request.user.is_superuser or self.request.user.is_staff
 
+class AccountingDashboardView(BaseAccountingView, TemplateView):
+    """ Executive control panel delivering immediate financial liquidity and health visualizers. """
+    template_name = 'accounting_erp/dashboard_main.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from apps.accounting_erp.services.financial_statements import FinancialStatementEngine
+        from apps.accounting_erp.services.trial_balance import TrialBalanceEngine
+        
+        # 1. Pull high level aggregates
+        pnl = FinancialStatementEngine.generate_income_statement()
+        bs = FinancialStatementEngine.generate_balance_sheet()
+        
+        context['net_income'] = pnl['net_income']
+        context['total_revenue'] = pnl['total_revenue']
+        
+        # 2. Direct specific account extractions (Cash 11, Receivables 12, Payables 21)
+        from apps.accounting_erp.models import JournalLine
+        from django.db.models import Sum
+        from decimal import Decimal
+        
+        def get_cat_balance(code_prefix):
+            agg = JournalLine.objects.filter(account__code__startswith=code_prefix).aggregate(dr=Sum('debit_amount'), cr=Sum('credit_amount'))
+            dr = agg['dr'] or Decimal('0')
+            cr = agg['cr'] or Decimal('0')
+            # Simplify based on typical category start digit (1=Dr normal, 2=Cr normal)
+            return (dr - cr) if code_prefix.startswith('1') else (cr - dr)
+
+        context['available_cash'] = get_cat_balance('11') # Assets: Liquid Cash
+        context['receivables'] = get_cat_balance('12') # Assets: AR
+        context['liabilities'] = get_cat_balance('2')  # All Liabilities
+        
+        return context
+
+
 class ChartOfAccountsView(BaseAccountingView, TemplateView):
     """ Displays hierarchical tree map of operational ledger indices. """
     template_name = 'accounting_erp/chart_tree.html'
