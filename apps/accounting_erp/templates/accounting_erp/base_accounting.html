@@ -44,53 +44,50 @@
       max-width: 100% !important; 
       margin: 0 !important; 
       padding: 0 !important; 
-      background: white !important; 
-      color: black !important;
       top: 0 !important;
     }
     
     /* Overrule standard dashboard absolute top spacing for navbar */
     .main-content { padding-top: 0 !important; margin-top: 0 !important; }
 
-    
-    /* Reset shadows and force simple visible borders for professional look */
+    /* Keep original styling beauty (Colors/Shadows) as requested by user */
     * { 
-      box-shadow: none !important; 
-      text-shadow: none !important; 
       -webkit-print-color-adjust: exact !important; 
       print-color-adjust: exact !important; 
+      color-adjust: exact !important;
     }
     
-    /* Standardize Page Settings */
+    /* Switch to Landscape (أفقي) for beautiful wide financial statements */
     @page { 
-      margin: 1.5cm; 
-      size: A4 portrait; 
+      margin: 1cm; 
+      size: A4 landscape; 
     }
 
-    /* Enhance table visual readability on paper */
-    table { 
-      page-break-inside: auto !important; 
-      border: 1px solid #000 !important;
+    /* The Magnificent Large Central Watermark */
+    .print-watermark {
+        display: block !important;
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) rotate(-15deg) !important;
+        width: 600px !important;
+        opacity: 0.08 !important;
+        z-index: -9999 !important;
+        pointer-events: none !important;
     }
-    tr { 
-      page-break-inside: avoid !important; 
-      page-break-after: auto !important; 
-    }
-    thead { 
-      display: table-header-group !important; 
-      background-color: #f3f4f6 !important;
-      color: black !important;
-      border-bottom: 2px solid #000 !important;
-    }
-    th, td {
-      border: 1px solid #e5e7eb !important;
-      color: black !important;
-    }
-    
-    /* Ensure link underlines and standard font sizing */
-    a[href]::after { content: none !important; }
-    h1, h2, h3, h4 { color: black !important; font-weight: bold !important; page-break-after: avoid; }
   }
-
+  
+  /* Hide watermark during normal screen usage */
+  .print-watermark { display: none; }
 </style>
 {% endblock %}
+
+{% block content %}
+<!-- Invisible on screen, visible as massive central branding watermark on paper -->
+<img src="{% static 'dashboard/icons/logo2.png' %}" class="print-watermark" alt="Mohtarifo Watermark">
+
+<div class="dashboard-wrapper">
+    {% block accounting_content %}{% endblock %}
+</div>
+{% endblock %}
+
