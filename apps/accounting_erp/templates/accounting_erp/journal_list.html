@@ -24,9 +24,21 @@
                 الدفاتر الرئيسية (Ledger)
             </div>
             <h1 class="text-4xl font-black tracking-tight text-neutral-900 dark:text-white flex items-center gap-3">
+                {% if filtered_account %}
+                دفتر الأستاذ المساعد: {{ filtered_account.name }}
+                {% else %}
                 سجل القيود اليومية
+                {% endif %}
             </h1>
-            <p class="text-neutral-500 mt-1">السجل التاريخي المتسلسل لكافة الأحداث والعمليات المالية الموثقة.</p>
+            <p class="text-neutral-500 mt-1">
+                {% if filtered_account %}
+                كشف تفصيلي لكافة الحركات المدينة والدائنة الخاصة بالحساب [{{ filtered_account.code }}] حصراً.
+                <a href="{% url 'accounting_erp:journal_list' %}" class="text-blue-600 dark:text-blue-400 underline ml-2">إلغاء الفلتر &times;</a>
+                {% else %}
+                السجل التاريخي المتسلسل لكافة الأحداث والعمليات المالية الموثقة.
+                {% endif %}
+            </p>
+
         </div>
         
         <div class="flex gap-3 w-full lg:w-auto justify-end print:hidden">

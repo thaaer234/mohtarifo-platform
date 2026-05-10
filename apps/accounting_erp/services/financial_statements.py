@@ -8,13 +8,15 @@ class FinancialStatementEngine:
     """
     
     @classmethod
-    def generate_income_statement(cls):
+    def generate_income_statement(cls, cost_center_id=None):
         """
         Produces Revenues vs Expenses grid resulting in Net Profit / Loss.
+        Optionally constrained by a specific Cost Center.
         """
-        # Fetch direct aggregates
         lines = JournalLine.objects.all()
-        
+        if cost_center_id:
+            lines = lines.filter(cost_center_id=cost_center_id)
+            
         revenue_accs = Account.objects.filter(category='revenue', is_group=False)
         expense_accs = Account.objects.filter(category='expense', is_group=False)
         
@@ -22,7 +24,6 @@ class FinancialStatementEngine:
         rev_lines = []
         for acc in revenue_accs:
             agg = lines.filter(account=acc).aggregate(dr=Sum('debit_amount'), cr=Sum('credit_amount'))
-            # Revenue is CR normal
             net = (agg['cr'] or Decimal('0')) - (agg['dr'] or Decimal('0'))
             if net != 0:
                 rev_lines.append({'name': acc.name, 'val': net})
@@ -32,7 +33,6 @@ class FinancialStatementEngine:
         exp_lines = []
         for acc in expense_accs:
             agg = lines.filter(account=acc).aggregate(dr=Sum('debit_amount'), cr=Sum('credit_amount'))
-            # Expense is DR normal
             net = (agg['dr'] or Decimal('0')) - (agg['cr'] or Decimal('0'))
             if net != 0:
                 exp_lines.append({'name': acc.name, 'val': net})
@@ -48,3 +48,52 @@ class FinancialStatementEngine:
             'net_income': net_income,
             'is_profit': net_income >= 0
         }
+
+    @classmethod
+    def generate_balance_sheet(cls, cost_center_id=None):
+        """
+        Analyzes cumulative static standing (Assets = Liabilities + Equity).
+        Injects real-time profit/loss as temporary Retained Earnings line.
+        """
+        lines = JournalLine.objects.all()
+        if cost_center_id:
+            lines = lines.filter(cost_center_id=cost_center_id)
+            
+        def get_grouped_accounts(category, normal_dr=True):
+            accs = Account.objects.filter(category=category, is_group=False)
+            total = Decimal('0')
+            items = []
+            for acc in accs:
+                agg = lines.filter(account=acc).aggregate(dr=Sum('debit_amount'), cr=Sum('credit_amount'))
+                dr = agg['dr'] or Decimal('0')
+                cr = agg['cr'] or Decimal('0')
+                net = (dr - cr) if normal_dr else (cr - dr)
+                if net != 0:
+                    items.append({'name': acc.name, 'val': net})
+                    total += net
+            return items, total
+            
+        assets_list, total_assets = get_grouped_accounts('asset', normal_dr=True)
+        liab_list, total_liab = get_grouped_accounts('liability', normal_dr=False)
+        equity_list, total_equity = get_grouped_accounts('equity', normal_dr=False)
+        
+        # Calculate temporal period profit injection for balancing the sheet
+        pnl = cls.generate_income_statement(cost_center_id=cost_center_id)
+        curr_net = pnl['net_income']
+        
+        # Final Equity = Static Equity Entries + Net Income Current Period
+        adjusted_total_equity = total_equity + curr_net
+        
+        return {
+            'assets': assets_list,
+            'total_assets': total_assets,
+            'liabilities': liab_list,
+            'total_liabilities': total_liab,
+            'equity': equity_list,
+            'total_equity_static': total_equity,
+            'current_profit': curr_net,
+            'total_equity_final': adjusted_total_equity,
+            'total_liab_equity': total_liab + adjusted_total_equity,
+            'is_balanced': total_assets == (total_liab + adjusted_total_equity)
+        }
+

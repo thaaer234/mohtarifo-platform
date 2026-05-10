@@ -35,7 +35,19 @@
             <p class="text-neutral-500 text-lg mt-3">تقرير رسمي يقيس الأداء المالي الصافي بناءً على تدفقات الإيرادات والمصروفات التراكمية.</p>
         </div>
         
-        <div class="flex gap-3">
+        <div class="w-full lg:w-auto flex gap-3 items-center flex-wrap print:hidden">
+            <!-- Dynamic Filter -->
+            <form method="get" class="flex gap-2 bg-neutral-50 dark:bg-neutral-900 p-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700">
+                <select name="cost_center" onchange="this.form.submit()" class="bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white px-4 py-2 rounded-lg font-bold border border-neutral-200 dark:border-neutral-700 text-sm min-w-[200px]">
+                    <option value="">🔍 كافة الفروع والمراكز</option>
+                    {% for cc in cost_centers %}
+                    <option value="{{ cc.id }}" {% if selected_cc == cc.id|stringformat:"s" %}selected{% endif %}>
+                        📍 {{ cc.get_type_display }}: {{ cc.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+
              <button onclick="window.print()" class="bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 px-6 py-3 rounded-2xl font-bold border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 shadow-sm transition flex items-center gap-2">
                  🖨️ طباعة
              </button>
@@ -43,6 +55,7 @@
                  📥 إكسل
              </a>
         </div>
+
     </div>
 
     <!-- The Formal Instrument Card -->

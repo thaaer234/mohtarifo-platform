@@ -99,8 +99,17 @@
                  <h4 class="font-black text-lg text-neutral-900 dark:text-white">ميزان المراجعة</h4>
                  <p class="text-sm text-neutral-500 dark:text-neutral-400">توازن الحسابات الختامي</p>
              </div>
+         <a href="{% url 'accounting_erp:balance_sheet' %}" class="glass-card group px-6 py-4 rounded-2xl flex items-center gap-4 hover:-translate-y-1 transition-all flex-1 min-w-[250px]">
+             <div class="bg-purple-500/10 text-purple-600 p-3 rounded-xl group-hover:bg-purple-600 group-hover:text-white transition">
+                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path></svg>
+             </div>
+             <div>
+                 <h4 class="font-black text-lg text-neutral-900 dark:text-white">الميزانية العمومية</h4>
+                 <p class="text-sm text-neutral-500 dark:text-neutral-400">المركز المالي الإجمالي</p>
+             </div>
          </a>
     </div>
+
 
     <!-- The Main Tree Card -->
     <div class="glass-card rounded-3xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
@@ -146,17 +155,29 @@
                         </div>
                     </div>
                     
-                    <!-- Action/Tag Area -->
-                    <div class="flex items-center gap-3 print:hidden">
+                    <!-- Balance & Action/Tag Area -->
+                    <div class="flex items-center gap-6 print:hidden">
+                         
+                         <!-- ACCOUNT BALANCE (NEW) -->
+                         {% if not acc.is_group %}
+                         <div class="flex items-center gap-2 px-3 py-1.5 bg-neutral-50 dark:bg-neutral-800 rounded-lg border border-neutral-200/50 dark:border-neutral-700/50">
+                             <span class="text-xs text-neutral-500 font-bold">الرصيد:</span>
+                             <span class="font-mono font-black text-base {% if acc.display_balance < 0 %}text-red-600 dark:text-red-400{% else %}text-emerald-600 dark:text-emerald-400{% endif %}">
+                                 {{ acc.display_balance|floatformat:2|intcomma }}
+                             </span>
+                         </div>
+                         {% endif %}
+
                          {% if acc.is_group %}
                             <span class="text-xs bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300 px-2.5 py-1 rounded-md font-bold uppercase">حساب رئيسي</span>
                          {% else %}
-                            <span class="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400 px-2.5 py-1 rounded-md font-bold flex items-center gap-1">
-                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path></svg>
-                                يقبل الترحيل
-                            </span>
+                            <a href="{% url 'accounting_erp:journal_list' %}?account_id={{ acc.id }}" class="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300 px-3 py-1.5 rounded-lg font-black flex items-center gap-1 transition border border-blue-100/50 dark:border-blue-800/50 shadow-sm">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                                دفتر الأستاذ
+                            </a>
                          {% endif %}
                     </div>
+
                 </div>
                 {% empty %}
                 <div class="py-20 text-center">

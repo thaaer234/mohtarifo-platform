@@ -13,18 +13,49 @@ class ChartOfAccountsView(BaseAccountingView, TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Pull only top-level root nodes, templates can iterate children recurively 
-        # or we flatten for ease. Let's pull ordered by code for flat visualization hierarchy.
-        context['accounts'] = Account.objects.all().order_by('code')
+        
+        from django.db.models import Sum
+        from decimal import Decimal
+        from apps.accounting_erp.models import JournalLine
+        
+        # 1. Aggregate line level
+        rollup = JournalLine.objects.values('account_id').annotate(dr=Sum('debit_amount'), cr=Sum('credit_amount'))
+        balance_map = {str(item['account_id']): (item['dr'] or Decimal(0)) - (item['cr'] or Decimal(0)) for item in rollup}
+        
+        # 2. Feed accounts list with attached computed balances
+        accounts = list(Account.objects.all().order_by('code'))
+        
+        # Helper to compute balance based on hierarchy later if group? 
+        # For simplicity, we attach raw net balance to each direct account object.
+        for a in accounts:
+            a.raw_balance = balance_map.get(str(a.id), Decimal(0))
+            # Format balance logically based on normal category for readability
+            if a.category in ['asset', 'expense']:
+                 a.display_balance = a.raw_balance
+            else:
+                 a.display_balance = a.raw_balance * -1 # Flip signs for credit normal accounts
+        
+        context['accounts'] = accounts
         return context
 
-class JournalVoucherListView(BaseAccountingView, ListView):
-    """ Visual log stream browsing operational ledger commitments. """
-    model = JournalEntry
+
+class JournalVoucherListView(BaseAccountingView, TemplateView):
+    """ Consolidated history stream of total balancing system vouchers. """
     template_name = 'accounting_erp/journal_list.html'
-    context_object_name = 'vouchers'
-    ordering = ['-posting_date', '-created_at']
-    paginate_by = 50
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        acc_filter = self.request.GET.get('account_id')
+        qs = JournalEntry.objects.all().order_by('-posting_date')
+        
+        if acc_filter:
+            qs = qs.filter(lines__account_id=acc_filter).distinct()
+            from apps.accounting_erp.models import Account
+            context['filtered_account'] = Account.objects.filter(pk=acc_filter).first()
+            
+        context['vouchers'] = qs
+        return context
 
 class TrialBalanceReportView(BaseAccountingView, TemplateView):
     """ Official balancing ledger aggregate summation report wrapper. """
@@ -42,8 +73,31 @@ class IncomeStatementReportView(BaseAccountingView, TemplateView):
     def get_context_data(self, **kwargs):
         from apps.accounting_erp.services.financial_statements import FinancialStatementEngine
         context = super().get_context_data(**kwargs)
-        context['pnl'] = FinancialStatementEngine.generate_income_statement()
+        
+        cc_id = self.request.GET.get('cost_center')
+        context['pnl'] = FinancialStatementEngine.generate_income_statement(cost_center_id=cc_id)
+        
+        from apps.accounting_erp.models import CostCenter
+        context['cost_centers'] = CostCenter.objects.all()
+        context['selected_cc'] = cc_id
         return context
+
+class BalanceSheetReportView(BaseAccountingView, TemplateView):
+    """ Static statement measuring snapshot position (Assets = L + E). """
+    template_name = 'accounting_erp/balance_sheet.html'
+    
+    def get_context_data(self, **kwargs):
+        from apps.accounting_erp.services.financial_statements import FinancialStatementEngine
+        context = super().get_context_data(**kwargs)
+        
+        cc_id = self.request.GET.get('cost_center')
+        context['bs'] = FinancialStatementEngine.generate_balance_sheet(cost_center_id=cc_id)
+        
+        from apps.accounting_erp.models import CostCenter
+        context['cost_centers'] = CostCenter.objects.all()
+        context['selected_cc'] = cc_id
+        return context
+
 
 class JournalVoucherDetailView(BaseAccountingView, TemplateView):
     """ Primary precision visual endpoint formatted specifically for physical archival print generation. """
