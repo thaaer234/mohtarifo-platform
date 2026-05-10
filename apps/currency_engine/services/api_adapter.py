@@ -36,10 +36,15 @@ class CurrencyServiceOrchestrator:
     def update_latest_rate(cls, base='USD', quote='SYP'):
         """ Main logical handler iterating configured enabled feeds with Cache Interception."""
         cache_key = f"fx_rate_{base}_{quote}"
-        cached_val = cache.get(cache_key)
+        cached_val = None
+        try:
+            cached_val = cache.get(cache_key)
+        except Exception:
+            pass # Redis offline resilience bypass
+
         if cached_val:
-            # Serve immediately if available in Redis
             return cached_val
+
             
         active_providers = ExchangeProvider.objects.filter(is_enabled=True).order_by('priority')
         
@@ -56,7 +61,10 @@ class CurrencyServiceOrchestrator:
                         provider=p
                     )
                     # Warm the cache for next hits
-                    cache.set(cache_key, rate_obj, CACHE_TIMEOUT)
+                    try:
+                        cache.set(cache_key, rate_obj, CACHE_TIMEOUT)
+                    except Exception:
+                        pass
                     return rate_obj
                     
         # Fallback retrieval loop
@@ -65,7 +73,11 @@ class CurrencyServiceOrchestrator:
         ).order_by('-valid_from').first()
         
         if fallback_rate:
-            cache.set(cache_key, fallback_rate, 60) # shorter cache for fallback
+            try:
+                cache.set(cache_key, fallback_rate, 60) # shorter cache for fallback
+            except Exception:
+                pass
             
         return fallback_rate
+
 

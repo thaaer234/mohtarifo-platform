@@ -40,10 +40,14 @@ class CashboxAnalyticsEngine:
         
         # 3. Composite Conversion Algebra
         # Value of ALL funds projected entirely into USD
-        composite_usd = usd_reserve + (syp_reserve / rate)
-        
+        if rate > 0:
+            composite_usd = usd_reserve + (syp_reserve / rate)
+        else:
+            composite_usd = usd_reserve
+
         # Value of ALL funds projected entirely into SYP
         composite_syp = (usd_reserve * rate) + syp_reserve
+
         
         return {
             'reserves': {
