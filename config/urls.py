@@ -30,6 +30,7 @@ urlpatterns = [
     path('finance-exports/', include('apps.export_center.urls')),
     path('ops-intelligence/', include('apps.cost_analysis.urls')),
     path('infra-bunny-analytics/', include('apps.bunny_analytics.urls')),
+    path('erp-accounting/', include('apps.accounting_erp.urls')),
     
     path(settings.ADMIN_URL, admin.site.urls),
 ]

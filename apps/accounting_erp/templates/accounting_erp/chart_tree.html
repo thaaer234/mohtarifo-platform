@@ -1,0 +1,88 @@
+{% extends 'dashboard/base.html' %}
+{% load static humanize %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8" dir="rtl">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-tight text-neutral-900 dark:text-white flex items-center gap-3">
+                <span class="bg-amber-500/10 text-amber-600 p-2 rounded-xl">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                </span>
+                شجرة الحسابات (Chart of Accounts)
+            </h1>
+            <p class="text-neutral-500 dark:text-neutral-400 mt-2 text-base">الهيكل المحاسبي الموحد للمنصة التعليمية</p>
+        </div>
+        <div class="flex gap-3 flex-wrap">
+             <a href="{% url 'accounting_erp:income_statement' %}" class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm hover:bg-emerald-700 transition">
+                 📈 قائمة الدخل
+             </a>
+             <a href="{% url 'accounting_erp:journal_list' %}" class="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm hover:bg-blue-700 transition">
+                 📒 القيود اليومية
+             </a>
+             <a href="{% url 'accounting_erp:trial_balance' %}" class="bg-neutral-900 dark:bg-neutral-800 text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm hover:bg-neutral-800 dark:hover:bg-neutral-700 transition">
+                 📑 ميزان المراجعة
+             </a>
+        </div>
+
+        <div class="flex gap-3 flex-wrap mt-4 md:mt-0 md:mr-auto">
+             <button onclick="window.print()" class="border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 px-4 py-2 rounded-lg font-bold shadow-sm hover:bg-neutral-50 flex items-center gap-2 print:hidden">
+                 🖨️ طباعة
+             </button>
+             <a href="{% url 'accounting_erp:export_excel' 'chart' %}" class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-4 py-2 rounded-lg font-bold shadow-sm hover:bg-emerald-200 flex items-center gap-2 print:hidden">
+                 📥 تصدير إكسل
+             </a>
+        </div>
+    </div>
+
+
+    <!-- Tree Card -->
+    <div class="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-xl shadow-neutral-900/5 overflow-hidden">
+        <div class="px-6 py-4 bg-neutral-50 dark:bg-neutral-900/50 border-b border-neutral-200 dark:border-neutral-800 flex justify-between items-center">
+            <span class="font-bold text-neutral-800 dark:text-white">الدليل المحاسبي الرسمي</span>
+            <span class="text-xs px-2.5 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-full font-medium">مفعل</span>
+        </div>
+        
+        <div class="p-6">
+            <div class="space-y-2">
+                {% for acc in accounts %}
+                <div class="flex items-center justify-between p-3 rounded-xl border border-transparent hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all {% if acc.is_group %}font-bold bg-neutral-50/50 dark:bg-neutral-800/30{% endif %}" 
+                     style="margin-right: {{ acc.code|length|add:"-1"|add:"-1" }}rem;">
+                    
+                    <div class="flex items-center gap-4">
+                        <span class="font-mono bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 px-3 py-1 rounded-md text-sm min-w-[60px] text-center">
+                            {{ acc.code }}
+                        </span>
+                        <span class="text-neutral-900 dark:text-white text-lg">
+                            {% if acc.is_group %}
+                                📁 {{ acc.name }}
+                            {% else %}
+                                📄 {{ acc.name }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="flex items-center gap-3">
+                         <span class="text-xs px-2 py-0.5 rounded uppercase font-bold 
+                            {% if acc.category == 'asset' %}bg-emerald-100 text-emerald-700
+                            {% elif acc.category == 'expense' %}bg-red-100 text-red-700
+                            {% elif acc.category == 'revenue' %}bg-blue-100 text-blue-700
+                            {% else %}bg-purple-100 text-purple-700{% endif %}">
+                            {{ acc.get_category_display }}
+                         </span>
+                         {% if acc.is_group %}
+                            <span class="text-xs text-neutral-400 font-medium">رئيسي</span>
+                         {% else %}
+                            <span class="text-xs text-amber-600 font-medium bg-amber-50 dark:bg-amber-900/20 px-2 rounded">فرعي (يرحل له)</span>
+                         {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-center text-neutral-500 py-10">لا توجد حسابات حالياً. الرجاء تشغيل أداة التأسيس.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

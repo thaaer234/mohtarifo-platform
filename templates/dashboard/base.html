@@ -164,7 +164,8 @@
                         <a href="{% url 'dashboard:admin_instructors' %}" class="nav-link {% if 'instructors' in request.path %}active{% endif %}">المدرسون</a>
                         <a href="{% url 'dashboard:admin_students' %}" class="nav-link {% if 'students' in request.path %}active{% endif %}">الطلاب</a>
                         <a href="{% url 'dashboard:admin_billing' %}" class="nav-link {% if 'billing' in request.path and 'sell-codes' not in request.path %}active{% endif %}">المالية</a>
-                        <a href="/finance-analytics-hub/" class="nav-link" style="color: #10B981; font-weight: 800; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 6px; padding: 4px 8px; background: rgba(16, 185, 129, 0.05);"><i data-lucide="trending-up" style="width: 14px; display: inline-block; vertical-align: middle; margin-left: 4px;"></i> ذكاء مالي ✨</a>
+                        <a href="{% url 'accounting_erp:chart_tree' %}" class="nav-link" style="color: #F59E0B; font-weight: 800; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 6px; padding: 4px 8px; background: rgba(245, 158, 11, 0.05);"><i data-lucide="landmark" style="width: 14px; display: inline-block; vertical-align: middle; margin-left: 4px;"></i> النظام المحاسبي 🏛️</a>
+
                         <a href="{% url 'dashboard:admin_sell_codes' %}" class="nav-link {% if 'sell-codes' in request.path %}active{% endif %}" style="color: var(--brand-gold); font-weight: 800; text-shadow: 0 0 10px rgba(var(--brand-gold-rgb), 0.2);"><i data-lucide="sparkles" style="width: 14px; display: inline-block; vertical-align: middle; margin-left: 2px;"></i> بيع أكواد</a>
                         <a href="{% url 'dashboard:admin_partners' %}" class="nav-link {% if 'partners' in request.path %}active{% endif %}">الشركاء</a>
                         <a href="{% url 'dashboard:admin_packages' %}" class="nav-link {% if 'packages' in request.path %}active{% endif %}">الباقات</a>
@@ -233,7 +234,8 @@
                 <a href="{% url 'dashboard:admin_instructors' %}" class="mobile-nav-link"><i data-lucide="users"></i> المدرسون</a>
                 <a href="{% url 'dashboard:admin_students' %}" class="mobile-nav-link"><i data-lucide="users"></i> الطلاب</a>
                 <a href="{% url 'dashboard:admin_billing' %}" class="mobile-nav-link"><i data-lucide="wallet"></i> المالية</a>
-                <a href="/finance-analytics-hub/" class="mobile-nav-link" style="color: #10B981 !important;"><i data-lucide="trending-up"></i> الذكاء المالي ✨</a>
+                <a href="{% url 'accounting_erp:chart_tree' %}" class="mobile-nav-link" style="color: #F59E0B !important;"><i data-lucide="landmark"></i> النظام المحاسبي 🏛️</a>
+
                 <a href="{% url 'dashboard:admin_sell_codes' %}" class="mobile-nav-link gold" style="color: var(--brand-gold) !important; font-weight: 800;"><i data-lucide="sparkles"></i> بيع أكواد</a>
                 <a href="{% url 'dashboard:admin_partners' %}" class="mobile-nav-link"><i data-lucide="users"></i> الشركاء</a>
                 <a href="{% url 'dashboard:admin_packages' %}" class="mobile-nav-link"><i data-lucide="package"></i> الباقات</a>

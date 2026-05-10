@@ -1,0 +1,130 @@
+from django.views.generic import TemplateView, ListView
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from apps.accounting_erp.models import Account, JournalEntry
+from apps.accounting_erp.services.trial_balance import TrialBalanceEngine
+
+class BaseAccountingView(LoginRequiredMixin, UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_superuser or self.request.user.is_staff
+
+class ChartOfAccountsView(BaseAccountingView, TemplateView):
+    """ Displays hierarchical tree map of operational ledger indices. """
+    template_name = 'accounting_erp/chart_tree.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Pull only top-level root nodes, templates can iterate children recurively 
+        # or we flatten for ease. Let's pull ordered by code for flat visualization hierarchy.
+        context['accounts'] = Account.objects.all().order_by('code')
+        return context
+
+class JournalVoucherListView(BaseAccountingView, ListView):
+    """ Visual log stream browsing operational ledger commitments. """
+    model = JournalEntry
+    template_name = 'accounting_erp/journal_list.html'
+    context_object_name = 'vouchers'
+    ordering = ['-posting_date', '-created_at']
+    paginate_by = 50
+
+class TrialBalanceReportView(BaseAccountingView, TemplateView):
+    """ Official balancing ledger aggregate summation report wrapper. """
+    template_name = 'accounting_erp/trial_balance.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['report'] = TrialBalanceEngine.get_full_trial_balance()
+        return context
+
+class IncomeStatementReportView(BaseAccountingView, TemplateView):
+    """ Premium formal operational Statement of Activities (Profit & Loss). """
+    template_name = 'accounting_erp/income_statement.html'
+    
+    def get_context_data(self, **kwargs):
+        from apps.accounting_erp.services.financial_statements import FinancialStatementEngine
+        context = super().get_context_data(**kwargs)
+        context['pnl'] = FinancialStatementEngine.generate_income_statement()
+        return context
+
+class JournalVoucherDetailView(BaseAccountingView, TemplateView):
+    """ Primary precision visual endpoint formatted specifically for physical archival print generation. """
+    template_name = 'accounting_erp/voucher_detail.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from django.shortcuts import get_object_or_404
+        from django.db.models import Sum
+        from decimal import Decimal
+        
+        pk = self.kwargs.get('pk')
+        voucher = get_object_or_404(JournalEntry, pk=pk)
+        lines = voucher.lines.all().select_related('account', 'cost_center').order_by('-debit_amount')
+        
+        totals = lines.aggregate(dr=Sum('debit_amount'), cr=Sum('credit_amount'))
+        
+        context['voucher'] = voucher
+        context['lines'] = lines
+        context['totals'] = {
+            'debit': totals['dr'] or Decimal('0'),
+            'credit': totals['cr'] or Decimal('0')
+        }
+        return context
+
+class UniversalErpExcelExportView(BaseAccountingView, TemplateView):
+    """ 
+    Provides zero-dependency high-speed generation of valid CSV-Excel exports.
+    Uses UTF-8-BOM enabling instant seamless reading by Microsoft Excel desktop. 
+    """
+    def get(self, request, *args, **kwargs):
+        import csv
+        from django.http import HttpResponse
+        
+        report_type = kwargs.get('report_type')
+        filename = f"erp_export_{report_type}.csv"
+        
+        response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        # Microsoft Excel requires specific signature to read Arabic properly in CSV
+        response.write(u'\ufeff'.encode('utf8'))
+        
+        writer = csv.writer(response)
+        
+        if report_type == 'trial_balance':
+            from apps.accounting_erp.services.trial_balance import TrialBalanceEngine
+            data = TrialBalanceEngine.get_full_trial_balance()
+            writer.writerow(['دليل الحساب', 'اسم الحساب', 'إجمالي مدين', 'إجمالي دائن', 'صافي مدين', 'صافي دائن'])
+            for acc in data['accounts']:
+                writer.writerow([acc['code'], acc['name'], acc['total_debit'], acc['total_credit'], acc['net_debit'], acc['net_credit']])
+            writer.writerow([])
+            writer.writerow(['إجمالي الميزان', '', data['grand_totals']['debit'], data['grand_totals']['credit']])
+
+        elif report_type == 'income_statement':
+            from apps.accounting_erp.services.financial_statements import FinancialStatementEngine
+            data = FinancialStatementEngine.generate_income_statement()
+            writer.writerow(['بند البيان', 'القيمة'])
+            writer.writerow(['--- الإيرادات ---', ''])
+            for r in data['revenue']:
+                writer.writerow([r['name'], r['val']])
+            writer.writerow(['إجمالي الإيرادات', data['total_revenue']])
+            writer.writerow([])
+            writer.writerow(['--- المصروفات ---', ''])
+            for e in data['expense']:
+                writer.writerow([e['name'], e['val']])
+            writer.writerow(['إجمالي المصروفات', data['total_expense']])
+            writer.writerow([])
+            writer.writerow(['صافي الربح/الخسارة', data['net_income']])
+
+        elif report_type == 'journal':
+            writer.writerow(['التاريخ', 'المرجع', 'البيان'])
+            for item in JournalEntry.objects.all().order_by('-posting_date'):
+                writer.writerow([item.posting_date, item.reference, item.memo])
+                
+        elif report_type == 'chart':
+            writer.writerow(['كود الحساب', 'اسم الحساب', 'النوع', 'رئيسي/فرعي'])
+            for acc in Account.objects.all().order_by('code'):
+                writer.writerow([acc.code, acc.name, acc.get_category_display(), "رئيسي" if acc.is_group else "فرعي"])
+
+        return response
+
+
+

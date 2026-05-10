@@ -104,7 +104,11 @@ INSTALLED_APPS = [
     'apps.operational_expenses',
     'apps.financial_conversion',
     'apps.bunny_analytics',
+    
+    # Final ERP System
+    'apps.accounting_erp',
 ]
+
 
 MIDDLEWARE = [
     'dashboard.middleware.AntiFingerprintMiddleware',

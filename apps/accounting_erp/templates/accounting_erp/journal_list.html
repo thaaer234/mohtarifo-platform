@@ -1,0 +1,58 @@
+{% extends 'dashboard/base.html' %}
+{% load static humanize %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8" dir="rtl">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-extrabold text-neutral-900 dark:text-white flex items-center gap-3">
+                <span class="bg-neutral-500/10 text-neutral-600 dark:text-neutral-300 p-2 rounded-xl">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                </span>
+                دفتر القيود اليومية (General Ledger)
+            </h1>
+            <p class="text-neutral-500 dark:text-neutral-400 mt-1">السجل التاريخي الموحد لكافة الحركات المالية المتزنة</p>
+        </div>
+        <div class="flex gap-3 flex-wrap items-center">
+             <button onclick="window.print()" class="bg-white text-neutral-700 border border-neutral-300 px-4 py-2 rounded-lg font-bold shadow-sm hover:bg-neutral-50 flex items-center gap-2 print:hidden">
+                 🖨️ طباعة
+             </button>
+             <a href="{% url 'accounting_erp:export_excel' 'journal' %}" class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-4 py-2 rounded-lg font-bold shadow-sm hover:bg-emerald-200 flex items-center gap-2 print:hidden">
+                 📥 تصدير إكسل
+             </a>
+        </div>
+    </div>
+
+
+    <div class="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow overflow-hidden">
+        <table class="w-full text-right text-sm">
+            <thead class="bg-neutral-50 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 font-bold text-neutral-700 dark:text-neutral-300">
+                <tr>
+                    <th class="px-6 py-3">تاريخ القيد</th>
+                    <th class="px-6 py-3">المرجع</th>
+                    <th class="px-6 py-3">البيان / التوضيح</th>
+                    <th class="px-6 py-3 text-center">الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800 text-neutral-800 dark:text-neutral-200">
+                {% for item in vouchers %}
+                <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition">
+                    <td class="px-6 py-4 font-medium whitespace-nowrap">{{ item.posting_date|date:"Y-m-d" }}</td>
+                    <td class="px-6 py-4 font-mono text-xs text-neutral-500">#{{ item.reference|default:"N/A" }}</td>
+                    <td class="px-6 py-4 text-base">{{ item.memo }}</td>
+                    <td class="px-6 py-4 text-center">
+                        <a href="{% url 'accounting_erp:voucher_detail' item.pk %}" class="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 px-3 py-1.5 rounded-lg font-bold border border-blue-100 hover:bg-blue-100 transition">
+                            عرض / طباعة 🖨️
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="px-6 py-12 text-center text-neutral-500">لا توجد قيود يومية مسجلة حالياً.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends 'dashboard/base.html' %}
+{% load static humanize %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8" dir="rtl">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+            <h1 class="text-3xl font-extrabold tracking-tight text-neutral-900 dark:text-white flex items-center gap-3">
+                <span class="bg-indigo-500/10 text-indigo-600 p-2 rounded-xl">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                </span>
+                ميزان المراجعة (Trial Balance)
+            </h1>
+            <p class="text-neutral-500 dark:text-neutral-400 mt-2 text-base">الملخص المالي التراكمي لجميع الحركات المالية</p>
+        </div>
+        <div class="flex items-center gap-3 flex-wrap">
+             <span class="{% if report.grand_totals.is_balanced %}bg-emerald-100 text-emerald-700{% else %}bg-red-100 text-red-700{% endif %} px-4 py-2 rounded-lg font-bold border shadow-sm">
+                {% if report.grand_totals.is_balanced %}✓ متوازن{% else %}⚠ غير متوازن{% endif %}
+             </span>
+             <button onclick="window.print()" class="bg-white text-neutral-700 border border-neutral-300 px-4 py-2 rounded-lg font-bold shadow-sm hover:bg-neutral-50 flex items-center gap-2 print:hidden">
+                 🖨️ طباعة
+             </button>
+             <a href="{% url 'accounting_erp:export_excel' 'trial_balance' %}" class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-4 py-2 rounded-lg font-bold shadow-sm hover:bg-emerald-200 flex items-center gap-2 print:hidden">
+                 📥 تصدير إكسل
+             </a>
+        </div>
+
+    </div>
+
+    <div class="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-xl overflow-x-auto">
+        <table class="w-full text-right">
+            <thead class="bg-neutral-50 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 text-sm font-bold text-neutral-700 dark:text-neutral-300">
+                <tr>
+                    <th rowspan="2" class="px-6 py-4">رمز الحساب</th>
+                    <th rowspan="2" class="px-6 py-4">اسم الحساب</th>
+                    <th colspan="2" class="px-6 py-3 text-center border-b border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800/50">مجموع الحركات</th>
+                    <th colspan="2" class="px-6 py-3 text-center bg-neutral-200/50 dark:bg-neutral-700/50">الأرصدة النهائية</th>
+                </tr>
+                <tr>
+                    <th class="px-6 py-3 text-center border-l border-neutral-200 dark:border-neutral-700">مدين (DR)</th>
+                    <th class="px-6 py-3 text-center">دائن (CR)</th>
+                    <th class="px-6 py-3 text-center border-l border-neutral-200 dark:border-neutral-700">مدين (DR)</th>
+                    <th class="px-6 py-3 text-center">دائن (CR)</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800 text-base text-neutral-800 dark:text-neutral-200">
+                {% for row in report.accounts %}
+                <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition">
+                    <td class="px-6 py-4 font-mono text-sm text-neutral-500">{{ row.code }}</td>
+                    <td class="px-6 py-4 font-bold">{{ row.name }}</td>
+                    <td class="px-6 py-4 text-center border-l border-neutral-100 dark:border-neutral-800 text-indigo-600 dark:text-indigo-400 font-medium">{{ row.total_debit|floatformat:2|intcomma }}</td>
+                    <td class="px-6 py-4 text-center font-medium text-emerald-600 dark:text-emerald-400">{{ row.total_credit|floatformat:2|intcomma }}</td>
+                    
+                    <td class="px-6 py-4 text-center border-l border-neutral-100 dark:border-neutral-800 bg-neutral-50/30 dark:bg-neutral-800/20 font-bold">
+                        {% if row.net_debit > 0 %}{{ row.net_debit|floatformat:2|intcomma }}{% else %}-{% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-center bg-neutral-50/30 dark:bg-neutral-800/20 font-bold">
+                        {% if row.net_credit > 0 %}{{ row.net_credit|floatformat:2|intcomma }}{% else %}-{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-16 text-center text-neutral-500">
+                        <div class="flex flex-col items-center gap-2">
+                            <svg class="w-12 h-12 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                            <p class="font-medium">لا توجد حركات مالية مرحلة في الأستاذ العام بعد.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="bg-neutral-900 dark:bg-black text-white text-lg font-bold">
+                <tr>
+                    <td colspan="2" class="px-6 py-4 text-left">إجمالي الميزان العمومي</td>
+                    <td class="px-6 py-4 text-center">{{ report.grand_totals.debit|floatformat:2|intcomma }}</td>
+                    <td class="px-6 py-4 text-center">{{ report.grand_totals.credit|floatformat:2|intcomma }}</td>
+                    <td colspan="2" class="px-6 py-4 bg-neutral-800 dark:bg-neutral-900 text-center">
+                        <span class="text-sm text-neutral-400 block font-normal">صافي التوازن</span>
+                        {% if report.grand_totals.is_balanced %}مكتمل ⚡{% else %}غير متزن ⚠️{% endif %}
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+{% endblock %}

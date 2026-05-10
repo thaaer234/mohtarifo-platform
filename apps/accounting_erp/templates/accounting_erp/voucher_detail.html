@@ -1,0 +1,118 @@
+{% extends 'dashboard/base.html' %}
+{% load static humanize %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8" dir="rtl">
+    <!-- Actions Bar (Hidden during print) -->
+    <div class="flex justify-between mb-6 print:hidden">
+        <a href="{% url 'accounting_erp:journal_list' %}" class="text-neutral-600 font-medium hover:underline flex items-center gap-2">
+             <span>&rarr; العودة للقائمة</span>
+        </a>
+        <button onclick="window.print()" class="bg-neutral-900 text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-black flex items-center gap-2 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            طباعة السند
+        </button>
+    </div>
+
+    <!-- Formal Print Layout -->
+    <div class="max-w-5xl mx-auto bg-white text-black p-8 md:p-12 border border-neutral-300 rounded shadow-sm print:border-0 print:shadow-none print:p-0">
+        
+        <!-- Report Top Header -->
+        <div class="flex justify-between border-b-2 border-black pb-4 mb-6">
+            <div class="text-right">
+                <h2 class="text-2xl font-black">أكاديمية محترفو التعليم</h2>
+                <p class="text-sm font-bold">نظام الإدارة المالية (ERP)</p>
+            </div>
+            <div class="text-center border-2 border-black px-6 py-2 self-center">
+                <h1 class="text-xl font-black">سند قيد يومية</h1>
+                <p class="text-xs font-bold">Journal Voucher</p>
+            </div>
+            <div class="text-left text-sm font-mono">
+                <p>التاريخ: {{ voucher.posting_date|date:"Y-m-d" }}</p>
+                <p>المرجع: {{ voucher.reference }}</p>
+            </div>
+        </div>
+
+        <!-- Narrative -->
+        <div class="mb-6 bg-neutral-50 p-4 border border-neutral-200 text-lg">
+            <span class="font-bold">البيان / التوضيح:</span>
+            <span class="mr-2">{{ voucher.memo }}</span>
+        </div>
+
+        <!-- Ledger Table -->
+        <table class="w-full border-collapse border border-black text-sm mb-12">
+            <thead class="bg-neutral-100">
+                <tr class="border-b border-black">
+                    <th class="border border-black px-3 py-2 w-24 text-center">مدين (Dr)</th>
+                    <th class="border border-black px-3 py-2 w-24 text-center">دائن (Cr)</th>
+                    <th class="border border-black px-3 py-2 text-right">اسم الحساب ودليل الترميز</th>
+                    <th class="border border-black px-3 py-2 text-right">مركز التكلفة</th>
+                    <th class="border border-black px-3 py-2 text-right">الملاحظات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for line in lines %}
+                <tr class="border-b border-black">
+                    <td class="border border-black px-3 py-3 text-center font-mono {% if line.debit_amount > 0 %}font-bold bg-neutral-50{% endif %}">
+                        {% if line.debit_amount > 0 %}{{ line.debit_amount|floatformat:2|intcomma }}{% else %}-{% endif %}
+                    </td>
+                    <td class="border border-black px-3 py-3 text-center font-mono {% if line.credit_amount > 0 %}font-bold bg-neutral-50{% endif %}">
+                        {% if line.credit_amount > 0 %}{{ line.credit_amount|floatformat:2|intcomma }}{% else %}-{% endif %}
+                    </td>
+                    <td class="border border-black px-3 py-3 font-bold">
+                        <span class="font-mono text-xs bg-neutral-200 px-1 rounded">{{ line.account.code }}</span>
+                        {{ line.account.name }}
+                    </td>
+                    <td class="border border-black px-3 py-3 text-neutral-700">
+                        {{ line.cost_center.name|default:"-" }}
+                    </td>
+                    <td class="border border-black px-3 py-3 text-xs italic text-neutral-600">
+                        {{ line.line_memo }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="bg-neutral-900 text-white">
+                <tr class="font-bold text-base">
+                    <td class="border border-black px-3 py-3 text-center">{{ totals.debit|floatformat:2|intcomma }}</td>
+                    <td class="border border-black px-3 py-3 text-center">{{ totals.credit|floatformat:2|intcomma }}</td>
+                    <td colspan="3" class="border border-black px-3 py-3 text-right">الإجماليات الكلية</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- Signatures Area -->
+        <div class="grid grid-cols-3 gap-8 mt-20 text-center font-bold text-sm">
+            <div>
+                <div class="border-b border-black w-full mb-2 h-8"></div>
+                <p>توقيع المحاسب المالي</p>
+            </div>
+            <div>
+                <div class="border-b border-black w-full mb-2 h-8"></div>
+                <p>المدير المالي / المراجعة</p>
+            </div>
+            <div>
+                <div class="border-b border-black w-full mb-2 h-8"></div>
+                <p>الاعتماد والموافقة</p>
+            </div>
+        </div>
+        
+        <div class="mt-12 text-center text-xs text-neutral-400 border-t pt-2">
+            طُبع هذا المستند آلياً بتاريخ {% now "Y-m-d H:i" %} من النظام المالي الموحد.
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    body * { visibility: hidden; background-color: white !important; color: black !important; }
+    .container, .container * { visibility: visible; }
+    .container { position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0; }
+    .print\:hidden { display: none !important; }
+    table { page-break-inside: auto; }
+    tr { page-break-inside: avoid; page-break-after: auto; }
+    .shadow-sm, .shadow-xl, .shadow-2xl { box-shadow: none !important; }
+    .border { border-color: #000 !important; }
+}
+</style>
+{% endblock %}
