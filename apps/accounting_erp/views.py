@@ -136,9 +136,10 @@ class RebuildAccountingSystemView(BaseAccountingView, TemplateView):
         
         try:
             # 1. Rebuild Chart structure if missing
-            ChartOfAccountsSeeder.run()
+            ChartOfAccountsSeeder.seed_standard_tree()
             
             # 2. Execute mass transformer from all time history
+
             msg = LegacyAccountingTransformer.auto_generate_ledger_from_sales()
             messages.success(request, f"تمت المعالجة بنجاح: {msg}")
             
