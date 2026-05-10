@@ -7,321 +7,6 @@
     {% if filtered_account %}كشف حساب {{ filtered_account.name }}{% else %}دفتر اليومية العامة{% endif %}
 {% endblock %}
 
-{% block extra_css %}
-{{ block.super }}
-<style>
-    /* ============================================
-       PREMIUM LEDGER & JOURNAL PRINT STYLES
-       Maintains platform identity + print optimization
-    ============================================ */
-    
-    @media print {
-        body {
-            background: white !important;
-            color: black !important;
-            margin: 0;
-            padding: 0;
-        }
-        .no-print, .btn-print, .action-buttons, .navbar, .footer-premium {
-            display: none !important;
-        }
-        .premium-card {
-            box-shadow: none !important;
-            border: 1px solid #ddd !important;
-            padding: 1rem !important;
-        }
-        .ledger-table th, .ledger-table td {
-            border: 1px solid #ccc !important;
-        }
-        .running-balance-cell {
-            background: #f5f5f5 !important;
-        }
-    }
-
-    :root {
-        --brand-gold: #d4af37;
-        --brand-gold-light: #f1d592;
-        --brand-gold-dark: #996515;
-        --brand-gold-glow: rgba(212, 175, 55, 0.15);
-        --brand-gold-rgb: 212, 175, 55;
-        --bg-base: #fdfdfd;
-        --bg-surface: #ffffff;
-        --bg-surface-elevated: #f8fafc;
-        --text-primary: #0a0a0a;
-        --text-secondary: #4a4a4a;
-        --text-muted: #8a8a8a;
-        --border-light: rgba(0, 0, 0, 0.08);
-        --border-strong: rgba(0, 0, 0, 0.12);
-        --radius-sm: 12px;
-        --radius-md: 20px;
-        --radius-lg: 28px;
-        --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.04);
-        --shadow-glow: 0 15px 35px rgba(212, 175, 55, 0.1);
-        --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        --success: #10b981;
-        --danger: #ef4444;
-    }
-
-    body {
-        font-family: 'Cairo', 'Inter', sans-serif;
-        background: var(--bg-base);
-        color: var(--text-primary);
-        line-height: 1.6;
-    }
-
-    .report-wrapper {
-        max-width: 1400px;
-        margin: 2rem auto;
-        padding: 0 1.5rem;
-    }
-
-    .premium-card {
-        background: var(--bg-surface);
-        border: 1px solid var(--border-light);
-        border-radius: var(--radius-lg);
-        padding: 2rem;
-        box-shadow: var(--shadow-soft);
-        transition: var(--transition-smooth);
-    }
-
-    .premium-card:hover {
-        box-shadow: var(--shadow-glow);
-        border-color: rgba(var(--brand-gold-rgb), 0.2);
-    }
-
-    /* رأس التقرير المطور */
-    .report-header {
-        margin-bottom: 2rem;
-        padding-bottom: 1.25rem;
-        border-bottom: 2px solid var(--brand-gold);
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-
-    .title-section h1 {
-        font-size: 1.7rem;
-        font-weight: 800;
-        margin: 0;
-        background: linear-gradient(135deg, var(--text-primary) 0%, var(--brand-gold) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .title-section .account-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        background: rgba(var(--brand-gold-rgb), 0.1);
-        padding: 0.4rem 1rem;
-        border-radius: 100px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        color: var(--brand-gold-dark);
-        margin-top: 0.5rem;
-    }
-
-    .account-badge i {
-        font-style: normal;
-    }
-
-    .date-section {
-        text-align: left;
-        background: var(--bg-surface-elevated);
-        padding: 0.75rem 1.25rem;
-        border-radius: var(--radius-md);
-        border: 1px solid var(--border-light);
-    }
-
-    .date-section p {
-        margin: 0;
-        font-weight: 600;
-        color: var(--text-secondary);
-    }
-
-    .date-range {
-        font-family: 'Inter', monospace;
-        color: var(--brand-gold-dark);
-    }
-
-    /* الجدول الرئيسي للكشف / دفتر اليومية */
-    .ledger-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.85rem;
-    }
-
-    .ledger-table th {
-        text-align: center;
-        padding: 1rem 0.75rem;
-        background: rgba(212, 175, 55, 0.06);
-        border-bottom: 2px solid var(--brand-gold);
-        font-weight: 800;
-        color: var(--text-primary);
-    }
-
-    .ledger-table td {
-        padding: 0.85rem 0.65rem;
-        border-bottom: 1px solid var(--border-light);
-        vertical-align: top;
-    }
-
-    .ledger-table tbody tr:hover {
-        background: rgba(var(--brand-gold-rgb), 0.03);
-        transition: 0.2s;
-    }
-
-    .ledger-table tfoot td {
-        border-top: 2px solid var(--border-strong);
-        background: rgba(212, 175, 55, 0.04);
-        font-weight: 800;
-        padding: 1rem 0.75rem;
-    }
-
-    .amount-col {
-        text-align: right;
-        font-family: 'Inter', monospace;
-        font-weight: 600;
-        letter-spacing: 0.3px;
-    }
-
-    .text-center {
-        text-align: center;
-    }
-
-    .text-right {
-        text-align: right;
-    }
-
-    .font-mono {
-        font-family: 'Inter', monospace;
-    }
-
-    .running-balance-cell {
-        background: rgba(212, 175, 55, 0.05);
-        font-weight: 800;
-    }
-
-    .opening-row {
-        font-style: italic;
-        background: rgba(0, 0, 0, 0.02);
-    }
-
-    .opening-row td {
-        border-bottom: 1px dashed var(--border-light);
-    }
-
-    .memo-detail {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-        margin-top: 0.2rem;
-    }
-
-    /* أزرار التحكم */
-    .action-buttons {
-        display: flex;
-        justify-content: flex-end;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-        flex-wrap: wrap;
-    }
-
-    .btn-print {
-        background: linear-gradient(135deg, var(--brand-gold), var(--brand-gold-dark));
-        color: #000;
-        font-weight: 800;
-        padding: 0.7rem 1.8rem;
-        border-radius: 40px;
-        border: none;
-        cursor: pointer;
-        transition: var(--transition-smooth);
-        display: inline-flex;
-        align-items: center;
-        gap: 0.6rem;
-        font-family: inherit;
-        font-size: 0.9rem;
-    }
-
-    .btn-print:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 25px rgba(212, 175, 55, 0.35);
-    }
-
-    /* ملخص الرصيد في نهاية التقرير */
-    .summary-footer {
-        margin-top: 1.5rem;
-        padding: 1rem;
-        background: rgba(212, 175, 55, 0.05);
-        border-radius: var(--radius-md);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 1rem;
-    }
-
-    .total-box {
-        padding: 0.5rem 1rem;
-        background: var(--bg-surface);
-        border-radius: var(--radius-sm);
-        border: 1px solid var(--border-light);
-    }
-
-    .total-box .label {
-        font-size: 0.7rem;
-        color: var(--text-muted);
-    }
-
-    .total-box .value {
-        font-size: 1.2rem;
-        font-weight: 900;
-        color: var(--brand-gold-dark);
-    }
-
-    .report-footer {
-        margin-top: 2rem;
-        padding-top: 1rem;
-        border-top: 1px solid var(--border-light);
-        text-align: center;
-        font-size: 0.7rem;
-        color: var(--text-muted);
-        display: flex;
-        justify-content: space-between;
-        flex-wrap: wrap;
-    }
-
-    @media (max-width: 992px) {
-        .report-wrapper {
-            padding: 0 1rem;
-        }
-        .premium-card {
-            padding: 1.25rem;
-        }
-        .ledger-table {
-            font-size: 0.75rem;
-        }
-        .report-header {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .ledger-table {
-            display: block;
-            overflow-x: auto;
-            white-space: nowrap;
-        }
-        .summary-footer {
-            flex-direction: column;
-            align-items: stretch;
-        }
-    }
-</style>
-{% endblock %}
-
 {% block report_name %}
     {% if filtered_account and filtered_cc %}
         كشف تفصيلي: {{ filtered_account.name }} / {{ filtered_cc.name }}
@@ -339,208 +24,166 @@
     إلى: {% if end_date %}{{ end_date|date:"Y/m/d" }}{% else %}الآن{% endif %}
 {% endblock %}
 
+{% block extra_css %}
+{{ block.super }}
+<style>
+    /* Clean layout enhancements for journal and ledger */
+    .running-balance-cell {
+        background-color: #f8fafc;
+        font-weight: 800;
+    }
+    .opening-row td {
+        font-style: italic;
+        background-color: #f1f5f9;
+        border-bottom: 2px dashed var(--border-color);
+    }
+    .memo-detail {
+        font-size: 8pt;
+        color: var(--text-muted);
+        margin-top: 0.2rem;
+    }
+    .summary-footer {
+        margin-top: 1.5rem;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        page-break-inside: avoid;
+    }
+    .total-box {
+        padding: 0.75rem 1rem;
+        background: #ffffff;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        text-align: center;
+    }
+    .total-box .label {
+        font-size: 8pt;
+        color: var(--text-muted);
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+    .total-box .value {
+        font-size: 14pt;
+        font-weight: 900;
+    }
+</style>
+{% endblock %}
+
 {% block report_body %}
-<div class="report-wrapper">
-    <!-- أزرار الطباعة -->
-    <div class="action-buttons no-print">
-        <button class="btn-print" onclick="window.print();">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6 9V3H18V9M6 21H18V15H6V21Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M18 9H6C4.34315 9 3 10.3431 3 12V18H6V15H18V18H21V12C21 10.3431 19.6569 9 18 9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                <circle cx="18" cy="14" r="1" fill="currentColor"/>
-            </svg>
-            طباعة التقرير
-        </button>
-    </div>
-
-    <div class="premium-card">
-        <!-- رأس التقرير -->
-        <div class="report-header">
-            <div class="title-section">
-                <h1>
-                    {% if filtered_account %}
-                        📘 كشف حساب
-                    {% elif filtered_cc %}
-                        🏷 سجل حركة طرف
-                    {% else %}
-                        📓 دفتر اليومية العامة
+{% if ledger_narrative is not None %}
+<!-- وضع كشف الحساب المفصل (Sub-Ledger) -->
+<div style="overflow-x: auto;">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width: 90px;" class="text-center">التاريخ</th>
+                <th style="width: 120px;" class="text-center">رقم السند</th>
+                <th>البيان / الشرح</th>
+                <th style="width: 110px;" class="text-center">مدين</th>
+                <th style="width: 110px;" class="text-center">دائن</th>
+                <th style="width: 130px;" class="text-center">الرصيد التراكمي</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- رصيد افتتاحي -->
+            <tr class="opening-row">
+                <td colspan="5" class="text-right" style="font-weight: 700;">📌 رصيد افتتاحي منقول:</td>
+                <td class="amount-col font-mono text-center">
+                    {{ opening_balance|floatformat:2|intcomma }}
+                </td>
+            </tr>
+            
+            {% for line in ledger_narrative %}
+            <tr>
+                <td class="text-center">{{ line.journal.posting_date|date:"Y-m-d" }}</td>
+                <td class="text-center font-mono">{{ line.journal.reference|default:"—"|truncatechars:12 }}</td>
+                <td>
+                    <strong>{{ line.journal.memo|default:"بدون بيان" }}</strong>
+                    {% if line.line_memo %}
+                        <div class="memo-detail">{{ line.line_memo }}</div>
                     {% endif %}
-                </h1>
-                <div class="account-badge">
-                    {% if filtered_account and filtered_cc %}
-                        🔹 {{ filtered_account.name }} / {{ filtered_cc.name }}
-                    {% elif filtered_account %}
-                        🔹 {{ filtered_account.name }} <span style="color: var(--brand-gold);">|</span> كود: {{ filtered_account.code }}
-                    {% elif filtered_cc %}
-                        🔹 طرف: {{ filtered_cc.name }}
-                    {% else %}
-                        🔹 عرض جميع القيود المحاسبية
-                    {% endif %}
-                </div>
-            </div>
-            <div class="date-section">
-                <p>📅 الفترة المحاسبية:</p>
-                <p class="date-range">
-                    من {% if start_date %}{{ start_date|date:"Y/m/d" }}{% else %}بداية السجلات{% endif %} 
-                    إلى {% if end_date %}{{ end_date|date:"Y/m/d" }}{% else %}الآن{% endif %}
-                </p>
-                <p style="font-size: 0.7rem;">⏱ تاريخ الطباعة: {% now "Y/m/d - H:i" %}</p>
-            </div>
-        </div>
-
-        <!-- وضع كشف الحساب المفصل (Sub-Ledger) -->
-        {% if ledger_narrative is not None %}
-        <div style="overflow-x: auto;">
-            <table class="ledger-table">
-                <thead>
-                    <tr>
-                        <th style="width: 90px;">التاريخ</th>
-                        <th style="width: 120px;">رقم السند</th>
-                        <th>البيان / الشرح</th>
-                        <th style="width: 110px;">مدين</th>
-                        <th style="width: 110px;">دائن</th>
-                        <th style="width: 130px; background: rgba(212, 175, 55, 0.1);">الرصيد التراكمي</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- رصيد افتتاحي -->
-                    <tr class="opening-row">
-                        <td colspan="5" class="text-right" style="font-weight: 700;">📌 رصيد افتتاحي منقول:</td>
-                        <td class="amount-col font-mono running-balance-cell">
-                            {{ opening_balance|floatformat:2|intcomma }}
-                        </td>
-                    </tr>
-                    
-                    {% for line in ledger_narrative %}
-                    <tr>
-                        <td class="text-center" style="font-size: 9pt;">{{ line.journal.posting_date|date:"Y-m-d" }}</td>
-                        <td class="text-center font-mono" style="font-size: 9pt;">{{ line.journal.reference|default:"—"|truncatechars:12 }}</td>
-                        <td style="font-size: 9pt;">
-                            <strong>{{ line.journal.memo|default:"بدون بيان" }}</strong>
-                            {% if line.line_memo %}
-                                <div class="memo-detail">{{ line.line_memo }}</div>
-                            {% endif %}
-                        </td>
-                        <td class="amount-col font-mono">
-                            {% if line.debit_amount > 0 %}{{ line.debit_amount|floatformat:2|intcomma }}{% else %}-{% endif %}
-                        </td>
-                        <td class="amount-col font-mono">
-                            {% if line.credit_amount > 0 %}{{ line.credit_amount|floatformat:2|intcomma }}{% else %}-{% endif %}
-                        </td>
-                        <td class="amount-col font-mono running-balance-cell">
-                            {{ line.running_balance|floatformat:2|intcomma }}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center" style="padding: 3rem;">
-                            <span style="opacity: 0.6;">📭 لا توجد حركات مسجلة في الفترة المحددة.</span>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-                {% if ledger_narrative %}
-                <tfoot>
-                    <tr>
-                        <td colspan="5" class="text-right" style="font-weight: 800;">🔻 الرصيد الختامي (نهاية الفترة):</td>
-                        <td class="amount-col font-mono running-balance-cell" style="font-size: 1rem; font-weight: 900;">
-                            {% with last_item=ledger_narrative|last %}
-                                {{ last_item.running_balance|floatformat:2|intcomma }}
-                            {% endwith %}
-                        </td>
-                    </tr>
-                </tfoot>
-                {% endif %}
-            </table>
-        </div>
-
-        <!-- ملخص إضافي لحركة الحساب -->
-        <div class="summary-footer">
-            <div class="total-box">
-                <span class="label">💸 إجمالي حركات المدين</span>
-                <div class="value">{{ total_debits|default:0|floatformat:2|intcomma }}</div>
-            </div>
-            <div class="total-box">
-                <span class="label">💰 إجمالي حركات الدائن</span>
-                <div class="value">{{ total_credits|default:0|floatformat:2|intcomma }}</div>
-            </div>
-            <div class="total-box">
-                <span class="label">⚖️ صافي الحركة (مدين - دائن)</span>
-                <div class="value" style="color: {% if net_movement >= 0 %}#10b981{% else %}#ef4444{% endif %};">
-                    {{ net_movement|default:0|floatformat:2|intcomma }}
-                </div>
-            </div>
-        </div>
-
-        <!-- وضع دفتر اليومية البسيط (List Mode) -->
-        {% else %}
-        <div style="overflow-x: auto;">
-            <table class="ledger-table">
-                <thead>
-                    <tr>
-                        <th style="width: 100px;">التاريخ</th>
-                        <th style="width: 150px;">رقم المرجع</th>
-                        <th>البيان الرسمي للقيد المحاسبي</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in vouchers %}
-                    <tr>
-                        <td class="text-center font-mono">{{ item.posting_date|date:"Y-m-d" }}</td>
-                        <td class="text-center font-mono">{{ item.reference|default:"—" }}</td>
-                        <td style="font-weight: 600;">{{ item.memo|default:"بدون وصف" }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="3" class="text-center" style="padding: 3rem;">
-                            <span style="opacity: 0.6;">📭 لا توجد قيود محاسبية في الفترة المحددة.</span>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="3" class="text-center" style="font-size: 0.85rem;">
-                            عدد القيود المسجلة: <strong>{{ vouchers|length }}</strong>
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
+                </td>
+                <td class="amount-col font-mono text-center">
+                    {% if line.debit_amount > 0 %}{{ line.debit_amount|floatformat:2|intcomma }}{% else %}-{% endif %}
+                </td>
+                <td class="amount-col font-mono text-center">
+                    {% if line.credit_amount > 0 %}{{ line.credit_amount|floatformat:2|intcomma }}{% else %}-{% endif %}
+                </td>
+                <td class="amount-col font-mono running-balance-cell text-center">
+                    {{ line.running_balance|floatformat:2|intcomma }}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">لا توجد حركات مسجلة في الفترة المحددة.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        {% if ledger_narrative %}
+        <tfoot>
+            <tr>
+                <td colspan="5" class="text-right" style="font-weight: 800;">🔻 الرصيد الختامي (نهاية الفترة):</td>
+                <td class="amount-col font-mono running-balance-cell text-center" style="font-size: 11pt; font-weight: 900;">
+                    {% with last_item=ledger_narrative|last %}
+                        {{ last_item.running_balance|floatformat:2|intcomma }}
+                    {% endwith %}
+                </td>
+            </tr>
+        </tfoot>
         {% endif %}
+    </table>
+</div>
 
-        <!-- تذييل التقرير -->
-        <div class="report-footer">
-            <div>📌 نظام المحاسبة المتكامل – تقرير دقيق ومعتمد</div>
-            <div>✨ تم إنشاؤه بواسطة المنصة المحاسبية الذكية ✨</div>
+<!-- ملخص إضافي لحركة الحساب -->
+<div class="summary-footer">
+    <div class="total-box">
+        <div class="label">إجمالي حركات المدين</div>
+        <div class="value font-mono">{{ total_debits|default:0|floatformat:2|intcomma }}</div>
+    </div>
+    <div class="total-box">
+        <div class="label">إجمالي حركات الدائن</div>
+        <div class="value font-mono">{{ total_credits|default:0|floatformat:2|intcomma }}</div>
+    </div>
+    <div class="total-box">
+        <div class="label">صافي الحركة (مدين - دائن)</div>
+        <div class="value font-mono" style="color: {% if net_movement >= 0 %}#166534{% else %}#991b1b{% endif %};">
+            {{ net_movement|default:0|floatformat:2|intcomma }}
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
-{{ block.super }}
-<script>
-    (function() {
-        const printBtn = document.querySelector('.btn-print');
-        if (printBtn) {
-            printBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                window.print();
-            });
-        }
-        
-        // إضافة تحسين بسيط للطباعة التلقائية للجداول الطويلة
-        if (window.matchMedia) {
-            const printHandler = (mql) => {
-                if (mql.matches) {
-                    document.body.style.backgroundColor = 'white';
-                } else {
-                    document.body.style.backgroundColor = '';
-                }
-            };
-            window.matchMedia('print').addListener(printHandler);
-        }
-    })();
-</script>
+{% else %}
+<!-- وضع دفتر اليومية البسيط (List Mode) -->
+<div style="overflow-x: auto;">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width: 100px;" class="text-center">التاريخ</th>
+                <th style="width: 150px;" class="text-center">رقم المرجع</th>
+                <th>البيان الرسمي للقيد المحاسبي</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in vouchers %}
+            <tr>
+                <td class="text-center font-mono">{{ item.posting_date|date:"Y-m-d" }}</td>
+                <td class="text-center font-mono">{{ item.reference|default:"—" }}</td>
+                <td style="font-weight: 600;">{{ item.memo|default:"بدون وصف" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" class="text-center">لا توجد قيود محاسبية في الفترة المحددة.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3" class="text-center">
+                    عدد القيود المسجلة: <strong>{{ vouchers|length }}</strong>
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+{% endif %}
 {% endblock %}

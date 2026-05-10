@@ -119,48 +119,52 @@
     📌 أداء الصناديق – مقارنة بين الصندوق المتوقع والحقيقي بعد الخصومات
 </div>
 
-<table>
-    <thead>
-        <tr>
-            <th>مركز البيع</th>
-            <th>المعهد التابع</th>
-            <th style="width: 70px;">📦 الأكواد</th>
-            <th style="width: 70px;">✅ المباع</th>
-            <th>💰 المتوقع</th>
-            <th>📊 الحقيقي (كامل)</th>
-            <th style="background: linear-gradient(135deg, #f0fdf4, #dcfce7);">🏅 الفعلي بعد الخصم</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for item in centers_report %}
-        <tr>
-            <td style="font-weight: 800;">{{ item.center.name }}</td>
-            <td>{{ item.center.institute.name|default:"—" }}</td>
-            <td class="text-center font-mono">{{ item.total_codes|default:0 }}</td>
-            <td class="text-center font-mono highlight-green">{{ item.sold_codes_count|default:0 }}</td>
-            <td class="text-center font-mono">{{ item.expected_balance|floatformat:0|intcomma|default:"0" }} ل.س</td>
-            <td class="text-center font-mono">{{ item.real_standard|floatformat:0|intcomma|default:"0" }} ل.س</td>
-            <td class="text-center font-mono" style="font-weight: 900; color: #16a34a; background: #f0fdf4;">
-                {{ item.actual_earned|floatformat:0|intcomma|default:"0" }} ل.س
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="7" class="text-center" style="padding: 2rem;">📭 لا توجد بيانات لمراكز المبيعات</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-    {% if centers_report %}
-    <tfoot>
-        <tr>
-            <td colspan="4" class="text-right" style="font-weight: 800;">📈 إجمالي الإيرادات الفعلية للأكواد:</td>
-            <td colspan="3" class="text-center font-mono" style="font-weight: 900; font-size: 1rem; color: #16a34a;">
-                {{ total_centers_earned|floatformat:0|intcomma }} ل.س
-            </td>
-        </tr>
-    </tfoot>
-    {% endif %}
-</table>
+<div style="overflow-x: auto;">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>مركز البيع</th>
+                <th>المعهد التابع</th>
+                <th style="width: 70px;" class="text-center">📦 الأكواد</th>
+                <th style="width: 70px;" class="text-center">✅ المباع</th>
+                <th class="text-center">💰 المتوقع</th>
+                <th class="text-center">📊 الحقيقي (كامل)</th>
+                <th class="text-center" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7);">🏅 الفعلي بعد الخصم</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in centers_report %}
+            <tr>
+                <td style="font-weight: 800;">{{ item.center.name }}</td>
+                <td>{{ item.center.institute.name|default:"—" }}</td>
+                <td class="text-center font-mono">{{ item.total_codes|default:0 }}</td>
+                <td class="text-center font-mono highlight-green">{{ item.sold_codes_count|default:0 }}</td>
+                <td class="text-center font-mono">{{ item.expected_balance|floatformat:0|intcomma|default:"0" }} ل.س</td>
+                <td class="text-center font-mono">{{ item.real_standard|floatformat:0|intcomma|default:"0" }} ل.س</td>
+                <td class="text-center font-mono" style="font-weight: 900; color: #16a34a; background: #f0fdf4;">
+                    {{ item.actual_earned|floatformat:0|intcomma|default:"0" }} ل.س
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center" style="padding: 2rem;">📭 لا توجد بيانات لمراكز المبيعات</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        {% if centers_report %}
+        <tfoot>
+            <tr>
+                <td colspan="4" class="text-right" style="font-weight: 800;">📈 إجمالي الإيرادات الفعلية للأكواد:</td>
+                <td colspan="3" class="text-center font-mono" style="font-weight: 900; font-size: 1rem; color: #16a34a;">
+                    {{ total_centers_earned|floatformat:0|intcomma }} ل.س
+                </td>
+            </tr>
+        </tfoot>
+        {% endif %}
+    </table>
+</div>
+
+<div class="page-break"></div>
 
 <!-- 2. تحليل إيرادات الأكواد حسب الفلاتر والخطوط -->
 <h3 class="section-title">📊 تحليل إيرادات الأكواد حسب الفلاتر والخطوط</h3>
@@ -168,78 +172,82 @@
     🔍 توزيع الأكواد حسب التصنيف – الدورات، الأكواد المباعة، والمفعلة، وصافي القيمة النقدية
 </div>
 
-<table>
-    <thead>
-        <tr>
-            <th>التصنيف / الفلتر</th>
-            <th style="width: 75px;">📚 الدورات</th>
-            <th style="width: 75px;">🏷 الأكواد</th>
-            <th style="width: 75px;">✅ المباعة</th>
-            <th style="width: 80px;">⚡ المفعلة</th>
-            <th>💵 إجمالي القيمة النقدية</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for row in filter_reports %}
-        <tr>
-            <td style="font-weight: 700;">{{ row.label }}</td>
-            <td class="text-center">{{ row.courses|default:0 }}</td>
-            <td class="text-center">{{ row.codes|default:0 }}</td>
-            <td class="text-center font-mono" style="color: #16a34a; font-weight: 700;">{{ row.sold|default:0 }}</td>
-            <td class="text-center font-mono" style="color: #2563eb; font-weight: 700;">{{ row.activated|default:0 }}</td>
-            <td class="text-center font-mono" style="font-weight: 800;">{{ row.gross|default:0|floatformat:2|intcomma }} ل.س</td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="6" class="text-center" style="padding: 2rem;">📭 لا توجد بيانات تحليلية للفلاتر</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-    <tfoot>
-        <tr>
-            <td colspan="5" class="text-right" style="font-weight: 800;">🔻 الإجمالي الكلي لقيمة الأكواد:</td>
-            <td class="text-center font-mono" style="font-weight: 900; font-size: 1rem; background: rgba(197, 160, 89, 0.1);">
-                {{ total_filter_gross|default:0|floatformat:2|intcomma }} ل.س
-            </td>
-        </tr>
-    </tfoot>
-</table>
+<div style="overflow-x: auto;">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>التصنيف / الفلتر</th>
+                <th style="width: 75px;" class="text-center">📚 الدورات</th>
+                <th style="width: 75px;" class="text-center">🏷 الأكواد</th>
+                <th style="width: 75px;" class="text-center">✅ المباعة</th>
+                <th style="width: 80px;" class="text-center">⚡ المفعلة</th>
+                <th class="text-center">💵 إجمالي القيمة النقدية</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in filter_reports %}
+            <tr>
+                <td style="font-weight: 700;">{{ row.label }}</td>
+                <td class="text-center">{{ row.courses|default:0 }}</td>
+                <td class="text-center">{{ row.codes|default:0 }}</td>
+                <td class="text-center font-mono" style="color: #16a34a; font-weight: 700;">{{ row.sold|default:0 }}</td>
+                <td class="text-center font-mono" style="color: #2563eb; font-weight: 700;">{{ row.activated|default:0 }}</td>
+                <td class="text-center font-mono" style="font-weight: 800;">{{ row.gross|default:0|floatformat:2|intcomma }} ل.س</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center" style="padding: 2rem;">📭 لا توجد بيانات تحليلية للفلاتر</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="5" class="text-right" style="font-weight: 800;">🔻 الإجمالي الكلي لقيمة الأكواد:</td>
+                <td class="text-center font-mono" style="font-weight: 900; font-size: 1rem; background: rgba(197, 160, 89, 0.1);">
+                    {{ total_filter_gross|default:0|floatformat:2|intcomma }} ل.س
+                </td>
+            </tr>
+        </tfoot>
+    </table>
+</div>
 
 <!-- 3. المدفوعات والاشتراكات (شبكة ثنائية) -->
-<div class="two-columns-grid">
+<div class="two-columns-grid avoid-break">
     <!-- الاشتراكات الحديثة -->
     <div>
         <div class="sub-section-title">
             👨‍🎓 أحدث الاشتراكات المسجلة
         </div>
-        <table class="table-compact">
-            <thead>
-                <tr>
-                    <th>الطالب / المستخدم</th>
-                    <th>الخطة</th>
-                    <th style="width: 70px;">الحالة</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for sub in subscriptions|slice:":15" %}
-                <tr>
-                    <td style="font-weight: 600;">{{ sub.user.get_full_name|default:sub.user.username|truncatechars:20 }}</td>
-                    <td style="font-size: 0.8rem;">{{ sub.plan.name|default:"—" }}</td>
-                    <td class="text-center">
-                        <span class="badge-status 
-                            {% if sub.status == 'active' %}status-active
-                            {% elif sub.status == 'pending' %}status-pending
-                            {% elif sub.status == 'expired' %}status-expired
-                            {% else %}status-pending{% endif %}">
-                            {{ sub.get_status_display|default:sub.status }}
-                        </span>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="3" class="text-center" style="padding: 1.5rem;">📭 لا توجد اشتراكات</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div style="overflow-x: auto;">
+            <table class="data-table table-compact">
+                <thead>
+                    <tr>
+                        <th>الطالب / المستخدم</th>
+                        <th>الخطة</th>
+                        <th style="width: 70px;" class="text-center">الحالة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sub in subscriptions|slice:":15" %}
+                    <tr>
+                        <td style="font-weight: 600;">{{ sub.user.get_full_name|default:sub.user.username|truncatechars:20 }}</td>
+                        <td style="font-size: 0.8rem;">{{ sub.plan.name|default:"—" }}</td>
+                        <td class="text-center">
+                            <span class="badge-status 
+                                {% if sub.status == 'active' %}status-active
+                                {% elif sub.status == 'pending' %}status-pending
+                                {% elif sub.status == 'expired' %}status-expired
+                                {% else %}status-pending{% endif %}">
+                                {{ sub.get_status_display|default:sub.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center" style="padding: 1.5rem;">📭 لا توجد اشتراكات</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- المدفوعات الرقمية الحديثة -->
@@ -247,28 +255,30 @@
         <div class="sub-section-title">
             💳 أحدث المدفوعات الرقمية (دولار أمريكي)
         </div>
-        <table class="table-compact">
-            <thead>
-                <tr>
-                    <th>الطالب</th>
-                    <th style="width: 90px;">المبلغ</th>
-                    <th>وسيلة الدفع</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in payments|slice:":15" %}
-                <tr>
-                    <td style="font-weight: 600;">{{ p.user.get_full_name|default:p.user.username|truncatechars:18 }}</td>
-                    <td class="font-mono" style="font-weight: 800; color: #059669; text-align: center;">
-                        {{ p.amount_dollars|floatformat:2|intcomma }} $
-                    </td>
-                    <td style="font-size: 0.75rem;">{{ p.provider|default:"—" }}</td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="3" class="text-center" style="padding: 1.5rem;">📭 لا توجد مدفوعات</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div style="overflow-x: auto;">
+            <table class="data-table table-compact">
+                <thead>
+                    <tr>
+                        <th>الطالب</th>
+                        <th style="width: 90px;" class="text-center">المبلغ</th>
+                        <th>وسيلة الدفع</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in payments|slice:":15" %}
+                    <tr>
+                        <td style="font-weight: 600;">{{ p.user.get_full_name|default:p.user.username|truncatechars:18 }}</td>
+                        <td class="font-mono" style="font-weight: 800; color: #059669; text-align: center;">
+                            {{ p.amount_dollars|floatformat:2|intcomma }} $
+                        </td>
+                        <td style="font-size: 0.75rem;">{{ p.provider|default:"—" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-center" style="padding: 1.5rem;">📭 لا توجد مدفوعات</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 

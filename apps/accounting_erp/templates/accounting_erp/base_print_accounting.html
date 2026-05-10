@@ -6,207 +6,307 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}تقرير محاسبي{% endblock %}</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+        /* =========================================================
+           1. CORE RESET & FONTS (Web Safe & Print Optimized)
+        ========================================================= */
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap');
+        
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         :root {
-            --primary: #1e293b;
-            --border: #e2e8f0;
+            --primary-dark: #0f172a;
+            --text-main: #1e293b;
             --text-muted: #64748b;
+            --border-color: #cbd5e1;
+            --bg-light: #f8fafc;
+            --accent: #2563eb;
         }
 
         body {
-            background-color: #f8fafc;
-            color: #0f172a;
-            font-family: 'Cairo', 'Inter', 'Segoe UI', sans-serif;
-            margin: 0;
-            padding: 25px;
+            font-family: 'Cairo', Arial, Helvetica, sans-serif;
+            color: var(--text-main);
+            background-color: #f1f5f9;
             font-size: 11pt;
-            line-height: 1.5;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            line-height: 1.6;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            text-rendering: optimizeLegibility;
         }
 
+        /* =========================================================
+           2. PRINT SPECIFIC RULES (@media print)
+        ========================================================= */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 1.5cm 1cm 1.5cm 1cm;
+            }
+
+            body {
+                background: #ffffff !important;
+                margin: 0;
+                padding: 0;
+            }
+
+            .page-wrapper {
+                margin: 0;
+                padding: 0;
+                box-shadow: none !important;
+                max-width: 100%;
+                border: none;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            /* Table rendering optimizations */
+            table {
+                page-break-inside: auto;
+            }
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+            thead {
+                display: table-header-group;
+            }
+            tfoot {
+                display: table-footer-group;
+            }
+
+            /* Avoid breaking components */
+            .box, .stat-card, .avoid-break {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+
+            /* Force black & white contrast if needed */
+            th {
+                background-color: #f1f5f9 !important;
+                color: #000000 !important;
+            }
+            
+            /* Print Header & Footer variables */
+            .print-header { position: fixed; top: 0; left: 0; right: 0; }
+            .print-footer { position: fixed; bottom: 0; left: 0; right: 0; }
+        }
+
+        /* =========================================================
+           3. SCREEN PREVIEW STYLES
+        ========================================================= */
         .page-wrapper {
-            max-width: 1000px;
-            margin: 20px auto;
-            padding: 30px;
-            background: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            max-width: 210mm; /* A4 Width */
+            min-height: 297mm; /* A4 Height */
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #ffffff;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
         }
 
-        /* Header Styling - Highly Formatted */
+        /* =========================================================
+           4. VISUAL HIERARCHY & LAYOUT (Grid/Flexbox)
+        ========================================================= */
         .report-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            border-bottom: 3px solid var(--primary);
-            padding-bottom: 15px;
-            margin-bottom: 25px;
+            align-items: flex-end;
+            border-bottom: 2px solid var(--primary-dark);
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .company-info h1 {
-            font-family: 'Amiri', serif;
-            margin: 0;
-            font-size: 24pt;
-            color: var(--primary);
+            font-size: 22pt;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin-bottom: 0.25rem;
         }
-        
+
         .company-info p {
-            margin: 4px 0;
-            color: var(--text-muted);
-            font-size: 9pt;
+            font-size: 10pt;
             font-weight: 600;
+            color: var(--text-muted);
         }
 
         .report-meta {
             text-align: left;
             font-size: 9pt;
-            font-weight: 600;
-            color: #444;
-            direction: ltr;
+            color: var(--text-main);
+            direction: rtl;
+        }
+
+        .report-meta div {
+            margin-bottom: 0.25rem;
         }
 
         .report-title-box {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: var(--bg-light);
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
         }
-        
+
         .report-title-box h2 {
             font-size: 18pt;
-            font-weight: 700;
-            margin: 0 0 5px 0;
+            font-weight: 800;
             color: #000;
+            margin-bottom: 0.5rem;
         }
 
         .report-title-box .subtitle {
             font-size: 11pt;
-            color: var(--text-muted);
             font-weight: 600;
+            color: var(--text-muted);
         }
 
-        /* Table Formatting */
-        table {
+        /* =========================================================
+           5. DATA TABLES (Professional Accounting Layout)
+        ========================================================= */
+        table.data-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
-            border: 1px solid #ccc;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
         }
 
-        th {
-            background-color: #f8fafc !important;
+        table.data-table th, table.data-table td {
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+
+        table.data-table th {
+            background-color: var(--bg-light);
             color: #000;
-            font-weight: 700;
+            font-weight: 800;
             font-size: 10pt;
-            padding: 10px 8px;
-            border: 1px solid #94a3b8;
-            text-align: center;
+            text-align: right;
         }
 
-        td {
-            padding: 8px;
-            border: 1px solid #e2e8f0;
+        table.data-table td {
             font-size: 10pt;
-            color: #1e293b;
-        }
-        
-        .font-mono {
-            font-family: 'Courier New', Courier, monospace;
-            font-weight: 700;
-            letter-spacing: 0.5px;
+            color: var(--text-main);
+            vertical-align: middle;
         }
 
-        .text-right { text-align: right; }
-        .text-left { text-align: left; }
-        .text-center { text-align: center; }
-        
-        tr:nth-child(even) { background-color: #fcfdfe; }
-        
-        tfoot td {
-            background-color: #f1f5f9 !important;
-            font-weight: 800 !important;
-            border-top: 2px solid var(--primary);
+        table.data-table tbody tr:nth-child(even) td {
+            background-color: #fdfdfd;
+        }
+
+        table.data-table tfoot td {
+            background-color: var(--bg-light);
+            font-weight: 800;
             font-size: 11pt;
             color: #000;
+            border-top: 2px solid var(--primary-dark);
+        }
+
+        /* Typography Utilities */
+        .text-center { text-align: center !important; }
+        .text-right { text-align: right !important; }
+        .text-left { text-align: left !important; }
+        
+        .font-mono {
+            font-family: Arial, Helvetica, monospace;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            direction: ltr;
+            display: inline-block;
         }
 
         .amount-col {
-            text-align: center;
+            text-align: left !important;
             white-space: nowrap;
         }
 
-        .level-1 { font-weight: 700; background-color: #f8fafc; }
-        .level-2 { padding-right: 20px; }
-        .level-3 { padding-right: 40px; color: #475569; }
-
-        /* Footer Signatures */
-        .signatures {
-            margin-top: 50px;
-            display: flex;
-            justify-content: space-between;
-            padding: 0 20px;
+        /* =========================================================
+           6. SIGNATURES & FOOTER
+        ========================================================= */
+        .signatures-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            margin-top: 3rem;
+            page-break-inside: avoid;
         }
-        
+
         .sig-box {
             text-align: center;
-            width: 200px;
-            font-size: 10pt;
-            font-weight: 700;
-        }
-        
-        .sig-line {
-            border-top: 1.5px solid #000;
-            margin-top: 40px;
-            padding-top: 5px;
         }
 
-        .print-btn-fixed {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            background: #0f172a;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-family: inherit;
+        .sig-line {
+            border-top: 1px solid #000;
+            margin-top: 4rem;
+            padding-top: 0.5rem;
             font-weight: 700;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            font-size: 10pt;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Print Actions Container (Screen Only) */
+        .print-actions {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
             z-index: 1000;
         }
 
-        @media print {
-            .page-wrapper {
-                margin: 0;
-                padding: 0;
-                box-shadow: none;
-                max-width: 100%;
-            }
-            body { padding: 15mm; }
-            .print-btn-fixed { display: none !important; }
-            @page {
-                margin: 10mm;
-                size: A4;
-            }
+        .btn-print-action {
+            background: var(--primary-dark);
+            color: #fff;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 11pt;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-print-action:hover {
+            opacity: 0.9;
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <button class="print-btn-fixed" onclick="window.print()">🖨️ طباعة الآن</button>
+    <!-- Floating Print Button (Screen Only) -->
+    <div class="print-actions no-print">
+        <button class="btn-print-action" onclick="window.print()">
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            طباعة التقرير
+        </button>
+    </div>
 
+    <!-- Main Report Container -->
     <div class="page-wrapper">
+        <!-- Standardized Print Header -->
         <header class="report-header">
             <div class="company-info">
                 <h1>أكاديمية المحترفين</h1>
                 <p>قسم المحاسبة والمالية - النظام الموحد</p>
             </div>
             <div class="report-meta">
-                <div>تاريخ الاستخراج: {{ now|date:"Y-m-d H:i" }}</div>
-                <div>بواسطة: {{ user.get_full_name|default:user.username }}</div>
+                <div><strong>تاريخ الاستخراج:</strong> {{ now|date:"Y-m-d H:i" }}</div>
+                <div><strong>بواسطة:</strong> {{ user.get_full_name|default:user.username }}</div>
             </div>
         </header>
 
+        <!-- Report Title Banner -->
         <div class="report-title-box">
             <h2>{% block report_name %}عنوان التقرير{% endblock %}</h2>
             <div class="subtitle">
@@ -214,16 +314,18 @@
             </div>
         </div>
 
+        <!-- Report Main Body -->
         <main>
             {% block report_body %}{% endblock %}
         </main>
 
-        <div class="signatures">
+        <!-- Dynamic Signatures Area -->
+        <div class="signatures-grid">
             <div class="sig-box">
-                <div class="sig-line">توقيع المحاسب</div>
+                <div class="sig-line">توقيع المحاسب / المدقق</div>
             </div>
             <div class="sig-box">
-                <div class="sig-line">مدير الإدارة المالية</div>
+                <div class="sig-line">إعتماد مدير الإدارة المالية</div>
             </div>
         </div>
     </div>

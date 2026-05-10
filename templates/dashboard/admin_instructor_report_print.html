@@ -1,29 +1,29 @@
-{% extends "dashboard/base_print_dashboard.html" %}
+{% extends "accounting_erp/base_print_accounting.html" %}
 {% load humanize inline_static %}
 
 {% block title %}تقرير المدرس: {{ instructor.get_full_name|default:instructor.username }}{% endblock %}
 
+{% block report_name %}التقرير المالي والتحليلي الشامل للمدرس{% endblock %}
+
 {% block extra_css %}
+{{ block.super }}
 <style>
-    @media print {
-        .page-breaker { page-break-before: always; margin-top: 2cm; }
-        table { font-size: 8.5pt; }
-    }
     .kpi-ribbon {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 15px;
         margin-bottom: 30px;
+        page-break-inside: avoid;
     }
     .kpi-box {
-        border: 1px solid var(--border-strong);
+        border: 1px solid var(--border-color);
         border-radius: 8px;
         padding: 15px;
         text-align: center;
-        background: #fbfcfd;
+        background: #ffffff;
     }
-    .kpi-lbl { font-size: 8.5pt; color: var(--text-muted); display: block; margin-bottom: 5px; font-weight: 700; }
-    .kpi-val { font-size: 16pt; font-weight: 900; color: #000; font-family: 'Cairo', sans-serif; }
+    .kpi-lbl { font-size: 9pt; color: var(--text-muted); display: block; margin-bottom: 5px; font-weight: 700; }
+    .kpi-val { font-size: 16pt; font-weight: 900; color: var(--text-primary); font-family: 'Inter', monospace; }
     
     .composite-grid {
         display: grid;
@@ -33,51 +33,49 @@
     }
     
     .course-block {
-        border: 2px solid #e2e8f0;
-        border-radius: 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
         padding: 20px;
         margin-bottom: 40px;
-        background: #fff;
+        background: #ffffff;
+        page-break-inside: avoid;
     }
     .course-block-head {
         display: flex;
         justify-content: space-between;
         align-items: flex-end;
-        border-bottom: 2px solid var(--brand-gold);
-        padding-bottom: 10px;
-        margin-bottom: 15px;
+        border-bottom: 2px solid var(--brand-color);
+        padding-bottom: 15px;
+        margin-bottom: 20px;
     }
-    .course-block-head h3 { font-size: 13pt; font-weight: 800; margin: 0; }
+    .course-block-head h3 { font-size: 14pt; font-weight: 800; margin: 0; color: var(--primary-color); }
     .course-mini-stats {
         display: flex;
         gap: 15px;
-        margin-bottom: 15px;
-        font-size: 9pt;
+        margin-bottom: 20px;
+        font-size: 10pt;
     }
     .course-mini-stat {
         background: #f8fafc;
-        padding: 6px 12px;
+        padding: 8px 15px;
         border-radius: 6px;
-        border: 1px solid #e2e8f0;
+        border: 1px solid var(--border-color);
+        font-weight: 600;
     }
     
     .sub-sect-title {
-        font-size: 10pt;
+        font-size: 11pt;
         font-weight: 800;
-        color: #1e293b;
-        margin: 15px 0 8px 0;
-        border-right: 3px solid #94a3b8;
-        padding-right: 8px;
+        color: var(--primary-color);
+        margin: 20px 0 15px 0;
+        border-right: 3px solid var(--brand-color);
+        padding-right: 10px;
     }
 </style>
 {% endblock %}
 
-{% block report_name %}التقرير المالي والتحليلي الشامل للمدرس{% endblock %}
-{% block report_subtitle %}مبيعات الدورات، تفعيلات الأكواد، وتوزيع الفروع الجغرافي{% endblock %}
-
-{% block extra_meta %}
-    <div>👨‍🏫 اسم المدرس: <strong>{{ instructor.get_full_name|default:instructor.username }}</strong></div>
-    <div>📧 البريد: {{ instructor.email|default:"--" }}</div>
+{% block report_date %}
+    تاريخ التقرير: {% now "Y/m/d" %}
 {% endblock %}
 
 {% block report_body %}
@@ -87,17 +85,17 @@
         <span class="kpi-lbl">إجمالي الأكواد المُخصصة</span>
         <div class="kpi-val">{{ total_codes }}</div>
     </div>
-    <div class="kpi-box">
+    <div class="kpi-box" style="border-color: var(--brand-color);">
         <span class="kpi-lbl">إجمالي المباع</span>
-        <div class="kpi-val" style="color: #c5a059;">{{ total_sold }}</div>
+        <div class="kpi-val" style="color: var(--brand-color);">{{ total_sold }}</div>
     </div>
-    <div class="kpi-box">
-        <span class="kpi-lbl">الأكواد النشطة (المفعلة)</span>
+    <div class="kpi-box" style="border-color: #16a34a; background: #f0fdf4;">
+        <span class="kpi-lbl" style="color: #16a34a;">الأكواد النشطة (المفعلة)</span>
         <div class="kpi-val" style="color: #16a34a;">{{ total_activated }}</div>
     </div>
-    <div class="kpi-box" style="border-color: #000; background: #f8fafc;">
+    <div class="kpi-box" style="border-color: var(--primary-color); background: #f8fafc;">
         <span class="kpi-lbl">صافي المبيعات الإجمالي</span>
-        <div class="kpi-val font-mono" style="font-size: 13pt;">{{ total_gross|currency_format }} ل.س</div>
+        <div class="kpi-val" style="font-size: 14pt;">{{ total_gross|currency_format }} ل.س</div>
     </div>
 </div>
 
@@ -105,55 +103,57 @@
     <!-- Table 1: Courses Overview -->
     <div>
         <h3 class="section-title">📊 ملخص أداء الدورات التعليمية</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>اسم الدورة</th>
-                    <th style="width: 70px;">الأكواد</th>
-                    <th style="width: 70px;">المباعة</th>
-                    <th style="width: 70px;">المفعلة</th>
-                    <th class="text-right">الإيراد (ل.س)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for data in course_data %}
-                <tr>
-                    <td style="font-weight: 700;">{{ data.course.title }}</td>
-                    <td class="text-center font-mono">{{ data.cnt_all }}</td>
-                    <td class="text-center font-mono" style="color: #c5a059;">{{ data.cnt_sold }}</td>
-                    <td class="text-center font-mono" style="color: #16a34a; font-weight: 800;">{{ data.cnt_active }}</td>
-                    <td class="text-right font-mono">{{ data.sum_gross|currency_format }}</td>
-                </tr>
-                {% empty %}
-                <tr><td colspan="5" class="text-center">لا توجد بيانات متاحة</td></tr>
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td><strong>المجموع النهائي</strong></td>
-                    <td class="text-center font-mono">{{ total_codes }}</td>
-                    <td class="text-center font-mono">{{ total_sold }}</td>
-                    <td class="text-center font-mono">{{ total_activated }}</td>
-                    <td class="text-right font-mono">{{ total_gross|currency_format }}</td>
-                </tr>
-            </tfoot>
-        </table>
+        <div style="overflow-x: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>اسم الدورة</th>
+                        <th style="width: 70px;" class="text-center">الأكواد</th>
+                        <th style="width: 70px;" class="text-center">المباعة</th>
+                        <th style="width: 70px;" class="text-center">المفعلة</th>
+                        <th class="text-center">الإيراد (ل.س)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in course_data %}
+                    <tr>
+                        <td style="font-weight: 700;">{{ data.course.title }}</td>
+                        <td class="text-center font-mono">{{ data.cnt_all }}</td>
+                        <td class="text-center font-mono" style="color: var(--brand-color);">{{ data.cnt_sold }}</td>
+                        <td class="text-center font-mono" style="color: #166534; font-weight: 800;">{{ data.cnt_active }}</td>
+                        <td class="text-center font-mono" style="font-weight: 700;">{{ data.sum_gross|currency_format }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center">لا توجد بيانات متاحة</td></tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td class="text-right" style="font-weight: 800;">المجموع النهائي</td>
+                        <td class="text-center font-mono" style="font-weight: 900;">{{ total_codes }}</td>
+                        <td class="text-center font-mono" style="font-weight: 900;">{{ total_sold }}</td>
+                        <td class="text-center font-mono" style="font-weight: 900;">{{ total_activated }}</td>
+                        <td class="text-center font-mono" style="font-weight: 900;">{{ total_gross|currency_format }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
     </div>
 
     <!-- Table 2: Sales Centers Overview -->
     <div>
         <h3 class="section-title">🏪 مبيعات مراكز البيع</h3>
-        <table>
+        <table class="data-table">
             <thead>
                 <tr>
                     <th>المركز</th>
-                    <th style="width: 60px;">المباع</th>
+                    <th style="width: 60px;" class="text-center">المباع</th>
                 </tr>
             </thead>
             <tbody>
                 {% for center in centers_sales|slice:":10" %}
                 <tr>
-                    <td style="font-size: 8.5pt;">{{ center.sales_center__name|default:"مباشر" }}</td>
+                    <td style="font-size: 9pt;">{{ center.sales_center__name|default:"مباشر" }}</td>
                     <td class="text-center font-mono">{{ center.sold_count }}</td>
                 </tr>
                 {% empty %}
@@ -162,18 +162,18 @@
             </tbody>
         </table>
         
-        <h3 class="section-title" style="margin-top: 20px;">📍 التوزيع الجغرافي</h3>
-        <table>
+        <h3 class="section-title" style="margin-top: 25px;">📍 التوزيع الجغرافي</h3>
+        <table class="data-table">
             <thead>
                 <tr>
                     <th>المحافظة</th>
-                    <th style="width: 60px;">الطلاب</th>
+                    <th style="width: 60px;" class="text-center">الطلاب</th>
                 </tr>
             </thead>
             <tbody>
                 {% for row in governorate_sales|slice:":5" %}
                 <tr>
-                    <td style="font-size: 8.5pt;">{{ row.user__student_profile__governorate|default:"غير محدد" }}</td>
+                    <td style="font-size: 9pt;">{{ row.user__student_profile__governorate|default:"غير محدد" }}</td>
                     <td class="text-center font-mono" style="font-weight: 800;">{{ row.activated_count }}</td>
                 </tr>
                 {% empty %}
@@ -184,85 +184,87 @@
     </div>
 </div>
 
-<div class="page-breaker"></div>
+<div class="page-break"></div>
 
-<h2 class="section-title" style="border-bottom: 2px solid #000; padding-bottom: 10px;">🔍 تفصيل حركات الأكواد والطلاب حسب الدورة</h2>
+<h2 class="section-title" style="border-bottom: 2px solid var(--border-color); padding-bottom: 15px; margin-top: 20px;">🔍 تفصيل حركات الأكواد والطلاب حسب الدورة</h2>
 
 {% for data in course_data %}
-<div class="course-block {% if not forloop.first %}page-breaker{% endif %}">
+<div class="course-block">
     <div class="course-block-head">
         <div>
             <h3>{{ data.course.title }}</h3>
-            <small style="color: #64748b;">{{ data.course.get_kind_display }} / {{ data.course.get_academic_track_display }}</small>
+            <small style="color: var(--text-muted); font-size: 10pt;">{{ data.course.get_kind_display }} / {{ data.course.get_academic_track_display }}</small>
         </div>
-        <div class="font-mono" style="font-weight: 800; font-size: 11pt; color: #c5a059;">
+        <div class="font-mono" style="font-weight: 800; font-size: 12pt; color: var(--primary-color);">
             إجمالي: {{ data.sum_gross|currency_format }} ل.س
         </div>
     </div>
     
     <div class="course-mini-stats">
         <div class="course-mini-stat">الأكواد: <strong>{{ data.cnt_all }}</strong></div>
-        <div class="course-mini-stat">مباع: <strong style="color:#c5a059;">{{ data.cnt_sold }}</strong></div>
-        <div class="course-mini-stat">مفعل: <strong style="color:#16a34a;">{{ data.cnt_active }}</strong></div>
+        <div class="course-mini-stat">مباع: <strong style="color:var(--brand-color);">{{ data.cnt_sold }}</strong></div>
+        <div class="course-mini-stat">مفعل: <strong style="color:#166534;">{{ data.cnt_active }}</strong></div>
     </div>
     
     <div class="sub-sect-title">سجل الطلاب والأكواد التفصيلي لهذه الدورة</div>
-    <table style="margin-bottom: 0;">
-        <thead>
-            <tr>
-                <th style="width: 100px;">الكود</th>
-                <th>اسم الطالب / الحساب</th>
-                <th>رقم الهاتف</th>
-                <th style="width: 100px;">تاريخ البيع</th>
-                <th style="width: 50px;">مفعل</th>
-                <th>المصدر</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for code in data.codes %}
-            <tr>
-                <td class="font-mono" style="font-size: 7.5pt;">{{ code.code }}</td>
-                <td>
-                    <strong>
-                        {% if code.assigned_student_name %}
-                            {{ code.assigned_student_name }}
+    <div style="overflow-x: auto;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 100px;">الكود</th>
+                    <th>اسم الطالب / الحساب</th>
+                    <th>رقم الهاتف</th>
+                    <th style="width: 100px;" class="text-center">تاريخ البيع</th>
+                    <th style="width: 50px;" class="text-center">مفعل</th>
+                    <th>المصدر</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for code in data.codes %}
+                <tr>
+                    <td class="font-mono text-center" style="font-size: 8.5pt;">{{ code.code }}</td>
+                    <td>
+                        <strong>
+                            {% if code.assigned_student_name %}
+                                {{ code.assigned_student_name }}
+                            {% elif code.grants.all.first %}
+                                {{ code.grants.all.first.user.get_full_name|default:code.grants.all.first.user.username }}
+                            {% else %}
+                                --
+                            {% endif %}
+                        </strong>
+                    </td>
+                    <td class="font-mono text-center" style="font-size: 9pt;">
+                        {% if code.assigned_student_phone %}
+                            {{ code.assigned_student_phone }}
                         {% elif code.grants.all.first %}
-                            {{ code.grants.all.first.user.get_full_name|default:code.grants.all.first.user.username }}
+                            {{ code.grants.all.first.user.student_profile.phone|default:"--" }}
                         {% else %}
                             --
                         {% endif %}
-                    </strong>
-                </td>
-                <td class="font-mono" style="font-size: 8pt;">
-                    {% if code.assigned_student_phone %}
-                        {{ code.assigned_student_phone }}
-                    {% elif code.grants.all.first %}
-                        {{ code.grants.all.first.user.student_profile.phone|default:"--" }}
-                    {% else %}
-                        --
-                    {% endif %}
-                </td>
-                <td class="text-center font-mono" style="font-size: 7.5pt;">
-                    {% if code.sold_at %}
-                        {{ code.sold_at|date:"Y/m/d" }}
-                    {% else %}
-                        --
-                    {% endif %}
-                </td>
-                <td class="text-center">
-                    {% if code.redeemed_count > 0 %}
-                        <span style="color: #16a34a; font-weight: 900;">✅</span>
-                    {% else %}
-                        <span style="color: #cbd5e1;">❌</span>
-                    {% endif %}
-                </td>
-                <td style="font-size: 7.5pt; color: #64748b;">{{ code.sales_center.name|default:"مباشر" }}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="6" class="text-center">لا توجد أكواد مسجلة.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                    </td>
+                    <td class="text-center font-mono" style="font-size: 8.5pt;">
+                        {% if code.sold_at %}
+                            {{ code.sold_at|date:"Y/m/d" }}
+                        {% else %}
+                            --
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if code.redeemed_count > 0 %}
+                            <span style="color: #166534; font-weight: 900;">✅</span>
+                        {% else %}
+                            <span style="color: var(--text-muted);">❌</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size: 8.5pt; color: var(--text-muted);">{{ code.sales_center.name|default:"مباشر" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center">لا توجد أكواد مسجلة.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endfor %}
 
