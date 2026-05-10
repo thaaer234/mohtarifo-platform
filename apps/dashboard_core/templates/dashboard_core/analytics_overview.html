@@ -85,15 +85,16 @@
             </div>
             
             <div class="flex gap-3">
-                <button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm font-semibold hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors shadow-sm">
+                <a href="/finance-exports/test/excel/" class="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white border border-emerald-600 rounded-lg text-sm font-bold hover:bg-emerald-600 transition-colors shadow-sm">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                    تصدير Excel
+                </a>
+                <a href="/finance-exports/test/pdf/" class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm font-semibold hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors shadow-sm">
                     <i data-lucide="download" class="w-4 h-4"></i>
-                    تصدير PDF
-                </button>
-                <button class="flex items-center gap-2 px-4 py-2 bg-brand-gold text-black font-bold rounded-lg text-sm shadow-lg shadow-brand-gold/20 hover:brightness-110 transition-all">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                    تحديث يدوي
-                </button>
+                    كشف PDF
+                </a>
             </div>
+
         </header>
 
         <!-- KPI Grid -->
@@ -155,6 +156,42 @@
                 </div>
             </div>
         </div>
+
+        <!-- SYSTEM NAVIGATION GATEWAYS (CONNECTING ISOLATED MODULES) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            
+            <!-- Hub Link (Active) -->
+            <a href="/finance-analytics-hub/" class="glass-card p-4 flex items-center gap-4 bg-white dark:bg-neutral-900/50 border-2 border-brand-gold/50 relative shadow-lg">
+                <div class="p-3 bg-brand-gold/10 text-brand-gold rounded-lg"><i data-lucide="layout-grid" class="w-6 h-6"></i></div>
+                <div>
+                    <div class="font-bold text-neutral-900 dark:text-white text-lg">الاستخبارات الرئيسية</div>
+                    <div class="text-xs text-neutral-500">المركز التحليلي العام</div>
+                </div>
+                <div class="absolute top-2 left-2 text-[10px] bg-brand-gold text-black font-bold px-2 py-0.5 rounded">نشط حالياً</div>
+            </a>
+
+            <!-- Operations & Currency Link -->
+            <a href="/ops-intelligence/dashboard/" class="glass-card p-4 flex items-center gap-4 bg-white dark:bg-neutral-900/20 hover:bg-emerald-50 dark:hover:bg-emerald-900/10 hover:border-emerald-500/50 shadow-sm group">
+                <div class="p-3 bg-emerald-100 dark:bg-emerald-900/20 text-emerald-600 rounded-lg group-hover:scale-110 transition-transform"><i data-lucide="activity" class="w-6 h-6"></i></div>
+                <div>
+                    <div class="font-bold text-neutral-900 dark:text-white text-lg group-hover:text-emerald-500 transition-colors">رادار العمليات والصرف</div>
+                    <div class="text-xs text-neutral-500">سعر الدولار، رواتب، ومعدل الحرق</div>
+                </div>
+                <div class="mr-auto text-neutral-300 group-hover:text-emerald-500 transition-colors"><i data-lucide="chevron-left"></i></div>
+            </a>
+
+            <!-- Bunny.net Costs Link -->
+            <a href="/infra-bunny-analytics/control-room/" class="glass-card p-4 flex items-center gap-4 bg-white dark:bg-neutral-900/20 hover:bg-amber-50 dark:hover:bg-amber-900/10 hover:border-amber-500/50 shadow-sm group">
+                <div class="p-3 bg-amber-100 dark:bg-amber-900/20 text-amber-600 rounded-lg group-hover:scale-110 transition-transform"><i data-lucide="play-square" class="w-6 h-6"></i></div>
+                <div>
+                    <div class="font-bold text-neutral-900 dark:text-white text-lg group-hover:text-amber-600 transition-colors">محلل تكاليف الفيديو</div>
+                    <div class="text-xs text-neutral-500">تكاليف Bunny.net واستهلاك الباندويث</div>
+                </div>
+                <div class="mr-auto text-neutral-300 group-hover:text-amber-500 transition-colors"><i data-lucide="chevron-left"></i></div>
+            </a>
+
+        </div>
+
 
         <!-- Main Charts Section -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
