@@ -1,5 +1,5 @@
 from django.db.models import Q, Sum
-from billing.models import Payment, Subscription, CoursePurchase
+from billing.models import Payment, Subscription, CoursePurchase, AccessCode
 
 class LegacyPaymentSelector:
     """
@@ -26,6 +26,15 @@ class LegacyPaymentSelector:
         ).aggregate(total=Sum('amount_cents'))
         
         return result.get('total') or 0
+
+    @staticmethod
+    def get_access_code_sales_range(start_date, end_date):
+        """Extracts finalized offline voucher instrument transactions."""
+        return AccessCode.objects.filter(
+            sale_status='sold',
+            sold_at__gte=start_date,
+            sold_at__lte=end_date
+        ).select_related('sold_by', 'course', 'package')
 
 class LegacySubscriptionSelector:
     """Adaptation interface for core subscription schema analytics."""

@@ -17,14 +17,22 @@ class AdminDashboardFinanceView(LoginRequiredMixin, UserPassesTestMixin, Templat
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Retrieve core headline KPIs
+        # 1. Real-time Cashbox and FX Evaluation
+        from apps.financial_conversion.services.cashbox_engine import CashboxAnalyticsEngine
+        try:
+             cash_data = CashboxAnalyticsEngine.calculate_composited_summary()
+             context['cashbox'] = cash_data
+        except Exception:
+             context['cashbox'] = None
+
+        # 2. Retrieve core headline KPIs
         try:
             total_rev = KPIRecord.objects.filter(kpi_key='TOTAL_GROSS').first()
             arpu = KPIRecord.objects.filter(kpi_key='ARPU').first()
             last_rr = RecurringRevenueMetric.objects.first()
             
             context['headline_stats'] = {
-                'total_gross': total_rev.value if total_rev else 0,
+                'total_gross': cash_data['composite_totals']['all_usd'] if context.get('cashbox') else (total_rev.value if total_rev else 0),
                 'arpu': arpu.value if arpu else 0,
                 'mrr': (last_rr.mrr_cents / 100.0) if last_rr else 0,
                 'arr': (last_rr.arr_cents / 100.0) if last_rr else 0

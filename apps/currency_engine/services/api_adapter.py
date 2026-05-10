@@ -1,7 +1,10 @@
 import requests
 import decimal
 from django.utils import timezone
+from django.core.cache import cache
 from ..models import ExchangeProvider, ExchangeRate
+
+CACHE_TIMEOUT = 900 # 15 mins cache duration
 
 class BaseExchangeAdapter:
     """ Blueprint for secondary market data ingestion APIs."""
@@ -31,7 +34,13 @@ class CurrencyServiceOrchestrator:
     
     @classmethod
     def update_latest_rate(cls, base='USD', quote='SYP'):
-        """ Main logical handler iterating configured enabled feeds."""
+        """ Main logical handler iterating configured enabled feeds with Cache Interception."""
+        cache_key = f"fx_rate_{base}_{quote}"
+        cached_val = cache.get(cache_key)
+        if cached_val:
+            # Serve immediately if available in Redis
+            return cached_val
+            
         active_providers = ExchangeProvider.objects.filter(is_enabled=True).order_by('priority')
         
         for p in active_providers:
@@ -46,9 +55,17 @@ class CurrencyServiceOrchestrator:
                         rate=val,
                         provider=p
                     )
+                    # Warm the cache for next hits
+                    cache.set(cache_key, rate_obj, CACHE_TIMEOUT)
                     return rate_obj
                     
-        # If all fail, simply return latest from static history or manual override
-        return ExchangeRate.objects.filter(
+        # Fallback retrieval loop
+        fallback_rate = ExchangeRate.objects.filter(
             base_currency=base, quote_currency=quote
         ).order_by('-valid_from').first()
+        
+        if fallback_rate:
+            cache.set(cache_key, fallback_rate, 60) # shorter cache for fallback
+            
+        return fallback_rate
+

@@ -36,3 +36,40 @@ class FinancialLedgerViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, v
     permission_classes = [IsAdminUser]
     ordering_fields = ['created_at', 'amount_cents']
     search_fields = ['description', 'external_reference_id', 'user__username']
+
+
+class FinancialOperationsViewSet(viewsets.ViewSet):
+    """
+    Command and control triggers delivering operational orchestration APIs.
+    """
+    permission_classes = [IsAdminUser]
+    
+    @action(detail=False, methods=['post'], url_path='trigger-sync')
+    def trigger_sync(self, request):
+        """ Forces an on-demand pull from legacy data repositories."""
+        from apps.financial_system.services.etl import LedgerSyncService
+        count = LedgerSyncService.sync_missing_payments(lookback_days=30)
+        return Response({
+            "status": "success",
+            "message": f"Synchronized {count} legacy transactions into the isolated ledger.",
+            "synced_count": count
+        })
+        
+    @action(detail=False, methods=['get'], url_path='cashbox-liquidity')
+    def cashbox_liquidity(self, request):
+        """ Evaluates enterprise-wide reserves against current live pricing."""
+        from apps.financial_conversion.services.cashbox_engine import CashboxAnalyticsEngine
+        payload = CashboxAnalyticsEngine.calculate_composited_summary()
+        return Response(payload)
+
+    @action(detail=False, methods=['get'], url_path='live-fx-rate')
+    def live_fx_rate(self, request):
+        """ Reads current dynamic currency index via cache-interception."""
+        from apps.currency_engine.services.api_adapter import CurrencyServiceOrchestrator
+        rate_obj = CurrencyServiceOrchestrator.update_latest_rate('USD', 'SYP')
+        return Response({
+            "base": "USD", "quote": "SYP",
+            "rate": str(rate_obj.rate) if rate_obj else "N/A",
+            "timestamp": rate_obj.valid_from if rate_obj else None
+        })
+

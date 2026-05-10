@@ -23,8 +23,8 @@ class LedgerSyncService:
         synced_count = 0
         
         with transaction.atomic():
+            # A. Digital Wire Ingest
             for payment in legacy_payments:
-                # Skip if already exists to ensure immutability and idempotence
                 exists = FinancialLedger.objects.filter(
                     external_reference_id=str(payment.id),
                     external_source='billing.Payment'
@@ -38,8 +38,35 @@ class LedgerSyncService:
                         external_reference_id=str(payment.id),
                         external_source='billing.Payment',
                         user=payment.user,
-                        description=f"Payment Sync Ref: {payment.provider_payment_id}",
+                        description=f"Digital Payment: {payment.provider_payment_id or payment.id}",
                         created_at=payment.created_at
+                    )
+                    synced_count += 1
+
+            # B. Access Code Sale Ingest
+            legacy_codes = LegacyPaymentSelector.get_access_code_sales_range(start, now)
+            for code in legacy_codes:
+                exists = FinancialLedger.objects.filter(
+                    external_reference_id=str(code.id),
+                    external_source='billing.AccessCode'
+                ).exists()
+                
+                if not exists:
+                    # Fallback fallback price detection logic mirrored from core
+                    amt = code.sold_price_cents
+                    if amt is None:
+                         if code.course: amt = code.course.price_cents
+                         elif code.package: amt = code.package.price_cents
+                         
+                    FinancialLedger.objects.create(
+                        entry_type='revenue',
+                        amount_cents=amt or 0,
+                        currency='SYP', # Access codes natively priced in SYP generally in system
+                        external_reference_id=str(code.id),
+                        external_source='billing.AccessCode',
+                        user=code.sold_by, # Attributing to operator who registered sale
+                        description=f"Access Code Sold: {code.code}",
+                        created_at=code.sold_at or code.created_at
                     )
                     synced_count += 1
                     
