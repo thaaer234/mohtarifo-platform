@@ -42,8 +42,9 @@
                     <option value="">🔍 كافة الفروع والمراكز</option>
                     {% for cc in cost_centers %}
                     <option value="{{ cc.id }}" {% if selected_cc == cc.id|stringformat:"s" %}selected{% endif %}>
-                        📍 {{ cc.get_type_display }}: {{ cc.name }}
+                        📍 {{ cc.name }}
                     </option>
+
                     {% endfor %}
                 </select>
             </form>

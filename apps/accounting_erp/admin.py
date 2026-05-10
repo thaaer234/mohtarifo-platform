@@ -42,9 +42,9 @@ class AccountAdmin(admin.ModelAdmin):
 
 @admin.register(CostCenter)
 class CostCenterAdmin(admin.ModelAdmin):
-    list_display = ('name', 'center_type', 'created_at')
-    list_filter = ('center_type',)
-    search_fields = ('name',)
+    list_display = ('code', 'name')
+    search_fields = ('code', 'name')
+
 
 @admin.register(JournalEntry)
 class JournalEntryAdmin(admin.ModelAdmin):
