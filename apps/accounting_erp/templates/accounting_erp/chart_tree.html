@@ -2,84 +2,166 @@
 {% load static humanize %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8" dir="rtl">
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
-            <h1 class="text-3xl font-extrabold tracking-tight text-neutral-900 dark:text-white flex items-center gap-3">
-                <span class="bg-amber-500/10 text-amber-600 p-2 rounded-xl">
-                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                </span>
-                شجرة الحسابات (Chart of Accounts)
-            </h1>
-            <p class="text-neutral-500 dark:text-neutral-400 mt-2 text-base">الهيكل المحاسبي الموحد للمنصة التعليمية</p>
-        </div>
-        <div class="flex gap-3 flex-wrap">
-             <a href="{% url 'accounting_erp:income_statement' %}" class="bg-emerald-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm hover:bg-emerald-700 transition">
-                 📈 قائمة الدخل
-             </a>
-             <a href="{% url 'accounting_erp:journal_list' %}" class="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm hover:bg-blue-700 transition">
-                 📒 القيود اليومية
-             </a>
-             <a href="{% url 'accounting_erp:trial_balance' %}" class="bg-neutral-900 dark:bg-neutral-800 text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm hover:bg-neutral-800 dark:hover:bg-neutral-700 transition">
-                 📑 ميزان المراجعة
-             </a>
-        </div>
+<style>
+    .glass-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(0,0,0,0.06);
+        box-shadow: 0 8px 30px -5px rgba(0, 0, 0, 0.05);
+    }
+    [data-theme='dark'] .glass-card {
+        background: rgba(23, 23, 23, 0.8);
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 8px 30px -5px rgba(0, 0, 0, 0.3);
+    }
+    .tree-item {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .tree-item:hover {
+        transform: translateX(-4px);
+        background-color: rgba(0,0,0,0.02);
+    }
+    [data-theme='dark'] .tree-item:hover {
+        background-color: rgba(255,255,255,0.03);
+    }
+    .cat-dot {
+        width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+    }
+    .dot-asset { background: #10B981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.5); }
+    .dot-liability { background: #F59E0B; box-shadow: 0 0 8px rgba(245, 158, 11, 0.5); }
+    .dot-equity { background: #8B5CF6; box-shadow: 0 0 8px rgba(139, 92, 246, 0.5); }
+    .dot-revenue { background: #3B82F6; box-shadow: 0 0 8px rgba(59, 130, 246, 0.5); }
+    .dot-expense { background: #EF4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.5); }
+</style>
 
-        <div class="flex gap-3 flex-wrap mt-4 md:mt-0 md:mr-auto">
-             <button onclick="window.print()" class="border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 px-4 py-2 rounded-lg font-bold shadow-sm hover:bg-neutral-50 flex items-center gap-2 print:hidden">
-                 🖨️ طباعة
+<div class="container mx-auto px-4 py-10 max-w-7xl" dir="rtl">
+    
+    <!-- Top Utility Header -->
+    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 mb-10 border-b border-neutral-200/60 dark:border-neutral-800 pb-8">
+        <div>
+            <div class="inline-flex items-center gap-2 bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-3 py-1.5 rounded-full text-sm font-bold mb-4 border border-amber-200/50 dark:border-amber-700/30">
+                <span class="relative flex h-3 w-3">
+                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                </span>
+                نظام ERP نشط
+            </div>
+            <h1 class="text-4xl font-black tracking-tight text-neutral-900 dark:text-white flex items-center gap-3">
+                شجرة الحسابات الرسمية
+            </h1>
+            <p class="text-neutral-500 dark:text-neutral-400 mt-2 text-lg leading-relaxed max-w-2xl">
+                الهيكل الهرمي الشامل لكافة الحسابات المالية للمنصة التعليمية وفق المعايير الدولية.
+            </p>
+        </div>
+        
+        <!-- Tools Cluster -->
+        <div class="flex flex-wrap gap-3 justify-end w-full lg:w-auto print:hidden">
+             <button onclick="window.print()" class="group flex items-center gap-2 bg-white hover:bg-neutral-50 dark:bg-neutral-900 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 px-5 py-3 rounded-xl font-bold border border-neutral-200 dark:border-neutral-700 shadow-sm transition-all">
+                 <svg class="w-5 h-5 group-hover:scale-110 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                 طباعة الهيكل
              </button>
-             <a href="{% url 'accounting_erp:export_excel' 'chart' %}" class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-4 py-2 rounded-lg font-bold shadow-sm hover:bg-emerald-200 flex items-center gap-2 print:hidden">
-                 📥 تصدير إكسل
+             <a href="{% url 'accounting_erp:export_excel' 'chart' %}" class="group flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-5 py-3 rounded-xl font-bold border border-emerald-200 shadow-sm transition-all">
+                 <svg class="w-5 h-5 group-hover:translate-y-0.5 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                 إكسل (Excel)
              </a>
         </div>
     </div>
 
+    <!-- Core Actions Navigation Strip -->
+    <div class="flex flex-wrap gap-3 mb-8 print:hidden">
+         <a href="{% url 'accounting_erp:income_statement' %}" class="glass-card group px-6 py-4 rounded-2xl flex items-center gap-4 hover:-translate-y-1 transition-all flex-1 min-w-[250px]">
+             <div class="bg-emerald-500/10 text-emerald-600 p-3 rounded-xl group-hover:bg-emerald-500 group-hover:text-white transition">
+                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+             </div>
+             <div>
+                 <h4 class="font-black text-lg text-neutral-900 dark:text-white">قائمة الدخل</h4>
+                 <p class="text-sm text-neutral-500 dark:text-neutral-400">الأرباح والخسائر اللحظية</p>
+             </div>
+         </a>
+         <a href="{% url 'accounting_erp:journal_list' %}" class="glass-card group px-6 py-4 rounded-2xl flex items-center gap-4 hover:-translate-y-1 transition-all flex-1 min-w-[250px]">
+             <div class="bg-blue-500/10 text-blue-600 p-3 rounded-xl group-hover:bg-blue-500 group-hover:text-white transition">
+                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+             </div>
+             <div>
+                 <h4 class="font-black text-lg text-neutral-900 dark:text-white">دفتر القيود</h4>
+                 <p class="text-sm text-neutral-500 dark:text-neutral-400">التدفق الزمني للعمليات</p>
+             </div>
+         </a>
+         <a href="{% url 'accounting_erp:trial_balance' %}" class="glass-card group px-6 py-4 rounded-2xl flex items-center gap-4 hover:-translate-y-1 transition-all flex-1 min-w-[250px]">
+             <div class="bg-indigo-500/10 text-indigo-600 p-3 rounded-xl group-hover:bg-indigo-500 group-hover:text-white transition">
+                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+             </div>
+             <div>
+                 <h4 class="font-black text-lg text-neutral-900 dark:text-white">ميزان المراجعة</h4>
+                 <p class="text-sm text-neutral-500 dark:text-neutral-400">توازن الحسابات الختامي</p>
+             </div>
+         </a>
+    </div>
 
-    <!-- Tree Card -->
-    <div class="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-xl shadow-neutral-900/5 overflow-hidden">
-        <div class="px-6 py-4 bg-neutral-50 dark:bg-neutral-900/50 border-b border-neutral-200 dark:border-neutral-800 flex justify-between items-center">
-            <span class="font-bold text-neutral-800 dark:text-white">الدليل المحاسبي الرسمي</span>
-            <span class="text-xs px-2.5 py-1 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 rounded-full font-medium">مفعل</span>
+    <!-- The Main Tree Card -->
+    <div class="glass-card rounded-3xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+        <!-- Table Header Header Sticky -->
+        <div class="px-8 py-5 bg-neutral-50/80 dark:bg-neutral-800/80 border-b border-neutral-200 dark:border-neutral-700 flex justify-between items-center sticky top-0 z-10 backdrop-blur-md">
+            <h3 class="font-black text-neutral-800 dark:text-white tracking-wide">توزيع الدليل المحاسبي</h3>
+            <div class="flex items-center gap-4 text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                <div class="flex items-center gap-1.5"><span class="cat-dot dot-asset"></span> أصول</div>
+                <div class="flex items-center gap-1.5"><span class="cat-dot dot-revenue"></span> إيرادات</div>
+                <div class="flex items-center gap-1.5"><span class="cat-dot dot-expense"></span> مصاريف</div>
+            </div>
         </div>
         
-        <div class="p-6">
-            <div class="space-y-2">
+        <div class="p-6 md:p-8 bg-white dark:bg-transparent">
+            <div class="space-y-1.5">
                 {% for acc in accounts %}
-                <div class="flex items-center justify-between p-3 rounded-xl border border-transparent hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all {% if acc.is_group %}font-bold bg-neutral-50/50 dark:bg-neutral-800/30{% endif %}" 
-                     style="margin-right: {{ acc.code|length|add:"-1"|add:"-1" }}rem;">
+                <div class="tree-item flex items-center justify-between p-4 rounded-xl border border-transparent hover:border-neutral-200 dark:hover:border-neutral-800 {% if acc.is_group %}bg-neutral-50/50 dark:bg-neutral-800/20 font-bold border-neutral-100 dark:border-neutral-800/50{% endif %}" 
+                     style="margin-right: {{ acc.code|length|add:"-1"|add:"-1"|add:"-1" }}rem;">
                     
                     <div class="flex items-center gap-4">
-                        <span class="font-mono bg-neutral-200 dark:bg-neutral-700 text-neutral-700 dark:text-neutral-300 px-3 py-1 rounded-md text-sm min-w-[60px] text-center">
+                        <!-- Connector line indicator for nested items -->
+                        {% if acc.code|length > 1 %}
+                        <div class="w-4 h-px bg-neutral-300 dark:bg-neutral-700 relative -right-2"></div>
+                        {% endif %}
+
+                        <!-- Ledger Code Badge -->
+                        <span class="font-mono text-sm px-3 py-1.5 rounded-lg tracking-wider min-w-[65px] text-center
+                            {% if acc.is_group %}bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-md{% else %}bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300 border border-neutral-200/50 dark:border-neutral-700/50{% endif %}">
                             {{ acc.code }}
                         </span>
-                        <span class="text-neutral-900 dark:text-white text-lg">
-                            {% if acc.is_group %}
-                                📁 {{ acc.name }}
-                            {% else %}
-                                📄 {{ acc.name }}
-                            {% endif %}
-                        </span>
+
+                        <!-- Name & Category Indicator -->
+                        <div class="flex items-center gap-3">
+                            <span class="{% if acc.is_group %}text-xl font-black text-neutral-900 dark:text-white{% else %}text-lg text-neutral-700 dark:text-neutral-300{% endif %}">
+                                {% if acc.is_group %}📁{% else %}📄{% endif %} {{ acc.name }}
+                            </span>
+                            <span class="cat-dot 
+                                {% if acc.category == 'asset' %}dot-asset
+                                {% elif acc.category == 'liability' %}dot-liability
+                                {% elif acc.category == 'equity' %}dot-equity
+                                {% elif acc.category == 'revenue' %}dot-revenue
+                                {% elif acc.category == 'expense' %}dot-expense{% endif %}"></span>
+                        </div>
                     </div>
                     
-                    <div class="flex items-center gap-3">
-                         <span class="text-xs px-2 py-0.5 rounded uppercase font-bold 
-                            {% if acc.category == 'asset' %}bg-emerald-100 text-emerald-700
-                            {% elif acc.category == 'expense' %}bg-red-100 text-red-700
-                            {% elif acc.category == 'revenue' %}bg-blue-100 text-blue-700
-                            {% else %}bg-purple-100 text-purple-700{% endif %}">
-                            {{ acc.get_category_display }}
-                         </span>
+                    <!-- Action/Tag Area -->
+                    <div class="flex items-center gap-3 print:hidden">
                          {% if acc.is_group %}
-                            <span class="text-xs text-neutral-400 font-medium">رئيسي</span>
+                            <span class="text-xs bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300 px-2.5 py-1 rounded-md font-bold uppercase">حساب رئيسي</span>
                          {% else %}
-                            <span class="text-xs text-amber-600 font-medium bg-amber-50 dark:bg-amber-900/20 px-2 rounded">فرعي (يرحل له)</span>
+                            <span class="text-xs bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-400 px-2.5 py-1 rounded-md font-bold flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path></svg>
+                                يقبل الترحيل
+                            </span>
                          {% endif %}
                     </div>
                 </div>
                 {% empty %}
-                <p class="text-center text-neutral-500 py-10">لا توجد حسابات حالياً. الرجاء تشغيل أداة التأسيس.</p>
+                <div class="py-20 text-center">
+                    <div class="bg-neutral-100 dark:bg-neutral-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 text-neutral-400">
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-neutral-800 dark:text-white mb-2">قاعدة البيانات فارغة</h3>
+                    <p class="text-neutral-500 dark:text-neutral-400">الرجاء تشغيل أداة التأسيس (Bootstrap) لتوليد الشجرة الافتراضية.</p>
+                </div>
                 {% endfor %}
             </div>
         </div>

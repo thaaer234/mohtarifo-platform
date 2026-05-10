@@ -2,57 +2,110 @@
 {% load static humanize %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8" dir="rtl">
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
-            <h1 class="text-3xl font-extrabold text-neutral-900 dark:text-white flex items-center gap-3">
-                <span class="bg-neutral-500/10 text-neutral-600 dark:text-neutral-300 p-2 rounded-xl">
-                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                </span>
-                دفتر القيود اليومية (General Ledger)
+<style>
+    .record-row {
+        transition: all 0.2s ease-in-out;
+    }
+    .record-row:hover {
+        background-color: rgba(0,0,0,0.02);
+        transform: translateY(-1px);
+        box-shadow: inset 4px 0 0 0 #3B82F6;
+    }
+    [data-theme='dark'] .record-row:hover {
+        background-color: rgba(255,255,255,0.03);
+    }
+</style>
+
+<div class="container mx-auto px-4 py-10 max-w-7xl" dir="rtl">
+    <!-- Main Global Toolbar Header -->
+    <div class="flex flex-col lg:flex-row justify-between items-center mb-10 pb-6 border-b border-neutral-200 dark:border-neutral-800 gap-6">
+        <div class="w-full">
+            <div class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-3 py-1 rounded-full text-xs font-black tracking-wider uppercase mb-3">
+                الدفاتر الرئيسية (Ledger)
+            </div>
+            <h1 class="text-4xl font-black tracking-tight text-neutral-900 dark:text-white flex items-center gap-3">
+                سجل القيود اليومية
             </h1>
-            <p class="text-neutral-500 dark:text-neutral-400 mt-1">السجل التاريخي الموحد لكافة الحركات المالية المتزنة</p>
+            <p class="text-neutral-500 mt-1">السجل التاريخي المتسلسل لكافة الأحداث والعمليات المالية الموثقة.</p>
         </div>
-        <div class="flex gap-3 flex-wrap items-center">
-             <button onclick="window.print()" class="bg-white text-neutral-700 border border-neutral-300 px-4 py-2 rounded-lg font-bold shadow-sm hover:bg-neutral-50 flex items-center gap-2 print:hidden">
-                 🖨️ طباعة
+        
+        <div class="flex gap-3 w-full lg:w-auto justify-end print:hidden">
+             <button onclick="window.print()" class="bg-white hover:bg-neutral-50 dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 border border-neutral-300 dark:border-neutral-700 px-5 py-2.5 rounded-xl font-bold shadow-sm flex items-center gap-2 transition">
+                 🖨️ طباعة السجل
              </button>
-             <a href="{% url 'accounting_erp:export_excel' 'journal' %}" class="bg-emerald-100 text-emerald-800 border border-emerald-200 px-4 py-2 rounded-lg font-bold shadow-sm hover:bg-emerald-200 flex items-center gap-2 print:hidden">
-                 📥 تصدير إكسل
+             <a href="{% url 'accounting_erp:export_excel' 'journal' %}" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 px-5 py-2.5 rounded-xl font-bold border border-emerald-200 shadow-sm flex items-center gap-2 transition">
+                 📥 إكسل
              </a>
         </div>
     </div>
 
-
-    <div class="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow overflow-hidden">
-        <table class="w-full text-right text-sm">
-            <thead class="bg-neutral-50 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700 font-bold text-neutral-700 dark:text-neutral-300">
-                <tr>
-                    <th class="px-6 py-3">تاريخ القيد</th>
-                    <th class="px-6 py-3">المرجع</th>
-                    <th class="px-6 py-3">البيان / التوضيح</th>
-                    <th class="px-6 py-3 text-center">الإجراءات</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800 text-neutral-800 dark:text-neutral-200">
-                {% for item in vouchers %}
-                <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition">
-                    <td class="px-6 py-4 font-medium whitespace-nowrap">{{ item.posting_date|date:"Y-m-d" }}</td>
-                    <td class="px-6 py-4 font-mono text-xs text-neutral-500">#{{ item.reference|default:"N/A" }}</td>
-                    <td class="px-6 py-4 text-base">{{ item.memo }}</td>
-                    <td class="px-6 py-4 text-center">
-                        <a href="{% url 'accounting_erp:voucher_detail' item.pk %}" class="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 px-3 py-1.5 rounded-lg font-bold border border-blue-100 hover:bg-blue-100 transition">
-                            عرض / طباعة 🖨️
-                        </a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4" class="px-6 py-12 text-center text-neutral-500">لا توجد قيود يومية مسجلة حالياً.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- Advanced Data Table Wrapper -->
+    <div class="bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200 dark:border-neutral-800 shadow-2xl shadow-black/5 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-right border-collapse">
+                <!-- Unified Head -->
+                <thead class="bg-neutral-50 dark:bg-neutral-800/80 border-b border-neutral-200 dark:border-neutral-700">
+                    <tr class="text-sm font-black text-neutral-500 tracking-wider uppercase">
+                        <th class="px-8 py-5">تاريخ القيد</th>
+                        <th class="px-6 py-5">المرجع / Reference</th>
+                        <th class="px-6 py-5">البيان المحاسبي الرسمي</th>
+                        <th class="px-8 py-5 text-center">خيارات الوثيقة</th>
+                    </tr>
+                </thead>
+                
+                <!-- High-Density Body -->
+                <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800/50 text-neutral-800 dark:text-neutral-200 font-medium">
+                    {% for item in vouchers %}
+                    <tr class="record-row">
+                        <!-- Accurate Date -->
+                        <td class="px-8 py-5">
+                            <div class="flex items-center gap-2 font-bold text-neutral-900 dark:text-white">
+                                <svg class="w-4 h-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                {{ item.posting_date|date:"Y-m-d" }}
+                            </div>
+                        </td>
+                        
+                        <!-- Clean Ref Monospace -->
+                        <td class="px-6 py-5">
+                            <span class="font-mono text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 px-2 py-1 rounded border border-neutral-200/50 dark:border-neutral-700/50">
+                                {{ item.reference|default:"INTERNAL" }}
+                            </span>
+                        </td>
+                        
+                        <!-- Bold Narrative -->
+                        <td class="px-6 py-5 text-base font-bold text-neutral-800 dark:text-neutral-200">
+                            {{ item.memo }}
+                        </td>
+                        
+                        <!-- Action Anchors -->
+                        <td class="px-8 py-5 text-center print:hidden">
+                            <a href="{% url 'accounting_erp:voucher_detail' item.pk %}" class="inline-flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-blue-600 dark:bg-neutral-800 dark:hover:bg-blue-600 text-white text-sm font-black rounded-xl transition-all shadow-sm">
+                                🖨️ عرض السند
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-8 py-24 text-center">
+                            <div class="flex flex-col items-center gap-3">
+                                <div class="bg-neutral-100 dark:bg-neutral-800 w-16 h-16 rounded-full flex items-center justify-center text-neutral-400">
+                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                                </div>
+                                <h3 class="text-lg font-bold text-neutral-800 dark:text-white">سجل القيود فارغ</h3>
+                                <p class="text-neutral-500 text-sm">لا توجد عمليات مالية مسجلة في هذا النطاق الزمني بعد.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Quick Pagination Guard / Stat Footer -->
+        <div class="px-8 py-4 bg-neutral-50 dark:bg-neutral-800/30 border-t border-neutral-200 dark:border-neutral-700 text-xs text-neutral-400 font-bold tracking-wider flex justify-between items-center">
+            <span>إجمالي القيود المعروضة: {{ vouchers|length }}</span>
+            <span>مؤرشف بالكامل ✓</span>
+        </div>
     </div>
 </div>
 {% endblock %}
