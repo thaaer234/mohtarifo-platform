@@ -33,6 +33,10 @@ class LegacyAccountingTransformer:
         start_dt = end_dt - timezone.timedelta(days=90)
         
         codes = LegacyPaymentSelector.get_access_code_sales_range(start_dt, end_dt)
+        # Crtical Fix: Wipe previously generated auto-vouchers to force reconstruction with NEW logic (Student Mapping, etc.)
+        # This ensures the 'exists()' check doesn't cause them to be skipped.
+        JournalEntry.objects.filter(reference__startswith='CODE_').delete()
+        
         created_count = 0
         
         for code in codes:
@@ -112,10 +116,28 @@ class LegacyAccountingTransformer:
                         JournalLine.objects.create(journal=v_sell, account=recv_acc, credit_amount=base_price_dec, line_memo="تسوية عهدة المركز عند البيع")
 
                     # CORE SALES LEGS
+                    # Prepare student-specific cost center dimension
+                    std_cost = None
+                    # Search the direct AccessGrant associated with this specific code instance
+                    grant = code.grants.select_related('user').first()
+                    if grant and grant.user:
+                        std_cost, _ = CostCenter.objects.get_or_create(
+                            code=f"STD-{grant.user.id}",
+                            defaults={'name': f"طالب: {grant.user.get_full_name() or grant.user.username}"}
+                        )
+                    elif code.assigned_student_name:
+                        # Fallback: If user isn't linked yet, map via raw text handle to maintain tracing
+                        std_cost, _ = CostCenter.objects.get_or_create(
+                            code=f"RAWSTD-{code.id}", 
+                            defaults={'name': f"طالب (يدوي): {code.assigned_student_name}"}
+                        )
+
                     # Debit CASH (Actual received)
-                    JournalLine.objects.create(journal=v_sell, account=cash_acc, debit_amount=realized_dec, line_memo="استلام نقدية البيع النهائي")
+                    JournalLine.objects.create(journal=v_sell, account=cash_acc, debit_amount=realized_dec, line_memo="استلام نقدية البيع النهائي", cost_center=std_cost)
+
                     # Credit REVENUE (Earned!)
                     JournalLine.objects.create(journal=v_sell, account=revenue_acc, credit_amount=realized_dec, cost_center=crs_cost, line_memo="تحقيق الإيراد الفعلي")
+
 
                     # --- INSTRUCTOR SHARE SPLIT (Dynamic Accrual) ---
                     if course_ref and course_ref.instructor:

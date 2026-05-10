@@ -1,7 +1,16 @@
 from django.views.generic import TemplateView, ListView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.utils import timezone
+from datetime import datetime
 from apps.accounting_erp.models import Account, JournalEntry
 from apps.accounting_erp.services.trial_balance import TrialBalanceEngine
+
+def parse_date_safe(date_str):
+    if not date_str: return None
+    try:
+        return datetime.strptime(date_str, '%Y-%m-%d').date()
+    except:
+        return None
 
 class BaseAccountingView(LoginRequiredMixin, UserPassesTestMixin):
     def test_func(self):
@@ -41,6 +50,61 @@ class AccountingDashboardView(BaseAccountingView, TemplateView):
         
         return context
 
+class QuickTransactionView(BaseAccountingView, TemplateView):
+    """ Simplified gateway enabling non-accountants to record daily cash movements without understanding double-entry. """
+    template_name = 'accounting_erp/quick_transaction.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from apps.accounting_erp.models import CostCenter
+        context['centers'] = CostCenter.objects.filter(code__startswith='CEN-')
+        context['instructors'] = CostCenter.objects.filter(code__startswith='INS-')
+        return context
+
+    def post(self, request, *args, **kwargs):
+        from decimal import Decimal
+        from django.shortcuts import redirect
+        from django.contrib import messages
+        from django.utils import timezone
+        from apps.accounting_erp.models import JournalEntry, JournalLine, Account, CostCenter, AccountCategory
+        
+        tx_type = request.POST.get('tx_type') # 'collect' or 'pay'
+        amount = Decimal(request.POST.get('amount', '0'))
+        target_cc_id = request.POST.get('target_cc')
+        notes = request.POST.get('notes', '')
+        
+        if amount <= 0 or not target_cc_id:
+            messages.error(request, "خطأ: يجب إدخال المبلغ واختيار الطرف.")
+            return redirect('accounting_erp:quick_tx')
+            
+        try:
+            cc = CostCenter.objects.get(pk=target_cc_id)
+            cash_acc, _ = Account.objects.get_or_create(code='1101', defaults={'name': 'الصندوق الرئيسي', 'category': AccountCategory.ASSET, 'parent': Account.objects.get(code='1')})
+            
+            voucher = JournalEntry.objects.create(
+                posting_date=timezone.now().date(),
+                reference=f"QUICK_{int(timezone.now().timestamp())}",
+                memo=f"{'تحصيل نقدية' if tx_type=='collect' else 'صرف دفعة'} - {cc.name} | {notes}"
+            )
+            
+            if tx_type == 'collect':
+                # Collecting from Center: Debit Cash, Credit Center Receivable
+                recv_acc, _ = Account.objects.get_or_create(code='1201', defaults={'name': 'ذمم مراكز بيع مدينة', 'category': AccountCategory.ASSET, 'parent': Account.objects.get(code='1')})
+                JournalLine.objects.create(journal=voucher, account=cash_acc, debit_amount=amount, line_memo="استلام نقدية صندوق")
+                JournalLine.objects.create(journal=voucher, account=recv_acc, credit_amount=amount, cost_center=cc, line_memo="تسوية عهدة")
+                messages.success(request, f"✅ تم بنجاح تسجيل استلام {amount} من {cc.name}")
+                
+            elif tx_type == 'pay':
+                # Paying Instructor: Debit Liability, Credit Cash
+                liab_acc, _ = Account.objects.get_or_create(code='2101', defaults={'name': 'مستحقات المدرسين', 'category': AccountCategory.LIABILITY, 'parent': Account.objects.get(code='2')})
+                JournalLine.objects.create(journal=voucher, account=liab_acc, debit_amount=amount, cost_center=cc, line_memo="سداد استحقاق مدرس")
+                JournalLine.objects.create(journal=voucher, account=cash_acc, credit_amount=amount, line_memo="صرف نقدي من الصندوق")
+                messages.success(request, f"✅ تم بنجاح تسجيل صرف {amount} للمدرس {cc.name}")
+
+        except Exception as e:
+            messages.error(request, f"فشل العملية: {str(e)}")
+            
+        return redirect('accounting_erp:quick_tx')
 
 class ChartOfAccountsView(BaseAccountingView, TemplateView):
     """ Displays hierarchical tree map of operational ledger indices. """
@@ -82,8 +146,17 @@ class JournalVoucherListView(BaseAccountingView, TemplateView):
         context = super().get_context_data(**kwargs)
         
         acc_filter = self.request.GET.get('account_id')
+        cc_filter = self.request.GET.get('cost_center_id')
+        s_date = parse_date_safe(self.request.GET.get('start_date'))
+        e_date = parse_date_safe(self.request.GET.get('end_date'))
+        
         qs = JournalEntry.objects.all().order_by('-posting_date')
         
+        if s_date:
+            qs = qs.filter(posting_date__gte=s_date)
+        if e_date:
+            qs = qs.filter(posting_date__lte=e_date)
+            
         if acc_filter:
             from apps.accounting_erp.models import Account
             target_acc = Account.objects.filter(pk=acc_filter).first()
@@ -91,14 +164,80 @@ class JournalVoucherListView(BaseAccountingView, TemplateView):
             
             if target_acc:
                 if target_acc.is_group:
-                    # Dynamically expand search to ANY descendant children via prefix
-                    qs = qs.filter(lines__account__code__startswith=target_acc.code).distinct()
+                    qs = qs.filter(lines__account__code__startswith=target_acc.code)
                 else:
-                    # Specific targeted leaf match
-                    qs = qs.filter(lines__account=target_acc).distinct()
+                    qs = qs.filter(lines__account=target_acc)
+
+        if cc_filter:
+            qs = qs.filter(lines__cost_center_id=cc_filter)
+            from apps.accounting_erp.models import CostCenter
+            context['filtered_cc'] = CostCenter.objects.filter(pk=cc_filter).first()
+            
+        qs = qs.distinct()
+        
+        from apps.accounting_erp.models import CostCenter
+        context['cost_centers'] = CostCenter.objects.all() # Keep all, maybe paginate later if huge
+
             
         context['vouchers'] = qs
+        context['start_date'] = s_date
+        context['end_date'] = e_date
+        
+        # CUMULATIVE RUNNING BALANCE LOGIC (If filtering by Account OR CostCenter)
+        if (acc_filter and target_acc) or (cc_filter and context.get('filtered_cc')):
+            from django.db.models import Sum
+            from decimal import Decimal
+            from apps.accounting_erp.models import JournalLine
+            
+            base_lines = JournalLine.objects.all()
+            
+            # Apply Account filter if set
+            if acc_filter and target_acc:
+                if target_acc.is_group:
+                    base_lines = base_lines.filter(account__code__startswith=target_acc.code)
+                else:
+                    base_lines = base_lines.filter(account=target_acc)
+            
+            # Apply Dimension Filter if set
+            if cc_filter:
+                base_lines = base_lines.filter(cost_center_id=cc_filter)
+                
+            # 1. Calculate Opening Balance
+            opening_dr = 0
+            opening_cr = 0
+            if s_date:
+                agg_pre = base_lines.filter(journal__posting_date__lt=s_date).aggregate(dr=Sum('debit_amount'), cr=Sum('credit_amount'))
+                opening_dr = agg_pre['dr'] or Decimal(0)
+                opening_cr = agg_pre['cr'] or Decimal(0)
+            
+            # Determine normal side: default to DR normal unless targeted acc specifically is credit normal
+            is_dr_normal = True
+            if target_acc and target_acc.category not in ['asset', 'expense']:
+                is_dr_normal = False
+                
+            def get_net(d, c): return (d - c) if is_dr_normal else (c - d)
+            
+            running_bal = get_net(opening_dr, opening_cr)
+            context['opening_balance'] = running_bal
+            
+            # 2. Chronological stream
+            timeframe_qs = base_lines.order_by('journal__posting_date', 'journal__created_at').select_related('journal')
+            if s_date: timeframe_qs = timeframe_qs.filter(journal__posting_date__gte=s_date)
+            if e_date: timeframe_qs = timeframe_qs.filter(journal__posting_date__lte=e_date)
+            
+            narrative_lines = []
+            for line in timeframe_qs:
+                net_eff = get_net(line.debit_amount or 0, line.credit_amount or 0)
+                running_bal += net_eff
+                line.running_balance = running_bal
+                narrative_lines.append(line)
+                
+            context['ledger_narrative'] = narrative_lines
+
+            
         return context
+
+
 
 
 class TrialBalanceReportView(BaseAccountingView, TemplateView):
@@ -107,8 +246,14 @@ class TrialBalanceReportView(BaseAccountingView, TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['report'] = TrialBalanceEngine.get_full_trial_balance()
+        s_date = parse_date_safe(self.request.GET.get('start_date'))
+        e_date = parse_date_safe(self.request.GET.get('end_date'))
+        
+        context['report'] = TrialBalanceEngine.get_full_trial_balance(start_date=s_date, end_date=e_date)
+        context['start_date'] = s_date
+        context['end_date'] = e_date
         return context
+
 
 class IncomeStatementReportView(BaseAccountingView, TemplateView):
     """ Premium formal operational Statement of Activities (Profit & Loss). """
@@ -119,12 +264,20 @@ class IncomeStatementReportView(BaseAccountingView, TemplateView):
         context = super().get_context_data(**kwargs)
         
         cc_id = self.request.GET.get('cost_center')
-        context['pnl'] = FinancialStatementEngine.generate_income_statement(cost_center_id=cc_id)
+        s_date = parse_date_safe(self.request.GET.get('start_date'))
+        e_date = parse_date_safe(self.request.GET.get('end_date'))
+        
+        context['pnl'] = FinancialStatementEngine.generate_income_statement(
+            cost_center_id=cc_id, start_date=s_date, end_date=e_date
+        )
         
         from apps.accounting_erp.models import CostCenter
         context['cost_centers'] = CostCenter.objects.all()
         context['selected_cc'] = cc_id
+        context['start_date'] = s_date
+        context['end_date'] = e_date
         return context
+
 
 class BalanceSheetReportView(BaseAccountingView, TemplateView):
     """ Static statement measuring snapshot position (Assets = L + E). """
@@ -135,12 +288,18 @@ class BalanceSheetReportView(BaseAccountingView, TemplateView):
         context = super().get_context_data(**kwargs)
         
         cc_id = self.request.GET.get('cost_center')
-        context['bs'] = FinancialStatementEngine.generate_balance_sheet(cost_center_id=cc_id)
+        e_date = parse_date_safe(self.request.GET.get('end_date'))
+        
+        context['bs'] = FinancialStatementEngine.generate_balance_sheet(
+            cost_center_id=cc_id, end_date=e_date
+        )
         
         from apps.accounting_erp.models import CostCenter
         context['cost_centers'] = CostCenter.objects.all()
         context['selected_cc'] = cc_id
+        context['end_date'] = e_date
         return context
+
 
 
 class JournalVoucherDetailView(BaseAccountingView, TemplateView):

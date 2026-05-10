@@ -8,14 +8,20 @@ class FinancialStatementEngine:
     """
     
     @classmethod
-    def generate_income_statement(cls, cost_center_id=None):
+    def generate_income_statement(cls, cost_center_id=None, start_date=None, end_date=None):
         """
         Produces Revenues vs Expenses grid resulting in Net Profit / Loss.
-        Optionally constrained by a specific Cost Center.
+        Optionally constrained by a specific Cost Center and Date Period.
         """
         lines = JournalLine.objects.all()
         if cost_center_id:
             lines = lines.filter(cost_center_id=cost_center_id)
+            
+        if start_date:
+            lines = lines.filter(journal__posting_date__gte=start_date)
+        if end_date:
+            lines = lines.filter(journal__posting_date__lte=end_date)
+
             
         revenue_accs = Account.objects.filter(category='revenue', is_group=False)
         expense_accs = Account.objects.filter(category='expense', is_group=False)
@@ -50,14 +56,17 @@ class FinancialStatementEngine:
         }
 
     @classmethod
-    def generate_balance_sheet(cls, cost_center_id=None):
+    def generate_balance_sheet(cls, cost_center_id=None, end_date=None):
         """
         Analyzes cumulative static standing (Assets = Liabilities + Equity).
-        Injects real-time profit/loss as temporary Retained Earnings line.
+        Constrained up to a specific End Date snapshot.
         """
         lines = JournalLine.objects.all()
         if cost_center_id:
             lines = lines.filter(cost_center_id=cost_center_id)
+        if end_date:
+            lines = lines.filter(journal__posting_date__lte=end_date)
+
             
         def get_grouped_accounts(category, normal_dr=True):
             accs = Account.objects.filter(category=category, is_group=False)
@@ -78,7 +87,8 @@ class FinancialStatementEngine:
         equity_list, total_equity = get_grouped_accounts('equity', normal_dr=False)
         
         # Calculate temporal period profit injection for balancing the sheet
-        pnl = cls.generate_income_statement(cost_center_id=cost_center_id)
+        pnl = cls.generate_income_statement(cost_center_id=cost_center_id, end_date=end_date)
+
         curr_net = pnl['net_income']
         
         # Final Equity = Static Equity Entries + Net Income Current Period

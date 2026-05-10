@@ -36,18 +36,30 @@
         </div>
         
         <div class="w-full lg:w-auto flex gap-3 items-center flex-wrap print:hidden">
-            <!-- Dynamic Filter -->
-            <form method="get" class="flex gap-2 bg-neutral-50 dark:bg-neutral-900 p-1.5 rounded-xl border border-neutral-200 dark:border-neutral-700">
-                <select name="cost_center" onchange="this.form.submit()" class="bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white px-4 py-2 rounded-lg font-bold border border-neutral-200 dark:border-neutral-700 text-sm min-w-[200px]">
-                    <option value="">🔍 كافة الفروع والمراكز</option>
+            <!-- Enhanced Period & Center Filter -->
+            <form method="get" class="flex flex-wrap gap-3 items-center bg-neutral-50 dark:bg-neutral-900 p-2 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-inner">
+                
+                <div class="flex items-center gap-1 text-xs text-neutral-500 font-bold px-2">
+                   📅 الفترة:
+                   <input type="date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" class="bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white px-2 py-1.5 rounded border border-neutral-200 dark:border-neutral-700">
+                   <span>إلى</span>
+                   <input type="date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" class="bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white px-2 py-1.5 rounded border border-neutral-200 dark:border-neutral-700">
+                </div>
+
+                <select name="cost_center" class="bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white px-3 py-1.5 rounded-lg font-bold border border-neutral-200 dark:border-neutral-700 text-xs">
+                    <option value="">📍 كافة المراكز</option>
                     {% for cc in cost_centers %}
                     <option value="{{ cc.id }}" {% if selected_cc == cc.id|stringformat:"s" %}selected{% endif %}>
-                        📍 {{ cc.name }}
+                        {{ cc.name }}
                     </option>
-
                     {% endfor %}
                 </select>
+
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black px-3 py-1.5 rounded-lg shadow-sm transition">
+                    تحديث 🔍
+                </button>
             </form>
+
 
              <button onclick="window.print()" class="bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 px-6 py-3 rounded-2xl font-bold border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 shadow-sm transition flex items-center gap-2">
                  🖨️ طباعة

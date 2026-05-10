@@ -23,13 +23,18 @@
             <div class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-3 py-1 rounded-full text-xs font-black tracking-wider uppercase mb-3">
                 الدفاتر الرئيسية (Ledger)
             </div>
-            <h1 class="text-4xl font-black tracking-tight text-neutral-900 dark:text-white flex items-center gap-3">
-                {% if filtered_account %}
-                دفتر الأستاذ المساعد: {{ filtered_account.name }}
+            <h1 class="text-4xl font-black tracking-tight text-neutral-900 dark:text-white flex flex-wrap items-center gap-3">
+                {% if filtered_account and filtered_cc %}
+                كشف: {{ filtered_account.name }} / {{ filtered_cc.name }}
+                {% elif filtered_account %}
+                كشف حساب: {{ filtered_account.name }}
+                {% elif filtered_cc %}
+                كشف حركة: {{ filtered_cc.name }}
                 {% else %}
-                سجل القيود اليومية
+                سجل القيود المحاسبية العامة
                 {% endif %}
             </h1>
+
             <p class="text-neutral-500 mt-1">
                 {% if filtered_account %}
                 كشف تفصيلي لكافة الحركات المدينة والدائنة الخاصة بالحساب [{{ filtered_account.code }}] حصراً.
@@ -51,11 +56,92 @@
         </div>
     </div>
 
+    <!-- Enhanced Multi-Dimensional Filter -->
+    <div class="mb-8 flex justify-start print:hidden">
+        <form method="get" class="flex flex-wrap gap-3 items-center bg-neutral-50 dark:bg-neutral-900 p-2 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-inner">
+            {% if filtered_account %}
+            <input type="hidden" name="account_id" value="{{ filtered_account.id }}">
+            {% endif %}
+            
+            <!-- Entity Selector (Centers/Students) -->
+            <div class="px-2">
+                <select name="cost_center_id" class="bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white px-3 py-1.5 rounded-lg border border-neutral-200 dark:border-neutral-700 font-bold text-xs focus:ring-2 focus:ring-indigo-500 outline-none min-w-[200px]">
+                    <option value="">🔍 كل الأطراف (الطلاب، الفروع...)</option>
+                    {% for cc in cost_centers %}
+                    <option value="{{ cc.id }}" {% if filtered_cc and filtered_cc.id == cc.id %}selected{% endif %}>
+                        {{ cc.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex items-center gap-1 text-xs text-neutral-500 font-bold border-r border-neutral-200 dark:border-neutral-700 pr-3 px-2">
+               📅 الفترة:
+               <input type="date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" class="bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white px-2 py-1.5 rounded border border-neutral-200 dark:border-neutral-700">
+               <span>إلى</span>
+               <input type="date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" class="bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white px-2 py-1.5 rounded border border-neutral-200 dark:border-neutral-700">
+            </div>
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black px-4 py-1.5 rounded-lg shadow-sm transition">
+                عرض الكشف ⚡
+            </button>
+            
+            {% if filtered_cc or start_date or end_date %}
+            <a href="{% url 'accounting_erp:journal_list' %}{% if filtered_account %}?account_id={{ filtered_account.id }}{% endif %}" class="text-neutral-400 hover:text-red-500 transition text-xs font-bold underline decoration-dotted">
+                إعادة تعيين ✕
+            </a>
+            {% endif %}
+        </form>
+    </div>
+
+
     <!-- Advanced Data Table Wrapper -->
     <div class="bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200 dark:border-neutral-800 shadow-2xl shadow-black/5 overflow-hidden">
         <div class="overflow-x-auto">
+            
+            {% if ledger_narrative is not None %}
+            <!-- ===================================================== -->
+            <!-- SUB-LEDGER SCENARIO (Account Specific Statement)      -->
+            <!-- ===================================================== -->
             <table class="w-full text-right border-collapse">
-                <!-- Unified Head -->
+                <thead class="bg-neutral-900 text-white border-b border-neutral-700">
+                    <tr class="text-sm font-black tracking-wider uppercase">
+                        <th class="px-6 py-4 text-right">التاريخ</th>
+                        <th class="px-6 py-4">المرجع</th>
+                        <th class="px-6 py-4">البيان المحاسبي</th>
+                        <th class="px-6 py-4 text-center">مدين</th>
+                        <th class="px-6 py-4 text-center">دائن</th>
+                        <th class="px-6 py-4 text-left bg-indigo-900/50">الرصيد المتراكم</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800/50 text-sm">
+                    <!-- OPENING BALANCE ROW -->
+                    <tr class="bg-neutral-50 dark:bg-neutral-800/50 font-black text-neutral-600 dark:text-neutral-300 italic">
+                        <td colspan="5" class="px-6 py-4 text-left border-l border-neutral-200/50">رصيد افتتاحي منقول:</td>
+                        <td class="px-6 py-4 text-left font-mono text-base">{{ opening_balance|floatformat:2|intcomma }}</td>
+                    </tr>
+                    {% for line in ledger_narrative %}
+                    <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition border-b border-neutral-100 dark:border-neutral-800">
+                        <td class="px-6 py-4 whitespace-nowrap font-bold">{{ line.journal.posting_date|date:"Y-m-d" }}</td>
+                        <td class="px-6 py-4 font-mono text-xs opacity-60">{{ line.journal.reference|truncatechars:15 }}</td>
+                        <td class="px-6 py-4">
+                            <div class="font-bold text-neutral-900 dark:text-white">{{ line.journal.memo }}</div>
+                            <div class="text-xs text-neutral-500">{{ line.line_memo|default:"" }}</div>
+                        </td>
+                        <td class="px-6 py-4 text-center font-mono font-bold text-indigo-600 dark:text-indigo-400">{% if line.debit_amount > 0 %}{{ line.debit_amount|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                        <td class="px-6 py-4 text-center font-mono font-bold text-emerald-600 dark:text-emerald-400">{% if line.credit_amount > 0 %}{{ line.credit_amount|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                        <td class="px-6 py-4 text-left font-mono font-black text-base {% if line.running_balance >= 0 %}text-neutral-900 dark:text-white{% else %}text-red-600{% endif %}">
+                            {{ line.running_balance|floatformat:2|intcomma }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            {% else %}
+            <!-- ===================================================== -->
+            <!-- GENERIC VOUCHER LIST SCENARIO                         -->
+            <!-- ===================================================== -->
+            <table class="w-full text-right border-collapse">
                 <thead class="bg-neutral-50 dark:bg-neutral-800/80 border-b border-neutral-200 dark:border-neutral-700">
                     <tr class="text-sm font-black text-neutral-500 tracking-wider uppercase">
                         <th class="px-8 py-5">تاريخ القيد</th>
@@ -64,60 +150,31 @@
                         <th class="px-8 py-5 text-center">خيارات الوثيقة</th>
                     </tr>
                 </thead>
-                
-                <!-- High-Density Body -->
                 <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800/50 text-neutral-800 dark:text-neutral-200 font-medium">
                     {% for item in vouchers %}
                     <tr class="record-row">
-                        <!-- Accurate Date -->
-                        <td class="px-8 py-5">
-                            <div class="flex items-center gap-2 font-bold text-neutral-900 dark:text-white">
-                                <svg class="w-4 h-4 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                {{ item.posting_date|date:"Y-m-d" }}
-                            </div>
-                        </td>
-                        
-                        <!-- Clean Ref Monospace -->
-                        <td class="px-6 py-5">
-                            <span class="font-mono text-xs bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 px-2 py-1 rounded border border-neutral-200/50 dark:border-neutral-700/50">
-                                {{ item.reference|default:"INTERNAL" }}
-                            </span>
-                        </td>
-                        
-                        <!-- Bold Narrative -->
-                        <td class="px-6 py-5 text-base font-bold text-neutral-800 dark:text-neutral-200">
-                            {{ item.memo }}
-                        </td>
-                        
-                        <!-- Action Anchors -->
+                        <td class="px-8 py-5 font-bold text-neutral-900 dark:text-white">{{ item.posting_date|date:"Y-m-d" }}</td>
+                        <td class="px-6 py-5 font-mono text-xs">{{ item.reference|default:"INTERNAL" }}</td>
+                        <td class="px-6 py-5 font-bold">{{ item.memo }}</td>
                         <td class="px-8 py-5 text-center print:hidden">
-                            <a href="{% url 'accounting_erp:voucher_detail' item.pk %}" class="inline-flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-blue-600 dark:bg-neutral-800 dark:hover:bg-blue-600 text-white text-sm font-black rounded-xl transition-all shadow-sm">
+                            <a href="{% url 'accounting_erp:voucher_detail' item.pk %}" class="inline-flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-blue-600 dark:bg-neutral-800 dark:hover:bg-blue-600 text-white text-sm font-black rounded-xl transition shadow-sm">
                                 🖨️ عرض السند
                             </a>
                         </td>
                     </tr>
                     {% empty %}
-                    <tr>
-                        <td colspan="4" class="px-8 py-24 text-center">
-                            <div class="flex flex-col items-center gap-3">
-                                <div class="bg-neutral-100 dark:bg-neutral-800 w-16 h-16 rounded-full flex items-center justify-center text-neutral-400">
-                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
-                                </div>
-                                <h3 class="text-lg font-bold text-neutral-800 dark:text-white">سجل القيود فارغ</h3>
-                                <p class="text-neutral-500 text-sm">لا توجد عمليات مالية مسجلة في هذا النطاق الزمني بعد.</p>
-                            </div>
-                        </td>
-                    </tr>
+                    <tr><td colspan="4" class="px-8 py-24 text-center">سجل القيود فارغ</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
+            {% endif %}
         </div>
         
-        <!-- Quick Pagination Guard / Stat Footer -->
+        <!-- Quick Footer -->
         <div class="px-8 py-4 bg-neutral-50 dark:bg-neutral-800/30 border-t border-neutral-200 dark:border-neutral-700 text-xs text-neutral-400 font-bold tracking-wider flex justify-between items-center">
-            <span>إجمالي القيود المعروضة: {{ vouchers|length }}</span>
-            <span>مؤرشف بالكامل ✓</span>
+            <span>مؤرشف بالكامل بنجاح ✓</span>
         </div>
     </div>
+
 </div>
 {% endblock %}

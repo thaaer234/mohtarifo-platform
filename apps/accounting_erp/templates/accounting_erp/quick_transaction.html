@@ -1,0 +1,138 @@
+{% extends 'accounting_erp/base_accounting.html' %}
+{% load static humanize %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-12 max-w-3xl" dir="rtl">
+    <!-- Breadcrumb & Nav Back -->
+    <div class="mb-8 print:hidden">
+        <a href="{% url 'accounting_erp:dashboard_root' %}" class="group inline-flex items-center gap-2 text-neutral-500 hover:text-neutral-900 dark:hover:text-white font-bold transition">
+             <div class="p-2 bg-neutral-100 dark:bg-neutral-800 rounded-lg group-hover:-translate-x-1 transition">
+                <svg class="w-5 h-5 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+             </div>
+             العودة للوحة التحكم الرئيسية
+        </a>
+    </div>
+
+    <!-- Header -->
+    <div class="mb-10 text-center">
+        <h1 class="text-4xl font-black text-neutral-900 dark:text-white mb-3">الحركات النقدية اليومية</h1>
+        <p class="text-neutral-500 font-medium">تسجيل استلام الأموال من المراكز أو دفع مستحقات المدرسين آلياً.</p>
+    </div>
+
+    <!-- Notification Alert Hub -->
+    {% if messages %}
+    <div class="mb-8 space-y-3">
+        {% for message in messages %}
+        <div class="p-4 rounded-2xl font-bold flex items-center gap-3 shadow-sm 
+            {% if message.tags == 'success' %} bg-emerald-50 border border-emerald-200 text-emerald-800 dark:bg-emerald-900/30 dark:border-emerald-900/50 dark:text-emerald-400 
+            {% else %} bg-red-50 border border-red-200 text-red-800 dark:bg-red-900/30 dark:border-red-900/50 dark:text-red-400 {% endif %}">
+            {% if message.tags == 'success' %}✅{% else %}❌{% endif %}
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- The Ultimate Action Form -->
+    <div class="bg-white dark:bg-neutral-900 rounded-3xl p-8 md:p-12 border border-neutral-200 dark:border-neutral-800 shadow-2xl shadow-black/5">
+        
+        <form method="POST" class="space-y-8">
+            {% csrf_token %}
+
+            <!-- 1. TYPE SELECTOR GRID -->
+            <div>
+                <label class="block text-neutral-500 text-sm font-black uppercase tracking-wider mb-4">1. نوع العملية المالية</label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Option A: Collect -->
+                    <label class="relative flex items-center justify-between p-5 rounded-2xl border-2 border-neutral-200 dark:border-neutral-700 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/30 dark:has-[:checked]:border-blue-500 dark:has-[:checked]:bg-blue-900/20">
+                        <input type="radio" name="tx_type" value="collect" checked class="peer hidden" onchange="toggleView('collect')">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-blue-100 text-blue-600 p-2.5 rounded-xl"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"></path></svg></div>
+                            <div>
+                                <span class="block font-black text-lg text-neutral-900 dark:text-white">قبض نقدية</span>
+                                <span class="block text-xs text-neutral-500 font-medium">استلام كاش من مركز بيع</span>
+                            </div>
+                        </div>
+                        <div class="w-5 h-5 rounded-full border-2 border-neutral-300 peer-checked:border-blue-600 peer-checked:bg-blue-600 flex items-center justify-center after:w-2 after:h-2 after:bg-white after:rounded-full"></div>
+                    </label>
+
+                    <!-- Option B: Pay -->
+                    <label class="relative flex items-center justify-between p-5 rounded-2xl border-2 border-neutral-200 dark:border-neutral-700 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition has-[:checked]:border-emerald-600 has-[:checked]:bg-emerald-50/30 dark:has-[:checked]:border-emerald-500 dark:has-[:checked]:bg-emerald-900/20">
+                        <input type="radio" name="tx_type" value="pay" class="peer hidden" onchange="toggleView('pay')">
+                        <div class="flex items-center gap-3">
+                            <div class="bg-emerald-100 text-emerald-600 p-2.5 rounded-xl"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"></path></svg></div>
+                            <div>
+                                <span class="block font-black text-lg text-neutral-900 dark:text-white">صرف دفعة</span>
+                                <span class="block text-xs text-neutral-500 font-medium">تسليم مبالغ للمدرسين</span>
+                            </div>
+                        </div>
+                        <div class="w-5 h-5 rounded-full border-2 border-neutral-300 peer-checked:border-emerald-600 peer-checked:bg-emerald-600 flex items-center justify-center after:w-2 after:h-2 after:bg-white after:rounded-full"></div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 2. TARGET SELECTOR (Dynamic) -->
+            <div>
+                <label class="block text-neutral-500 text-sm font-black uppercase tracking-wider mb-2" id="target-label">2. اختيار الطرف المستهدف (مركز البيع)</label>
+                
+                <!-- Wrapper for Dropdown to be updated by JS -->
+                <div id="select-container">
+                    <select name="target_cc" required class="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 p-4 rounded-xl font-bold text-neutral-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500 text-lg transition shadow-sm">
+                        <option value="" disabled selected>-- اختر من القائمة --</option>
+                        <!-- Logic loaded dynamically by JS template hidden divs -->
+                    </select>
+                </div>
+            </div>
+
+            <!-- 3. AMOUNT INPUT -->
+            <div>
+                <label class="block text-neutral-500 text-sm font-black uppercase tracking-wider mb-2">3. القيمة المالية</label>
+                <div class="relative">
+                    <input type="number" name="amount" step="0.01" required placeholder="0.00" 
+                           class="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 pl-16 pr-4 py-5 rounded-xl font-mono font-black text-3xl text-neutral-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 text-right shadow-sm transition">
+                    <div class="absolute left-4 top-1/2 -translate-y-1/2 font-black text-neutral-400 text-lg uppercase tracking-widest">SYP/USD</div>
+                </div>
+            </div>
+
+            <!-- 4. NOTES -->
+            <div>
+                <label class="block text-neutral-500 text-sm font-black uppercase tracking-wider mb-2">ملاحظات إضافية (اختياري)</label>
+                <input type="text" name="notes" placeholder="مثال: دفعة شهر مايو، إيصال رقم..." class="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 p-4 rounded-xl font-bold text-neutral-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+            </div>
+
+            <!-- SUBMIT BUTTON -->
+            <button type="submit" class="w-full py-5 bg-neutral-900 hover:bg-black dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-neutral-900 rounded-2xl font-black text-xl shadow-xl shadow-black/10 transition-all active:scale-95 flex items-center justify-center gap-3 mt-4">
+                ⚡ ترحيل الحركة المحاسبية الآن
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Raw Hidden Source for JS switching -->
+<div id="source-centers" class="hidden">
+    <option value="" disabled selected>-- اختر مركز البيع --</option>
+    {% for c in centers %}<option value="{{ c.id }}">📍 {{ c.name }}</option>{% endfor %}
+</div>
+<div id="source-instructors" class="hidden">
+    <option value="" disabled selected>-- اختر المدرس --</option>
+    {% for i in instructors %}<option value="{{ i.id }}">👨‍🏫 {{ i.name }}</option>{% endfor %}
+</div>
+
+<script>
+function toggleView(type) {
+    const select = document.querySelector('select[name="target_cc"]');
+    const label = document.getElementById('target-label');
+    
+    if (type === 'collect') {
+        label.innerText = "2. اختيار الطرف المستهدف (مركز البيع)";
+        select.innerHTML = document.getElementById('source-centers').innerHTML;
+    } else {
+        label.innerText = "2. اختيار الطرف المستهدف (المدرس)";
+        select.innerHTML = document.getElementById('source-instructors').innerHTML;
+    }
+}
+// Init default onload
+document.addEventListener('DOMContentLoaded', () => toggleView('collect'));
+</script>
+
+{% endblock %}

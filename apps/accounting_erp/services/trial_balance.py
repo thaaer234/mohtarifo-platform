@@ -7,19 +7,24 @@ class TrialBalanceEngine:
     Aggregates current ledger state to produce dynamic balancing sheets.
     """
     @classmethod
-    def get_full_trial_balance(cls):
+    def get_full_trial_balance(cls, start_date=None, end_date=None):
         """
-        Computes aggregate debit/credit totals for all accounts and identifies 
-        net position balance for reporting.
+        Computes aggregate debit/credit totals for all accounts for a dynamic period.
         """
+        lines = JournalLine.objects.all()
+        if start_date:
+            lines = lines.filter(journal__posting_date__gte=start_date)
+        if end_date:
+            lines = lines.filter(journal__posting_date__lte=end_date)
+            
         # Direct database rollup at line level grouped by account
-        rollup = JournalLine.objects.values('account').annotate(
+        summary = lines.values('account_id').annotate(
             total_dr=Sum('debit_amount'),
             total_cr=Sum('credit_amount')
         )
         
         # Build lookup map
-        ledger_map = {str(item['account']): item for item in rollup}
+        ledger_map = {str(item['account_id']): item for item in summary}
         
         # Fetch all real leaf accounts
         accounts = Account.objects.filter(is_group=False).order_by('code')
