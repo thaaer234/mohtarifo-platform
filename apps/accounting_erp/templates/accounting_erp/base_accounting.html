@@ -25,5 +25,72 @@
   
   /* Custom Dark Mode Bridge: bridge .dark-theme from platform into tailwind's .dark */
   html.dark-theme .dark\:bg-neutral-900 { background-color: rgb(23 23 23) !important; }
+
+  /* =============================================================== */
+  /* CRITICAL PRINT PERFORMANCE OVERRIDES (Corporate Ready)           */
+  /* =============================================================== */
+  @media print {
+    /* Hide ALL platform navigation, sidebars, footers, ambient glows, and interaction buttons */
+    nav, aside, header.navbar, .navbar, .sidebar, footer, .main-footer, .print\:hidden, button, form, .bg-neutral-900\/50, input, .ambient-bg, .mobile-bottom-nav, .mobile-menu-overlay { 
+      display: none !important; 
+      height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    /* Force main content container to utilize 100% of paper without dashboard paddings */
+    body, main, .container, .main-content { 
+      width: 100% !important; 
+      max-width: 100% !important; 
+      margin: 0 !important; 
+      padding: 0 !important; 
+      background: white !important; 
+      color: black !important;
+      top: 0 !important;
+    }
+    
+    /* Overrule standard dashboard absolute top spacing for navbar */
+    .main-content { padding-top: 0 !important; margin-top: 0 !important; }
+
+    
+    /* Reset shadows and force simple visible borders for professional look */
+    * { 
+      box-shadow: none !important; 
+      text-shadow: none !important; 
+      -webkit-print-color-adjust: exact !important; 
+      print-color-adjust: exact !important; 
+    }
+    
+    /* Standardize Page Settings */
+    @page { 
+      margin: 1.5cm; 
+      size: A4 portrait; 
+    }
+
+    /* Enhance table visual readability on paper */
+    table { 
+      page-break-inside: auto !important; 
+      border: 1px solid #000 !important;
+    }
+    tr { 
+      page-break-inside: avoid !important; 
+      page-break-after: auto !important; 
+    }
+    thead { 
+      display: table-header-group !important; 
+      background-color: #f3f4f6 !important;
+      color: black !important;
+      border-bottom: 2px solid #000 !important;
+    }
+    th, td {
+      border: 1px solid #e5e7eb !important;
+      color: black !important;
+    }
+    
+    /* Ensure link underlines and standard font sizing */
+    a[href]::after { content: none !important; }
+    h1, h2, h3, h4 { color: black !important; font-weight: bold !important; page-break-after: avoid; }
+  }
+
 </style>
 {% endblock %}
