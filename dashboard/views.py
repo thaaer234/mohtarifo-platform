@@ -530,6 +530,7 @@ def admin_dashboard(request):
     
     # Fetch analytical data for the overview
     total_visits = LandingVisit.objects.count()
+    print("DEBUG ADMIN DASHBOARD - TOTAL VISITS COMPUTED AS:", total_visits)
     logged_in_visits = LandingVisit.objects.filter(user__isnull=False).count()
     anon_visits = total_visits - logged_in_visits
     

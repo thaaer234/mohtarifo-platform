@@ -132,12 +132,16 @@ class TrackingService:
                 ip = request.META.get('REMOTE_ADDR')
                 
             # Prepare logic safely
-            user = request.user if request.user.is_authenticated else None
-            session_key = request.session.session_key
-            if not session_key:
-                # Trigger session saving if not initialized yet
-                request.session.save()
+            user = request.user if hasattr(request, 'user') and request.user.is_authenticated else None
+            
+            if hasattr(request, 'session'):
                 session_key = request.session.session_key
+                if not session_key:
+                    # Trigger session saving if not initialized yet
+                    request.session.save()
+                    session_key = request.session.session_key
+            else:
+                session_key = f"ip_{ip}"
                 
             # Prevent spamming: Check if we logged this session in the last 5 seconds
             from django.utils import timezone

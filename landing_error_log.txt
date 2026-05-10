@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "C:\Users\THAAER\Desktop\pro\analytics\services.py", line 136, in log_landing_visit
+    session_key = request.session.session_key
+                  ^^^^^^^^^^^^^^^
+AttributeError: 'WSGIRequest' object has no attribute 'session'
+
