@@ -91,6 +91,9 @@ instructor_required = _role_required(_is_active_instructor)
 
 
 def home(request):
+    from analytics.services import TrackingService
+    TrackingService.log_landing_visit(request)
+    
     if not request.user.is_authenticated:
         return redirect("dashboard:landing")
     if _is_admin_user(request.user):
@@ -519,6 +522,9 @@ def register_view(request):
 
 @admin_required
 def admin_dashboard(request):
+    from analytics.services import TrackingService
+    TrackingService.log_landing_visit(request)
+    
     from analytics.models import LandingVisit
     from django.db.models import Count
     
@@ -1505,6 +1511,9 @@ def _redeem_package_choices(request, access_code, current_device, auto_select=Fa
 
 @login_required
 def student_dashboard(request):
+    from analytics.services import TrackingService
+    TrackingService.log_landing_visit(request)
+    
     redeem_form = RedeemCodeForm(request.POST or None)
     current_device = _current_device_fingerprint(request)
     package_selection = None
