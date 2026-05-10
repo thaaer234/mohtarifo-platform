@@ -16,6 +16,15 @@ class BaseAccountingView(LoginRequiredMixin, UserPassesTestMixin):
     def test_func(self):
         return self.request.user.is_superuser or self.request.user.is_staff
 
+class PrintReportMixin:
+    """ Dynamically alternates to a optimized print template if requested. """
+    print_template_name = None
+    
+    def get_template_names(self):
+        if self.request.GET.get('format') == 'print' and self.print_template_name:
+            return [self.print_template_name]
+        return super().get_template_names()
+
 class AccountingDashboardView(BaseAccountingView, TemplateView):
     """ Executive control panel delivering immediate financial liquidity and health visualizers. """
     template_name = 'accounting_erp/dashboard_main.html'
@@ -106,9 +115,10 @@ class QuickTransactionView(BaseAccountingView, TemplateView):
             
         return redirect('accounting_erp:quick_tx')
 
-class ChartOfAccountsView(BaseAccountingView, TemplateView):
+class ChartOfAccountsView(BaseAccountingView, PrintReportMixin, TemplateView):
     """ Displays hierarchical tree map of operational ledger indices. """
     template_name = 'accounting_erp/chart_tree.html'
+    print_template_name = 'accounting_erp/chart_tree_print.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -138,9 +148,10 @@ class ChartOfAccountsView(BaseAccountingView, TemplateView):
         return context
 
 
-class JournalVoucherListView(BaseAccountingView, TemplateView):
+class JournalVoucherListView(BaseAccountingView, PrintReportMixin, TemplateView):
     """ Consolidated history stream of total balancing system vouchers. """
     template_name = 'accounting_erp/journal_list.html'
+    print_template_name = 'accounting_erp/journal_list_print.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -240,9 +251,10 @@ class JournalVoucherListView(BaseAccountingView, TemplateView):
 
 
 
-class TrialBalanceReportView(BaseAccountingView, TemplateView):
+class TrialBalanceReportView(BaseAccountingView, PrintReportMixin, TemplateView):
     """ Official balancing ledger aggregate summation report wrapper. """
     template_name = 'accounting_erp/trial_balance.html'
+    print_template_name = 'accounting_erp/trial_balance_print.html'
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -255,9 +267,10 @@ class TrialBalanceReportView(BaseAccountingView, TemplateView):
         return context
 
 
-class IncomeStatementReportView(BaseAccountingView, TemplateView):
+class IncomeStatementReportView(BaseAccountingView, PrintReportMixin, TemplateView):
     """ Premium formal operational Statement of Activities (Profit & Loss). """
     template_name = 'accounting_erp/income_statement.html'
+    print_template_name = 'accounting_erp/income_statement_print.html'
     
     def get_context_data(self, **kwargs):
         from apps.accounting_erp.services.financial_statements import FinancialStatementEngine
@@ -279,9 +292,10 @@ class IncomeStatementReportView(BaseAccountingView, TemplateView):
         return context
 
 
-class BalanceSheetReportView(BaseAccountingView, TemplateView):
+class BalanceSheetReportView(BaseAccountingView, PrintReportMixin, TemplateView):
     """ Static statement measuring snapshot position (Assets = L + E). """
     template_name = 'accounting_erp/balance_sheet.html'
+    print_template_name = 'accounting_erp/balance_sheet_print.html'
     
     def get_context_data(self, **kwargs):
         from apps.accounting_erp.services.financial_statements import FinancialStatementEngine

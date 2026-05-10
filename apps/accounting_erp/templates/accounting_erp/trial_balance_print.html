@@ -1,0 +1,62 @@
+{% extends 'accounting_erp/base_print_accounting.html' %}
+{% load humanize %}
+
+{% block title %}طباعة: ميزان المراجعة{% endblock %}
+
+{% block report_name %}ميزان المراجعة التحليلي{% endblock %}
+
+{% block report_date %}
+    من: {% if start_date %}{{ start_date|date:"Y/m/d" }}{% else %}بداية العام{% endif %} 
+    إلى: {% if end_date %}{{ end_date|date:"Y/m/d" }}{% else %}الآن{% endif %}
+{% endblock %}
+
+{% block report_body %}
+<table>
+    <thead>
+        <tr>
+            <th rowspan="2" style="width: 120px;">كود الحساب</th>
+            <th rowspan="2">اسم الحساب المالي</th>
+            <th colspan="2">مجموع الحركات</th>
+            <th colspan="2">الأرصدة الختامية</th>
+        </tr>
+        <tr>
+            <th style="width: 100px;">مدين (Dr)</th>
+            <th style="width: 100px;">دائن (Cr)</th>
+            <th style="width: 100px;">مدين (Dr)</th>
+            <th style="width: 100px;">دائن (Cr)</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in report.accounts %}
+        <tr>
+            <td class="font-mono text-center">{{ row.code }}</td>
+            <td>{{ row.name }}</td>
+            <td class="amount-col font-mono">{% if row.total_debit > 0 %}{{ row.total_debit|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+            <td class="amount-col font-mono">{% if row.total_credit > 0 %}{{ row.total_credit|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+            <td class="amount-col font-mono" style="background-color: #f8fafc; font-weight: 800;">
+                {% if row.net_debit > 0 %}{{ row.net_debit|floatformat:2|intcomma }}{% else %}-{% endif %}
+            </td>
+            <td class="amount-col font-mono" style="background-color: #f8fafc; font-weight: 800;">
+                {% if row.net_credit > 0 %}{{ row.net_credit|floatformat:2|intcomma }}{% else %}-{% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" class="text-center">لا توجد بيانات في الفترة المحددة.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <td colspan="2" class="text-right">الإجمالي العام للميزان</td>
+            <td class="amount-col font-mono">{{ report.grand_totals.debit|floatformat:2|intcomma }}</td>
+            <td class="amount-col font-mono">{{ report.grand_totals.credit|floatformat:2|intcomma }}</td>
+            <td colspan="2" class="text-center" style="font-size: 10pt;">
+                حالة الميزان: 
+                {% if report.grand_totals.is_balanced %}<strong>مُتزن تماماً ✓</strong>
+                {% else %}<strong style="color: red;">⚠️ غير متزن</strong>{% endif %}
+            </td>
+        </tr>
+    </tfoot>
+</table>
+{% endblock %}

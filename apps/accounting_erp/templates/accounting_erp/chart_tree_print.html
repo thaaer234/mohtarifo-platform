@@ -1,0 +1,47 @@
+{% extends 'accounting_erp/base_print_accounting.html' %}
+{% load humanize %}
+
+{% block title %}طباعة: دليل الحسابات{% endblock %}
+
+{% block report_name %}شجرة الحسابات المعتمدة{% endblock %}
+
+{% block report_date %}الهيكل الهرمي الشامل للحسابات{% endblock %}
+
+{% block report_body %}
+<table style="width: 100%;">
+    <thead>
+        <tr>
+            <th style="width: 120px;">كود الحساب</th>
+            <th>اسم الحساب</th>
+            <th style="width: 120px;">النوع</th>
+            <th style="width: 100px;">طبيعة الحساب</th>
+            <th style="width: 160px;">الرصيد الحالي</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for acc in accounts %}
+        <tr {% if acc.is_group %}style="font-weight: 700; background-color: #f1f5f9 !important;"{% endif %}>
+            <td class="font-mono text-center">{{ acc.code }}</td>
+            <td style="padding-right: calc({{ acc.code|length|add:"-1" }} * 15px);">
+                {% if acc.is_group %}📁{% else %}📄{% endif %} {{ acc.name }}
+            </td>
+            <td class="text-center">{% if acc.is_group %}رئيسي{% else %}فرعي{% endif %}</td>
+            <td class="text-center" style="font-size: 9pt;">
+                {% if acc.category == 'asset' %}أصول
+                {% elif acc.category == 'liability' %}خصوم
+                {% elif acc.category == 'equity' %}حقوق ملكية
+                {% elif acc.category == 'revenue' %}إيراد
+                {% elif acc.category == 'expense' %}مصروف{% endif %}
+            </td>
+            <td class="amount-col font-mono">
+                {% if not acc.is_group %}
+                    {{ acc.display_balance|floatformat:2|intcomma }}
+                {% else %}-{% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center">دليل الحسابات فارغ.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

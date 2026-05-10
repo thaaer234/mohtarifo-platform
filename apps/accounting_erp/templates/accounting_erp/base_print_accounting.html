@@ -1,0 +1,231 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}تقرير محاسبي{% endblock %}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+
+        :root {
+            --primary: #1e293b;
+            --border: #e2e8f0;
+            --text-muted: #64748b;
+        }
+
+        body {
+            background-color: #fff;
+            color: #111;
+            font-family: 'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            font-size: 11pt;
+            line-height: 1.5;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .page-wrapper {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 30px;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+
+        /* Header Styling - Highly Formatted */
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .company-info h1 {
+            font-family: 'Amiri', serif;
+            margin: 0;
+            font-size: 24pt;
+            color: var(--primary);
+        }
+        
+        .company-info p {
+            margin: 4px 0;
+            color: var(--text-muted);
+            font-size: 9pt;
+            font-weight: 600;
+        }
+
+        .report-meta {
+            text-align: left;
+            font-size: 9pt;
+            font-weight: 600;
+            color: #444;
+            direction: ltr;
+        }
+
+        .report-title-box {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .report-title-box h2 {
+            font-size: 18pt;
+            font-weight: 700;
+            margin: 0 0 5px 0;
+            color: #000;
+        }
+
+        .report-title-box .subtitle {
+            font-size: 11pt;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* Table Formatting */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+        }
+
+        th {
+            background-color: #f8fafc !important;
+            color: #000;
+            font-weight: 700;
+            font-size: 10pt;
+            padding: 10px 8px;
+            border: 1px solid #94a3b8;
+            text-align: center;
+        }
+
+        td {
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            font-size: 10pt;
+            color: #1e293b;
+        }
+        
+        .font-mono {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .text-right { text-align: right; }
+        .text-left { text-align: left; }
+        .text-center { text-align: center; }
+        
+        tr:nth-child(even) { background-color: #fcfdfe; }
+        
+        tfoot td {
+            background-color: #f1f5f9 !important;
+            font-weight: 800 !important;
+            border-top: 2px solid var(--primary);
+            font-size: 11pt;
+            color: #000;
+        }
+
+        .amount-col {
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .level-1 { font-weight: 700; background-color: #f8fafc; }
+        .level-2 { padding-right: 20px; }
+        .level-3 { padding-right: 40px; color: #475569; }
+
+        /* Footer Signatures */
+        .signatures {
+            margin-top: 50px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+        
+        .sig-box {
+            text-align: center;
+            width: 200px;
+            font-size: 10pt;
+            font-weight: 700;
+        }
+        
+        .sig-line {
+            border-top: 1.5px solid #000;
+            margin-top: 40px;
+            padding-top: 5px;
+        }
+
+        .print-btn-fixed {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: #0f172a;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        @media print {
+            .page-wrapper {
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                max-width: 100%;
+            }
+            body { padding: 15mm; }
+            .print-btn-fixed { display: none !important; }
+            @page {
+                margin: 10mm;
+                size: A4;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <button class="print-btn-fixed" onclick="window.print()">🖨️ طباعة الآن</button>
+
+    <div class="page-wrapper">
+        <header class="report-header">
+            <div class="company-info">
+                <h1>أكاديمية المحترفين</h1>
+                <p>قسم المحاسبة والمالية - النظام الموحد</p>
+            </div>
+            <div class="report-meta">
+                <div>تاريخ الاستخراج: {{ now|date:"Y-m-d H:i" }}</div>
+                <div>بواسطة: {{ user.get_full_name|default:user.username }}</div>
+            </div>
+        </header>
+
+        <div class="report-title-box">
+            <h2>{% block report_name %}عنوان التقرير{% endblock %}</h2>
+            <div class="subtitle">
+                {% block report_date %}الفترة المالية المحددة{% endblock %}
+            </div>
+        </div>
+
+        <main>
+            {% block report_body %}{% endblock %}
+        </main>
+
+        <div class="signatures">
+            <div class="sig-box">
+                <div class="sig-line">توقيع المحاسب</div>
+            </div>
+            <div class="sig-box">
+                <div class="sig-line">مدير الإدارة المالية</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

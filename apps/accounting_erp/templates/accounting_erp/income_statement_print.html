@@ -1,0 +1,77 @@
+{% extends 'accounting_erp/base_print_accounting.html' %}
+{% load humanize %}
+
+{% block title %}طباعة: قائمة الدخل{% endblock %}
+
+{% block report_name %}قائمة الأرباح والخسائر (بيان الدخل){% endblock %}
+
+{% block report_date %}
+    الفترة من: {% if start_date %}{{ start_date|date:"Y/m/d" }}{% else %}البداية{% endif %} 
+    إلى: {% if end_date %}{{ end_date|date:"Y/m/d" }}{% else %}الآن{% endif %}
+{% endblock %}
+
+{% block report_body %}
+<div style="border-bottom: 2px solid #000; margin-bottom: 15px; padding-bottom: 5px;">
+    <h3 style="margin: 0; font-size: 14pt;">أولاً: الإيرادات التشغيلية</h3>
+</div>
+<table style="margin-bottom: 30px;">
+    <thead>
+        <tr>
+            <th>بند الإيراد</th>
+            <th style="width: 180px;">القيمة</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in pnl.revenue %}
+        <tr>
+            <td>{{ item.name }}</td>
+            <td class="amount-col font-mono">{{ item.val|floatformat:2|intcomma }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="2" class="text-center">لا توجد إيرادات</td></tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <td class="text-right">إجمالي الإيرادات المحققة</td>
+            <td class="amount-col font-mono" style="font-size: 13pt;">{{ pnl.total_revenue|floatformat:2|intcomma }}</td>
+        </tr>
+    </tfoot>
+</table>
+
+<div style="border-bottom: 2px solid #000; margin-bottom: 15px; padding-bottom: 5px;">
+    <h3 style="margin: 0; font-size: 14pt;">ثانياً: المصروفات والتكاليف</h3>
+</div>
+<table>
+    <thead>
+        <tr>
+            <th>بند المصروف</th>
+            <th style="width: 180px;">القيمة</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in pnl.expense %}
+        <tr>
+            <td>{{ item.name }}</td>
+            <td class="amount-col font-mono">({{ item.val|floatformat:2|intcomma }})</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="2" class="text-center">لا توجد مصروفات</td></tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <td class="text-right">إجمالي أعباء المصروفات</td>
+            <td class="amount-col font-mono" style="font-size: 13pt;">({{ pnl.total_expense|floatformat:2|intcomma }})</td>
+        </tr>
+    </tfoot>
+</table>
+
+<div style="margin-top: 40px; padding: 15px; border: 3px solid #000; text-align: center; background-color: #f8fafc;">
+    <h4 style="margin: 0 0 5px 0; font-size: 12pt; color: #475569;">النتيجة النهائية للنشاط</h4>
+    <h2 style="margin: 0; font-size: 20pt; font-weight: 900;">
+        صافي {% if pnl.is_profit %}الربح{% else %}الخسارة{% endif %}: 
+        <span class="font-mono" style="margin-right: 15px; border-bottom: 4px double #000;">{{ pnl.net_income|floatformat:2|intcomma }}</span>
+    </h2>
+</div>
+{% endblock %}

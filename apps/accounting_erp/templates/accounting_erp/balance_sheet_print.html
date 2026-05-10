@@ -1,0 +1,94 @@
+{% extends 'accounting_erp/base_print_accounting.html' %}
+{% load humanize %}
+
+{% block title %}طباعة: الميزانية العمومية{% endblock %}
+
+{% block report_name %}الميزانية العمومية (قائمة المركز المالي){% endblock %}
+
+{% block report_date %}
+    تاريخ المركز: {% if end_date %}{{ end_date|date:"Y/m/d" }}{% else %}اللحظة الحالية{% endif %}
+{% endblock %}
+
+{% block report_body %}
+<div style="border-bottom: 2px solid #000; margin-bottom: 15px; padding-bottom: 5px;">
+    <h3 style="margin: 0; font-size: 14pt;">الجانب المدين: الأصول (الموجودات)</h3>
+</div>
+<table style="margin-bottom: 25px;">
+    <thead>
+        <tr>
+            <th>بند الحساب</th>
+            <th style="width: 180px;">القيمة الصافية</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in bs.assets %}
+        <tr>
+            <td>{{ item.name }}</td>
+            <td class="amount-col font-mono">{{ item.val|floatformat:2|intcomma }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="2" class="text-center">لا توجد أصول</td></tr>
+        {% endfor %}
+    </tbody>
+    <tfoot>
+        <tr>
+            <td class="text-right">إجمالي قيمة الأصول</td>
+            <td class="amount-col font-mono" style="font-size: 13pt;">{{ bs.total_assets|floatformat:2|intcomma }}</td>
+        </tr>
+    </tfoot>
+</table>
+
+<div style="border-bottom: 2px solid #000; margin-bottom: 15px; padding-bottom: 5px;">
+    <h3 style="margin: 0; font-size: 14pt;">الجانب الدائن: الخصوم وحقوق الملكية</h3>
+</div>
+<table>
+    <thead>
+        <tr>
+            <th>بند الحساب</th>
+            <th style="width: 180px;">القيمة</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr style="background-color: #f8fafc; font-weight: 700;">
+            <td colspan="2">1. الالتزامات المتداولة (الخصوم)</td>
+        </tr>
+        {% for item in bs.liabilities %}
+        <tr>
+            <td style="padding-right: 30px;">{{ item.name }}</td>
+            <td class="amount-col font-mono">{{ item.val|floatformat:2|intcomma }}</td>
+        </tr>
+        {% endfor %}
+        
+        <tr style="background-color: #f8fafc; font-weight: 700;">
+            <td colspan="2">2. حقوق الملكية</td>
+        </tr>
+        {% for item in bs.equity %}
+        <tr>
+            <td style="padding-right: 30px;">{{ item.name }}</td>
+            <td class="amount-col font-mono">{{ item.val|floatformat:2|intcomma }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <td style="padding-right: 30px;">أرباح / خسائر الفترة الحالية</td>
+            <td class="amount-col font-mono" style="font-weight: 800;">{{ bs.current_profit|floatformat:2|intcomma }}</td>
+        </tr>
+    </tbody>
+    <tfoot>
+        <tr>
+            <td class="text-right">إجمالي (الخصوم + حقوق الملكية)</td>
+            <td class="amount-col font-mono" style="font-size: 13pt;">{{ bs.total_liab_equity|floatformat:2|intcomma }}</td>
+        </tr>
+    </tfoot>
+</table>
+
+{% if not bs.is_balanced %}
+<div style="margin-top: 20px; padding: 10px; border: 2px solid red; color: red; font-weight: 900; text-align: center; font-size: 12pt;">
+    ⚠️ تحذير: المركز المالي غير متزن! يوجد فرق بين الجانبين بقيمة {{ bs.total_assets|add:bs.total_liab_equity|floatformat:2|intcomma }}
+</div>
+{% else %}
+<div style="margin-top: 20px; text-align: center; color: green; font-weight: 700; font-size: 11pt;">
+    ✅ المركز المالي متطابق ومتزن تماماً.
+</div>
+{% endif %}
+
+{% endblock %}
