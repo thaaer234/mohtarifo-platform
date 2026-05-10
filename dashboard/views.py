@@ -2391,16 +2391,24 @@ def admin_billing(request):
     total_revenue_cents = Payment.objects.filter(status="paid").aggregate(total=models.Sum("amount_cents"))["total"] or 0
     total_revenue = total_revenue_cents / 100
 
+    filter_reports = _filter_financial_rows()
+    
+    # Pre-calculate summary totals for print view usage
+    total_centers_earned = sum(item["actual_earned"] for item in centers_report)
+    total_filter_gross = sum(item["gross"] for item in filter_reports)
+
     context = {
         "subscriptions": subscriptions,
         "payments": payments,
         "batches": batches,
         "total_revenue": total_revenue,
         "active_subs_count": active_subs_count,
-        "filter_reports": _filter_financial_rows(),
+        "filter_reports": filter_reports,
         "course_reports": _course_financial_rows()[:30],
         "general_fund_syp": general_fund_syp,
         "centers_report": centers_report,
+        "total_centers_earned": total_centers_earned,
+        "total_filter_gross": total_filter_gross,
     }
     return render(request, template_to_render, context)
 

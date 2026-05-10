@@ -155,7 +155,7 @@
         <tr>
             <td colspan="4" class="text-right" style="font-weight: 800;">📈 إجمالي الإيرادات الفعلية للأكواد:</td>
             <td colspan="3" class="text-center font-mono" style="font-weight: 900; font-size: 1rem; color: #16a34a;">
-                {{ centers_report|sum_attribute:'actual_earned'|floatformat:0|intcomma }} ل.س
+                {{ total_centers_earned|floatformat:0|intcomma }} ل.س
             </td>
         </tr>
     </tfoot>
@@ -199,7 +199,7 @@
         <tr>
             <td colspan="5" class="text-right" style="font-weight: 800;">🔻 الإجمالي الكلي لقيمة الأكواد:</td>
             <td class="text-center font-mono" style="font-weight: 900; font-size: 1rem; background: rgba(197, 160, 89, 0.1);">
-                {{ filter_reports|sum_attribute:'gross'|default:0|floatformat:2|intcomma }} ل.س
+                {{ total_filter_gross|default:0|floatformat:2|intcomma }} ل.س
             </td>
         </tr>
     </tfoot>
