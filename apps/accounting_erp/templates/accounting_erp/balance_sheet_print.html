@@ -1,7 +1,262 @@
 {% extends 'accounting_erp/base_print_accounting.html' %}
 {% load humanize %}
+{% load static %}
 
 {% block title %}طباعة: الميزانية العمومية{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    /* ============================================
+       OVERRIDES & PRINT ENHANCEMENTS
+       Maintains Premium Design System + Print Logic
+    ============================================ */
+    
+    /* إعادة ضبط الطباعة */
+    @media print {
+        body {
+            background: white !important;
+            color: black !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            font-family: 'Cairo', 'Inter', sans-serif;
+        }
+        .no-print, .btn, .action-buttons, .navbar, .footer-premium, .mobile-bottom-nav, .print-hide {
+            display: none !important;
+        }
+        .container, .main-content {
+            padding: 0 !important;
+            margin: 0 auto !important;
+            max-width: 100% !important;
+        }
+        .premium-card, .glass-card, .report-container {
+            box-shadow: none !important;
+            border: 1px solid #ddd !important;
+            background: white !important;
+            padding: 1.5rem !important;
+        }
+        table {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+        .report-header, .company-header {
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #000;
+        }
+        .amount-col {
+            font-weight: 600;
+        }
+        .balance-warning {
+            border: 1px solid #dc2626;
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    }
+
+    /* نفس روح CSS المنصة - Premium Design System */
+    :root {
+        --brand-gold: #d4af37;
+        --brand-gold-light: #f1d592;
+        --brand-gold-dark: #996515;
+        --brand-gold-glow: rgba(212, 175, 55, 0.2);
+        --brand-gold-rgb: 212, 175, 55;
+        --bg-base: #fdfdfd;
+        --bg-surface: #ffffff;
+        --text-primary: #0a0a0a;
+        --text-secondary: #4a4a4a;
+        --border-light: rgba(0, 0, 0, 0.08);
+        --radius-md: 24px;
+        --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.03);
+        --transition-smooth: all 0.3s ease;
+    }
+
+    body {
+        font-family: 'Cairo', 'Inter', sans-serif;
+        background-color: var(--bg-base);
+        color: var(--text-primary);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* حاويات التقرير */
+    .report-wrapper {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+
+    .premium-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-md);
+        padding: 2rem;
+        box-shadow: var(--shadow-soft);
+        transition: var(--transition-smooth);
+    }
+
+    .glass-card {
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.5);
+        border-radius: var(--radius-md);
+    }
+
+    /* رأس التقرير - مطابق لروح المنصة */
+    .report-header {
+        margin-bottom: 2rem;
+        border-bottom: 2px solid var(--brand-gold);
+        padding-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        flex-wrap: wrap;
+    }
+    .report-title h1 {
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin: 0;
+        background: linear-gradient(135deg, var(--text-primary) 0%, var(--brand-gold) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    .report-meta {
+        text-align: left;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+    }
+    .company-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(var(--brand-gold-rgb), 0.1);
+        padding: 0.5rem 1rem;
+        border-radius: 100px;
+        font-weight: 700;
+    }
+
+    /* الجداول الاحترافية */
+    .financial-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 2rem;
+        font-size: 0.95rem;
+    }
+    .financial-table th {
+        text-align: right;
+        padding: 1rem 0.75rem;
+        background: rgba(0, 0, 0, 0.02);
+        border-bottom: 2px solid var(--border-light);
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+    .financial-table td {
+        padding: 0.85rem 0.75rem;
+        border-bottom: 1px solid var(--border-light);
+        vertical-align: top;
+    }
+    .financial-table tfoot td {
+        border-top: 2px solid var(--border-light);
+        font-weight: 800;
+        background: rgba(212, 175, 55, 0.05);
+    }
+    .amount-col {
+        text-align: left;
+        font-family: 'Inter', monospace;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+    .sub-item {
+        padding-right: 2rem !important;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+    .section-header-row {
+        background-color: rgba(212, 175, 55, 0.08);
+        font-weight: 800;
+    }
+    .text-right {
+        text-align: right;
+    }
+    .text-center {
+        text-align: center;
+    }
+    .font-mono {
+        font-family: 'Inter', monospace;
+    }
+
+    /* بطاقات التوازن */
+    .balance-alert {
+        margin-top: 2rem;
+        padding: 1rem 1.5rem;
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-weight: 800;
+        justify-content: center;
+    }
+    .balance-success {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+        border: 1px solid rgba(16,185,129,0.2);
+    }
+    .balance-error {
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+        border: 1px solid rgba(239,68,68,0.3);
+    }
+
+    /* مجموعة الأزرار (للشاشة فقط) */
+    .action-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .btn-print {
+        background: linear-gradient(135deg, var(--brand-gold), var(--brand-gold-dark));
+        color: #000;
+        font-weight: 800;
+        padding: 0.75rem 1.8rem;
+        border-radius: 40px;
+        border: none;
+        cursor: pointer;
+        transition: 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-family: inherit;
+    }
+    .btn-print:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 20px rgba(212,175,55,0.3);
+    }
+
+    /* تذييل صغير */
+    .report-footer {
+        margin-top: 3rem;
+        text-align: center;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        border-top: 1px solid var(--border-light);
+        padding-top: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .report-wrapper {
+            padding: 0 1rem;
+        }
+        .financial-table th, .financial-table td {
+            padding: 0.6rem 0.5rem;
+        }
+        .report-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block report_name %}الميزانية العمومية (قائمة المركز المالي){% endblock %}
 
@@ -10,85 +265,166 @@
 {% endblock %}
 
 {% block report_body %}
-<div style="border-bottom: 2px solid #000; margin-bottom: 15px; padding-bottom: 5px;">
-    <h3 style="margin: 0; font-size: 14pt;">الجانب المدين: الأصول (الموجودات)</h3>
-</div>
-<table style="margin-bottom: 25px;">
-    <thead>
-        <tr>
-            <th>بند الحساب</th>
-            <th style="width: 180px;">القيمة الصافية</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for item in bs.assets %}
-        <tr>
-            <td>{{ item.name }}</td>
-            <td class="amount-col font-mono">{{ item.val|floatformat:2|intcomma }}</td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="2" class="text-center">لا توجد أصول</td></tr>
-        {% endfor %}
-    </tbody>
-    <tfoot>
-        <tr>
-            <td class="text-right">إجمالي قيمة الأصول</td>
-            <td class="amount-col font-mono" style="font-size: 13pt;">{{ bs.total_assets|floatformat:2|intcomma }}</td>
-        </tr>
-    </tfoot>
-</table>
+<div class="report-wrapper">
+    <!-- أزرار التحكم (تظهر فقط على الشاشة، وتختفي عند الطباعة) -->
+    <div class="action-buttons no-print">
+        <button class="btn-print" onclick="window.print();">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 9V3H18V9M6 21H18V15H6V21Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M18 9H6C4.34315 9 3 10.3431 3 12V18H6V15H18V18H21V12C21 10.3431 19.6569 9 18 9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <circle cx="18" cy="14" r="1" fill="currentColor"/>
+            </svg>
+            طباعة التقرير
+        </button>
+    </div>
 
-<div style="border-bottom: 2px solid #000; margin-bottom: 15px; padding-bottom: 5px;">
-    <h3 style="margin: 0; font-size: 14pt;">الجانب الدائن: الخصوم وحقوق الملكية</h3>
+    <!-- البطاقة الرئيسية للتقرير (بريمية عالية الجودة) -->
+    <div class="premium-card">
+        <!-- رأس التقرير بنفس لمسات المنصة -->
+        <div class="report-header">
+            <div class="report-title">
+                <h1>📊 الميزانية العمومية</h1>
+                <div class="company-badge">
+                    <span>✨ قائمة المركز المالي</span>
+                </div>
+            </div>
+            <div class="report-meta">
+                <div>📅 التاريخ: {% if end_date %}{{ end_date|date:"Y/m/d" }}{% else %}اللحظة الحالية{% endif %}</div>
+                <div>⏱ وقت الطباعة: {% now "Y/m/d - H:i" %}</div>
+            </div>
+        </div>
+
+        <!-- الجانب المدين: الأصول (الموجودات) -->
+        <div style="margin-top: 1rem;">
+            <div style="border-right: 4px solid var(--brand-gold); padding-right: 1rem; margin-bottom: 1.5rem;">
+                <h3 style="margin: 0; font-size: 1.35rem; font-weight: 800;">💎 الجانب المدين: الأصول (الموجودات)</h3>
+            </div>
+            <table class="financial-table">
+                <thead>
+                    <tr>
+                        <th>بند الحساب</th>
+                        <th style="width: 180px;" class="amount-col">القيمة الصافية (₿)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in bs.assets %}
+                    <tr>
+                        <td>{{ item.name }}</td>
+                        <td class="amount-col font-mono">{{ item.val|floatformat:2|intcomma }} </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="2" class="text-center">⚠️ لا توجد أصول مسجلة</td></tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td class="text-right" style="font-weight: 800;">إجمالي قيمة الأصول</td>
+                        <td class="amount-col font-mono" style="font-size: 1.1rem; font-weight: 900;">{{ bs.total_assets|floatformat:2|intcomma }} </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- الجانب الدائن: الخصوم وحقوق الملكية -->
+        <div style="margin-top: 2rem;">
+            <div style="border-right: 4px solid var(--brand-gold); padding-right: 1rem; margin-bottom: 1.5rem;">
+                <h3 style="margin: 0; font-size: 1.35rem; font-weight: 800;">⚖️ الجانب الدائن: الخصوم وحقوق الملكية</h3>
+            </div>
+            <table class="financial-table">
+                <thead>
+                    <tr>
+                        <th>بند الحساب</th>
+                        <th style="width: 180px;" class="amount-col">القيمة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- قسم الالتزامات المتداولة (الخصوم) -->
+                    <tr class="section-header-row">
+                        <td colspan="2">📌 1. الالتزامات المتداولة (الخصوم)</td>
+                    </tr>
+                    {% for item in bs.liabilities %}
+                    <tr>
+                        <td class="sub-item">{{ item.name }}</td>
+                        <td class="amount-col font-mono">{{ item.val|floatformat:2|intcomma }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="2" class="sub-item text-center">— لا توجد خصوم —</td></tr>
+                    {% endfor %}
+
+                    <!-- قسم حقوق الملكية -->
+                    <tr class="section-header-row">
+                        <td colspan="2">🏦 2. حقوق الملكية</td>
+                    </tr>
+                    {% for item in bs.equity %}
+                    <tr>
+                        <td class="sub-item">{{ item.name }}</td>
+                        <td class="amount-col font-mono">{{ item.val|floatformat:2|intcomma }}</td>
+                    </tr>
+                    {% endfor %}
+                    <tr style="background: rgba(212,175,55,0.05);">
+                        <td class="sub-item" style="font-weight: 800;">📈 أرباح / خسائر الفترة الحالية</td>
+                        <td class="amount-col font-mono" style="font-weight: 800;">{{ bs.current_profit|floatformat:2|intcomma }}</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td class="text-right" style="font-weight: 800;">إجمالي (الخصوم + حقوق الملكية)</td>
+                        <td class="amount-col font-mono" style="font-size: 1.1rem; font-weight: 900;">{{ bs.total_liab_equity|floatformat:2|intcomma }} </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- حالة التوازن (بطاقة تحذيرية أو تأكيدية حسب النتيجة) -->
+        {% if not bs.is_balanced %}
+        <div class="balance-alert balance-error">
+            <span>⚠️</span>
+            <span>تحذير: المركز المالي غير متزن! يوجد فرق بين الجانبين بقيمة {{ bs.total_assets|add:bs.total_liab_equity|floatformat:2|intcomma }}</span>
+        </div>
+        {% else %}
+        <div class="balance-alert balance-success">
+            <span>✅</span>
+            <span>المركز المالي متطابق ومتزن تماماً. الأصول = الخصوم + حقوق الملكية</span>
+        </div>
+        {% endif %}
+
+        <!-- تواقيع أو تذييل إضافي (اختياري) -->
+        <div class="report-footer">
+            <p>تم إنشاء هذا التقرير بواسطة نظام المحاسبة المتكامل | البيانات دقيقة حسب القيود المسجلة</p>
+            <p style="font-size: 0.7rem;">* الميزانية معدة وفقاً للمعايير المحاسبية وتظهر المركز المالي في التاريخ المحدد</p>
+        </div>
+    </div>
+    <!-- نهاية البطاقة الرئيسية -->
 </div>
-<table>
-    <thead>
-        <tr>
-            <th>بند الحساب</th>
-            <th style="width: 180px;">القيمة</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr style="background-color: #f8fafc; font-weight: 700;">
-            <td colspan="2">1. الالتزامات المتداولة (الخصوم)</td>
-        </tr>
-        {% for item in bs.liabilities %}
-        <tr>
-            <td style="padding-right: 30px;">{{ item.name }}</td>
-            <td class="amount-col font-mono">{{ item.val|floatformat:2|intcomma }}</td>
-        </tr>
-        {% endfor %}
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    (function() {
+        // تحسين تجربة الطباعة: إخفاء أزرار التحكم والهيدرات الإضافية أثناء الطباعة
+        if (window.matchMedia) {
+            const mediaQueryList = window.matchMedia('print');
+            const handlePrintChange = (mql) => {
+                if (mql.matches) {
+                    // قبل الطباعة مباشرة يمكن إضافة أي سلوك (اختياري)
+                    document.body.classList.add('printing-mode');
+                } else {
+                    document.body.classList.remove('printing-mode');
+                }
+            };
+            mediaQueryList.addListener(handlePrintChange);
+            handlePrintChange(mediaQueryList);
+        }
         
-        <tr style="background-color: #f8fafc; font-weight: 700;">
-            <td colspan="2">2. حقوق الملكية</td>
-        </tr>
-        {% for item in bs.equity %}
-        <tr>
-            <td style="padding-right: 30px;">{{ item.name }}</td>
-            <td class="amount-col font-mono">{{ item.val|floatformat:2|intcomma }}</td>
-        </tr>
-        {% endfor %}
-        <tr>
-            <td style="padding-right: 30px;">أرباح / خسائر الفترة الحالية</td>
-            <td class="amount-col font-mono" style="font-weight: 800;">{{ bs.current_profit|floatformat:2|intcomma }}</td>
-        </tr>
-    </tbody>
-    <tfoot>
-        <tr>
-            <td class="text-right">إجمالي (الخصوم + حقوق الملكية)</td>
-            <td class="amount-col font-mono" style="font-size: 13pt;">{{ bs.total_liab_equity|floatformat:2|intcomma }}</td>
-        </tr>
-    </tfoot>
-</table>
-
-{% if not bs.is_balanced %}
-<div style="margin-top: 20px; padding: 10px; border: 2px solid red; color: red; font-weight: 900; text-align: center; font-size: 12pt;">
-    ⚠️ تحذير: المركز المالي غير متزن! يوجد فرق بين الجانبين بقيمة {{ bs.total_assets|add:bs.total_liab_equity|floatformat:2|intcomma }}
-</div>
-{% else %}
-<div style="margin-top: 20px; text-align: center; color: green; font-weight: 700; font-size: 11pt;">
-    ✅ المركز المالي متطابق ومتزن تماماً.
-</div>
-{% endif %}
-
+        // إضافة تأكيد عند الطباعة لعرض التقرير بشكل نظيف
+        const printBtn = document.querySelector('.btn-print');
+        if (printBtn) {
+            printBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.print();
+            });
+        }
+    })();
+</script>
 {% endblock %}

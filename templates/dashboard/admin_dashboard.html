@@ -171,6 +171,104 @@
         </article>
     </section>
 
+    <section class="admin-zone mb-4">
+        <div class="zone-head">
+            <div>
+                <div class="badge badge-gold mb-2">تحليل المنصة (Live Traffic)</div>
+                <h2>زوار واجهة الدخول والأجهزة</h2>
+            </div>
+            <div class="text-muted" style="font-size: 0.85rem;">
+                إجمالي المشاهدات: <strong style="color: var(--text-primary); font-size:1rem;">{{ traffic_stats.total|default:0 }}</strong>
+            </div>
+        </div>
+        
+        <div class="analytics-composite-grid">
+            <!-- Split View: Logged vs Anon -->
+            <div class="analytics-subcard">
+                <span class="subcard-label">تفاعل الزوار (سجلوا دخول أم لا)</span>
+                <div class="progress-stacked">
+                    {% if traffic_stats.total > 0 %}
+                        {% widthratio traffic_stats.logged_in traffic_stats.total 100 as pct_logged %}
+                        {% widthratio traffic_stats.anon traffic_stats.total 100 as pct_anon %}
+                        
+                        <div class="progress-segment logged" style="width: {{ pct_logged|default:'0' }}%;" title="مسجلين">
+                            <span>{{ pct_logged }}%</span>
+                        </div>
+                        <div class="progress-segment anon" style="width: {{ pct_anon|default:'100' }}%;" title="مجهولين">
+                            <span>{{ pct_anon }}%</span>
+                        </div>
+                    {% else %}
+                        <div class="progress-segment empty" style="width: 100%;">لا توجد بيانات بعد</div>
+                    {% endif %}
+                </div>
+                <div class="legend-row">
+                    <div class="legend-item"><i class="dot dot-logged"></i> مسجلي دخول ({{ traffic_stats.logged_in|default:0 }})</div>
+                    <div class="legend-item"><i class="dot dot-anon"></i> زوار مجهولين ({{ traffic_stats.anon|default:0 }})</div>
+                </div>
+            </div>
+
+            <!-- Device Distribution -->
+            <div class="analytics-subcard">
+                <span class="subcard-label">توزيع الأجهزة المستخدمة</span>
+                <div class="device-chips-container">
+                    {% for dev in traffic_stats.devices %}
+                        <div class="device-chip">
+                            <div class="chip-ico">
+                                {% if dev.device_type == 'mobile' %}
+                                    <i data-lucide="smartphone"></i>
+                                {% elif dev.device_type == 'tablet' %}
+                                    <i data-lucide="tablet"></i>
+                                {% elif dev.device_type == 'pc' %}
+                                    <i data-lucide="monitor"></i>
+                                {% elif dev.device_type == 'bot' %}
+                                    <i data-lucide="bot"></i>
+                                {% else %}
+                                    <i data-lucide="help-circle"></i>
+                                {% endif %}
+                            </div>
+                            <div class="chip-details">
+                                <span class="chip-lbl">
+                                    {% if dev.device_type == 'mobile' %}موبايل
+                                    {% elif dev.device_type == 'pc' %}حاسوب
+                                    {% elif dev.device_type == 'tablet' %}تابلت
+                                    {% elif dev.device_type == 'bot' %}عناكب بحث
+                                    {% else %}{{ dev.device_type }}{% endif %}
+                                </span>
+                                <strong class="chip-val">{{ dev.total }}</strong>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-inline" style="grid-column: 1 / -1;">انتظار أول زائر...</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="traffic-log-container">
+            <span class="subcard-label">السجل الحي (Realtime Log)</span>
+            <div class="traffic-ticker">
+                {% for visit in traffic_stats.recent %}
+                    <div class="ticker-row">
+                        <div class="row-meta">
+                            <span class="time-tag">{{ visit.visited_at|date:"H:i:s" }}</span>
+                            {% if visit.user %}
+                                <span class="user-badge badge-ok"><i data-lucide="check-circle-2"></i> {{ visit.user.username }}</span>
+                            {% else %}
+                                <span class="user-badge badge-anon"><i data-lucide="user"></i> زائر</span>
+                            {% endif %}
+                        </div>
+                        <div class="row-details">
+                            <span class="dev-tag">{{ visit.device_type }} / {{ visit.browser_family }}</span>
+                            <span class="ip-tag">{{ visit.ip_address|default:"--" }}</span>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="empty-inline">لا يوجد نشاط حتى الآن</div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
     <section class="admin-lower-grid">
         <article class="admin-zone">
             <div class="zone-head">
@@ -358,5 +456,165 @@
         .row-actions { width: 100%; }
         .row-actions a { flex: 1; }
     }
+
+    /* === Advanced Analytics Styles === */
+    .analytics-composite-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    @media (max-width: 900px) {
+        .analytics-composite-grid { grid-template-columns: 1fr; }
+    }
+    .analytics-subcard {
+        background: var(--bg-surface-elevated);
+        border: 1px solid var(--border-light);
+        border-radius: 16px;
+        padding: 1.25rem;
+    }
+    .subcard-label {
+        display: block;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+    }
+    .progress-stacked {
+        display: flex;
+        height: 32px;
+        background: var(--bg-base);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--border-light);
+        margin-bottom: 0.75rem;
+    }
+    .progress-segment {
+        display: grid;
+        place-items: center;
+        height: 100%;
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 800;
+        transition: width 0.4s ease;
+    }
+    .progress-segment.logged {
+        background: linear-gradient(90deg, #10b981, #34d399);
+    }
+    .progress-segment.anon {
+        background: linear-gradient(90deg, #64748b, #94a3b8);
+    }
+    .progress-segment.empty {
+        color: var(--text-muted);
+        background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.02) 10px, rgba(0,0,0,0.02) 20px);
+    }
+    .legend-row {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot-logged { background: #10b981; }
+    .dot-anon { background: #64748b; }
+
+    .device-chips-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 0.75rem;
+    }
+    .device-chip {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+    }
+    .chip-ico {
+        color: var(--brand-gold);
+        display: grid;
+        place-items: center;
+    }
+    .chip-ico i { width: 18px; height: 18px; }
+    .chip-details {
+        display: flex;
+        flex-direction: column;
+    }
+    .chip-lbl { font-size: 0.72rem; color: var(--text-muted); font-weight: 700; }
+    .chip-val { font-size: 1.1rem; color: var(--text-primary); }
+
+    .traffic-log-container {
+        margin-top: 1rem;
+        padding-top: 1.5rem;
+        border-top: 1px dashed var(--border-light);
+    }
+    .traffic-ticker {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        max-height: 220px;
+        overflow-y: auto;
+        padding-right: 0.25rem;
+    }
+    .ticker-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.7rem 1rem;
+        background: var(--bg-surface-elevated);
+        border: 1px solid var(--border-light);
+        border-radius: 10px;
+        font-size: 0.82rem;
+    }
+    .row-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .time-tag {
+        font-family: monospace;
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+    .user-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.72rem;
+    }
+    .user-badge.badge-ok {
+        background: rgba(16, 185, 129, 0.1);
+        color: #059669;
+    }
+    .user-badge.badge-anon {
+        background: rgba(100, 116, 139, 0.1);
+        color: #475569;
+    }
+    .user-badge i { width: 12px; height: 12px; }
+    .row-details {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+    .ip-tag {
+        background: rgba(0,0,0,0.03);
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+        font-family: monospace;
+    }
+    .mb-4 { margin-bottom: 1.5rem; }
 </style>
 {% endblock %}

@@ -99,3 +99,55 @@ class AIService:
             perf.mastery_score = (perf.accuracy * 0.7) + (min(perf.attempts_count, 10) * 3)
             perf.last_practiced_at = timezone.now()
             perf.save()
+
+
+class TrackingService:
+    @staticmethod
+    def log_landing_visit(request):
+        """
+        Silently logs visitor information for analytical visibility.
+        Uses raw user-agent parsing.
+        """
+        try:
+            from .models import LandingVisit
+            import user_agents
+            
+            ua_string = request.META.get('HTTP_USER_AGENT', '')
+            user_agent = user_agents.parse(ua_string)
+            
+            # Categorize device
+            device_type = "pc"
+            if user_agent.is_mobile:
+                device_type = "mobile"
+            elif user_agent.is_tablet:
+                device_type = "tablet"
+            elif user_agent.is_bot:
+                device_type = "bot"
+                
+            # Extract IP Address
+            x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+            if x_forwarded_for:
+                ip = x_forwarded_for.split(',')[0]
+            else:
+                ip = request.META.get('REMOTE_ADDR')
+                
+            # Prepare logic safely
+            user = request.user if request.user.is_authenticated else None
+            session_key = request.session.session_key
+            if not session_key:
+                # Trigger session saving if not initialized yet
+                request.session.save()
+                session_key = request.session.session_key
+                
+            LandingVisit.objects.create(
+                user=user,
+                session_key=session_key,
+                ip_address=ip,
+                user_agent=ua_string[:400] if ua_string else None,
+                device_type=device_type,
+                os_family=user_agent.os.family,
+                browser_family=user_agent.browser.family
+            )
+        except Exception as e:
+            # Never break the main landing view loading due to log error
+            pass

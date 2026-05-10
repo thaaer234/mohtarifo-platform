@@ -101,6 +101,8 @@ def home(request):
 
 
 def landing_page(request):
+    from analytics.services import TrackingService
+    TrackingService.log_landing_visit(request)
     instructor_id = request.GET.get("instructor")
     catalog_tabs = _catalog_tabs()
     requested_kind = request.GET.get("kind")
@@ -511,6 +513,19 @@ def register_view(request):
 
 @admin_required
 def admin_dashboard(request):
+    from analytics.models import LandingVisit
+    from django.db.models import Count
+    
+    # Fetch analytical data for the overview
+    total_visits = LandingVisit.objects.count()
+    logged_in_visits = LandingVisit.objects.filter(user__isnull=False).count()
+    anon_visits = total_visits - logged_in_visits
+    
+    # Aggregate by device types
+    device_counts = LandingVisit.objects.values('device_type').annotate(total=Count('id')).order_by('-total')
+    
+    # Get last few specific actions to view
+    recent_traffic = LandingVisit.objects.select_related('user').order_by('-visited_at')[:10]
     courses = (
         Course.objects.select_related("subject", "instructor", "instructor__instructor_profile")
         .annotate(
@@ -542,6 +557,13 @@ def admin_dashboard(request):
         "courses": courses,
         "recent_batches": recent_batches,
         "sales_centers": sales_centers,
+        "traffic_stats": {
+            "total": total_visits,
+            "logged_in": logged_in_visits,
+            "anon": anon_visits,
+            "devices": device_counts,
+            "recent": recent_traffic
+        }
     }
     return render(request, "dashboard/admin_dashboard.html", context)
 
@@ -2290,7 +2312,12 @@ def _course_financial_rows():
 
 
 @admin_required
+@admin_required
 def admin_billing(request):
+    if request.GET.get('format') == 'print':
+        template_to_render = "dashboard/admin_billing_print.html"
+    else:
+        template_to_render = "dashboard/admin_billing.html"
     from billing.models import Subscription, Payment, AccessCodeBatch, AccessCode, SalesCenter
     
     # Calculate counts on unsliced querysets
@@ -2375,7 +2402,7 @@ def admin_billing(request):
         "general_fund_syp": general_fund_syp,
         "centers_report": centers_report,
     }
-    return render(request, "dashboard/admin_billing.html", context)
+    return render(request, template_to_render, context)
 
 
 @admin_required
@@ -2444,6 +2471,10 @@ def admin_discount_delete(request, discount_id):
 
 @admin_required
 def admin_center_invoice(request, center_id):
+    if request.GET.get('format') == 'print':
+        tmpl = "dashboard/admin_center_invoice_print.html"
+    else:
+        tmpl = "dashboard/admin_center_invoice.html"
     from billing.models import SalesCenter, AccessCodeBatch, AccessCode
     from django.db.models import Sum
     from django.utils import timezone
@@ -2504,7 +2535,7 @@ def admin_center_invoice(request, center_id):
         "total_net_share": total_net_share,
         "invoice_number": f"INV-{center.id}-{timezone.now().strftime('%Y%m%d')}",
     }
-    return render(request, "dashboard/admin_center_invoice.html", context)
+    return render(request, tmpl, context)
 
 
 def _apply_premium_excel_styling(ws, column_width=22):

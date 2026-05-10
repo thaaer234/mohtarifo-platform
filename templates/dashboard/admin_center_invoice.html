@@ -1060,9 +1060,9 @@
                 </select>
             </div>
             
-            <button onclick="window.print()" class="btn-erp btn-erp-primary">
+            <button onclick="const up = new URLSearchParams(window.location.search); up.set('format', 'print'); window.open(window.location.pathname + '?' + up.toString(), '_blank')" class="btn-erp btn-erp-primary">
                 <i data-lucide="printer" style="width: 18px;"></i>
-                <span>طباعة الفاتورة والتقارير (A4)</span>
+                <span>طباعة الفاتورة الفاخرة (PRINT.HTML)</span>
             </button>
             
             <a href="{% url 'dashboard:admin_billing' %}" class="btn-erp btn-erp-secondary">

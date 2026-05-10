@@ -1,0 +1,479 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>{% block title %}تقرير المنصة المحاسبية{% endblock %}</title>
+    
+    <!-- Google Fonts (Premium Arabic & Western Fonts) -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&family=Cairo:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ============================================
+           PREMIUM PRINT BASE STYLES
+           Unified Design System for All Accounting Reports
+           Version: 2.0 (Professional Education Platform)
+        ============================================ */
+        
+        @media print {
+            body {
+                background: white !important;
+                margin: 0;
+                padding: 0;
+            }
+            .print-float-btn {
+                display: none !important;
+            }
+            .page-wrapper {
+                margin: 0;
+                padding: 0.75rem;
+                box-shadow: none;
+                max-width: 100%;
+            }
+            @page {
+                margin: 1.2cm;
+                size: A4 portrait;
+            }
+            .no-print, .action-buttons, .btn-print {
+                display: none !important;
+            }
+            table, tr, td, th {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+            tr {
+                break-inside: avoid;
+            }
+            .premium-card {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+            }
+            .balance-stamp, .result-highlight {
+                border: 1px solid #aaa !important;
+            }
+        }
+
+        :root {
+            --brand-gold: #c5a059;
+            --brand-gold-light: #d4af37;
+            --brand-gold-dark: #996515;
+            --brand-gold-glow: rgba(197, 160, 89, 0.2);
+            --brand-gold-rgb: 197, 160, 89;
+            --primary-dark: #0f172a;
+            --text-primary: #0a0a0a;
+            --text-secondary: #334155;
+            --text-muted: #64748b;
+            --bg-surface: #ffffff;
+            --bg-surface-elevated: #f8fafc;
+            --border-light: #e2e8f0;
+            --border-strong: #cbd5e1;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.03);
+            --shadow-glow: 0 15px 35px rgba(197, 160, 89, 0.12);
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #f1f5f9;
+            color: var(--text-primary);
+            font-family: 'IBM Plex Sans Arabic', 'Inter', 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+            font-size: 11pt;
+            line-height: 1.55;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        /* الحاوية الرئيسية للتقرير */
+        .page-wrapper {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: white;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            border-radius: var(--radius-lg);
+        }
+
+        /* رأس التقرير (المنصة) */
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            border-bottom: 3px solid var(--brand-gold);
+            padding-bottom: 1.25rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .company-brand h1 {
+            font-family: 'Amiri', serif;
+            margin: 0;
+            font-size: 26pt;
+            font-weight: 800;
+            color: var(--primary-dark);
+            letter-spacing: -0.5px;
+        }
+
+        .company-brand p {
+            margin: 5px 0 0;
+            color: var(--text-muted);
+            font-size: 9.5pt;
+            font-weight: 600;
+        }
+
+        .meta-data {
+            text-align: left;
+            font-size: 9pt;
+            font-weight: 600;
+            color: var(--text-secondary);
+            background: var(--bg-surface-elevated);
+            padding: 0.6rem 1.2rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-light);
+        }
+
+        .meta-data div {
+            margin-bottom: 0.2rem;
+        }
+
+        /* لافتة التقرير (العنوان الرئيسي) */
+        .report-banner {
+            text-align: center;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, rgba(197, 160, 89, 0.06), rgba(197, 160, 89, 0.02));
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-light);
+        }
+
+        .report-banner h2 {
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin: 0 0 0.3rem 0;
+            color: var(--primary-dark);
+            background: linear-gradient(135deg, var(--primary-dark), var(--brand-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .report-banner span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        /* بطاقات إحصائية */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-box {
+            border: 1.5px solid var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            text-align: center;
+            background: var(--bg-surface);
+            transition: var(--transition-smooth);
+        }
+
+        .stat-box:hover {
+            border-color: var(--brand-gold);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .stat-box .lbl {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            display: block;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+        }
+
+        .stat-box .val {
+            font-family: 'Cairo', 'Inter', monospace;
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: var(--brand-gold-dark);
+        }
+
+        /* عناوين الأقسام */
+        h3.section-title {
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 800;
+            border-right: 5px solid var(--brand-gold);
+            padding-right: 0.9rem;
+            margin: 1.8rem 0 1.2rem 0;
+            color: var(--primary-dark);
+        }
+
+        /* الجداول المالية الاحترافية */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+
+        th {
+            background: var(--bg-surface-elevated);
+            color: var(--primary-dark);
+            font-weight: 800;
+            padding: 0.85rem 0.7rem;
+            border: 1px solid var(--border-strong);
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        td {
+            padding: 0.7rem;
+            border: 1px solid var(--border-light);
+            color: var(--text-secondary);
+            vertical-align: middle;
+        }
+
+        tr:hover {
+            background: rgba(197, 160, 89, 0.03);
+        }
+
+        tfoot td {
+            background: rgba(197, 160, 89, 0.05);
+            font-weight: 800;
+            border-top: 2px solid var(--border-strong);
+        }
+
+        /* أدوات التنسيق */
+        .text-center {
+            text-align: center;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .font-mono {
+            font-family: 'Inter', 'Courier New', monospace;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .amount-col {
+            text-align: left;
+            font-family: 'Inter', monospace;
+            font-weight: 700;
+        }
+
+        /* شارات وبطاقات */
+        .badge-category {
+            display: inline-block;
+            padding: 0.2rem 0.7rem;
+            border-radius: 100px;
+            font-size: 0.7rem;
+            font-weight: 800;
+        }
+
+        .badge-asset { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        .badge-liability { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        .badge-equity { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+        .badge-revenue { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .badge-expense { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+
+        /* زر الطباعة العائم */
+        .print-float-btn {
+            position: fixed;
+            bottom: 25px;
+            left: 25px;
+            background: linear-gradient(135deg, var(--brand-gold), var(--brand-gold-dark));
+            color: #000;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 60px;
+            font-weight: 800;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: 0 12px 30px rgba(197, 160, 89, 0.4);
+            z-index: 10000;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .print-float-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 18px 35px rgba(197, 160, 89, 0.5);
+        }
+
+        /* تذييل الصفحة */
+        .report-footer-note {
+            margin-top: 2.5rem;
+            border-top: 1px solid var(--border-light);
+            padding-top: 1.2rem;
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        /* استجابة للشاشات الصغيرة */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .page-wrapper {
+                padding: 1rem;
+            }
+            .report-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .meta-data {
+                text-align: right;
+                width: 100%;
+            }
+            table {
+                font-size: 0.75rem;
+            }
+            th, td {
+                padding: 0.5rem 0.35rem;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* إخفاء العناصر غير المراد طباعتها */
+        .no-print {
+            display: block;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        /* بطاقة النتيجة والتنبيهات */
+        .alert-box {
+            padding: 0.8rem 1.2rem;
+            border-radius: var(--radius-md);
+            margin: 1rem 0;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <button class="print-float-btn no-print" onclick="window.print();">
+        🖨️ طباعة التقرير النهائي
+    </button>
+
+    <div class="page-wrapper">
+        <header class="report-header">
+            <div class="company-brand">
+                <h1>محترفو التعليم</h1>
+                <p>إدارة الشؤون المالية والعمليات التجارية</p>
+            </div>
+            <div class="meta-data">
+                <div>📅 تاريخ الاستخراج: {% now "Y/m/d - H:i" %}</div>
+                <div>👤 المسؤول: {{ request.user.get_full_name|default:request.user.username }}</div>
+                {% block extra_meta %}{% endblock %}
+            </div>
+        </header>
+
+        <div class="report-banner">
+            <h2>{% block report_name %}عنوان البيان المالي{% endblock %}</h2>
+            <span>{% block report_subtitle %}منظومة التقارير الرسمية الموحدة{% endblock %}</span>
+        </div>
+
+        <main>
+            {% block report_body %}
+            <!-- المحتوى الرئيسي للتقرير يأتي هنا -->
+            <div class="text-center" style="padding: 4rem; color: #94a3b8;">
+                ⚙️ يرجى تحديد محتوى التقرير من خلال توسيع القالب.
+            </div>
+            {% endblock %}
+        </main>
+
+        <div class="report-footer-note">
+            <div>📌 جميع الحقوق محفوظة لمنصة محترفو التعليم &copy; {% now "Y" %}</div>
+            <div>✨ هذا التقرير معتمد ويمكن استخدامه للأغراض الرسمية والمراجعة ✨</div>
+        </div>
+    </div>
+
+    <!-- سكربت مساعد للطباعة -->
+    <script>
+        (function() {
+            // منع ظهور الأزرار اثناء الطباعة عبر JS تأكيدي
+            const printBtn = document.querySelector('.print-float-btn');
+            if (printBtn) {
+                printBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.print();
+                });
+            }
+            
+            // إضافة علامة للتحقق من أنماط الطباعة
+            if (window.matchMedia) {
+                const printMedia = window.matchMedia('print');
+                const handlePrint = (mql) => {
+                    if (mql.matches) {
+                        document.body.style.background = '#ffffff';
+                    } else {
+                        document.body.style.background = '';
+                    }
+                };
+                printMedia.addListener(handlePrint);
+                handlePrint(printMedia);
+            }
+        })();
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,7 +1,312 @@
 {% extends 'accounting_erp/base_print_accounting.html' %}
 {% load humanize %}
+{% load static %}
 
-{% block title %}طباعة: ميزان المراجعة{% endblock %}
+{% block title %}طباعة: ميزان المراجعة التحليلي{% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    /* ============================================
+       PREMIUM DESIGN SYSTEM FOR TRIAL BALANCE
+       Maintains platform identity + print optimization
+    ============================================ */
+    
+    @media print {
+        body {
+            background: white !important;
+            color: black !important;
+            margin: 0;
+            padding: 0;
+        }
+        .no-print, .btn-print, .action-buttons, .navbar, .footer-premium {
+            display: none !important;
+        }
+        .premium-card {
+            box-shadow: none !important;
+            border: 1px solid #ddd !important;
+            padding: 1rem !important;
+        }
+        .financial-table th, .financial-table td {
+            border: 1px solid #ccc !important;
+            padding: 0.5rem !important;
+        }
+        .balance-stamp {
+            border: 1px solid #000 !important;
+        }
+    }
+
+    :root {
+        --brand-gold: #d4af37;
+        --brand-gold-light: #f1d592;
+        --brand-gold-dark: #996515;
+        --brand-gold-glow: rgba(212, 175, 55, 0.15);
+        --brand-gold-rgb: 212, 175, 55;
+        --bg-base: #fdfdfd;
+        --bg-surface: #ffffff;
+        --bg-surface-elevated: #f8fafc;
+        --text-primary: #0a0a0a;
+        --text-secondary: #4a4a4a;
+        --text-muted: #8a8a8a;
+        --border-light: rgba(0, 0, 0, 0.08);
+        --border-strong: rgba(0, 0, 0, 0.12);
+        --radius-sm: 12px;
+        --radius-md: 20px;
+        --radius-lg: 28px;
+        --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.04);
+        --shadow-glow: 0 15px 35px rgba(212, 175, 55, 0.1);
+        --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+        font-family: 'Cairo', 'Inter', sans-serif;
+        background: var(--bg-base);
+        color: var(--text-primary);
+        line-height: 1.6;
+    }
+
+    /* حاوية التقرير الرئيسية */
+    .report-wrapper {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+
+    /* البطاقة البريميوم */
+    .premium-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        box-shadow: var(--shadow-soft);
+        transition: var(--transition-smooth);
+    }
+
+    .premium-card:hover {
+        box-shadow: var(--shadow-glow);
+        border-color: rgba(var(--brand-gold-rgb), 0.2);
+    }
+
+    /* رأس التقرير */
+    .report-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1.25rem;
+        border-bottom: 2px solid var(--brand-gold);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .title-section h1 {
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin: 0;
+        background: linear-gradient(135deg, var(--text-primary) 0%, var(--brand-gold) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .title-section .badge-premium {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(var(--brand-gold-rgb), 0.1);
+        padding: 0.4rem 1rem;
+        border-radius: 100px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--brand-gold-dark);
+        margin-top: 0.5rem;
+    }
+
+    .date-section {
+        text-align: left;
+        background: var(--bg-surface-elevated);
+        padding: 0.75rem 1.25rem;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-light);
+    }
+
+    .date-section p {
+        margin: 0;
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+
+    .date-section .date-range {
+        font-family: 'Inter', monospace;
+        color: var(--brand-gold-dark);
+    }
+
+    /* الجدول الاحترافي */
+    .financial-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+        overflow-x: auto;
+        display: table;
+    }
+
+    .financial-table th {
+        text-align: center;
+        padding: 1rem 0.75rem;
+        background: rgba(212, 175, 55, 0.06);
+        border-bottom: 2px solid var(--brand-gold);
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+
+    .financial-table td {
+        padding: 0.85rem 0.65rem;
+        border-bottom: 1px solid var(--border-light);
+        vertical-align: middle;
+    }
+
+    .financial-table tbody tr:hover {
+        background: rgba(var(--brand-gold-rgb), 0.03);
+        transition: 0.2s;
+    }
+
+    .financial-table tfoot td {
+        border-top: 2px solid var(--border-strong);
+        background: rgba(212, 175, 55, 0.04);
+        font-weight: 800;
+        padding: 1rem 0.75rem;
+    }
+
+    .amount-col {
+        text-align: right;
+        font-family: 'Inter', monospace;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+
+    .text-center {
+        text-align: center;
+    }
+
+    .text-right {
+        text-align: right;
+    }
+
+    .font-mono {
+        font-family: 'Inter', monospace;
+    }
+
+    /* حالة التوازن - بطاقة أنيقة */
+    .balance-stamp {
+        margin-top: 1.5rem;
+        padding: 1rem 1.5rem;
+        border-radius: var(--radius-md);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 800;
+        justify-content: center;
+        width: auto;
+    }
+
+    .balance-success {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+
+    .balance-error {
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    /* أزرار التحكم */
+    .action-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .btn-print {
+        background: linear-gradient(135deg, var(--brand-gold), var(--brand-gold-dark));
+        color: #000;
+        font-weight: 800;
+        padding: 0.7rem 1.8rem;
+        border-radius: 40px;
+        border: none;
+        cursor: pointer;
+        transition: var(--transition-smooth);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-family: inherit;
+        font-size: 0.9rem;
+    }
+
+    .btn-print:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 25px rgba(212, 175, 55, 0.35);
+    }
+
+    /* تذييل التقرير */
+    .report-footer {
+        margin-top: 2.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-light);
+        text-align: center;
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    /* تحسينات الجوال */
+    @media (max-width: 992px) {
+        .report-wrapper {
+            padding: 0 1rem;
+        }
+        .premium-card {
+            padding: 1.25rem;
+        }
+        .financial-table {
+            font-size: 0.75rem;
+        }
+        .financial-table th, .financial-table td {
+            padding: 0.5rem 0.35rem;
+        }
+        .report-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .date-section {
+            text-align: right;
+            width: 100%;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .financial-table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .action-buttons {
+            justify-content: center;
+        }
+    }
+
+    /* مؤشرات بصرية للأرصدة الموجبة والسالبة */
+    .positive-balance {
+        color: #10b981;
+        font-weight: 800;
+    }
+    .negative-balance {
+        color: #ef4444;
+    }
+</style>
+{% endblock %}
 
 {% block report_name %}ميزان المراجعة التحليلي{% endblock %}
 
@@ -11,52 +316,134 @@
 {% endblock %}
 
 {% block report_body %}
-<table>
-    <thead>
-        <tr>
-            <th rowspan="2" style="width: 120px;">كود الحساب</th>
-            <th rowspan="2">اسم الحساب المالي</th>
-            <th colspan="2">مجموع الحركات</th>
-            <th colspan="2">الأرصدة الختامية</th>
-        </tr>
-        <tr>
-            <th style="width: 100px;">مدين (Dr)</th>
-            <th style="width: 100px;">دائن (Cr)</th>
-            <th style="width: 100px;">مدين (Dr)</th>
-            <th style="width: 100px;">دائن (Cr)</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for row in report.accounts %}
-        <tr>
-            <td class="font-mono text-center">{{ row.code }}</td>
-            <td>{{ row.name }}</td>
-            <td class="amount-col font-mono">{% if row.total_debit > 0 %}{{ row.total_debit|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-            <td class="amount-col font-mono">{% if row.total_credit > 0 %}{{ row.total_credit|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
-            <td class="amount-col font-mono" style="background-color: #f8fafc; font-weight: 800;">
-                {% if row.net_debit > 0 %}{{ row.net_debit|floatformat:2|intcomma }}{% else %}-{% endif %}
-            </td>
-            <td class="amount-col font-mono" style="background-color: #f8fafc; font-weight: 800;">
-                {% if row.net_credit > 0 %}{{ row.net_credit|floatformat:2|intcomma }}{% else %}-{% endif %}
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="6" class="text-center">لا توجد بيانات في الفترة المحددة.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-    <tfoot>
-        <tr>
-            <td colspan="2" class="text-right">الإجمالي العام للميزان</td>
-            <td class="amount-col font-mono">{{ report.grand_totals.debit|floatformat:2|intcomma }}</td>
-            <td class="amount-col font-mono">{{ report.grand_totals.credit|floatformat:2|intcomma }}</td>
-            <td colspan="2" class="text-center" style="font-size: 10pt;">
-                حالة الميزان: 
-                {% if report.grand_totals.is_balanced %}<strong>مُتزن تماماً ✓</strong>
-                {% else %}<strong style="color: red;">⚠️ غير متزن</strong>{% endif %}
-            </td>
-        </tr>
-    </tfoot>
-</table>
+<div class="report-wrapper">
+    <!-- أزرار الطباعة (تظهر فقط على الشاشة) -->
+    <div class="action-buttons no-print">
+        <button class="btn-print" onclick="window.print();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 9V3H18V9M6 21H18V15H6V21Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M18 9H6C4.34315 9 3 10.3431 3 12V18H6V15H18V18H21V12C21 10.3431 19.6569 9 18 9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <circle cx="18" cy="14" r="1" fill="currentColor"/>
+            </svg>
+            طباعة ميزان المراجعة
+        </button>
+    </div>
+
+    <!-- البطاقة الرئيسية -->
+    <div class="premium-card">
+        <!-- رأس التقرير -->
+        <div class="report-header">
+            <div class="title-section">
+                <h1>📋 ميزان المراجعة التحليلي</h1>
+                <div class="badge-premium">
+                    <span>✨ تحليل الحركة والأرصدة الختامية ✨</span>
+                </div>
+            </div>
+            <div class="date-section">
+                <p>🗓 الفترة المعتمدة:</p>
+                <p class="date-range">
+                    من {% if start_date %}{{ start_date|date:"Y/m/d" }}{% else %}بداية العام{% endif %} 
+                    إلى {% if end_date %}{{ end_date|date:"Y/m/d" }}{% else %}الآن{% endif %}
+                </p>
+                <p style="font-size: 0.7rem;">⏱ تاريخ الطباعة: {% now "Y/m/d - H:i" %}</p>
+            </div>
+        </div>
+
+        <!-- الجدول الرئيسي: عرض الحسابات والحركات والأرصدة -->
+        <div style="overflow-x: auto;">
+            <table class="financial-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2" style="width: 100px;">كود الحساب</th>
+                        <th rowspan="2">اسم الحساب المالي</th>
+                        <th colspan="2">📊 مجمّع الحركات (الفترة)</th>
+                        <th colspan="2">⚖️ الأرصدة الختامية</th>
+                    </tr>
+                    <tr>
+                        <th style="width: 110px;">مدين (Dr)</th>
+                        <th style="width: 110px;">دائن (Cr)</th>
+                        <th style="width: 110px;">مدين (Dr)</th>
+                        <th style="width: 110px;">دائن (Cr)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in report.accounts %}
+                    <tr>
+                        <td class="font-mono text-center">{{ row.code|default:"—" }}</td>
+                        <td style="font-weight: 600;">{{ row.name }}</td>
+                        <td class="amount-col font-mono">
+                            {% if row.total_debit > 0 %}{{ row.total_debit|floatformat:2|intcomma }}{% else %}-{% endif %}
+                        </td>
+                        <td class="amount-col font-mono">
+                            {% if row.total_credit > 0 %}{{ row.total_credit|floatformat:2|intcomma }}{% else %}-{% endif %}
+                        </td>
+                        <td class="amount-col font-mono" style="background-color: rgba(212, 175, 55, 0.05); font-weight: 800;">
+                            {% if row.net_debit > 0 %}
+                                <span class="positive-balance">{{ row.net_debit|floatformat:2|intcomma }}</span>
+                            {% else %}-{% endif %}
+                        </td>
+                        <td class="amount-col font-mono" style="background-color: rgba(212, 175, 55, 0.05); font-weight: 800;">
+                            {% if row.net_credit > 0 %}
+                                <span class="positive-balance">{{ row.net_credit|floatformat:2|intcomma }}</span>
+                            {% else %}-{% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center" style="padding: 3rem;">
+                            <span style="opacity: 0.6;">📭 لا توجد بيانات مالية في الفترة المحددة.</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="2" class="text-right" style="font-weight: 800;">🔻 الإجمالي العام للميزان</td>
+                        <td class="amount-col font-mono" style="font-weight: 900;">{{ report.grand_totals.debit|floatformat:2|intcomma }}</td>
+                        <td class="amount-col font-mono" style="font-weight: 900;">{{ report.grand_totals.credit|floatformat:2|intcomma }}</td>
+                        <td colspan="2" class="text-center">
+                            {% if report.grand_totals.is_balanced %}
+                                <div class="balance-stamp balance-success" style="display: inline-flex; margin: 0;">
+                                    ✅ الميزان مُتزن تماماً ✓
+                                </div>
+                            {% else %}
+                                <div class="balance-stamp balance-error" style="display: inline-flex; margin: 0;">
+                                    ⚠️ الميزان غير متزن | الفرق: {{ report.grand_totals.diff|floatformat:2|intcomma }}
+                                </div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- تذييل تقني مع معلومات إضافية -->
+        <div class="report-footer">
+            <div>📌 نظام المحاسبة المتكامل – ميزان المراجعة التحليلي</div>
+            <div>✨ الأرصدة الختامية = (مجموع المدين - مجموع الدائن) حسب طبيعة الحساب ✨</div>
+        </div>
+    </div>
+    <!-- نهاية premium-card -->
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    (function() {
+        // تحسين تجربة الطباعة
+        const printBtn = document.querySelector('.btn-print');
+        if (printBtn) {
+            printBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.print();
+            });
+        }
+        
+        // إضافة تنبيه بسيط عند وجود اختلال في الميزان (للتذكير فقط في وحدة التحكم)
+        {% if not report.grand_totals.is_balanced %}
+        console.warn('⚠️ ميزان المراجعة غير متزن، الفرق: {{ report.grand_totals.diff|floatformat:2 }}');
+        {% endif %}
+    })();
+</script>
 {% endblock %}

@@ -1,7 +1,349 @@
 {% extends 'accounting_erp/base_print_accounting.html' %}
 {% load humanize %}
+{% load static %}
 
-{% block title %}طباعة: قائمة الدخل{% endblock %}
+{% block title %}طباعة: قائمة الدخل (الأرباح والخسائر){% endblock %}
+
+{% block extra_css %}
+{{ block.super }}
+<style>
+    /* ============================================
+       PREMIUM INCOME STATEMENT STYLES
+       Maintains platform identity + print optimization
+    ============================================ */
+    
+    @media print {
+        body {
+            background: white !important;
+            color: black !important;
+            margin: 0;
+            padding: 0;
+        }
+        .no-print, .btn-print, .action-buttons, .navbar, .footer-premium {
+            display: none !important;
+        }
+        .premium-card {
+            box-shadow: none !important;
+            border: 1px solid #ddd !important;
+            padding: 1rem !important;
+        }
+        .result-highlight {
+            border: 2px solid #000 !important;
+            break-inside: avoid;
+        }
+        .financial-table th, .financial-table td {
+            border: 1px solid #ccc !important;
+        }
+    }
+
+    :root {
+        --brand-gold: #d4af37;
+        --brand-gold-light: #f1d592;
+        --brand-gold-dark: #996515;
+        --brand-gold-glow: rgba(212, 175, 55, 0.15);
+        --brand-gold-rgb: 212, 175, 55;
+        --bg-base: #fdfdfd;
+        --bg-surface: #ffffff;
+        --bg-surface-elevated: #f8fafc;
+        --text-primary: #0a0a0a;
+        --text-secondary: #4a4a4a;
+        --text-muted: #8a8a8a;
+        --border-light: rgba(0, 0, 0, 0.08);
+        --border-strong: rgba(0, 0, 0, 0.12);
+        --radius-sm: 12px;
+        --radius-md: 20px;
+        --radius-lg: 28px;
+        --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.04);
+        --shadow-glow: 0 15px 35px rgba(212, 175, 55, 0.1);
+        --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        --success: #10b981;
+        --danger: #ef4444;
+    }
+
+    body {
+        font-family: 'Cairo', 'Inter', sans-serif;
+        background: var(--bg-base);
+        color: var(--text-primary);
+        line-height: 1.6;
+    }
+
+    .report-wrapper {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+
+    .premium-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-lg);
+        padding: 2rem;
+        box-shadow: var(--shadow-soft);
+        transition: var(--transition-smooth);
+    }
+
+    .premium-card:hover {
+        box-shadow: var(--shadow-glow);
+        border-color: rgba(var(--brand-gold-rgb), 0.2);
+    }
+
+    /* رأس التقرير المطور */
+    .report-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1.25rem;
+        border-bottom: 2px solid var(--brand-gold);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .title-section h1 {
+        font-size: 1.7rem;
+        font-weight: 800;
+        margin: 0;
+        background: linear-gradient(135deg, var(--text-primary) 0%, var(--brand-gold) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .title-section .badge-premium {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(var(--brand-gold-rgb), 0.1);
+        padding: 0.4rem 1rem;
+        border-radius: 100px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--brand-gold-dark);
+        margin-top: 0.5rem;
+    }
+
+    .date-section {
+        text-align: left;
+        background: var(--bg-surface-elevated);
+        padding: 0.75rem 1.25rem;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-light);
+    }
+
+    .date-section p {
+        margin: 0;
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+
+    .date-range {
+        font-family: 'Inter', monospace;
+        color: var(--brand-gold-dark);
+    }
+
+    /* الجداول المالية */
+    .financial-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .financial-table th {
+        text-align: right;
+        padding: 1rem 0.75rem;
+        background: rgba(212, 175, 55, 0.06);
+        border-bottom: 2px solid var(--brand-gold);
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+
+    .financial-table td {
+        padding: 0.85rem 0.75rem;
+        border-bottom: 1px solid var(--border-light);
+        vertical-align: middle;
+    }
+
+    .financial-table tbody tr:hover {
+        background: rgba(var(--brand-gold-rgb), 0.03);
+        transition: 0.2s;
+    }
+
+    .financial-table tfoot td {
+        border-top: 2px solid var(--border-strong);
+        background: rgba(212, 175, 55, 0.05);
+        font-weight: 800;
+        padding: 1rem 0.75rem;
+    }
+
+    .amount-col {
+        text-align: left;
+        font-family: 'Inter', monospace;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+    }
+
+    .text-right {
+        text-align: right;
+    }
+
+    .text-center {
+        text-align: center;
+    }
+
+    .font-mono {
+        font-family: 'Inter', monospace;
+    }
+
+    /* أقسام الإيرادات والمصروفات */
+    .section-header {
+        margin: 1.5rem 0 1rem 0;
+        padding-right: 1rem;
+        border-right: 4px solid var(--brand-gold);
+    }
+
+    .section-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+
+    /* بطاقة النتيجة النهائية */
+    .result-highlight {
+        margin-top: 2rem;
+        padding: 1.75rem;
+        border-radius: var(--radius-md);
+        text-align: center;
+        background: linear-gradient(135deg, rgba(212, 175, 55, 0.08), rgba(212, 175, 55, 0.02));
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        transition: var(--transition-smooth);
+    }
+
+    .result-highlight:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-glow);
+    }
+
+    .result-label {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        letter-spacing: 1px;
+        margin-bottom: 0.5rem;
+    }
+
+    .result-amount {
+        font-size: 2.2rem;
+        font-weight: 900;
+        line-height: 1.2;
+    }
+
+    .result-amount.profit {
+        color: var(--success);
+    }
+
+    .result-amount.loss {
+        color: var(--danger);
+    }
+
+    .result-status {
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+
+    /* أزرار التحكم */
+    .action-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-print {
+        background: linear-gradient(135deg, var(--brand-gold), var(--brand-gold-dark));
+        color: #000;
+        font-weight: 800;
+        padding: 0.7rem 1.8rem;
+        border-radius: 40px;
+        border: none;
+        cursor: pointer;
+        transition: var(--transition-smooth);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-family: inherit;
+        font-size: 0.9rem;
+    }
+
+    .btn-print:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 25px rgba(212, 175, 55, 0.35);
+    }
+
+    /* بطاقات إحصائيات سريعة */
+    .stats-mini {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 1.5rem;
+        flex-wrap: wrap;
+    }
+
+    .stat-mini-card {
+        flex: 1;
+        background: var(--bg-surface-elevated);
+        border-radius: var(--radius-md);
+        padding: 1rem;
+        text-align: center;
+        border: 1px solid var(--border-light);
+    }
+
+    .stat-mini-card .stat-label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        font-weight: 700;
+    }
+
+    .stat-mini-card .stat-value {
+        font-size: 1.1rem;
+        font-weight: 900;
+        color: var(--brand-gold-dark);
+    }
+
+    .report-footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-light);
+        text-align: center;
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    @media (max-width: 768px) {
+        .report-wrapper {
+            padding: 0 1rem;
+        }
+        .premium-card {
+            padding: 1.25rem;
+        }
+        .result-amount {
+            font-size: 1.5rem;
+        }
+        .stats-mini {
+            flex-direction: column;
+        }
+        .report-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block report_name %}قائمة الأرباح والخسائر (بيان الدخل){% endblock %}
 
@@ -11,67 +353,182 @@
 {% endblock %}
 
 {% block report_body %}
-<div style="border-bottom: 2px solid #000; margin-bottom: 15px; padding-bottom: 5px;">
-    <h3 style="margin: 0; font-size: 14pt;">أولاً: الإيرادات التشغيلية</h3>
-</div>
-<table style="margin-bottom: 30px;">
-    <thead>
-        <tr>
-            <th>بند الإيراد</th>
-            <th style="width: 180px;">القيمة</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for item in pnl.revenue %}
-        <tr>
-            <td>{{ item.name }}</td>
-            <td class="amount-col font-mono">{{ item.val|floatformat:2|intcomma }}</td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="2" class="text-center">لا توجد إيرادات</td></tr>
-        {% endfor %}
-    </tbody>
-    <tfoot>
-        <tr>
-            <td class="text-right">إجمالي الإيرادات المحققة</td>
-            <td class="amount-col font-mono" style="font-size: 13pt;">{{ pnl.total_revenue|floatformat:2|intcomma }}</td>
-        </tr>
-    </tfoot>
-</table>
+<div class="report-wrapper">
+    <!-- أزرار الطباعة -->
+    <div class="action-buttons no-print">
+        <button class="btn-print" onclick="window.print();">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 9V3H18V9M6 21H18V15H6V21Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M18 9H6C4.34315 9 3 10.3431 3 12V18H6V15H18V18H21V12C21 10.3431 19.6569 9 18 9Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <circle cx="18" cy="14" r="1" fill="currentColor"/>
+            </svg>
+            طباعة قائمة الدخل
+        </button>
+    </div>
 
-<div style="border-bottom: 2px solid #000; margin-bottom: 15px; padding-bottom: 5px;">
-    <h3 style="margin: 0; font-size: 14pt;">ثانياً: المصروفات والتكاليف</h3>
-</div>
-<table>
-    <thead>
-        <tr>
-            <th>بند المصروف</th>
-            <th style="width: 180px;">القيمة</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for item in pnl.expense %}
-        <tr>
-            <td>{{ item.name }}</td>
-            <td class="amount-col font-mono">({{ item.val|floatformat:2|intcomma }})</td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="2" class="text-center">لا توجد مصروفات</td></tr>
-        {% endfor %}
-    </tbody>
-    <tfoot>
-        <tr>
-            <td class="text-right">إجمالي أعباء المصروفات</td>
-            <td class="amount-col font-mono" style="font-size: 13pt;">({{ pnl.total_expense|floatformat:2|intcomma }})</td>
-        </tr>
-    </tfoot>
-</table>
+    <div class="premium-card">
+        <!-- رأس التقرير -->
+        <div class="report-header">
+            <div class="title-section">
+                <h1>📊 قائمة الأرباح والخسائر</h1>
+                <div class="badge-premium">
+                    <span>✨ بيان الدخل الشامل ✨</span>
+                </div>
+            </div>
+            <div class="date-section">
+                <p>📅 الفترة المحاسبية:</p>
+                <p class="date-range">
+                    من {% if start_date %}{{ start_date|date:"Y/m/d" }}{% else %}بداية السجلات{% endif %} 
+                    إلى {% if end_date %}{{ end_date|date:"Y/m/d" }}{% else %}الآن{% endif %}
+                </p>
+                <p style="font-size: 0.7rem;">⏱ تاريخ الطباعة: {% now "Y/m/d - H:i" %}</p>
+            </div>
+        </div>
 
-<div style="margin-top: 40px; padding: 15px; border: 3px solid #000; text-align: center; background-color: #f8fafc;">
-    <h4 style="margin: 0 0 5px 0; font-size: 12pt; color: #475569;">النتيجة النهائية للنشاط</h4>
-    <h2 style="margin: 0; font-size: 20pt; font-weight: 900;">
-        صافي {% if pnl.is_profit %}الربح{% else %}الخسارة{% endif %}: 
-        <span class="font-mono" style="margin-right: 15px; border-bottom: 4px double #000;">{{ pnl.net_income|floatformat:2|intcomma }}</span>
-    </h2>
+        <!-- أولاً: الإيرادات التشغيلية -->
+        <div class="section-header">
+            <h3>📈 أولاً: الإيرادات التشغيلية</h3>
+        </div>
+        <table class="financial-table">
+            <thead>
+                <tr>
+                    <th>بند الإيراد</th>
+                    <th style="width: 180px;" class="amount-col">القيمة (₿)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in pnl.revenue %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td class="amount-col font-mono">{{ item.val|floatformat:2|intcomma }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2" class="text-center">— لا توجد إيرادات مسجلة في هذه الفترة —</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td class="text-right">✅ إجمالي الإيرادات المحققة</td>
+                    <td class="amount-col font-mono" style="font-size: 1.1rem; font-weight: 900; color: var(--success);">
+                        {{ pnl.total_revenue|floatformat:2|intcomma }}
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- ثانياً: المصروفات والتكاليف -->
+        <div class="section-header">
+            <h3>📉 ثانياً: المصروفات والتكاليف</h3>
+        </div>
+        <table class="financial-table">
+            <thead>
+                <tr>
+                    <th>بند المصروف</th>
+                    <th style="width: 180px;" class="amount-col">القيمة (₿)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in pnl.expense %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td class="amount-col font-mono" style="color: var(--danger);">({{ item.val|floatformat:2|intcomma }})</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2" class="text-center">— لا توجد مصروفات مسجلة في هذه الفترة —</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td class="text-right">📌 إجمالي أعباء المصروفات</td>
+                    <td class="amount-col font-mono" style="font-size: 1.1rem; font-weight: 900; color: var(--danger);">
+                        ({{ pnl.total_expense|floatformat:2|intcomma }})
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <!-- ملخص سريع للإيرادات والمصروفات -->
+        <div class="stats-mini">
+            <div class="stat-mini-card">
+                <div class="stat-label">💰 إجمالي الإيرادات</div>
+                <div class="stat-value">{{ pnl.total_revenue|floatformat:2|intcomma }}</div>
+            </div>
+            <div class="stat-mini-card">
+                <div class="stat-label">💸 إجمالي المصروفات</div>
+                <div class="stat-value">{{ pnl.total_expense|floatformat:2|intcomma }}</div>
+            </div>
+            <div class="stat-mini-card">
+                <div class="stat-label">⚖️ الفرق (الإيرادات - المصروفات)</div>
+                <div class="stat-value">{{ pnl.net_income|floatformat:2|intcomma }}</div>
+            </div>
+        </div>
+
+        <!-- النتيجة النهائية للنشاط -->
+        <div class="result-highlight">
+            <div class="result-label">🏆 صافي نتيجة النشاط (الأرباح / الخسائر)</div>
+            <div class="result-amount {% if pnl.is_profit %}profit{% else %}loss{% endif %}">
+                {% if pnl.is_profit %}➕{% else %}➖{% endif %}
+                {{ pnl.net_income|floatformat:2|intcomma }}
+            </div>
+            <div class="result-status">
+                {% if pnl.is_profit %}
+                    ✅ تحقيق ربح صافي خلال الفترة
+                {% else %}
+                    ⚠️ تحقيق خسارة صافية خلال الفترة
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- معلومات إضافية عن الأداء -->
+        {% if pnl.is_profit %}
+        <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(16, 185, 129, 0.08); border-radius: var(--radius-sm); text-align: center; font-size: 0.8rem;">
+            💡 هامش الربح الصافي: 
+            <strong>
+                {% if pnl.total_revenue > 0 %}
+                    {{ pnl.net_income|div:pnl.total_revenue|floatformat:2|intcomma }}%
+                {% else %}
+                    0%
+                {% endif %}
+            </strong>
+        </div>
+        {% endif %}
+
+        <!-- تذييل التقرير -->
+        <div class="report-footer">
+            <div>📌 نظام المحاسبة المتكامل – قائمة الدخل</div>
+            <div>✨ تعكس هذه القائمة أداء المنشأة خلال الفترة المحددة ✨</div>
+        </div>
+    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    (function() {
+        const printBtn = document.querySelector('.btn-print');
+        if (printBtn) {
+            printBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                window.print();
+            });
+        }
+        
+        // إضافة تأثير بسيط للنتيجة عند التحميل
+        const resultBox = document.querySelector('.result-highlight');
+        if (resultBox) {
+            resultBox.style.opacity = '0';
+            resultBox.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                resultBox.style.transition = 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)';
+                resultBox.style.opacity = '1';
+                resultBox.style.transform = 'translateY(0)';
+            }, 100);
+        }
+    })();
+</script>
 {% endblock %}

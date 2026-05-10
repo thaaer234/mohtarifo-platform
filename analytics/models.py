@@ -68,4 +68,21 @@ class StudyPlanItem(models.Model):
         verbose_name_plural = "مهام خطط الدراسة"
         ordering = ["due_date", "sort_order"]
 
-# Create your models here.
+
+class LandingVisit(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="landing_visits")
+    session_key = models.CharField(max_length=40, null=True, blank=True, db_index=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(null=True, blank=True)
+    device_type = models.CharField(max_length=20, default="unknown", db_index=True) # mobile, tablet, pc, bot
+    os_family = models.CharField(max_length=50, null=True, blank=True)
+    browser_family = models.CharField(max_length=50, null=True, blank=True)
+    visited_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    
+    class Meta:
+        ordering = ["-visited_at"]
+        verbose_name = "زيارة للواجهة"
+        verbose_name_plural = "زيارات الواجهة"
+
+    def __str__(self):
+        return f"{self.device_type} view at {self.visited_at}"
