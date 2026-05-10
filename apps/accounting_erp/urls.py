@@ -11,6 +11,8 @@ urlpatterns = [
 
     path('income-statement/', views.IncomeStatementReportView.as_view(), name='income_statement'),
     path('export-excel/<str:report_type>/', views.UniversalErpExcelExportView.as_view(), name='export_excel'),
+    path('system-rebuild-action/', views.RebuildAccountingSystemView.as_view(), name='system_rebuild'),
+
 
 
 ]

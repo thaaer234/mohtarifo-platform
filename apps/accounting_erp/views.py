@@ -126,5 +126,27 @@ class UniversalErpExcelExportView(BaseAccountingView, TemplateView):
 
         return response
 
+class RebuildAccountingSystemView(BaseAccountingView, TemplateView):
+    """ Administrative tool to perform emergency reconstruction of the accounting dataset from history. """
+    def get(self, request, *args, **kwargs):
+        from apps.accounting_erp.services.chart_seeder import ChartOfAccountsSeeder
+        from apps.accounting_erp.services.legacy_transformer import LegacyAccountingTransformer
+        from django.contrib import messages
+        from django.shortcuts import redirect
+        
+        try:
+            # 1. Rebuild Chart structure if missing
+            ChartOfAccountsSeeder.run()
+            
+            # 2. Execute mass transformer from all time history
+            msg = LegacyAccountingTransformer.auto_generate_ledger_from_sales()
+            messages.success(request, f"تمت المعالجة بنجاح: {msg}")
+            
+        except Exception as e:
+            messages.error(request, f"خطأ أثناء المزامنة: {str(e)}")
+            
+        return redirect('accounting_erp:chart_tree')
+
+
 
 
