@@ -1,118 +1,167 @@
-{% extends 'dashboard/base.html' %}
+{% extends 'accounting_erp/base_accounting.html' %}
 {% load static humanize %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8" dir="rtl">
-    <!-- Actions Bar (Hidden during print) -->
-    <div class="flex justify-between mb-6 print:hidden">
-        <a href="{% url 'accounting_erp:journal_list' %}" class="text-neutral-600 font-medium hover:underline flex items-center gap-2">
-             <span>&rarr; العودة للقائمة</span>
+<style>
+    .doc-shadow {
+        box-shadow: 0 20px 60px -10px rgba(0,0,0,0.08), 0 0 1px rgba(0,0,0,0.05);
+    }
+    [data-theme='dark'] .doc-shadow {
+        box-shadow: 0 20px 60px -10px rgba(0,0,0,0.4), 0 0 1px rgba(255,255,255,0.05);
+    }
+    @media print {
+        body * { visibility: hidden; background: white !important; color: #000 !important; }
+        .printable-area, .printable-area * { visibility: visible; }
+        .printable-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0; }
+        .print-hide { display: none !important; }
+        table, th, td { border: 1px solid #000 !important; border-collapse: collapse; color: #000 !important;}
+        th { background-color: #f3f4f6 !important; }
+        .shadow-sm, .doc-shadow, .shadow-lg { box-shadow: none !important; }
+        .rounded-3xl, .rounded-2xl, .rounded-xl { border-radius: 0 !important; }
+    }
+</style>
+
+<div class="container mx-auto px-4 py-10 max-w-5xl" dir="rtl">
+    <!-- Dynamic Action Toolbar -->
+    <div class="flex flex-col sm:flex-row justify-between items-center mb-10 gap-4 print-hide">
+        <a href="{% url 'accounting_erp:journal_list' %}" class="group inline-flex items-center gap-2 text-neutral-500 hover:text-neutral-900 dark:hover:text-white font-bold transition">
+             <div class="p-2 bg-neutral-100 dark:bg-neutral-800 rounded-lg group-hover:-translate-x-1 transition">
+                <svg class="w-5 h-5 rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+             </div>
+             العودة لسجل القيود
         </a>
-        <button onclick="window.print()" class="bg-neutral-900 text-white px-6 py-2.5 rounded-xl font-bold shadow hover:bg-black flex items-center gap-2 transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-            طباعة السند
+        
+        <button onclick="window.print()" class="bg-neutral-900 hover:bg-black dark:bg-white dark:hover:bg-neutral-100 text-white dark:text-neutral-900 px-6 py-3 rounded-2xl font-black shadow-xl transition-all flex items-center gap-3 hover:-translate-y-0.5">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            طباعة / تصدير PDF
         </button>
     </div>
 
-    <!-- Formal Print Layout -->
-    <div class="max-w-5xl mx-auto bg-white text-black p-8 md:p-12 border border-neutral-300 rounded shadow-sm print:border-0 print:shadow-none print:p-0">
+    <!-- Main Physical Voucher Page Simulator -->
+    <div class="printable-area bg-white text-neutral-900 p-8 md:p-16 border border-neutral-100 dark:border-neutral-800 rounded-3xl doc-shadow relative overflow-hidden">
         
-        <!-- Report Top Header -->
-        <div class="flex justify-between border-b-2 border-black pb-4 mb-6">
+        <!-- Static Stamp Background -->
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] rotate-[-30deg] font-black text-7xl uppercase select-none print-hide">
+            ACADEMY OFFICIAL VOUCHER
+        </div>
+
+        <!-- Header Corporate Identity -->
+        <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 border-b-4 border-neutral-900 pb-8 mb-10">
             <div class="text-right">
-                <h2 class="text-2xl font-black">أكاديمية محترفو التعليم</h2>
-                <p class="text-sm font-bold">نظام الإدارة المالية (ERP)</p>
+                <h2 class="text-3xl font-black tracking-tight">أكاديمية محترفو التعليم</h2>
+                <p class="text-sm font-bold text-neutral-500 tracking-widest mt-1">إدارة الشؤون المالية والمحاسبية</p>
+                <div class="mt-4 inline-flex items-center gap-2 text-xs font-bold bg-neutral-100 px-3 py-1 rounded-full">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                    مُرحَّل نهائياً (Posted)
+                </div>
             </div>
-            <div class="text-center border-2 border-black px-6 py-2 self-center">
-                <h1 class="text-xl font-black">سند قيد يومية</h1>
-                <p class="text-xs font-bold">Journal Voucher</p>
+            
+            <div class="text-center md:absolute md:left-1/2 md:-translate-x-1/2 px-8 py-3 border-2 border-neutral-900 rounded-xl bg-neutral-50">
+                <h1 class="text-2xl font-black tracking-widest">سـنــد قـيــد</h1>
+                <p class="text-xs font-bold uppercase opacity-70">Journal Voucher</p>
             </div>
-            <div class="text-left text-sm font-mono">
-                <p>التاريخ: {{ voucher.posting_date|date:"Y-m-d" }}</p>
-                <p>المرجع: {{ voucher.reference }}</p>
+
+            <div class="text-left font-mono text-sm text-neutral-600 border-l-4 border-neutral-200 pl-4 py-1">
+                <p class="font-bold text-neutral-900"><span class="text-neutral-400 mr-2">تاريخ القيد:</span> {{ voucher.posting_date|date:"Y-m-d" }}</p>
+                <p class="font-bold text-neutral-900"><span class="text-neutral-400 mr-2">رقم المرجع:</span> #{{ voucher.reference|default:"N/A" }}</p>
             </div>
         </div>
 
-        <!-- Narrative -->
-        <div class="mb-6 bg-neutral-50 p-4 border border-neutral-200 text-lg">
-            <span class="font-bold">البيان / التوضيح:</span>
-            <span class="mr-2">{{ voucher.memo }}</span>
+        <!-- Core Info Box -->
+        <div class="mb-10 bg-neutral-50 p-6 rounded-2xl border border-neutral-200/60">
+            <div class="flex flex-col md:flex-row gap-2 items-baseline">
+                <span class="font-black text-neutral-500 whitespace-nowrap text-lg">البيــــان:</span>
+                <span class="text-xl font-black text-neutral-900 mr-2 leading-relaxed">
+                    {{ voucher.memo }}
+                </span>
+            </div>
         </div>
 
-        <!-- Ledger Table -->
-        <table class="w-full border-collapse border border-black text-sm mb-12">
-            <thead class="bg-neutral-100">
-                <tr class="border-b border-black">
-                    <th class="border border-black px-3 py-2 w-24 text-center">مدين (Dr)</th>
-                    <th class="border border-black px-3 py-2 w-24 text-center">دائن (Cr)</th>
-                    <th class="border border-black px-3 py-2 text-right">اسم الحساب ودليل الترميز</th>
-                    <th class="border border-black px-3 py-2 text-right">مركز التكلفة</th>
-                    <th class="border border-black px-3 py-2 text-right">الملاحظات</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for line in lines %}
-                <tr class="border-b border-black">
-                    <td class="border border-black px-3 py-3 text-center font-mono {% if line.debit_amount > 0 %}font-bold bg-neutral-50{% endif %}">
-                        {% if line.debit_amount > 0 %}{{ line.debit_amount|floatformat:2|intcomma }}{% else %}-{% endif %}
-                    </td>
-                    <td class="border border-black px-3 py-3 text-center font-mono {% if line.credit_amount > 0 %}font-bold bg-neutral-50{% endif %}">
-                        {% if line.credit_amount > 0 %}{{ line.credit_amount|floatformat:2|intcomma }}{% else %}-{% endif %}
-                    </td>
-                    <td class="border border-black px-3 py-3 font-bold">
-                        <span class="font-mono text-xs bg-neutral-200 px-1 rounded">{{ line.account.code }}</span>
-                        {{ line.account.name }}
-                    </td>
-                    <td class="border border-black px-3 py-3 text-neutral-700">
-                        {{ line.cost_center.name|default:"-" }}
-                    </td>
-                    <td class="border border-black px-3 py-3 text-xs italic text-neutral-600">
-                        {{ line.line_memo }}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot class="bg-neutral-900 text-white">
-                <tr class="font-bold text-base">
-                    <td class="border border-black px-3 py-3 text-center">{{ totals.debit|floatformat:2|intcomma }}</td>
-                    <td class="border border-black px-3 py-3 text-center">{{ totals.credit|floatformat:2|intcomma }}</td>
-                    <td colspan="3" class="border border-black px-3 py-3 text-right">الإجماليات الكلية</td>
-                </tr>
-            </tfoot>
-        </table>
+        <!-- Data Engine Grid -->
+        <div class="overflow-x-auto border border-neutral-900 rounded-xl overflow-hidden mb-12">
+            <table class="w-full text-right border-collapse">
+                <thead class="bg-neutral-100 border-b border-neutral-900">
+                    <tr class="text-sm font-black text-neutral-900">
+                        <th class="px-4 py-4 text-center border-l border-neutral-900 bg-neutral-200/50 min-w-[120px]">مـديــن (Dr)</th>
+                        <th class="px-4 py-4 text-center border-l border-neutral-900 bg-neutral-200/50 min-w-[120px]">دائـــن (Cr)</th>
+                        <th class="px-5 py-4 border-l border-neutral-900">تفاصيل الحساب والترميز</th>
+                        <th class="px-5 py-4 border-l border-neutral-900">مراكز التكلفة</th>
+                        <th class="px-5 py-4">الملاحظات التفصيلية</th>
+                    </tr>
+                </thead>
+                <tbody class="text-sm font-bold divide-y divide-neutral-300 text-neutral-900">
+                    {% for line in lines %}
+                    <tr class="hover:bg-neutral-50 transition-colors">
+                        <!-- Value Dr -->
+                        <td class="px-4 py-4 text-center font-mono text-lg border-l border-neutral-300 {% if line.debit_amount > 0 %}bg-neutral-50 font-black{% else %}opacity-30{% endif %}">
+                            {% if line.debit_amount > 0 %}{{ line.debit_amount|floatformat:2|intcomma }}{% else %}-{% endif %}
+                        </td>
+                        
+                        <!-- Value Cr -->
+                        <td class="px-4 py-4 text-center font-mono text-lg border-l border-neutral-300 {% if line.credit_amount > 0 %}bg-neutral-50 font-black{% else %}opacity-30{% endif %}">
+                            {% if line.credit_amount > 0 %}{{ line.credit_amount|floatformat:2|intcomma }}{% else %}-{% endif %}
+                        </td>
+                        
+                        <!-- Account Info -->
+                        <td class="px-5 py-4 border-l border-neutral-300">
+                            <div class="flex items-center gap-3">
+                                <span class="font-mono text-xs bg-neutral-900 text-white px-2 py-0.5 rounded shadow-sm">
+                                    {{ line.account.code }}
+                                </span>
+                                <span class="text-base font-black">{{ line.account.name }}</span>
+                            </div>
+                        </td>
+                        
+                        <!-- Cost Center -->
+                        <td class="px-5 py-4 border-l border-neutral-300 text-neutral-700 font-medium italic">
+                            {{ line.cost_center.name|default:"-" }}
+                        </td>
+                        
+                        <!-- Specific Line Memo -->
+                        <td class="px-5 py-4 text-xs text-neutral-500 font-medium italic">
+                            {{ line.line_memo|default:"" }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                
+                <!-- Absolute Totals Foot -->
+                <tfoot class="bg-neutral-900 text-white border-t-4 border-neutral-900">
+                    <tr class="font-black text-xl font-mono">
+                        <td class="px-4 py-5 text-center border-l border-neutral-700 bg-neutral-800">{{ totals.debit|floatformat:2|intcomma }}</td>
+                        <td class="px-4 py-5 text-center border-l border-neutral-700 bg-neutral-800">{{ totals.credit|floatformat:2|intcomma }}</td>
+                        <td colspan="3" class="px-6 py-5 text-right font-black text-lg uppercase tracking-wider bg-neutral-900">
+                            الإجمالي الكلي المتوازن (TOTAL)
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
 
-        <!-- Signatures Area -->
-        <div class="grid grid-cols-3 gap-8 mt-20 text-center font-bold text-sm">
+        <!-- Formal Validation Footer -->
+        <div class="grid grid-cols-3 gap-12 mt-24 text-center font-black text-sm text-neutral-900 print:mt-16">
             <div>
-                <div class="border-b border-black w-full mb-2 h-8"></div>
-                <p>توقيع المحاسب المالي</p>
+                <div class="border-b-2 border-neutral-900 w-full mb-3 h-10"></div>
+                <p>توقيع مُنشئ السند</p>
+                <p class="text-xs font-medium opacity-60 mt-0.5">Financial Officer</p>
             </div>
             <div>
-                <div class="border-b border-black w-full mb-2 h-8"></div>
-                <p>المدير المالي / المراجعة</p>
+                <div class="border-b-2 border-neutral-900 w-full mb-3 h-10"></div>
+                <p>مراجعة قسم المحاسبة</p>
+                <p class="text-xs font-medium opacity-60 mt-0.5">Internal Audit</p>
             </div>
             <div>
-                <div class="border-b border-black w-full mb-2 h-8"></div>
-                <p>الاعتماد والموافقة</p>
+                <div class="border-b-2 border-neutral-900 w-full mb-3 h-10"></div>
+                <p>الموافقة والاعتماد</p>
+                <p class="text-xs font-medium opacity-60 mt-0.5">CFO / Approval</p>
             </div>
         </div>
         
-        <div class="mt-12 text-center text-xs text-neutral-400 border-t pt-2">
-            طُبع هذا المستند آلياً بتاريخ {% now "Y-m-d H:i" %} من النظام المالي الموحد.
+        <!-- Micro Stamp / Timestamp -->
+        <div class="mt-16 pt-4 border-t border-neutral-200 flex justify-between items-center text-xs text-neutral-400 font-bold uppercase">
+            <span>نظام الإدارة المالية الموحد محترفو v2.0</span>
+            <span>تاريخ الاستخراج المطبوع: {% now "Y-m-d H:i" %}</span>
         </div>
     </div>
 </div>
-
-<style>
-@media print {
-    body * { visibility: hidden; background-color: white !important; color: black !important; }
-    .container, .container * { visibility: visible; }
-    .container { position: absolute; left: 0; top: 0; width: 100%; padding: 0; margin: 0; }
-    .print\:hidden { display: none !important; }
-    table { page-break-inside: auto; }
-    tr { page-break-inside: avoid; page-break-after: auto; }
-    .shadow-sm, .shadow-xl, .shadow-2xl { box-shadow: none !important; }
-    .border { border-color: #000 !important; }
-}
-</style>
 {% endblock %}
