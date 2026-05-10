@@ -29,12 +29,14 @@ class LegacyPaymentSelector:
 
     @staticmethod
     def get_access_code_sales_range(start_date, end_date):
-        """Extracts finalized offline voucher instrument transactions."""
+        """Extracts finalized offline voucher instrument transactions with robustness fallback."""
+        from django.db.models import Q
         return AccessCode.objects.filter(
-            sale_status='sold',
-            sold_at__gte=start_date,
-            sold_at__lte=end_date
+            Q(sale_status='sold'),
+            Q(sold_at__gte=start_date, sold_at__lte=end_date) | 
+            Q(sold_at__isnull=True, created_at__gte=start_date, created_at__lte=end_date)
         ).select_related('sold_by', 'course', 'package')
+
 
 class LegacySubscriptionSelector:
     """Adaptation interface for core subscription schema analytics."""
