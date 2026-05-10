@@ -13,9 +13,9 @@
             <p class="text-muted">تقرير مالي تفصيلي شامل لكافة الكورسات، مبيعات مراكز البيع، وقوائم أكواد الطلاب المفصلة.</p>
         </div>
         <div class="header-actions">
-            <button onclick="window.print();" class="btn btn-primary btn-glow">
+            <button onclick="const sp = new URLSearchParams(window.location.search); sp.set('format', 'print'); window.open(window.location.pathname + '?' + sp.toString(), '_blank')" class="btn btn-primary btn-glow">
                 <i data-lucide="printer"></i>
-                طباعة التقرير (A4)
+                توليد ملف الطباعة (PRINT.HTML)
             </button>
             <a href="{% url 'dashboard:admin_instructor_report_export' instructor.id %}" class="btn btn-secondary btn-glow">
                 <i data-lucide="file-spreadsheet" class="gold"></i>

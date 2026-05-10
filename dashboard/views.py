@@ -3129,6 +3129,10 @@ def admin_course_report_export(request, course_id):
 
 @admin_required
 def admin_instructor_report(request, instructor_id):
+    if request.GET.get('format') == 'print':
+        render_tmpl = "dashboard/admin_instructor_report_print.html"
+    else:
+        render_tmpl = "dashboard/admin_instructor_report.html"
     from django.db.models import Sum, Count
     from billing.models import AccessCode
     instructor = get_object_or_404(User, id=instructor_id)
@@ -3201,7 +3205,7 @@ def admin_instructor_report(request, instructor_id):
 
     return render(
         request,
-        "dashboard/admin_instructor_report.html",
+        render_tmpl,
         {
             "instructor": instructor,
             "course_data": course_data,
