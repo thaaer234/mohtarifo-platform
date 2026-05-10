@@ -30,22 +30,18 @@
   /* CRITICAL PRINT PERFORMANCE OVERRIDES (Corporate Ready)           */
   /* =============================================================== */
   @media print {
-    /* Hide ALL platform navigation, sidebars, footers, ambient glows, and interaction buttons */
-    nav, aside, header.navbar, .navbar, .sidebar, footer, .main-footer, .print\:hidden, button, form, .bg-neutral-900\/50, input, .ambient-bg, .mobile-bottom-nav, .mobile-menu-overlay { 
+    /* Only hide strict outer dashboard artifacts, leave INTERNAL layouts 100% untouched */
+    nav, aside, header.navbar, .navbar, .sidebar, footer, .main-footer, .ambient-bg, .mobile-bottom-nav, .mobile-menu-overlay { 
       display: none !important; 
-      height: 0 !important;
-      margin: 0 !important;
-      padding: 0 !important;
     }
 
-    /* Force main content container to utilize 100% of paper without dashboard paddings */
+    /* Maintain pixel-perfect layout symmetry identical to screen view */
     body, main, .container, .main-content { 
-      width: 100% !important; 
-      max-width: 100% !important; 
-      margin: 0 !important; 
-      padding: 0 !important; 
-      top: 0 !important;
+      background: transparent !important; 
+      box-shadow: none !important;
+      /* Do not force 100% width if it alters internal design balance */
     }
+
     
     /* Overrule standard dashboard absolute top spacing for navbar */
     .main-content { padding-top: 0 !important; margin-top: 0 !important; }
@@ -55,7 +51,19 @@
       -webkit-print-color-adjust: exact !important; 
       print-color-adjust: exact !important; 
       color-adjust: exact !important;
+      box-shadow: inherit !important; /* Restore shadows */
     }
+    
+    /* Explicit compatibility fix for glass-cards/transparencies on print engines */
+    .glass-card, [class*="bg-opacity"] {
+       background-color: #ffffff !important; /* Fallback safety */
+       background-image: inherit !important;
+       opacity: 1 !important;
+    }
+    [data-theme='dark'] .glass-card {
+       background-color: #171717 !important;
+    }
+
     
     /* Switch to Landscape (أفقي) for beautiful wide financial statements */
     @page { 
