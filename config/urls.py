@@ -23,6 +23,14 @@ urlpatterns = [
     path('api/v1/learning/', include('learning.urls')),
     path('api/v1/analytics/', include('analytics.urls')),
     path('api/v1/billing/', include('billing.urls')),
+    
+    # Enterprise Financial Analytics Engine API Extensions
+    path('api/financial/', include('apps.financial_system.urls')),
+    path('finance-analytics-hub/', include('apps.dashboard_core.urls')),
+    path('finance-exports/', include('apps.export_center.urls')),
+    path('ops-intelligence/', include('apps.cost_analysis.urls')),
+    path('infra-bunny-analytics/', include('apps.bunny_analytics.urls')),
+    
     path(settings.ADMIN_URL, admin.site.urls),
 ]
 

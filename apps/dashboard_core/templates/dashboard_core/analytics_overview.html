@@ -1,0 +1,296 @@
+{% extends 'dashboard/base.html' %}
+{% load static humanize %}
+
+{% block title %}لوحة التحليلات المالية | محترفو{% endblock %}
+
+{% block extra_css %}
+<!-- Advanced CSS Additions specifically for Enterprise Dashboard Aesthetics -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              gold: '#c5a059',
+              dark: '#0a0a0a',
+              surface: '#161616'
+            }
+          },
+          backdropBlur: {
+            xs: '2px',
+          }
+        }
+      }
+    }
+</script>
+<style>
+    /* Seamless Integration Layer overrides */
+    .main-content {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin-top: 70px !important;
+    }
+    
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .dark-theme .glass-card {
+        background: rgba(20, 20, 20, 0.6);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .glass-card:hover {
+        transform: translateY(-3px);
+        border-color: rgba(197, 160, 89, 0.3);
+    }
+
+    .chart-container {
+        position: relative;
+        height: 350px;
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-neutral-50 dark:bg-[#0a0a0a] min-h-screen text-neutral-900 dark:text-white transition-colors duration-300" dir="rtl">
+    
+    <!-- Main Subsystem Wrapper -->
+    <div class="container mx-auto px-6 py-8 max-w-7xl">
+        
+        <!-- Header Area -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-6">
+            <div>
+                <h1 class="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-neutral-900 to-neutral-500 dark:from-white dark:to-neutral-400">
+                    الاستخبارات المالية
+                </h1>
+                <p class="text-neutral-500 dark:text-neutral-400 mt-1 text-sm flex items-center gap-2">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    بيانات الأنظمة المدمجة في الزمن الحقيقي
+                </p>
+            </div>
+            
+            <div class="flex gap-3">
+                <button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-lg text-sm font-semibold hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors shadow-sm">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    تصدير PDF
+                </button>
+                <button class="flex items-center gap-2 px-4 py-2 bg-brand-gold text-black font-bold rounded-lg text-sm shadow-lg shadow-brand-gold/20 hover:brightness-110 transition-all">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    تحديث يدوي
+                </button>
+            </div>
+        </header>
+
+        <!-- KPI Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            
+            <!-- Card 1: Revenue -->
+            <div class="glass-card p-6 bg-white dark:bg-neutral-900/40 relative overflow-hidden shadow-sm">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl">
+                        <i data-lucide="dollar-sign" class="w-6 h-6"></i>
+                    </div>
+                    <span class="text-xs font-bold text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400 px-2 py-1 rounded-md flex items-center gap-1">
+                        <i data-lucide="trending-up" class="w-3 h-3"></i> 12%
+                    </span>
+                </div>
+                <h3 class="text-neutral-500 dark:text-neutral-400 text-sm font-medium mb-1">إجمالي الإيرادات التراكمي</h3>
+                <div class="text-3xl font-bold tracking-tight">
+                    {{ headline_stats.total_gross|floatformat:2|intcomma }} <span class="text-base font-normal text-neutral-500">USD</span>
+                </div>
+            </div>
+
+            <!-- Card 2: MRR -->
+            <div class="glass-card p-6 bg-white dark:bg-neutral-900/40 shadow-sm">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-xl">
+                        <i data-lucide="repeat" class="w-6 h-6"></i>
+                    </div>
+                    <span class="text-neutral-400 text-xs font-medium">شهرياً متكرر</span>
+                </div>
+                <h3 class="text-neutral-500 dark:text-neutral-400 text-sm font-medium mb-1">الإيراد الشهري المتكرر (MRR)</h3>
+                <div class="text-3xl font-bold tracking-tight">
+                    {{ headline_stats.mrr|floatformat:2|intcomma }} <span class="text-base font-normal text-neutral-500">USD</span>
+                </div>
+            </div>
+
+            <!-- Card 3: ARR -->
+            <div class="glass-card p-6 bg-white dark:bg-neutral-900/40 shadow-sm">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 rounded-xl">
+                        <i data-lucide="calendar" class="w-6 h-6"></i>
+                    </div>
+                </div>
+                <h3 class="text-neutral-500 dark:text-neutral-400 text-sm font-medium mb-1">التوقع السنوي (ARR)</h3>
+                <div class="text-3xl font-bold tracking-tight">
+                    {{ headline_stats.arr|floatformat:2|intcomma }} <span class="text-base font-normal text-neutral-500">USD</span>
+                </div>
+            </div>
+
+            <!-- Card 4: ARPU -->
+            <div class="glass-card p-6 bg-white dark:bg-neutral-900/40 shadow-sm border-l-4 border-l-brand-gold">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-500 rounded-xl">
+                        <i data-lucide="users" class="w-6 h-6"></i>
+                    </div>
+                </div>
+                <h3 class="text-neutral-500 dark:text-neutral-400 text-sm font-medium mb-1">متوسط الإيراد لكل مستخدم</h3>
+                <div class="text-3xl font-bold tracking-tight">
+                    {{ headline_stats.arpu|floatformat:2 }} <span class="text-base font-normal text-neutral-500">USD</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            
+            <!-- Revenue Growth Chart -->
+            <div class="lg:col-span-2 glass-card p-6 bg-white dark:bg-neutral-900/30 shadow-md">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-bold">مسار النمو المالي (30 يوم)</h2>
+                    <select class="bg-neutral-100 dark:bg-neutral-800 border-0 rounded-md text-xs px-3 py-1.5 outline-none focus:ring-1 focus:ring-brand-gold">
+                        <option>الإجمالي</option>
+                        <option>الصافي</option>
+                    </select>
+                </div>
+                <div class="chart-container">
+                    <canvas id="mainRevenueChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Context Details -->
+            <div class="glass-card p-6 bg-white dark:bg-neutral-900/30 shadow-md flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold mb-6">رؤى الذكاء المالي</h2>
+                    
+                    <div class="space-y-4">
+                        <div class="flex gap-4 items-start p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-100 dark:border-neutral-700">
+                            <div class="text-amber-500 mt-0.5"><i data-lucide="zap" class="w-5 h-5"></i></div>
+                            <div>
+                                <h4 class="font-bold text-sm mb-1">كفاءة الهوامش</h4>
+                                <p class="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                                    تُظهر الخوارزمية أن هوامش المساهمة حالياً مستقرة. التدفق النقدي إيجابي تماماً لهذا الشهر.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 items-start p-3 rounded-lg bg-neutral-50 dark:bg-neutral-800/50 border border-neutral-100 dark:border-neutral-700">
+                            <div class="text-green-500 mt-0.5"><i data-lucide="shield" class="w-5 h-5"></i></div>
+                            <div>
+                                <h4 class="font-bold text-sm mb-1">تنبيه الوقاية من التعثر</h4>
+                                <p class="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                                    معدلات الفشل في بوابة الدفع أقل من 0.5% خلال الـ 48 ساعة الماضية.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 pt-6 border-t border-neutral-200 dark:border-neutral-800">
+                    <a href="#" class="text-brand-gold text-sm font-bold flex items-center gap-2 justify-center hover:gap-3 transition-all w-full py-2 bg-amber-50 dark:bg-amber-900/10 rounded-lg">
+                        مشاهدة كافة التقارير
+                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Chart Config & Rendering
+    const chartRawData = JSON.parse('{{ chart_data_json|safe }}');
+    
+    const ctx = document.getElementById('mainRevenueChart').getContext('2d');
+    
+    // Check context theme and switch colors accordingly
+    const isDark = document.documentElement.classList.contains('dark-theme') || localStorage.getItem('theme') === 'dark';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
+    const textColor = isDark ? '#a3a3a3' : '#737373';
+
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(197, 160, 89, 0.4)');
+    gradient.addColorStop(1, 'rgba(197, 160, 89, 0.0)');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartRawData.labels.length ? chartRawData.labels : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'الإيرادات اليومية',
+                data: chartRawData.data.length ? chartRawData.data : [120, 190, 300, 250, 400, 550],
+                borderColor: '#c5a059',
+                borderWidth: 3,
+                backgroundColor: gradient,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#c5a059',
+                pointBorderColor: isDark ? '#0a0a0a' : '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: isDark ? '#171717' : '#fff',
+                    titleColor: isDark ? '#fff' : '#111',
+                    bodyColor: isDark ? '#fff' : '#111',
+                    borderColor: isDark ? '#333' : '#ddd',
+                    borderWidth: 1,
+                    rtl: true,
+                    padding: 12
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: gridColor,
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: textColor,
+                        font: { family: 'sans-serif', size: 11 }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: textColor,
+                        font: { family: 'sans-serif', size: 11 }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

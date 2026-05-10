@@ -83,6 +83,27 @@ INSTALLED_APPS = [
     'analytics',
     'billing',
     'dashboard',
+    
+    # Enterprise Financial Analytics Subsystem
+    'apps.core_finance',
+    'apps.financial_system',
+    'apps.analytics_engine',
+    'apps.reporting_center',
+    'apps.payment_analytics',
+    'apps.subscription_analytics',
+    'apps.instructor_finance',
+    'apps.kpi_engine',
+    'apps.dashboard_core',
+    'apps.export_center',
+    
+    # Operational Cost & Currency Engines
+    'apps.currency_engine',
+    'apps.cost_analysis',
+    'apps.infrastructure_finance',
+    'apps.video_cost_engine',
+    'apps.operational_expenses',
+    'apps.financial_conversion',
+    'apps.bunny_analytics',
 ]
 
 MIDDLEWARE = [

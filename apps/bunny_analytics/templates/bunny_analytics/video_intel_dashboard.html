@@ -1,0 +1,125 @@
+{% extends 'dashboard/base.html' %}
+{% load static humanize %}
+
+{% block title %}Bunny Analytics | Operational Control{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: { colors: { bunny: '#FFA33C', darker: '#1A1A1A' } }
+      }
+    }
+</script>
+<style>
+    .main-content { max-width: 100% !important; padding: 0 !important; margin-top: 70px !important; }
+    .glass-card {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid #E5E7EB;
+        border-radius: 1rem;
+    }
+    .dark-theme .glass-card {
+        background: rgba(24, 24, 27, 0.7);
+        border-color: rgba(255, 255, 255, 0.05);
+    }
+    .table-row:hover { background-color: rgba(245, 158, 11, 0.05); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 dark:bg-[#09090b] text-zinc-900 dark:text-zinc-100 transition-colors" dir="rtl">
+    <div class="container mx-auto px-6 py-10 max-w-7xl">
+        
+        <!-- Header & Configuration Quick View -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-10">
+            <div class="flex items-center gap-4">
+                <div class="p-4 bg-amber-100 dark:bg-amber-500/20 rounded-2xl text-amber-600">
+                    <i data-lucide="play" class="w-8 h-8 fill-current"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-black tracking-tight text-zinc-800 dark:text-white">تحليلات البنية التحتية للبث</h1>
+                    <p class="text-zinc-500 font-medium mt-0.5">تقييم تكاليف الاستضافة والنقل السحابي Bunny.net</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2 text-xs mt-4 md:mt-0 px-4 py-2 bg-zinc-200 dark:bg-zinc-800 rounded-lg font-bold">
+                <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                التسعيرة المفعلة: ${{ active_config.price_per_gb_storage }} / GB للتخزين
+            </div>
+        </header>
+
+        <!-- High Level Summary Metrics -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            
+            <div class="glass-card p-6 shadow-sm">
+                <div class="text-zinc-500 dark:text-zinc-400 text-sm font-bold mb-2">إجمالي التكلفة المحسوبة</div>
+                <div class="text-3xl font-black text-amber-600 dark:text-amber-500">${{ total_cost|floatformat:2|intcomma }}</div>
+            </div>
+
+            <div class="glass-card p-6 shadow-sm">
+                <div class="text-zinc-500 text-sm font-bold mb-2">إجمالي التخزين النشط</div>
+                <div class="text-3xl font-extrabold">{{ total_gb }} GB</div>
+            </div>
+
+            <div class="glass-card p-6 shadow-sm">
+                <div class="text-zinc-500 text-sm font-bold mb-2">الباندويث التراكمي</div>
+                <div class="text-3xl font-extrabold">{{ total_bw }} GB</div>
+            </div>
+
+            <div class="glass-card p-6 shadow-sm">
+                <div class="text-zinc-500 text-sm font-bold mb-2">إجمالي المشاهدات</div>
+                <div class="text-3xl font-extrabold text-blue-600 dark:text-blue-400">{{ total_views|intcomma }}</div>
+            </div>
+        </div>
+
+        <!-- Detailed Ranking (The Core Analysis) -->
+        <div class="glass-card overflow-hidden shadow-md border border-zinc-200 dark:border-zinc-800">
+            <div class="p-6 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 flex justify-between items-center">
+                <h2 class="text-xl font-black flex items-center gap-2">
+                    <i data-lucide="trending-up" class="text-red-500"></i>
+                    الفيديوهات الأكثر استنزافاً للموارد (Top 10)
+                </h2>
+                <button class="text-xs bg-zinc-900 dark:bg-white text-white dark:text-black px-4 py-2 rounded font-bold">مزامنة الآن</button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-right">
+                    <thead class="bg-zinc-50 dark:bg-zinc-900 text-zinc-500 text-xs font-bold uppercase tracking-wider">
+                        <tr>
+                            <th class="px-6 py-4">اسم الفيديو / المعرف</th>
+                            <th class="px-6 py-4">حجم التخزين</th>
+                            <th class="px-6 py-4">المشاهدات</th>
+                            <th class="px-6 py-4">مدة الفيديو</th>
+                            <th class="px-6 py-4 text-left">إجمالي التكلفة الحقيقي</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                        {% for vid in leaderboard %}
+                        <tr class="table-row transition-colors duration-150 group">
+                            <td class="px-6 py-5">
+                                <div class="font-bold group-hover:text-amber-600 transition-colors">{{ vid.title|default:"No Title" }}</div>
+                                <div class="text-xs text-zinc-400 font-mono">{{ vid.bunny_id }}</div>
+                            </td>
+                            <td class="px-6 py-5 font-medium">{{ vid.size_gb|floatformat:2 }} GB</td>
+                            <td class="px-6 py-5">{{ vid.total_views|intcomma }}</td>
+                            <td class="px-6 py-5">{{ vid.duration_seconds }} ثانية</td>
+                            <td class="px-6 py-5 text-left font-black text-lg tracking-tight">
+                                <span class="bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded text-amber-600 dark:text-amber-500">
+                                    ${{ vid.calculated_total_cost_usd|floatformat:3 }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-10 text-center text-zinc-400">لم يتم إجراء مزامنة بعد. قم بتشغيل المزامنة لملء البيانات.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

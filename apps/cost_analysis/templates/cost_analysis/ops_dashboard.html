@@ -1,0 +1,178 @@
+{% extends 'dashboard/base.html' %}
+{% load static humanize %}
+
+{% block title %}Operational Analytics | Enterprise Intelligence{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { dark: '#0F172A', accent: '#3B82F6' }
+          }
+        }
+      }
+    }
+</script>
+<style>
+    .main-content { max-width: 100% !important; padding: 0 !important; margin-top: 70px !important; }
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid #e2e8f0;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .dark-theme .glass-panel {
+        background: rgba(15, 23, 42, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 4px 30px rgba(0,0,0,0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50 dark:bg-[#020617] text-slate-900 dark:text-white font-sans transition-colors" dir="rtl">
+    <div class="container mx-auto px-6 py-8 max-w-7xl">
+        
+        <!-- Header -->
+        <header class="mb-8 flex flex-col md:flex-row justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-6">
+            <div>
+                <h1 class="text-3xl font-black tracking-tight flex items-center gap-3">
+                    <i data-lucide="activity" class="text-blue-500"></i>
+                    رادار الكفاءة والعمليات
+                </h1>
+                <p class="text-slate-500 dark:text-slate-400 mt-1">نظام الرقابة الذكي للسيولة والمعدلات التشغيلية</p>
+            </div>
+            
+            <!-- Live Currency Ticker Widget -->
+            <div class="glass-panel px-6 py-3 mt-4 md:mt-0 flex items-center gap-6 border-r-4 border-r-emerald-500 bg-white dark:bg-slate-900">
+                <div>
+                    <div class="text-xs text-slate-400 font-bold">سعر الصرف الرسمي (USD ➔ SYP)</div>
+                    <div class="text-2xl font-black tracking-widest text-emerald-600 dark:text-emerald-400">
+                        {{ exchange_rate|floatformat:0|intcomma }} <span class="text-xs font-normal">SYP</span>
+                    </div>
+                </div>
+                <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-full text-emerald-500">
+                    <i data-lucide="trending-up" class="w-6 h-6 animate-pulse"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- KPI Strip -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            
+            <!-- Burn Rate -->
+            <div class="glass-panel p-6 flex justify-between items-center relative overflow-hidden group hover:border-red-500/50 transition-colors">
+                <div>
+                    <h3 class="text-slate-400 text-sm font-bold mb-1">معدل الحرق الشهري (Composite Burn)</h3>
+                    <div class="text-4xl font-extrabold text-slate-800 dark:text-white">
+                        ${{ burn_metrics.total_usd|floatformat:2|intcomma }}
+                    </div>
+                </div>
+                <div class="text-red-500 opacity-50 group-hover:opacity-100 transition-opacity"><i data-lucide="flame" class="w-10 h-10"></i></div>
+            </div>
+
+            <!-- Infra Weight -->
+            <div class="glass-panel p-6 flex justify-between items-center">
+                <div>
+                    <h3 class="text-slate-400 text-sm font-bold mb-1">تكلفة البنية التحتية (Infra)</h3>
+                    <div class="text-3xl font-bold">
+                        ${{ burn_metrics.infra|floatformat:2|intcomma }}
+                    </div>
+                </div>
+                <div class="text-indigo-500"><i data-lucide="server" class="w-10 h-10"></i></div>
+            </div>
+
+            <!-- Video Metric -->
+            <div class="glass-panel p-6 flex justify-between items-center border-b-4 border-b-blue-500">
+                <div>
+                    <h3 class="text-slate-400 text-sm font-bold mb-1">تكلفة الفيديو الواحد (Unit Cost)</h3>
+                    <div class="text-3xl font-bold">
+                        ${{ unit_costs.per_vid|floatformat:4 }}
+                    </div>
+                    <span class="text-xs text-slate-500">لكل جيجا: ${{ unit_costs.per_gb|floatformat:4 }}</span>
+                </div>
+                <div class="text-blue-500"><i data-lucide="video" class="w-10 h-10"></i></div>
+            </div>
+        </div>
+
+        <!-- Visual Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Allocation Doughnut -->
+            <div class="glass-panel p-6">
+                <h2 class="text-lg font-bold mb-6 border-b border-slate-100 dark:border-slate-800 pb-3 flex items-center gap-2">
+                    <i data-lucide="pie-chart" class="w-5 h-5"></i>
+                    توزيع الميزانية التشغيلية
+                </h2>
+                <div class="relative h-64 flex justify-center">
+                    <canvas id="expenseDoughnut"></canvas>
+                </div>
+            </div>
+
+            <!-- Intelligence Briefing -->
+            <div class="glass-panel p-6 flex flex-col">
+                <h2 class="text-lg font-bold mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">التوصيات الاستراتيجية</h2>
+                <div class="space-y-4 flex-grow">
+                    <div class="bg-blue-50 dark:bg-blue-900/10 border-l-4 border-l-blue-500 p-4 rounded">
+                        <h4 class="font-bold text-sm text-blue-700 dark:text-blue-400">تحسين كفاءة الفيديو</h4>
+                        <p class="text-xs mt-1 text-slate-600 dark:text-slate-300 leading-relaxed">تمثل تكاليف الـ CDN الحالية الجزء الأكبر من تكلفة الوحدة. يوصى بتفعيل ضغط إضافي لتقليل استهلاك الـ GB.</p>
+                    </div>
+                    <div class="bg-emerald-50 dark:bg-emerald-900/10 border-l-4 border-l-emerald-500 p-4 rounded">
+                        <h4 class="font-bold text-sm text-emerald-700 dark:text-emerald-400">استقرار الصرف</h4>
+                        <p class="text-xs mt-1 text-slate-600 dark:text-slate-300">سعر الصرف مستقر حالياً ضمن معدل انحراف 2%. لا حاجة لتعديل أسعار الباقات المحلية فورياً.</p>
+                    </div>
+                </div>
+                <div class="mt-6">
+                    <a href="#" class="w-full block text-center bg-slate-800 dark:bg-slate-200 dark:text-slate-900 text-white font-bold py-3 rounded-lg hover:opacity-90 transition-all">تحميل التقرير التفصيلي PDF</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rawData = JSON.parse('{{ expense_composition_json|safe }}');
+    const isDark = document.documentElement.classList.contains('dark-theme');
+    
+    const ctx = document.getElementById('expenseDoughnut').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: rawData.labels,
+            datasets: [{
+                data: rawData.data,
+                backgroundColor: [
+                    '#3B82F6', '#10B981', '#8B5CF6', '#EF4444', '#F59E0B'
+                ],
+                borderWidth: 0,
+                hoverOffset: 10
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    rtl: true,
+                    labels: {
+                        color: isDark ? '#cbd5e1' : '#475569',
+                        font: { size: 12, weight: 'bold' },
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                }
+            },
+            cutout: '70%'
+        }
+    });
+});
+</script>
+{% endblock %}
