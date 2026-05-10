@@ -178,14 +178,16 @@
                          </div>
                          {% endif %}
 
+                         <!-- GL Link - NOW UNIFIED FOR ALL -->
+                         <a href="{% url 'accounting_erp:journal_list' %}?account_id={{ acc.id }}" class="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300 px-3 py-1.5 rounded-lg font-black flex items-center gap-1 transition border border-blue-100/50 dark:border-blue-800/50 shadow-sm">
+                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                             دفتر الأستاذ
+                         </a>
+
                          {% if acc.is_group %}
                             <span class="text-xs bg-neutral-200 text-neutral-700 dark:bg-neutral-700 dark:text-neutral-300 px-2.5 py-1 rounded-md font-bold uppercase">حساب رئيسي</span>
-                         {% else %}
-                            <a href="{% url 'accounting_erp:journal_list' %}?account_id={{ acc.id }}" class="text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/40 dark:text-blue-300 px-3 py-1.5 rounded-lg font-black flex items-center gap-1 transition border border-blue-100/50 dark:border-blue-800/50 shadow-sm">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
-                                دفتر الأستاذ
-                            </a>
                          {% endif %}
+
                     </div>
 
                 </div>

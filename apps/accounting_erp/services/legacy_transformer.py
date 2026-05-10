@@ -36,125 +36,107 @@ class LegacyAccountingTransformer:
         created_count = 0
         
         for code in codes:
-            ref_tag = f"CODE_SALE_{code.id}"
-            if JournalEntry.objects.filter(reference=ref_tag).exists():
-                continue
-                
-            # Resolve Reference Item (Course/Package)
-            item_name = "Unspecified"
-            item_base_price = 0
+            # Phase 1: RESOLVE BASIC ATTRIBUTES
+            item_name = "مادة"
+            item_price_cents = 0
             course_ref = None
-            
             if code.course:
                 item_name = code.course.title
-                item_base_price = code.course.price_cents or 0
+                item_price_cents = code.course.price_cents or 0
                 course_ref = code.course
             elif code.package:
                 item_name = code.package.name
-                item_base_price = code.package.price_cents or 0
+                item_price_cents = code.package.price_cents or 0
 
-                
-            # 1. Resolve Course Cost Center (Direct association as requested)
-            cost_ctr = None
-            if course_ref:
-                cost_ctr, _ = CostCenter.objects.get_or_create(
-                    code=f"CRS-{course_ref.id}",
-                    defaults={'name': f"دورة: {item_name[:60]}"}
-                )
+            base_price_dec = Decimal(item_price_cents) / Decimal('100.0')
+            if base_price_dec <= 0: continue
             
-            # 2. Accrual Math: Realized Price vs Original Price
-            realized_price_cents = code.sold_price_cents or item_base_price
-            discount_cents = item_base_price - realized_price_cents if item_base_price > realized_price_cents else 0
-            
-            amt_cash = Decimal(realized_price_cents) / Decimal('100.0')
-            amt_gross = Decimal(item_base_price) / Decimal('100.0')
-            amt_disc = Decimal(discount_cents) / Decimal('100.0')
-            
-            if amt_gross <= 0: continue # Edge case safe exit
-
-            entry_date = code.sold_at.date() if code.sold_at else (code.created_at.date() if code.created_at else timezone.now().date())
-            
-            voucher = JournalEntry.objects.create(
-                posting_date=entry_date,
-                reference=ref_tag,
-                memo=f"قيد مبيعات تلقائي: {item_name}"
-            )
-            
-            # 3. Resolve Instructor/Branch context
-            branch_ctr = None
-            if code.sold_by:
-                branch_ctr, _ = CostCenter.objects.get_or_create(
-                    code=f"BRN-{code.sold_by.id}",
-                    defaults={'name': f"فرع/بائع: {code.sold_by.get_full_name() or code.sold_by.username}"}
-                )
-            
-            instructor_ctr = None
-            instructor_ref = None
-            if course_ref and course_ref.instructor:
-                instructor_ref = course_ref.instructor
-                instructor_ctr, _ = CostCenter.objects.get_or_create(
-                    code=f"INS-{instructor_ref.id}",
-                    defaults={'name': f"مدرس: {instructor_ref.get_full_name() or instructor_ref.username}"}
-                )
-            
-            # LEG 1: Debit Cash (Real cash actually taken) -> Tagged to receiving branch!
-            JournalLine.objects.create(
-                journal=voucher, account=cash_acc,
-                debit_amount=amt_cash, line_memo="تحصيل قيمة البيع",
-                cost_center=branch_ctr
-            )
-            
-            # LEG 2: Debit Discount (If applicable)
-            if amt_disc > 0:
-                JournalLine.objects.create(
-                    journal=voucher, account=disc_acc,
-                    debit_amount=amt_disc, line_memo=f"حسم ممنوح ({item_name})",
-                    cost_center=cost_ctr
-                )
-                
-            # LEG 3: Credit GROSS Revenue (Tied to Course)
-            JournalLine.objects.create(
-                journal=voucher, account=revenue_acc,
-                credit_amount=amt_gross, line_memo="إثبات إيراد الكورس الإجمالي",
-                cost_center=cost_ctr
-            )
-            
-            # --- ACCRUAL PHASE 2: INSTRUCTOR SHARE INJECTION ---
-            if instructor_ref and amt_gross > 0:
-                # Lookup dynamic platform share BPS (Basis points)
-                from django.apps import apps
-                share_model = next((m for m in apps.get_models() if m.__name__ == 'RevenueShareAgreement'), None)
-                
-                bps = 5000 # Default fallback 50% if no agreement found
-                if share_model:
-                    agree = share_model.objects.filter(course=course_ref, instructor=instructor_ref, is_active=True).first()
-                    if agree:
-                        bps = agree.commission_bps or 5000
-                
-                # Calculate instructor dollar amount from NET realized or GROSS?
-                # Conventionally on platform net realized.
-                inst_amt = (amt_cash * Decimal(str(bps))) / Decimal('10000')
-                
-                if inst_amt > 0:
-                    # Lookup necessary liability & expense accounts
-                    exp_inst_acc, _ = Account.objects.get_or_create(code='5101', defaults={'name': 'حصة المدرسين من المبيعات', 'category': AccountCategory.EXPENSE, 'parent': Account.objects.get(code='51')})
-                    liab_inst_acc, _ = Account.objects.get_or_create(code='2101', defaults={'name': 'مستحقات المدرسين (أمانات)', 'category': AccountCategory.LIABILITY, 'parent': Account.objects.get(code='21')})
-                    
-                    # LEG 4: Debit Expense (Accrue direct instructor cost tied to that Specific Instructor)
-                    JournalLine.objects.create(
-                        journal=voucher, account=exp_inst_acc,
-                        debit_amount=inst_amt, line_memo=f"استحقاق عمولة مدرس: {instructor_ref.username}",
-                        cost_center=instructor_ctr
+            # ------------------------------------------------------------
+            # EVENT A: CODE ALLOCATION TO CENTER (INVENTORY/DEFERRED)
+            # ------------------------------------------------------------
+            if code.sales_center:
+                alloc_tag = f"CODE_ALLOC_{code.id}"
+                if not JournalEntry.objects.filter(reference=alloc_tag).exists():
+                    # Lookup/Create center-specific cost center
+                    center_cost, _ = CostCenter.objects.get_or_create(
+                        code=f"CEN-{code.sales_center.id}",
+                        defaults={'name': f"مركز: {code.sales_center.name}"}
                     )
                     
-                    # LEG 5: Credit Payable (Recognize money we OWE them now)
-                    JournalLine.objects.create(
-                        journal=voucher, account=liab_inst_acc,
-                        credit_amount=inst_amt, line_memo=f"أمانة مستحقة للمدرس عن بيع {item_name}",
-                        cost_center=instructor_ctr
+                    # Define required accounts
+                    # 1201: Accounts Receivable / Center Consignment
+                    recv_acc, _ = Account.objects.get_or_create(code='1201', defaults={'name': 'ذمم مراكز بيع مدينة', 'category': AccountCategory.ASSET, 'parent': Account.objects.get(code='1')})
+                    # 2102: Deferred Revenue
+                    def_acc, _ = Account.objects.get_or_create(code='2102', defaults={'name': 'إيرادات مؤجلة (اشتراكات)', 'category': AccountCategory.LIABILITY, 'parent': Account.objects.get(code='2')})
+                    
+                    v_alloc = JournalEntry.objects.create(
+                        posting_date=code.created_at.date(),
+                        reference=alloc_tag,
+                        memo=f"تخصيص كود عهدة للمركز ({item_name})"
                     )
-            
-            created_count += 1
+                    # Debit Center Receivable
+                    JournalLine.objects.create(journal=v_alloc, account=recv_acc, debit_amount=base_price_dec, cost_center=center_cost, line_memo="عهدة كود مطبوع للمركز")
+                    # Credit Deferred Rev
+                    JournalLine.objects.create(journal=v_alloc, account=def_acc, credit_amount=base_price_dec, cost_center=center_cost, line_memo="إيراد مؤجل معلق")
+                    created_count += 1
+
+            # ------------------------------------------------------------
+            # EVENT B: FINAL ACTIVATION/SALE (REALIZE REVENUE & SPLIT)
+            # ------------------------------------------------------------
+            if code.sale_status == 'sold' or code.redeemed_count > 0:
+                sell_tag = f"CODE_SALE_{code.id}"
+                if not JournalEntry.objects.filter(reference=sell_tag).exists():
+                    
+                    realized_cents = code.sold_price_cents or item_price_cents
+                    realized_dec = Decimal(realized_cents) / Decimal('100.0')
+                    
+                    # Prepare course-specific center
+                    crs_cost = None
+                    if course_ref:
+                        crs_cost, _ = CostCenter.objects.get_or_create(code=f"CRS-{course_ref.id}", defaults={'name': f"دورة: {item_name[:60]}"})
+                    
+                    v_sell = JournalEntry.objects.create(
+                        posting_date=code.sold_at.date() if code.sold_at else timezone.now().date(),
+                        reference=sell_tag,
+                        memo=f"تفعيل وبيع نهائي: {item_name}"
+                    )
+                    
+                    # If had a center before, resolve the allocation chain!
+                    if code.sales_center:
+                        recv_acc, _ = Account.objects.get_or_create(code='1201', defaults={'name': 'ذمم مراكز بيع مدينة', 'category': AccountCategory.ASSET})
+                        def_acc, _ = Account.objects.get_or_create(code='2102', defaults={'name': 'إيرادات مؤجلة (اشتراكات)', 'category': AccountCategory.LIABILITY})
+                        
+                        # Debit Deferred (Reverse the liability)
+                        JournalLine.objects.create(journal=v_sell, account=def_acc, debit_amount=base_price_dec, line_memo="تصفية الإيراد المؤجل عند البيع")
+                        # Credit Center Receivable (Settled)
+                        JournalLine.objects.create(journal=v_sell, account=recv_acc, credit_amount=base_price_dec, line_memo="تسوية عهدة المركز عند البيع")
+
+                    # CORE SALES LEGS
+                    # Debit CASH (Actual received)
+                    JournalLine.objects.create(journal=v_sell, account=cash_acc, debit_amount=realized_dec, line_memo="استلام نقدية البيع النهائي")
+                    # Credit REVENUE (Earned!)
+                    JournalLine.objects.create(journal=v_sell, account=revenue_acc, credit_amount=realized_dec, cost_center=crs_cost, line_memo="تحقيق الإيراد الفعلي")
+
+                    # --- INSTRUCTOR SHARE SPLIT (Dynamic Accrual) ---
+                    if course_ref and course_ref.instructor:
+                        from django.apps import apps
+                        share_model = next((m for m in apps.get_models() if m.__name__ == 'RevenueShareAgreement'), None)
+                        bps = 5000
+                        if share_model:
+                            agree = share_model.objects.filter(course=course_ref, instructor=course_ref.instructor, is_active=True).first()
+                            if agree: bps = agree.commission_bps or 5000
+                        
+                        inst_amt = (realized_dec * Decimal(str(bps))) / Decimal('10000')
+                        if inst_amt > 0:
+                            inst_cost, _ = CostCenter.objects.get_or_create(code=f"INS-{course_ref.instructor.id}", defaults={'name': f"مدرس: {course_ref.instructor.username}"})
+                            exp_i, _ = Account.objects.get_or_create(code='5101', defaults={'name': 'حصة المدرسين', 'category': AccountCategory.EXPENSE, 'parent': Account.objects.get(code='51')})
+                            lia_i, _ = Account.objects.get_or_create(code='2101', defaults={'name': 'مستحقات مدرسين', 'category': AccountCategory.LIABILITY, 'parent': Account.objects.get(code='21')})
+                            
+                            JournalLine.objects.create(journal=v_sell, account=exp_i, debit_amount=inst_amt, cost_center=inst_cost, line_memo="عبء عمولة مدرس")
+                            JournalLine.objects.create(journal=v_sell, account=lia_i, credit_amount=inst_amt, cost_center=inst_cost, line_memo="استحقاق أمانة مدرس")
+
+                    created_count += 1
+
 
 
             

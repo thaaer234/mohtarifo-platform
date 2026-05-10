@@ -32,10 +32,9 @@ class LegacyPaymentSelector:
         """Extracts finalized offline voucher instrument transactions with robustness fallback."""
         from django.db.models import Q
         return AccessCode.objects.filter(
-            Q(sale_status='sold'),
-            Q(sold_at__gte=start_date, sold_at__lte=end_date) | 
-            Q(sold_at__isnull=True, created_at__gte=start_date, created_at__lte=end_date)
-        ).select_related('sold_by', 'course', 'package')
+            created_at__gte=start_date, created_at__lte=end_date
+        ).select_related('sold_by', 'sales_center', 'course', 'package')
+
 
 
 class LegacySubscriptionSelector:

@@ -85,12 +85,21 @@ class JournalVoucherListView(BaseAccountingView, TemplateView):
         qs = JournalEntry.objects.all().order_by('-posting_date')
         
         if acc_filter:
-            qs = qs.filter(lines__account_id=acc_filter).distinct()
             from apps.accounting_erp.models import Account
-            context['filtered_account'] = Account.objects.filter(pk=acc_filter).first()
+            target_acc = Account.objects.filter(pk=acc_filter).first()
+            context['filtered_account'] = target_acc
+            
+            if target_acc:
+                if target_acc.is_group:
+                    # Dynamically expand search to ANY descendant children via prefix
+                    qs = qs.filter(lines__account__code__startswith=target_acc.code).distinct()
+                else:
+                    # Specific targeted leaf match
+                    qs = qs.filter(lines__account=target_acc).distinct()
             
         context['vouchers'] = qs
         return context
+
 
 class TrialBalanceReportView(BaseAccountingView, TemplateView):
     """ Official balancing ledger aggregate summation report wrapper. """
