@@ -1,4 +1,5 @@
-import requests
+import urllib.request
+import json
 import decimal
 from django.utils import timezone
 from django.core.cache import cache
@@ -13,17 +14,18 @@ class BaseExchangeAdapter:
 
 class ExchangeRateHostAdapter(BaseExchangeAdapter):
     def get_rate(self, base, quote):
-        # Mock/Real implementation using fallback tolerant pattern
+        # Standard library implementation with Zero dependencies
         url = f"https://api.exchangerate.host/convert?from={base}&to={quote}"
         try:
-            # Short timeout prevents thread blocking
-            resp = requests.get(url, timeout=5)
-            if resp.status_code == 200:
-                data = resp.json()
-                return decimal.Decimal(str(data['result']))
-        except:
+            with urllib.request.urlopen(url, timeout=5) as response:
+                if response.status == 200:
+                    data = json.loads(response.read().decode('utf-8'))
+                    # Fallback handling for structure
+                    return decimal.Decimal(str(data.get('result', 0)))
+        except Exception:
             pass
         return None
+
 
 class CurrencyServiceOrchestrator:
     """ Handles the cascade logic querying multiple fallback channels."""

@@ -1,4 +1,3 @@
-import requests
 from decimal import Decimal
 from django.db.models import Count
 from ..models import BunnyRateConfiguration, BunnyVideoAnalytics, BunnyPlatformReport

@@ -14,13 +14,7 @@ class AdminDashboardFinanceView(LoginRequiredMixin, UserPassesTestMixin, Templat
     def test_func(self):
         return self.request.user.is_superuser or self.request.user.is_staff
 
-    def get(self, request, *args, **kwargs):
-        try:
-             return super().get(request, *args, **kwargs)
-        except Exception:
-             import traceback
-             from django.http import HttpResponse
-             return HttpResponse(f"<h1>CRITICAL_DEBUG_CAPTURE</h1><pre>{traceback.format_exc()}</pre>", content_type="text/html", status=500)
+
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
