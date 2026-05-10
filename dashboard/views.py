@@ -2510,7 +2510,17 @@ def admin_center_invoice(request, center_id):
         elif batch.package and batch.package.price_cents:
             std_price = batch.package.price_cents / 100
             
+        # 1. Potential of ALL codes (if everything was sold at full price)
         pot_val = batch.allocated_count * std_price
+        
+        # 2. Gross Standard value of only SOLD codes (Used as base for constant commission)
+        sold_gross_std = sold_cnt * std_price
+        
+        # 3. The commission center earned on the sales they completed
+        c_share = sold_gross_std * commission_percent / 100
+        
+        # 4. Net remainder for platform = (Actual Money Collected - Center's Share)
+        n_share = earned_syp - c_share
         
         detailed_batches.append({
             "batch": batch,
@@ -2519,8 +2529,8 @@ def admin_center_invoice(request, center_id):
             "standard_price": std_price,
             "potential_value": pot_val,
             "actual_earned": earned_syp,
-            "center_share": pot_val * commission_percent / 100,
-            "net_share": pot_val * (100 - commission_percent) / 100,
+            "center_share": c_share,
+            "net_share": n_share,
         })
         
         total_assigned += batch.allocated_count
@@ -2528,8 +2538,9 @@ def admin_center_invoice(request, center_id):
         total_potential += pot_val
         total_earned += earned_syp
         
-    total_center_commission = total_potential * commission_percent / 100
-    total_net_share = total_potential - total_center_commission
+    # Aggregating overall summaries correctly from detail rows
+    total_center_commission = sum(x["center_share"] for x in detailed_batches)
+    total_net_share = total_earned - total_center_commission
     
     context = {
         "center": center,
