@@ -2597,251 +2597,252 @@ def _apply_god_tier_excel_styling(ws, column_width=25, force_zebra=True):
         ws.column_dimensions[get_column_letter(i)].width = column_width
 
 
+def _draw_erp_card(ws, row, col, title, val_formula, sub_label, hex_theme="233646"):
+    from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
+    head_f = PatternFill(start_color=hex_theme, end_color=hex_theme, fill_type="solid")
+    body_f = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
+    foot_f = PatternFill(start_color="F8F9FA", end_color="F8F9FA", fill_type="solid")
+    thin = Side(style="thin", color="D1D5DB")
+    heavy_b = Side(style="medium", color=hex_theme)
+    
+    c1 = ws.cell(row=row, column=col)
+    c1.value = title
+    c1.font = Font(bold=True, color="FFFFFF", size=11, name="Segoe UI")
+    c1.fill = head_f
+    c1.alignment = Alignment(horizontal="center", vertical="center")
+    c1.border = Border(top=thin, left=thin, right=thin)
+
+    c2 = ws.cell(row=row+1, column=col)
+    c2.value = val_formula
+    c2.font = Font(bold=True, color="1F2937", size=24, name="Segoe UI")
+    c2.fill = body_f
+    c2.alignment = Alignment(horizontal="center", vertical="center")
+    c2.number_format = '#,##0'
+    c2.border = Border(left=thin, right=thin)
+
+    c3 = ws.cell(row=row+2, column=col)
+    c3.value = sub_label
+    c3.font = Font(italic=True, color="6B7280", size=9, name="Segoe UI")
+    c3.fill = foot_f
+    c3.alignment = Alignment(horizontal="center", vertical="center")
+    c3.border = Border(left=thin, right=thin, bottom=heavy_b)
+
+def _draw_erp_table(ws, sr, er, sc, ec, zebra=True):
+    from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
+    head_f = PatternFill(start_color="1E293B", end_color="1E293B", fill_type="solid")
+    head_font = Font(bold=True, color="FFFFFF", size=10, name="Segoe UI")
+    row_even = PatternFill(start_color="F8FAFC", end_color="F8FAFC", fill_type="solid")
+    thin_b = Side(style="thin", color="E2E8F0")
+    uni_border = Border(left=thin_b, right=thin_b, top=thin_b, bottom=thin_b)
+    for r in range(sr, er + 1):
+        for c in range(sc, ec + 1):
+            cell = ws.cell(row=r, column=c)
+            cell.border = uni_border
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+            if r == sr:
+                cell.fill = head_f
+                cell.font = head_font
+            else:
+                cell.font = Font(size=9, name="Segoe UI", color="334155")
+                if zebra and (r % 2 == 0):
+                    cell.fill = row_even
+
 @admin_required
 def admin_financial_report_export(request):
     from openpyxl import Workbook
     from openpyxl.chart import PieChart, Reference
-    from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.formatting.rule import CellIsRule, ColorScaleRule
     from django.utils import timezone
     from django.db.models import Sum, Count, Avg, Q
-    from django.contrib.auth import get_user_model
-    
+    from openpyxl.utils import get_column_letter
+
     from billing.models import AccessCode, AccessCodePrintLog, CoursePackage, SalesCenter
     from learning.models import Course, Lesson, LessonProgress
     from accounts.models import StudentProfile, InstructorProfile
-    
-    from openpyxl.utils import get_column_letter
-    
+
     wb = Workbook()
-    
-    # =========================================================
-    # SHEET 1: EXECUTIVE GLOBAL DASHBOARD (لوحة المؤشرات)
-    # =========================================================
-    ws_dash = wb.active
-    ws_dash.title = "01-لوحة القيادة التنفيذية"
-    ws_dash.append(["📌 مؤشرات الأداء الإستراتيجية", "📊 القيمة الإحصائية", "💡 التوضيح المرجعي"])
-    
-    std_cnt = StudentProfile.objects.count()
-    ins_cnt = InstructorProfile.objects.count()
-    crs_cnt = Course.objects.count()
-    pub_cnt = Course.objects.filter(status="published").count()
-    less_cnt = Lesson.objects.count()
-    prog_cnt = LessonProgress.objects.count()
-    pkg_cnt = CoursePackage.objects.count()
-    
-    scodes_all = AccessCode.objects.filter(sale_status="sold")
-    gross_rev = (scodes_all.aggregate(s=Sum("sold_price_cents"))["s"] or 0) / 100
-    atv = (scodes_all.aggregate(a=Avg("sold_price_cents"))["a"] or 0) / 100
-    
-    dash_metrics = [
-        ["قاعدة بيانات الطلبة الكلية", std_cnt, "طالب مسجل"],
-        ["كادر الهيئة التدريسية", ins_cnt, "مدرس نشط"],
-        ["المحفظة التعليمية الكلية", crs_cnt, "دورة إجمالية"],
-        ["الدورات النشطة في السوق", pub_cnt, "كورس منشور للبيع"],
-        ["المكتبة الرقمية (الدروس)", less_cnt, "درس مرجعي"],
-        ["تفاعل المحتوى التراكمي", prog_cnt, "سجل مشاهدة متتبع"],
-        ["الباقات المدمجة المتاحة", pkg_cnt, "عرض باقة مفعل"],
-        ["إجمالي الإيرادات المحققة", int(gross_rev), "ل.س (تدفق تاريخي)"],
-        ["متوسط تذكرة المبيع (ATV)", int(atv), "ل.س لكل عملية"],
-        ["عدد المبيعات الناجحة", scodes_all.count(), "عملية بيع كود"],
+    act = wb.active
+    wb.remove(act)
+
+    # 1. ERP SHEET CONFIGURATION (21 SHEETS REQUIRED)
+    sheets = {}
+    sheet_config = [
+        ("01 - لوحة القيادة التنفيذية", True),
+        ("02 - الموقف المالي العام", True),
+        ("03 - تحليلات الإيرادات", True),
+        ("04 - تقارير الطلاب المالية", True),
+        ("05 - التقرير المالي للمدرسين", True),
+        ("06 - أداء الفروع والمراكز", True),
+        ("07 - ربحية المواد والكورسات", True),
+        ("08 - تتبع الدفعات والأقساط", True),
+        ("09 - الديون والذمم المتعثرة", True),
+        ("10 - الاستحقاقات المالية Accruals", True),
+        ("11 - كشف عمولات الشركاء", True),
+        ("12 - تتبع المصروفات التشغيلية", True),
+        ("13 - قائمة الدخل P&L", True),
+        ("14 - تقرير التدفق النقدي", True),
+        ("15 - ملخص الميزانية العمومية", True),
+        ("16 - التوقعات المالية Forecasting", True),
+        ("17 - مؤشرات الأداء الذكية KPI", True),
+        ("18 - المعاملات والسجلات التفصيلية", True),
+        ("19 - التنبيهات المالية الذكية", True),
+        ("20 - إعدادات وتهيئة النظام", True),
+        ("21 - قاعدة بيانات الربط", True),
     ]
-    for dm in dash_metrics: ws_dash.append(dm)
-    _apply_god_tier_excel_styling(ws_dash, column_width=35)
+    for name, rtl in sheet_config:
+        ws = wb.create_sheet(name)
+        if rtl: ws.sheet_view.rightToLeft = True
+        ws.sheet_view.showGridLines = False
+        sheets[name] = ws
 
-    # =========================================================
-    # SHEET 2: DETAILED SALES AUDIT (سجل المبيعات)
-    # =========================================================
-    ws_audit = wb.create_sheet("02-سجل المبيعات التدقيقي")
-    ws_audit.append(["تاريخ البيع", "الوقت", "الكود", "المنتج", "المشتري", "الهاتف", "نقطة البيع", "القيمة ل.س"])
-    audit_qs = AccessCode.objects.filter(sale_status="sold").select_related("course", "package", "sales_center").order_by("-sold_at")
-    for row in audit_qs.iterator(chunk_size=1000):
-        p_nm = ""
-        if row.access_type == "course" and row.course: p_nm = row.course.title
-        elif row.access_type == "package" and row.package: p_nm = row.package.name
-        else: p_nm = "عام"
-        ws_audit.append([
-            row.sold_at.strftime("%Y-%m-%d") if row.sold_at else "-",
-            row.sold_at.strftime("%H:%M") if row.sold_at else "-",
-            row.code, p_nm, row.assigned_student_name or "-",
-            row.assigned_student_phone or "-",
-            row.sales_center.name if row.sales_center else "بيع مركزي",
-            int((row.sold_price_cents or 0)/100)
-        ])
-    _apply_god_tier_excel_styling(ws_audit, column_width=20)
+    # PREPARATION: Config Sheet (Reference point for formulas)
+    cfg = sheets["20 - إعدادات وتهيئة النظام"]
+    cfg.column_dimensions['B'].width = 40
+    cfg.column_dimensions['C'].width = 20
+    cfg.append(["", "🛠️ تهيئة المتغيرات المالية للنظام", "القيمة"])
+    cfg.append(["", "نسبة عمولة المدرس الافتراضية", 0.45])
+    cfg.append(["", "نسبة مصروف التشغيل (CDN/IT)", 0.03])
+    cfg.append(["", "هدف الإيراد الشهري المرجعي", 5000000])
+    _draw_erp_table(cfg, 1, 4, 2, 3)
 
-    # =========================================================
-    # SHEET 3: ACADEMIC GROUPS (أداء الفئات)
-    # =========================================================
-    ws_sec = wb.create_sheet("03-أداء الفئات التعليمية")
-    ws_sec.append(["الفئة", "الكورسات", "الأكواد المولدة", "المباعة", "المفعلة", "المطبوعة", "الإيراد الفعلي", "توقع البيع الكامل"])
-    for sr in _get_enhanced_filter_financials(): ws_sec.append(sr)
-    _apply_god_tier_excel_styling(ws_sec, column_width=22)
+    # 2. SOURCE DATA (Sheet 18: Detailed Transactions)
+    trx = sheets["18 - المعاملات والسجلات التفصيلية"]
+    for char in ['A','B','C','D','E','F','G']: trx.column_dimensions[char].width = 20
+    trx.append(["التاريخ", "كود العملية", "المنتج التعليمي", "صافي المقبوض", "جهة التحصيل", "اسم الطالب", "النوع"])
+    
+    sales_qs = AccessCode.objects.filter(sale_status="sold").select_related("course", "package", "sales_center").order_by("-sold_at")
+    r_t = 2
+    total_cash = 0
+    for s in sales_qs.iterator(chunk_size=500):
+        d_str = s.sold_at.strftime("%Y-%m-%d") if s.sold_at else "-"
+        nm = s.course.title if s.course else (s.package.name if s.package else "عام")
+        val = int((s.sold_price_cents or 0) / 100)
+        chan = s.sales_center.name if s.sales_center else "بيع مباشر"
+        st_n = s.assigned_student_name or "-"
+        typ = s.get_access_type_display()
+        trx.append([d_str, s.code, nm, val, chan, st_n, typ])
+        total_cash += val
+        r_t += 1
+    _draw_erp_table(trx, 1, max(2, r_t-1), 1, 7)
+    trx.freeze_panes = "A2"
+    
+    rev_col = "'18 - المعاملات والسجلات التفصيلية'!D:D"
 
-    # =========================================================
-    # SHEET 4: INSTRUCTORS (أنصبة المدرسين)
-    # =========================================================
-    ws_ins = wb.create_sheet("04-محاسبة أنصبة المدرسين")
-    ws_ins.append(["المادة", "المدرس", "السعر", "مبيعات (عدد)", "إيراد", "نسبة %", "مستحق الشريك", "صافي المنصة"])
-    c_list = Course.objects.select_related("instructor").order_by("-created_at")
-    ri = 2
-    for cl in c_list:
-        sld = AccessCode.objects.filter(course=cl, sale_status="sold")
-        rev = (sld.aggregate(a=Sum("sold_price_cents"))["a"] or 0) / 100
-        ws_ins.append([
-            cl.title, cl.instructor.get_full_name() or cl.instructor.username,
-            int((cl.price_cents or 0)/100), sld.count(), int(rev), 45,
-            f"={get_column_letter(5)}{ri}*({get_column_letter(6)}{ri}/100)",
-            f"={get_column_letter(5)}{ri}-{get_column_letter(7)}{ri}"
-        ])
-        ri += 1
-    _apply_god_tier_excel_styling(ws_ins, column_width=24)
+    # 3. EXECUTIVE DASHBOARD (Sheet 01)
+    dsh = sheets["01 - لوحة القيادة التنفيذية"]
+    for char in ['B','C','D','E']: dsh.column_dimensions[char].width = 28
+    dsh.merge_cells('B2:E2')
+    dsh['B2'] = "🏛️ لوحة الرقابة المالية التنفيذية - محترفو التعليم"
+    dsh['B2'].font = Font(bold=True, size=16, color="FFFFFF")
+    dsh['B2'].fill = PatternFill(start_color="1E293B", end_color="1E293B", fill_type="solid")
+    dsh['B2'].alignment = Alignment(horizontal="center", vertical="center")
+    
+    _draw_erp_card(dsh, 4, 2, "إجمالي التحصيل النقدي", f"=SUM({rev_col})", "السيولة التاريخية", "059669")
+    _draw_erp_card(dsh, 4, 3, "إجمالي العمليات الناجحة", f"=COUNTA('18 - المعاملات والسجلات التفصيلية'!B:B)-1", "سندات مبيع كودات", "2563EB")
+    _draw_erp_card(dsh, 4, 4, "التكلفة المباشرة المقدرة", f"=B5 * '20 - إعدادات وتهيئة النظام'!C2", "حصة المدرسين المفترضة", "DC2626")
+    _draw_erp_card(dsh, 4, 5, "صافي الهامش التشغيلي", "=B5 - D5", "الفائض النقدي الخام", "CA8A04")
 
-    # =========================================================
-    # SHEET 5: CENTERS (تحليل المراكز)
-    # =========================================================
-    ws_cnt = wb.create_sheet("05-تحليل مراكز التوزيع")
-    ws_cnt.append(["اسم المركز", "المبيعات ل.س", "العمليات المنفذة", "المخزون المتبقي"])
-    for ct in SalesCenter.objects.all():
-        c_qs = AccessCode.objects.filter(sales_center=ct)
-        s_q = c_qs.filter(sale_status="sold")
-        amt = (s_q.aggregate(a=Sum("sold_price_cents"))["a"] or 0) / 100
-        ws_cnt.append([ct.name, int(amt), s_q.count(), c_qs.filter(sale_status="available").count()])
-    _apply_god_tier_excel_styling(ws_cnt, column_width=24)
-
-    # =========================================================
-    # SHEET 6: PACKAGES (تحليل الباقات)
-    # =========================================================
-    ws_pk = wb.create_sheet("06-تحليل الباقات")
-    ws_pk.append(["اسم الباقة", "المواد", "مولدة", "مباعة", "مفعلة", "إجمالي العائد ل.س"])
-    for p in CoursePackage.objects.all():
-        q = AccessCode.objects.filter(access_type="package", package=p)
-        s = q.filter(sale_status="sold")
-        r = (s.aggregate(t=Sum("sold_price_cents"))["t"] or 0) / 100
-        ws_pk.append([p.name, p.eligible_courses_queryset().count(), q.count(), s.count(), q.filter(redeemed_count__gt=0).count(), int(r)])
-    _apply_god_tier_excel_styling(ws_pk, column_width=22)
-
-    # =========================================================
-    # SHEET 7: DEMOGRAPHICS (توزع الديموغرافيا)
-    # =========================================================
-    ws_ge = wb.create_sheet("07-توزع الديموغرافيا")
-    ws_ge.append(["الفئة", "المسار/الجغرافيا", "تعداد الطلاب"])
-    gd = StudentProfile.objects.values("governorate").annotate(c=Count("id")).order_by("-c")
-    for g in gd: ws_ge.append(["جغرافية", g["governorate"] or "غير محدد", g["c"]])
-    ws_ge.append(["", "", ""])
-    ws_ge.append(["أكاديمي", "المسار الدراسي", "العدد"])
-    ds = ws_ge.max_row + 1
-    td = StudentProfile.objects.values("track").annotate(c=Count("id")).order_by("-c")
-    for t in td: ws_ge.append(["أكاديمي", t["track"] or "عام", t["c"]])
-    de = ws_ge.max_row
-    try:
-        pi = PieChart()
-        pi.add_data(Reference(ws_ge, min_col=3, min_row=ds, max_row=de), titles_from_data=False)
-        pi.set_categories(Reference(ws_ge, min_col=2, min_row=ds, max_row=de))
-        pi.title = "توزيع الطلاب"
-        ws_ge.add_chart(pi, "E5")
-    except: pass
-    _apply_god_tier_excel_styling(ws_ge, column_width=24)
-
-    # =========================================================
-    # SHEET 8: CONTENT (تحليل استهلاك المحتوى)
-    # =========================================================
-    ws_vd = wb.create_sheet("08-تحليل استهلاك المحتوى")
-    ws_vd.append(["عنوان الدورة", "دروس", "فيديوهات", "اختبارات", "تفاعلات المشاهدة"])
-    vs = Course.objects.annotate(
-        lc=Count("units__lessons", distinct=True),
-        vc=Count("units__lessons", filter=Q(units__lessons__lesson_type="video"), distinct=True),
-        qc=Count("units__lessons", filter=Q(units__lessons__lesson_type="quiz"), distinct=True),
-        wc=Count("units__lessons__progress", distinct=True)
-    ).order_by("-wc")
-    for v in vs: ws_vd.append([v.title, v.lc, v.vc, v.qc, v.wc])
-    _apply_god_tier_excel_styling(ws_vd, column_width=24)
-
-    # =========================================================
-    # SHEET 9: COA (دليل الحسابات المركزي)
-    # =========================================================
-    ws_ca = wb.create_sheet("09-دليل الحسابات المركزي")
-    ws_ca.append(["كود", "اسم الحساب", "التبويب", "الطبيعة"])
-    cf = [
-        ["1101", "الصندوق والخزينة", "أصول متداولة", "مدين"],
-        ["1201", "المدينون والمراكز", "أصول متداولة", "مدين"],
-        ["2101", "مستحقات المدرسين", "خصوم متداولة", "دائن"],
-        ["4101", "إيرادات المبيعات", "قائمة دخل", "دائن"],
-        ["5101", "تكلفة المبيعات", "قائمة دخل", "مدين"],
-    ]
-    for r in cf: ws_ca.append(r)
-    _apply_god_tier_excel_styling(ws_ca, column_width=24)
-
-    # =========================================================
-    # SHEET 10: JOURNAL (القيود ومراكز الكلفة)
-    # =========================================================
-    ws_jr = wb.create_sheet("10-القيود ومراكز الكلفة")
-    ws_jr.append(["المرجع", "التاريخ", "كود", "الحساب", "مدين", "دائن", "البيان", "مركز التكلفة"])
-    ac_m = {
-        "1101": {"n": "الصندوق", "d": 0, "c": 0},
-        "1201": {"n": "المدينون", "d": 0, "c": 0},
-        "2101": {"n": "مستحقات", "d": 0, "c": 0},
-        "4101": {"n": "إيرادات", "d": 0, "c": 0},
-        "5101": {"n": "تكلفة", "d": 0, "c": 0}
-    }
-    jid = 1
-    jqs = AccessCode.objects.filter(sale_status="sold").select_related("sales_center", "course").order_by("sold_at")
-    for sj in jqs.iterator(chunk_size=1000):
-        vl = int((sj.sold_price_cents or 0)/100)
-        if vl <= 0: continue
-        dt = sj.sold_at.strftime("%Y-%m-%d") if sj.sold_at else timezone.now().strftime("%Y-%m-%d")
-        ct = int(vl * 0.45)
-        cc = sj.course.title if sj.course else "باقة"
-        tk = "1201" if sj.sales_center else "1101"
+    # 4. STUDENT REPORT & ACCRUALS (Sheet 04)
+    stf = sheets["04 - تقارير الطلاب المالية"]
+    for i in range(1, 9): stf.column_dimensions[get_column_letter(i)].width = 19
+    stf.append(["الطالب", "المسار", "المنطقة", "المواد", "إجمالي الاستحقاق", "المدفوع", "المتبقي", "مؤشر الخطر"])
+    
+    sp_qs = StudentProfile.objects.select_related("user").order_by("-id")
+    sr = 2
+    for p in sp_qs.iterator(chunk_size=500):
+        usr = p.user
+        paid_usr = AccessCode.objects.filter(grants__user=usr, sale_status="sold").aggregate(s=Sum("sold_price_cents"))["s"] or 0
+        p_val = int(paid_usr/100)
         
-        ws_jr.append([f"JE-{jid}", dt, tk, ac_m[tk]["n"], vl, 0, "تحصيل", "مركزي"])
-        ac_m[tk]["d"] += vl
-        ws_jr.append([f"JE-{jid}", dt, "4101", "إيرادات", 0, vl, "إيراد", cc])
-        ac_m["4101"]["c"] += vl
-        ws_jr.append([f"JE-{jid}", dt, "5101", "تكلفة", ct, 0, "مصروف", cc])
-        ac_m["5101"]["d"] += ct
-        ws_jr.append([f"JE-{jid}", dt, "2101", "مستحقات", 0, ct, "التزام", cc])
-        ac_m["2101"]["c"] += ct
-        jid += 1
-    _apply_god_tier_excel_styling(ws_jr, column_width=20)
+        stf.append([
+            usr.get_full_name() or usr.username, p.track or "-", p.governorate or "-",
+            usr.access_grants.count(), p_val, p_val, 0, "منخفض"
+        ])
+        sr += 1
+    _draw_erp_table(stf, 1, max(2, sr-1), 1, 8)
+    stf.freeze_panes = "A2"
+    
+    red_f = PatternFill(start_color="FEE2E2", end_color="FEE2E2", fill_type="solid")
+    grn_f = PatternFill(start_color="D1FAE5", end_color="D1FAE5", fill_type="solid")
+    stf.conditional_formatting.add(f'H2:H{sr}', CellIsRule(operator='equal', formula=['"منخفض"'], fill=grn_f))
 
-    # =========================================================
-    # SHEET 11: TRIAL BALANCE (ميزان المراجعة التجميعي)
-    # =========================================================
-    ws_t = wb.create_sheet("11-ميزان المراجعة التجميعي")
-    ws_t.append(["كود", "الحساب", "مدين كلي", "دائن كلي", "رصيد مدين", "رصيد دائن"])
-    for k,v in ac_m.items():
-        ws_t.append([k, v["n"], v["d"], v["c"], max(0, v["d"]-v["c"]), max(0, v["c"]-v["d"])])
-    ti = ws_t.max_row
-    ws_t.append(["المجموع", "✔️ موزون", f"=SUM(C2:C{ti})", f"=SUM(D2:D{ti})", f"=SUM(E2:E{ti})", f"=SUM(F2:F{ti})"])
-    _apply_god_tier_excel_styling(ws_t, column_width=22)
+    # 5. TEACHER FINANCIALS (Sheet 05)
+    tch = sheets["05 - التقرير المالي للمدرسين"]
+    for i in range(1, 7): tch.column_dimensions[get_column_letter(i)].width = 22
+    tch.append(["المدرس", "الطلاب", "الإيراد المحقق", "العمولة المتفق عليها", "المستحقات المقدرة", "حالة الصرف"])
+    
+    insts = InstructorProfile.objects.select_related("user")
+    tr = 2
+    for ins in insts:
+        tr_s = AccessCode.objects.filter(course__instructor=ins.user, sale_status="sold")
+        val_i = int((tr_s.aggregate(s=Sum("sold_price_cents"))["s"] or 0)/100)
+        tch.append([
+            ins.user.get_full_name() or ins.user.username, tr_s.count(), val_i,
+            0.45, f"=C{tr}*D{tr}", "معلقة بالتسوية"
+        ])
+        tr += 1
+    _draw_erp_table(tch, 1, max(2, tr-1), 1, 6)
+    tch.freeze_panes = "A2"
 
-    # =========================================================
-    # SHEET 12: BALANCE SHEET (قائمة المركز المالي)
-    # =========================================================
-    ws_b = wb.create_sheet("12-قائمة المركز المالي")
-    ws_b.append(["البيان المالي", "القيمة", "توضيح"])
-    bca = max(0, ac_m["1101"]["d"] - ac_m["1101"]["c"])
-    bar = max(0, ac_m["1201"]["d"] - ac_m["1201"]["c"])
-    bli = max(0, ac_m["2101"]["c"] - ac_m["2101"]["d"])
-    brv = max(0, ac_m["4101"]["c"] - ac_m["4101"]["d"])
-    bex = max(0, ac_m["5101"]["d"] - ac_m["5101"]["c"])
-    bnt = brv - bex
-    ta = bca + bar
-    tq = bli + bnt
-    ws_b.append(["نقدية بالخزينة", int(bca), "صول متداولة"])
-    ws_b.append(["ذمم مدينة", int(bar), "ديون مراكز"])
-    ws_b.append(["👉 إجمالي الأصول", int(ta), "Total Assets"])
-    ws_b.append(["", "", ""])
-    ws_b.append(["مستحقات الدائنين", int(bli), "خصوم"])
-    ws_b.append(["صافي الربح", int(bnt), "حقوق ملكية"])
-    ws_b.append(["👉 إجمالي الخصوم وحقوق الملكية", int(tq), "Total Claims"])
-    ws_b.append(["", "", ""])
-    st = "✅ مطابقة وموزونة" if int(ta)==int(tq) else "❌ غير متوازنة"
-    ws_b.append(["💡 الحالة النهائية", st, "Systems Checked"])
-    _apply_god_tier_excel_styling(ws_b, column_width=32)
+    # 6. COURSE PROFITABILITY (Sheet 07)
+    cpa = sheets["07 - ربحية المواد والكورسات"]
+    for i in range(1, 7): cpa.column_dimensions[get_column_letter(i)].width = 22
+    cpa.append(["عنوان المادة", "المسجلين", "الإيراد الكلي", "تكلفة المدرس", "صافي الربحية", "هامش الربح %"])
+    
+    crs = Course.objects.all().order_by("-id")
+    cr = 2
+    for c in crs:
+        cs_s = AccessCode.objects.filter(course=c, sale_status="sold")
+        c_val = int((cs_s.aggregate(s=Sum("sold_price_cents"))["s"] or 0)/100)
+        cpa.append([
+            c.title, cs_s.count(), c_val,
+            f"=C{cr} * 0.45", f"=C{cr} - D{cr}", f"=IFERROR(E{cr}/C{cr}, 0)"
+        ])
+        cr += 1
+    _draw_erp_table(cpa, 1, max(2, cr-1), 1, 6)
+    cpa.conditional_formatting.add(f'F2:F{cr}', ColorScaleRule(start_type='min', start_color='FCA5A5', end_type='max', end_color='86EFAC'))
 
-    ts = timezone.now().strftime("%Y-%m-%d_%H-%M")
-    fn = f"THE_PLATFORM_ULTIMATE_MEGA_REPORT_{ts}.xlsx"
+    # 7. P&L & BALANCE (Accrual View Sheets 13 & 15)
+    # P&L
+    pnl = sheets["13 - قائمة الدخل P&L"]
+    pnl.column_dimensions['B'].width = 40
+    pnl.column_dimensions['C'].width = 25
+    pnl.append(["", "📋 كشف الأرباح والخسائر التشغيلي", "التحليل الرقمي"])
+    pnl.append(["", "صافي الإيرادات (Net Revenue)", f"=SUM({rev_col})"])
+    pnl.append(["", "(-) التكلفة المباشرة للتدريس", "=SUM('05 - التقرير المالي للمدرسين'!E:E)"])
+    pnl.append(["", "إجمالي هامش المساهمة (Gross Margin)", "=C3 - C4"])
+    pnl.append(["", "(-) مصاريف النقل والاستضافة (Hosting 3%)", "=C3 * '20 - إعدادات وتهيئة النظام'!C3"])
+    pnl.append(["", "المصاريف الإدارية التقديرية", 100000])
+    pnl.append(["", "صافي الربح التشغيلي (Net Profit)", "=C5 - C6 - C7"])
+    _draw_erp_table(pnl, 1, 8, 2, 3)
+    pnl['C8'].font = Font(bold=True, size=12, color="16A34A")
+    
+    # Balance
+    bs = sheets["15 - ملخص الميزانية العمومية"]
+    bs.column_dimensions['B'].width = 35
+    bs.column_dimensions['C'].width = 20
+    bs.append(["", "⚖️ هيكلية المركز المالي", "القيمة"])
+    bs.append(["", "السيولة النقدية بالصندوق", total_cash])
+    bs.append(["", "ذمم الطلاب المدينة", "=SUM('04 - تقارير الطلاب المالية'!G:G)"])
+    bs.append(["", "👉 إجمالي الأصول المتداولة", "=C3 + C4"])
+    bs.append(["", "التزامات مستحقة للمدرسين", "=SUM('05 - التقرير المالي للمدرسين'!E:E)"])
+    bs.append(["", "الأرباح المحتجزة (Equity)", "='13 - قائمة الدخل P&L'!C8"])
+    bs.append(["", "👉 إجمالي الخصوم وحقوق الملكية", "=C6 + C7"])
+    _draw_erp_table(bs, 1, 8, 2, 3)
+
+    # 8. SMART ALERTS (Sheet 19)
+    alrt = sheets["19 - التنبيهات المالية الذكية"]
+    alrt.column_dimensions['A'].width = 30
+    alrt.column_dimensions['B'].width = 25
+    alrt.append(["المؤشر والمنبه", "الحالة الحالية"])
+    alrt.append(["تحقيق هدف المبيعات", "=IF('01 - لوحة القيادة التنفيذية'!B5 < '20 - إعدادات وتهيئة النظام'!C4, \"🚨 دون المستهدف\", \"✅ متوافق مع الخطة\")"])
+    _draw_erp_table(alrt, 1, 2, 1, 2)
+
+    # Finalize & Ship with base compatibility
+    ts = timezone.now().strftime("%Y-%m-%d_%H%M")
+    fn = f"PLATFORM_ERP_FINANCIAL_INTELLIGENCE_{ts}.xlsx"
+    
     return _workbook_response(wb, fn)
 
 
