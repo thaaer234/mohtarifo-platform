@@ -2247,6 +2247,48 @@ def instructor_courses(request, instructor_id):
     )
 
 
+def _filter_financial_rows():
+    rows = []
+    sections = [
+        {"label": "امتحانيات علمي", "kind": "exam_camp", "track": "scientific"},
+        {"label": "امتحانيات أدبي", "kind": "exam_camp", "track": "literary"},
+        {"label": "امتحانيات التاسع", "kind": "exam_camp", "track": "ninth"},
+        {"label": "امتحانيات المشترك", "kind": "exam_camp", "track": "general"},
+    ]
+    for tab in sections:
+        codes = AccessCode.objects.filter(course__kind=tab["kind"], course__academic_track=tab["track"])
+        rows.append({
+            "label": tab["label"],
+            "kind": tab["kind"],
+            "track": tab["track"],
+            "courses": Course.objects.filter(kind=tab["kind"], academic_track=tab["track"]).count(),
+            "codes": codes.count(),
+            "sold": codes.filter(sale_status="sold").count(),
+            "activated": codes.filter(redeemed_count__gt=0).count(),
+            "inactive": codes.filter(redeemed_count=0).count(),
+            "gross": (codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0) / 100,
+        })
+    return rows
+
+
+def _course_financial_rows():
+    rows = []
+    courses = Course.objects.select_related("subject", "instructor").order_by("academic_track", "kind", "subject__name", "title")
+    for course in courses:
+        codes = AccessCode.objects.filter(course=course)
+        prints = AccessCodePrintLog.objects.filter(batch__course=course)
+        rows.append({
+            "course": course,
+            "codes": codes.count(),
+            "sold": codes.filter(sale_status="sold").count(),
+            "activated": codes.filter(redeemed_count__gt=0).count(),
+            "inactive": codes.filter(redeemed_count=0).count(),
+            "printed": prints.aggregate(total=Sum("cards_count"))["total"] or 0,
+            "gross": (codes.filter(sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0) / 100,
+        })
+    return rows
+
+
 @admin_required
 def admin_billing(request):
     from billing.models import Subscription, Payment, AccessCodeBatch, AccessCode, SalesCenter
