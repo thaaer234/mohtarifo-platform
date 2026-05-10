@@ -139,6 +139,15 @@ class TrackingService:
                 request.session.save()
                 session_key = request.session.session_key
                 
+            # Prevent spamming: Check if we logged this session in the last hour
+            from django.utils import timezone
+            recent = LandingVisit.objects.filter(session_key=session_key).order_by('-visited_at').first()
+            if recent and (timezone.now() - recent.visited_at).total_seconds() < 3600:
+                if user and not recent.user:
+                    recent.user = user
+                    recent.save(update_fields=['user'])
+                return
+                
             LandingVisit.objects.create(
                 user=user,
                 session_key=session_key,
@@ -149,5 +158,8 @@ class TrackingService:
                 browser_family=user_agent.browser.family
             )
         except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error("Failed to log landing visit: %s", str(e))
             # Never break the main landing view loading due to log error
             pass

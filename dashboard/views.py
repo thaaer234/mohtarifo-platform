@@ -464,6 +464,9 @@ def _record_failed_login(request):
 
 
 def login_view(request):
+    from analytics.services import TrackingService
+    TrackingService.log_landing_visit(request)
+    
     if request.user.is_authenticated:
         return redirect("dashboard:home")
 
@@ -487,6 +490,9 @@ def login_view(request):
 
 
 def register_view(request):
+    from analytics.services import TrackingService
+    TrackingService.log_landing_visit(request)
+    
     if request.user.is_authenticated:
         return redirect("dashboard:home")
 
