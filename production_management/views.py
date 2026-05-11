@@ -238,8 +238,7 @@ class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
 
             # Skip if already exists
             if TeacherProductionSession.objects.filter(
-                teacher_name=teacher_name, subject=subject_name,
-                branch=branch, exam_date=exam.exam_date
+                course=course, exam_date=exam.exam_date
             ).exists():
                 continue
 
@@ -249,6 +248,7 @@ class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
             price = course.price_cents / 100 if course.price_cents else PresentationBuilder.get_platform_price(subject_name, branch)
 
             session = TeacherProductionSession.objects.create(
+                course=course,
                 teacher_name=teacher_name,
                 subject=subject_name,
                 branch=branch,
@@ -344,40 +344,6 @@ class TeacherCardsPrintView(LoginRequiredMixin, IsProductionStaffMixin, Template
         presentation = PresentationBuilder.build_presentation_data()
 
         for card in presentation.get('teacher_cards', []):
-            teacher_name = card['name']
-            parts = teacher_name.split()
-
-            # Try multiple strategies to find teacher photo
-            photo_url = None
-            course = None
-
-            # Strategy 1: Match by full name in instructor
-            if len(parts) >= 2:
-                course = Course.objects.filter(
-                    instructor__first_name__icontains=parts[0],
-                    instructor__last_name__icontains=parts[-1]
-                ).first()
-
-            # Strategy 2: Match by first name only
-            if not course and parts:
-                course = Course.objects.filter(
-                    instructor__first_name__icontains=parts[0]
-                ).first()
-
-            # Strategy 3: Match by teacher_name in session
-            if not course:
-                course = Course.objects.filter(
-                    subject__name__icontains=card['sessions'][0]['subject'] if card['sessions'] else ''
-                ).first()
-
-            if course:
-                if course.teacher_photo:
-                    photo_url = course.teacher_photo.url
-                elif course.cover:
-                    photo_url = course.cover.url
-
-            card['photo_url'] = photo_url
-
             for session in card['sessions']:
                 session['exam_date_str'] = session['exam_date'].strftime('%d-%m-%Y') if session['exam_date'] else ''
                 session['shooting_date_str'] = session['shooting_date'].strftime('%d-%m-%Y') if session['shooting_date'] else ''

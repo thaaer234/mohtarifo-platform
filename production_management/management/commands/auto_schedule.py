@@ -138,9 +138,7 @@ class Command(BaseCommand):
 
             # Check if already exists
             exists = TeacherProductionSession.objects.filter(
-                teacher_name=teacher_name,
-                subject=subject_name,
-                branch=branch,
+                course=course,
                 exam_date=exam_info['date'],
             ).exists()
 
@@ -171,6 +169,7 @@ class Command(BaseCommand):
                 )
             else:
                 session = TeacherProductionSession.objects.create(
+                    course=course,
                     teacher_name=teacher_name,
                     subject=subject_name,
                     branch=branch,

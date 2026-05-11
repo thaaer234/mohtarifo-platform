@@ -48,7 +48,14 @@ class TeacherProductionSession(models.Model):
         NINTH = 'ninth', _('تاسع')
         OTHER = 'other', _('أخرى')
 
-    # Link to external Teacher model if exists, otherwise text
+    # ── Direct link to platform Course ──
+    course = models.ForeignKey(
+        'learning.Course', on_delete=models.CASCADE,
+        null=True, blank=True, related_name='production_sessions',
+        verbose_name=_('الدورة على المنصة')
+    )
+
+    # Fallback text fields (auto-filled from course)
     teacher_name = models.CharField(max_length=255) 
     subject = models.CharField(max_length=255)
     branch = models.CharField(max_length=50, choices=BranchChoices.choices)
@@ -69,8 +76,48 @@ class TeacherProductionSession(models.Model):
     
     notes = models.TextField(blank=True, null=True)
 
+    @property
+    def instructor_name(self):
+        """Get teacher name from course if linked, else fallback."""
+        if self.course and self.course.instructor:
+            return self.course.instructor.get_full_name() or self.course.instructor.username
+        return self.teacher_name
+
+    @property
+    def subject_name(self):
+        """Get subject from course if linked."""
+        if self.course and self.course.subject:
+            return self.course.subject.name
+        return self.subject
+
+    @property
+    def teacher_photo_url(self):
+        """Get teacher photo from course."""
+        if self.course:
+            if self.course.teacher_photo:
+                return self.course.teacher_photo.url
+            if self.course.cover:
+                return self.course.cover.url
+        return None
+
+    @property
+    def platform_price(self):
+        """Get price from course."""
+        if self.course and self.course.price_cents:
+            return self.course.price_cents / 100
+        if hasattr(self, 'cost') and self.cost:
+            return float(self.cost.platform_price or 0)
+        return 0
+
+    @property
+    def course_title(self):
+        """Get course title."""
+        if self.course:
+            return self.course.title
+        return f"{self.subject} - {self.teacher_name}"
+
     def __str__(self):
-        return f"{self.teacher_name} - {self.subject} ({self.get_branch_display()})"
+        return f"{self.instructor_name} - {self.subject_name} ({self.get_branch_display()})"
 
 class ProductionTask(models.Model):
     class TaskTypeChoices(models.TextChoices):

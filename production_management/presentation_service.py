@@ -123,8 +123,8 @@ class PresentationBuilder:
     @classmethod
     def build_presentation_data(cls):
         sessions = TeacherProductionSession.objects.all().select_related(
-            'cost', 'room'
-        ).order_by('exam_date', 'teacher_name')
+            'cost', 'room', 'course', 'course__instructor', 'course__subject'
+        ).order_by('exam_date', 'course__instructor__first_name', 'teacher_name')
 
         if not sessions.exists():
             return cls._empty_data()
@@ -133,30 +133,29 @@ class PresentationBuilder:
         schedule_date = cls.SCHEDULE_START_DATE
 
         for i, session in enumerate(sessions):
-            price = cls.get_platform_price(session.subject, session.branch)
-            hours = cls.get_production_hours(session.subject, session.branch)
+            subject_name = session.subject_name
+            teacher_name = session.instructor_name
+            
+            price = cls.get_platform_price(subject_name, session.branch)
+            hours = cls.get_production_hours(subject_name, session.branch)
 
             # Shooting date
             if session.shooting_date:
                 shooting_date = session.shooting_date
             else:
                 shooting_date = cls.calculate_shooting_date(
-                    session.exam_date, session.subject, session.branch, schedule_date
+                    session.exam_date, subject_name, session.branch, schedule_date
                 )
 
-            # Cost
-            if hasattr(session, 'cost') and session.cost:
-                actual_price = float(session.cost.platform_price) if session.cost.platform_price else price
-                prod_cost = float(session.cost.production_cost) if session.cost.production_cost else cls.get_production_cost(session.subject, session.branch)
-            else:
-                actual_price = price
-                prod_cost = cls.get_production_cost(session.subject, session.branch)
+            # Dynamic Pricing/Cost
+            actual_price = session.platform_price or price
+            prod_cost = cls.get_production_cost(subject_name, session.branch)
 
             row = {
                 'id': session.id,
                 'row_number': i + 1,
-                'teacher_name': session.teacher_name,
-                'subject': session.subject,
+                'teacher_name': teacher_name,
+                'subject': subject_name,
                 'branch': session.get_branch_display(),
                 'branch_code': session.branch,
                 'session_type': 'جلسة',
@@ -164,7 +163,7 @@ class PresentationBuilder:
                 'exam_date_str': session.exam_date.strftime('%Y-%m-%d') if session.exam_date else '',
                 'day_name': ARABIC_DAYS.get(session.exam_date.weekday(), '') if session.exam_date else '',
                 'exam_time': session.exam_time.strftime('%H:%M') if session.exam_time else '09:00',
-                'exam_duration': cls.get_exam_duration(session.subject, session.branch),
+                'exam_duration': cls.get_exam_duration(subject_name, session.branch),
                 'production_cost': prod_cost,
                 'platform_price': actual_price,
                 'price_display': cls._format_price(actual_price),
@@ -180,6 +179,7 @@ class PresentationBuilder:
                 'status': session.status,
                 'status_display': session.get_status_display(),
                 'notes': session.notes or '',
+                'photo_url': session.teacher_photo_url,
             }
             all_rows.append(row)
             schedule_date = shooting_date + timedelta(days=1)
@@ -219,9 +219,18 @@ class PresentationBuilder:
         for row in all_rows:
             name = row['teacher_name']
             if name not in teachers:
-                teachers[name] = {'name': name, 'sessions': [], 'total_price': 0}
+                teachers[name] = {
+                    'name': name, 
+                    'sessions': [], 
+                    'total_price': 0,
+                    'photo_url': row.get('photo_url')
+                }
             teachers[name]['sessions'].append(row)
             teachers[name]['total_price'] += row['platform_price']
+            
+            # Update photo if missing
+            if not teachers[name]['photo_url'] and row.get('photo_url'):
+                teachers[name]['photo_url'] = row.get('photo_url')
 
         cards = []
         for name, data in teachers.items():
