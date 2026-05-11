@@ -29,47 +29,138 @@
 
     <!-- Huge Table -->
     <div class="overflow-x-auto rounded-lg border border-gray-200">
-        <table class="w-full text-sm text-right">
+        <table class="w-full text-sm text-right" x-data="{ updating: null }">
             <thead class="bg-gray-50 text-gray-700 font-bold">
                 <tr>
-                    <th class="px-4 py-3 border-b">المدرس</th>
-                    <th class="px-4 py-3 border-b">المادة</th>
+                    <th class="px-4 py-3 border-b">المدرس / المادة</th>
                     <th class="px-4 py-3 border-b">موعد الامتحان</th>
                     <th class="px-4 py-3 border-b">تاريخ التصوير</th>
-                    <th class="px-4 py-3 border-b">التكلفة (ل.س)</th>
+                    <th class="px-4 py-3 border-b">تكلفة الإنتاج</th>
+                    <th class="px-4 py-3 border-b">سعر المنصة</th>
                     <th class="px-4 py-3 border-b">الحالة</th>
                     <th class="px-4 py-3 border-b">إجراءات</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
                 {% for session in sessions %}
-                <tr class="hover:bg-gray-50 transition">
-                    <td class="px-4 py-3 font-semibold text-royal">{{ session.teacher_name }}</td>
+                <tr class="hover:bg-gray-50 transition relative"
+                    x-data="{
+                        edit: false,
+                        saving: false,
+                        data: {
+                            id: '{{ session.id }}',
+                            shooting_date: '{{ session.shooting_date|date:'Y-m-d' }}',
+                            production_cost: '{{ session.cost.production_cost|default:0 }}',
+                            platform_price: '{{ session.cost.platform_price|default:0 }}',
+                            status: '{{ session.status }}'
+                        },
+                        async saveChanges() {
+                            this.saving = true;
+                            try {
+                                const res = await fetch('{% url 'production_management:session_update_api' %}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': '{{ csrf_token }}'
+                                    },
+                                    body: JSON.stringify(this.data)
+                                });
+                                const result = await res.json();
+                                if(result.success) {
+                                    this.edit = false;
+                                    window.location.reload(); // Refresh to make sure everything in presentation updates
+                                } else {
+                                    alert('خطأ: ' + result.error);
+                                }
+                            } catch(e) {
+                                alert('حدث خطأ أثناء الحفظ');
+                            } finally { this.saving = false; }
+                        }
+                    }">
                     <td class="px-4 py-3">
-                        {{ session.subject }} 
-                        <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">{{ session.get_branch_display }}</span>
+                        <div class="font-bold text-royal">{{ session.teacher_name }}</div>
+                        <div class="text-xs text-gray-500">{{ session.subject }} <span class="bg-gray-100 px-1 rounded">{{ session.get_branch_display }}</span></div>
                     </td>
                     <td class="px-4 py-3 text-red-600 font-bold">{{ session.exam_date|date:"Y-m-d" }}</td>
-                    <td class="px-4 py-3 text-royal">{{ session.shooting_date|date:"Y-m-d"|default:"-" }}</td>
-                    <td class="px-4 py-3">{{ session.cost.production_cost|default:"0" }}</td>
+                    
+                    <!-- Shooting Date -->
                     <td class="px-4 py-3">
-                        {% if session.status == 'scheduled' %}
-                            <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-calendar mr-1"></i>مجدول</span>
-                        {% elif session.status == 'shooting' %}
-                            <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-video mr-1"></i>قيد التصوير</span>
-                        {% elif session.status == 'editing' %}
-                            <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-cut mr-1"></i>قيد المونتاج</span>
-                        {% elif session.status == 'reviewing' %}
-                            <span class="bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-eye mr-1"></i>مراجعة</span>
-                        {% elif session.status == 'completed' %}
-                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-check mr-1"></i>مكتمل</span>
-                        {% else %}
-                            <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-bold">{{ session.get_status_display }}</span>
-                        {% endif %}
+                        <template x-if="!edit">
+                            <span class="text-royal font-semibold">{{ session.shooting_date|date:"Y-m-d"|default:"-" }}</span>
+                        </template>
+                        <template x-if="edit">
+                            <input type="date" x-model="data.shooting_date" class="border border-gold rounded p-1 text-xs outline-none focus:ring-1">
+                        </template>
                     </td>
+                    
+                    <!-- Production Cost -->
                     <td class="px-4 py-3">
-                        <button class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pen"></i></button>
-                        <button class="text-red-500 hover:text-red-700 mr-2"><i class="fa-solid fa-trash"></i></button>
+                        <template x-if="!edit">
+                            <span class="text-amber-700 font-bold">{{ session.cost.production_cost|default:"0"|floatformat:0 }} ل.س</span>
+                        </template>
+                        <template x-if="edit">
+                            <input type="number" x-model="data.production_cost" class="border border-gold rounded p-1 w-20 text-xs outline-none">
+                        </template>
+                    </td>
+
+                    <!-- Platform Price -->
+                    <td class="px-4 py-3">
+                        <template x-if="!edit">
+                            <span class="text-green-700 font-bold">{{ session.cost.platform_price|default:"0"|floatformat:0 }} ل.س</span>
+                        </template>
+                        <template x-if="edit">
+                            <input type="number" x-model="data.platform_price" class="border border-gold rounded p-1 w-24 text-xs outline-none">
+                        </template>
+                    </td>
+
+                    <!-- Status -->
+                    <td class="px-4 py-3">
+                        <template x-if="!edit">
+                            <span>
+                            {% if session.status == 'scheduled' %}
+                                <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-calendar mr-1"></i>مجدول</span>
+                            {% elif session.status == 'confirmed' %}
+                                <span class="bg-teal-100 text-teal-800 px-2 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-check-double mr-1"></i>مصادق عليه</span>
+                            {% elif session.status == 'shooting' %}
+                                <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-video mr-1"></i>تصوير</span>
+                            {% elif session.status == 'editing' %}
+                                <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-cut mr-1"></i>مونتاج</span>
+                            {% elif session.status == 'completed' %}
+                                <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-check mr-1"></i>مكتمل</span>
+                            {% else %}
+                                <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-bold">{{ session.get_status_display }}</span>
+                            {% endif %}
+                            </span>
+                        </template>
+                        <template x-if="edit">
+                            <select x-model="data.status" class="border border-gold rounded p-1 text-xs outline-none">
+                                <option value="scheduled">مجدول</option>
+                                <option value="confirmed">مصادق عليه</option>
+                                <option value="shooting">تصوير</option>
+                                <option value="editing">مونتاج</option>
+                                <option value="reviewing">مراجعة</option>
+                                <option value="designing">تصميم</option>
+                                <option value="ready">جاهز للرفع</option>
+                                <option value="completed">مكتمل</option>
+                            </select>
+                        </template>
+                    </td>
+                    
+                    <!-- Actions -->
+                    <td class="px-4 py-3">
+                        <template x-if="!edit">
+                            <button @click="edit = true" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg hover:bg-blue-100 transition text-xs font-bold">
+                                <i class="fa-solid fa-pen mr-1"></i> تعديل
+                            </button>
+                        </template>
+                        <template x-if="edit">
+                            <div class="flex gap-1">
+                                <button @click="saveChanges()" :disabled="saving" class="bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition text-xs font-bold">
+                                    <i class="fa-solid" :class="saving ? 'fa-spinner fa-spin' : 'fa-save'"></i> حفظ
+                                </button>
+                                <button @click="edit = false" :disabled="saving" class="bg-gray-200 text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-300 text-xs font-bold">الغاء</button>
+                            </div>
+                        </template>
                     </td>
                 </tr>
                 {% empty %}

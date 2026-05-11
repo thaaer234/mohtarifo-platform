@@ -350,3 +350,44 @@ class TeacherCardsPrintView(LoginRequiredMixin, IsProductionStaffMixin, Template
 
         context.update(presentation)
         return context
+
+
+@require_POST
+def quick_update_session(request):
+    """API to handle rapid inline session edits from list views."""
+    import json
+    try:
+        data = json.loads(request.body)
+        session_id = data.get('id')
+        if not session_id:
+            return JsonResponse({'success': False, 'error': 'Missing ID'})
+
+        session = TeacherProductionSession.objects.get(pk=session_id)
+        
+        if 'shooting_date' in data:
+            session.shooting_date = data['shooting_date'] if data['shooting_date'] else None
+        
+        # User requested: If edited, automatically flip from 'scheduled' to 'confirmed' 
+        # unless they explicitly chose another specific status
+        if 'status' in data:
+            session.status = data['status']
+        
+        if session.status == 'scheduled':
+            session.status = 'confirmed'
+            
+        session.save()
+
+        # Handle related production cost
+        cost_obj, created = ProductionCost.objects.get_or_create(session=session)
+        
+        if 'production_cost' in data:
+            cost_obj.production_cost = data['production_cost'] or 0
+            
+        if 'platform_price' in data:
+            cost_obj.platform_price = data['platform_price'] or 0
+            
+        cost_obj.save()
+        
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})

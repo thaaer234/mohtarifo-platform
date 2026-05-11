@@ -16,6 +16,10 @@
                 :class="mode === 'manual' ? 'bg-white shadow text-royal' : 'text-gray-500 hover:text-gray-700'">
                 <i class="fa-solid fa-pen-to-square ml-1"></i> إدخال يدوي
             </button>
+            <button @click="mode = 'import_json'" class="px-5 py-2 rounded-lg text-sm font-bold transition"
+                :class="mode === 'import_json' ? 'bg-white shadow text-royal' : 'text-gray-500 hover:text-gray-700'">
+                <i class="fa-solid fa-code ml-1"></i> استيراد ملف JSON
+            </button>
         </div>
         <a href="{% url 'production_management:presentation' %}" class="px-4 py-2 rounded-lg gold-gradient text-sm font-bold hover:opacity-90 transition" target="_blank">
             <i class="fa-solid fa-table-list ml-1"></i> عرض الجدول الزمني
@@ -116,6 +120,27 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- ═══ MODE 3: Import JSON ═══ -->
+    <!-- ═══════════════════════════════════════ -->
+    <div x-show="mode === 'import_json'" class="glass-card p-8 rounded-2xl">
+        <h3 class="text-xl font-bold text-royal mb-2"><i class="fa-solid fa-file-import text-gold ml-2"></i> استيراد برنامج امتحان من ملف JSON</h3>
+        <p class="text-gray-500 text-sm mb-6">قم بلصق النص البرمجي (JSON) الخاص بالجدول هنا ليقوم النظام بتحليله وتوليد المواعيد تلقائياً.</p>
+        
+        <div class="mb-6">
+            <textarea x-ref="jsonInput" rows="12" dir="ltr" 
+                      placeholder='{ "علمي": { "exams": [...] }, "تاسع": { ... } }'
+                      class="w-full font-mono text-sm p-4 bg-gray-50 border border-gray-200 rounded-xl focus:border-gold outline-none"></textarea>
+        </div>
+
+        <div class="flex justify-end">
+            <button type="button" @click="handleJsonImport($refs.jsonInput.value)" 
+                    class="gold-gradient px-8 py-3 rounded-xl text-white font-bold hover:shadow-lg transition text-lg flex items-center gap-2">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> تحليل البيانات وبناء الجدول
+            </button>
         </div>
     </div>
 
@@ -417,6 +442,69 @@ function scannerApp() {
                     <td class="px-4 py-3"><button type="button" onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button></td>
                 </tr>`;
             });
+        },
+
+        handleJsonImport(jsonString) {
+            if (!jsonString.trim()) return alert('يرجى لصق بيانات JSON أولاً.');
+            try {
+                const data = JSON.parse(jsonString);
+                const parsedRows = [];
+                
+                // Map branches names from user JSON to backend keys
+                const branchMap = {
+                    'تاسع': 'ninth',
+                    'علمي': 'science',
+                    'ادبي': 'literal',
+                    'أدبي': 'literal'
+                };
+
+                for (const [branchName, payload] of Object.entries(data)) {
+                    const backendBranch = branchMap[branchName];
+                    if (!backendBranch || !payload.exams) continue;
+
+                    payload.exams.forEach(exam => {
+                        let cleanSubject = exam.subject.trim();
+                        let cleanDuration = exam.duration || '2';
+                        let cleanTime = exam.start_time || '08:30';
+
+                        // SPECIAL RULE: Ninth grade "علوم عامة" needs to split into Physics, Chemistry, and Sciences
+                        if (backendBranch === 'ninth' && (cleanSubject === 'علوم عامة' || cleanSubject.includes('علوم'))) {
+                            // Generate 3 distinct lines sharing the same date
+                            const sublist = ['الفيزياء', 'الكيمياء', 'العلوم'];
+                            sublist.forEach(s => {
+                                parsedRows.push({
+                                    subject: s,
+                                    branch: backendBranch,
+                                    date: exam.date,
+                                    time: cleanTime,
+                                    duration: cleanDuration
+                                });
+                            });
+                        } else {
+                            // Standard direct addition
+                            parsedRows.push({
+                                subject: cleanSubject,
+                                branch: backendBranch,
+                                date: exam.date,
+                                time: cleanTime,
+                                duration: cleanDuration
+                            });
+                        }
+                    });
+                }
+
+                if (parsedRows.length === 0) {
+                    throw new Error('لم يتم العثور على أي مواعيد متوافقة في الملف المرفق.');
+                }
+
+                // Re-use the Scanner logic by populating result and switching step
+                this.populateScannedRows(parsedRows);
+                this.mode = 'scanner';
+                this.step = 3; // Skip straight to validation view!
+
+            } catch (e) {
+                alert('خطأ في قراءة ملف JSON: تأكد أن الصيغة صحيحة.\n' + e.message);
+            }
         }
     };
 }

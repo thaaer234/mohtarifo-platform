@@ -18,4 +18,5 @@ urlpatterns = [
     path('presentation/', views.PresentationView.as_view(), name='presentation'),
     path('presentation/cards/', views.TeacherCardsPrintView.as_view(), name='teacher_cards_print'),
     path('api/presentation/', views.PresentationAPIView.as_view(), name='presentation_api'),
+    path('api/sessions/update/', views.quick_update_session, name='session_update_api'),
 ]

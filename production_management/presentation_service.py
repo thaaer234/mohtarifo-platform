@@ -150,7 +150,13 @@ class PresentationBuilder:
 
             # Dynamic Pricing/Cost
             actual_price = session.platform_price or price
-            prod_cost = cls.get_production_cost(subject_name, session.branch)
+            
+            # Prioritize manually entered production cost if available
+            prod_cost = 0
+            if hasattr(session, 'cost') and session.cost and session.cost.production_cost > 0:
+                prod_cost = session.cost.production_cost
+            else:
+                prod_cost = cls.get_production_cost(subject_name, session.branch)
 
             row = {
                 'id': session.id,

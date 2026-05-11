@@ -32,6 +32,7 @@ class ProductionRoom(models.Model):
 
 class ProductionStatus(models.TextChoices):
     SCHEDULED = 'scheduled', _('مجدول')
+    CONFIRMED = 'confirmed', _('مصادق عليه')
     SHOOTING = 'shooting', _('تصوير')
     EDITING = 'editing', _('مونتاج')
     REVIEWING = 'reviewing', _('مراجعة')
