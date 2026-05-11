@@ -79,7 +79,7 @@ const sessions = [
         subject: "{{ s.subject }}",
         exam: "{{ s.exam_date|date:'Y-m-d' }}",
         shoot: "{{ s.shooting_date|date:'Y-m-d' }}",
-        duration: {{ s.shooting_duration_days|default:1 }},
+        duration: {{ s.smart_duration }},
         status: "{{ s.status }}"
     },
     {% endfor %}

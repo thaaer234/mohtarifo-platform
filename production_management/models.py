@@ -79,6 +79,20 @@ class TeacherProductionSession(models.Model):
     notes = models.TextField(blank=True, null=True)
 
     @property
+    def smart_duration(self):
+        """Resolves optimal shooting days even if defaulted to 1 in legacy records."""
+        if self.shooting_duration_days and self.shooting_duration_days > 1:
+            return self.shooting_duration_days
+        
+        s = self.subject_name or ""
+        norm_sub = s.strip().replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا')
+        if 'الرياضيات' in norm_sub:
+            return 2 if self.branch == 'ninth' else 3
+        elif any(kw in norm_sub for kw in ['الفيزياء', 'الكيمياء', 'العلوم', 'فيزياء']):
+            return 2
+        return self.shooting_duration_days or 1
+
+    @property
     def instructor_name(self):
         """Get teacher name from course if linked, else fallback."""
         if self.course and self.course.instructor:

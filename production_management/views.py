@@ -234,7 +234,24 @@ class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
         ).select_related('subject', 'instructor')
 
         schedule_date = PresentationBuilder.SCHEDULE_START_DATE
+        
+        from datetime import date as d_t
+        EID_BLOCK = [d_t(2026, 5, 27), d_t(2026, 5, 28), d_t(2026, 5, 29)]
+        HARD_END = d_t(2026, 6, 22)
+        
         allocations = {} 
+        # ── PRE-LOAD EXISTING RESERVATIONS TO PREVENT COLLISION ──
+        existing_active = TeacherProductionSession.objects.exclude(status='scheduled').filter(shooting_date__isnull=False)
+        for ex_sess in existing_active:
+            w_d = ex_sess.shooting_date
+            a_cnt = 0
+            tries = 0
+            while a_cnt < ex_sess.smart_duration and tries < 20:
+                tries += 1
+                if w_d not in EID_BLOCK and w_d.weekday() != 4:
+                    allocations[w_d] = allocations.get(w_d, 0) + 1
+                    a_cnt += 1
+                w_d += timedelta(days=1)
         items = []
         for c in courses:
             br = TRACK_MAP.get(c.academic_track, 'ninth')
@@ -265,9 +282,8 @@ class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
                 elif any(kw in norm_sub for kw in ['الفيزياء', 'الكيمياء', 'العلوم', 'فيزياء']):
                     num_days = 2
 
-                from datetime import date as d_t
-                EID_BLOCK = [d_t(2026, 5, 27), d_t(2026, 5, 28), d_t(2026, 5, 29)]
-                HARD_END = d_t(2026, 6, 22)
+
+                # ── ULTIMATE FAIL-SAFE & BULLETPROOF WRAPPER ──
                 
                 if ex_date:
                     anchor = PresentationBuilder.calculate_shooting_date(ex_date, subject, branch, PresentationBuilder.SCHEDULE_START_DATE)
