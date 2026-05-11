@@ -100,6 +100,8 @@ class PresentationBuilder:
     def calculate_shooting_date(cls, exam_date, subject, branch, current_date=None):
         if current_date is None:
             current_date = cls.SCHEDULE_START_DATE
+        if not exam_date:
+            return current_date
         hours = cls.get_production_hours(subject, branch)
         total_days = max(3, (hours['edit_max'] + hours['shoot_max']) // 8 + 2)
         latest = exam_date - timedelta(days=total_days)
@@ -125,8 +127,6 @@ class PresentationBuilder:
         sessions = TeacherProductionSession.objects.all().select_related(
             'cost', 'room', 'course', 'course__instructor', 
             'course__subject', 'course__instructor__instructor_profile'
-        ).exclude(
-            exam_date__isnull=True
         ).order_by('shooting_date', 'exam_date', 'teacher_name')
 
         if not sessions.exists():

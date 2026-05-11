@@ -244,18 +244,26 @@ class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
 
             # Find matching exam entry
             exam = self._find_exam(subject_name, branch, exam_entries)
-            if not exam:
-                continue
+            
+            final_exam_date = exam.exam_date if exam else None
+            final_exam_time = exam.exam_time if exam else None
 
             # Skip if already exists
             if TeacherProductionSession.objects.filter(
-                course=course, exam_date=exam.exam_date
+                course=course, exam_date=final_exam_date
             ).exists():
                 continue
 
-            shooting_date = PresentationBuilder.calculate_shooting_date(
-                exam.exam_date, subject_name, branch, schedule_date
-            )
+            # Calculate Shooting Date: uses exam if exists, otherwise falls back to default sequence
+            if final_exam_date:
+                shooting_date = PresentationBuilder.calculate_shooting_date(
+                    final_exam_date, subject_name, branch, schedule_date
+                )
+            else:
+                # Dynamic increment fallback for non-scheduled items
+                shooting_date = schedule_date
+                schedule_date += timedelta(days=1)
+
             price = course.price_cents / 100 if course.price_cents else PresentationBuilder.get_platform_price(subject_name, branch)
 
             session = TeacherProductionSession.objects.create(
@@ -263,8 +271,8 @@ class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
                 teacher_name=teacher_name,
                 subject=subject_name,
                 branch=branch,
-                exam_date=exam.exam_date,
-                exam_time=exam.exam_time,
+                exam_date=final_exam_date,
+                exam_time=final_exam_time,
                 shooting_date=shooting_date,
                 status='scheduled',
             )
@@ -304,7 +312,10 @@ class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
             'العلوم': ['العلوم', 'علم الأحياء', 'احياء', 'علوم عامة', 'العلوم العامة'],
             'علم الأحياء': ['العلوم', 'الاحياء', 'احياء'],
             'الاجتماعيات': ['اجتماعيات', 'التاريخ', 'الجغرافية', 'التربية الوطنية'],
-            'التربية الدينية': ['الديانة', 'اسلامية', 'التربية الاسلامية', 'دين']
+            'التربية الدينية': ['الديانة', 'الاسلامية', 'اسلامية', 'التربية الاسلامية', 'التربية الإسلامية', 'دين'],
+            'التربية الإسلامية': ['التربية الدينية', 'الديانة', 'الاسلامية', 'اسلامية', 'التربية الاسلامية', 'دين'],
+            'التربية الاسلامية': ['التربية الدينية', 'الديانة', 'الاسلامية', 'اسلامية', 'التربية الإسلامية', 'دين'],
+            'الديانة': ['التربية الدينية', 'التربية الاسلامية', 'التربية الإسلامية', 'اسلامية']
         }
 
         # Check if current subject has established aliases
