@@ -92,12 +92,31 @@ class TeacherProductionSession(models.Model):
 
     @property
     def teacher_photo_url(self):
-        """Get teacher photo from course."""
-        if self.course:
-            if self.course.teacher_photo:
+        """Exhaustive photo discovery: Course Photo -> Instructor Avatar -> Course Cover"""
+        if not self.course:
+            return None
+
+        # 1. Check dedicated teacher photo in course
+        try:
+            if self.course.teacher_photo and hasattr(self.course.teacher_photo, 'url'):
                 return self.course.teacher_photo.url
-            if self.course.cover:
+        except Exception:
+            pass
+
+        # 2. Check instructor user profile avatar
+        try:
+            if hasattr(self.course.instructor, 'instructor_profile') and self.course.instructor.instructor_profile.avatar:
+                return self.course.instructor.instructor_profile.avatar.url
+        except Exception:
+            pass
+
+        # 3. Check course cover
+        try:
+            if self.course.cover and hasattr(self.course.cover, 'url'):
                 return self.course.cover.url
+        except Exception:
+            pass
+
         return None
 
     @property

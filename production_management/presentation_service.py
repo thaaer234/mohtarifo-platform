@@ -123,7 +123,8 @@ class PresentationBuilder:
     @classmethod
     def build_presentation_data(cls):
         sessions = TeacherProductionSession.objects.all().select_related(
-            'cost', 'room', 'course', 'course__instructor', 'course__subject'
+            'cost', 'room', 'course', 'course__instructor', 
+            'course__subject', 'course__instructor__instructor_profile'
         ).order_by('exam_date', 'course__instructor__first_name', 'teacher_name')
 
         if not sessions.exists():
