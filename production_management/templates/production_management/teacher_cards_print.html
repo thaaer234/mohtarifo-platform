@@ -105,7 +105,8 @@
     .btn-download-card:hover { background: #fbbf24; border-color: #d97706; color: #fff; }
     
     /* Dynamic Hiding Logic */
-    body.hide-shoot-dates .date-hl { display: none !important; }
+    body.hide-shoot-dates .dm-part { display: none !important; }
+    body.hide-shoot-dates .y-part::before { content: "-- -- "; font-weight: 800; opacity: 0.7; }
     body.hide-costs .cost-banner { display: none !important; }
 
     /* ── RIGHT SIDE: Big Vertical Photo ── */
@@ -372,7 +373,7 @@
                 <div class="h-item session-box">
                     <div class="session-box-title">{{ s.subject }}</div>
                     <div class="session-box-date">الامتحان: {{ s.exam_date_str }}</div>
-                    <div class="session-box-date date-hl">التصوير: {{ s.shooting_date_str }}</div>
+                    <div class="session-box-date date-hl">التصوير: <span class="dm-part">{{ s.shooting_date_str|slice:":6" }}</span><span class="y-part">{{ s.shooting_date_str|slice:"6:" }}</span></div>
                 </div>
                 {% endfor %}
             </div>
@@ -459,12 +460,23 @@
         const originalHtml = triggerBtn ? triggerBtn.innerHTML : "";
         if(triggerBtn) triggerBtn.innerHTML = "⏳ جاري المعالجة...";
 
-        // Render with ultra-high scale for premium crispness
+        // Render with ultra-high scale and FORCED layout for premium crispness consistent with print
         html2canvas(element, {
-            scale: 3, // High res multiple
-            useCORS: true, // For external loaded profile pictures
+            scale: 3, 
+            useCORS: true, 
             backgroundColor: "#ffffff",
-            ignoreElements: (el) => el.classList.contains('no-print') || el.classList.contains('card-actions-overlay')
+            ignoreElements: (el) => el.classList.contains('no-print') || el.classList.contains('card-actions-overlay'),
+            onclone: (clonedDoc) => {
+                // FORCE exact high fidelity print proportion inside the snapshot clone
+                const cloneEl = clonedDoc.getElementById(elementId);
+                if(cloneEl) {
+                    cloneEl.style.width = "1000px";
+                    cloneEl.style.height = "460px";
+                    cloneEl.style.minHeight = "460px";
+                    cloneEl.style.borderRadius = "24px";
+                    cloneEl.style.boxShadow = "none";
+                }
+            }
         }).then(canvas => {
             const link = document.createElement('a');
             link.download = `بطاقة_إنتاج_${teacherName.trim().replace(/\s+/g, '_')}.png`;
@@ -498,11 +510,21 @@
             await new Promise(resolve => setTimeout(resolve, 300));
 
             try {
+                const cardId = card.id;
                 const canvas = await html2canvas(card, {
                     scale: 3,
                     useCORS: true,
                     backgroundColor: "#ffffff",
-                    ignoreElements: (el) => el.classList.contains('no-print') || el.classList.contains('card-actions-overlay')
+                    ignoreElements: (el) => el.classList.contains('no-print') || el.classList.contains('card-actions-overlay'),
+                    onclone: (clonedDoc) => {
+                         const cloneItem = clonedDoc.getElementById(cardId);
+                         if(cloneItem) {
+                             cloneItem.style.width = "1000px";
+                             cloneItem.style.height = "460px";
+                             cloneItem.style.minHeight = "460px";
+                             cloneItem.style.boxShadow = "none";
+                         }
+                    }
                 });
                 const link = document.createElement('a');
                 link.download = `بطاقة_${rawName.trim().replace(/\s+/g, '_')}.png`;
