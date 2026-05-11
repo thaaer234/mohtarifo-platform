@@ -7,7 +7,13 @@
 
 {% block extra_meta %}
 <div>👨‍🏫 عدد المدرسين: {{ stats.total_teachers }}</div>
-<div>🎬 الجلسات: {{ stat    @media print {
+<div>🎬 الجلسات: {{ stats.total_sessions }}</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    @page { size: A4 landscape !important; margin: 0.8cm; }
+    @media print {
         body { font-size: 8pt; padding: 0; background: #f8fafc !important; -webkit-print-color-adjust: exact !important; }
         .page-wrapper { padding: 0.5rem; max-width: 100%; }
         .cards-grid { display: flex !important; flex-direction: column; gap: 1.5rem !important; }
