@@ -248,7 +248,7 @@ class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
             tries = 0
             while a_cnt < ex_sess.smart_duration and tries < 20:
                 tries += 1
-                if w_d not in EID_BLOCK and w_d.weekday() != 4:
+                if w_d not in EID_BLOCK:
                     allocations[w_d] = allocations.get(w_d, 0) + 1
                     a_cnt += 1
                 w_d += timedelta(days=1)
@@ -310,7 +310,7 @@ class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
                                  is_valid_start = False
                                  break
                             
-                            if b_walk.weekday() != 4 and b_walk not in EID_BLOCK:
+                            if b_walk not in EID_BLOCK:
                                  if allocations.get(b_walk, 0) < max_cap:
                                       candidate_span.append(b_walk)
                                  else:
