@@ -35,6 +35,7 @@
                     <th class="px-4 py-3 border-b">المدرس / المادة</th>
                     <th class="px-4 py-3 border-b">موعد الامتحان</th>
                     <th class="px-4 py-3 border-b">تاريخ التصوير</th>
+                    <th class="px-4 py-3 border-b text-indigo-600">⏱️ التوقيت</th>
                     <th class="px-4 py-3 border-b">تكلفة الإنتاج</th>
                     <th class="px-4 py-3 border-b">سعر المنصة</th>
                     <th class="px-4 py-3 border-b">الحالة</th>
@@ -50,6 +51,7 @@
                         data: {
                             id: '{{ session.id }}',
                             shooting_date: '{{ session.shooting_date|date:'Y-m-d' }}',
+                            shooting_time: '{{ session.shooting_time|time:'H:i' }}',
                             production_cost: '{{ session.cost.production_cost|default:0 }}',
                             platform_price: '{{ session.cost.platform_price|default:0 }}',
                             status: '{{ session.status }}'
@@ -90,6 +92,19 @@
                         </template>
                         <template x-if="edit">
                             <input type="date" x-model="data.shooting_date" class="border border-gold rounded p-1 text-xs outline-none focus:ring-1">
+                        </template>
+                    </td>
+
+                    <!-- Shooting Time -->
+                    <td class="px-4 py-3">
+                        <template x-if="!edit">
+                            <div class="flex items-center gap-1 text-indigo-700 font-bold bg-indigo-50 px-2 py-1 rounded inline-flex border border-indigo-100 text-xs shadow-sm">
+                                <i class="fa-regular fa-clock"></i>
+                                <span>{{ session.shooting_time|time:"H:i"|default:"20:00" }}</span>
+                            </div>
+                        </template>
+                        <template x-if="edit">
+                            <input type="time" x-model="data.shooting_time" class="border-2 border-indigo-200 rounded-lg p-1 shadow-sm focus:border-indigo-400 outline-none text-xs font-bold">
                         </template>
                     </td>
                     

@@ -450,6 +450,9 @@ def quick_update_session(request):
         if 'shooting_date' in data:
             session.shooting_date = data['shooting_date'] if data['shooting_date'] else None
         
+        if 'shooting_time' in data:
+            session.shooting_time = data['shooting_time'] if data['shooting_time'] else None
+        
         # User requested: If edited, automatically flip from 'scheduled' to 'confirmed' 
         # unless they explicitly chose another specific status
         if 'status' in data:
