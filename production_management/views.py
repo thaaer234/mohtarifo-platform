@@ -277,29 +277,39 @@ class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
             # Automatically spawn multiple discrete operational sessions for large subjects
             for part in range(num_days):
                 s_date = None
-                steps = 0
-                walk = current_walk 
+                # ── TWO-PASS ELASTIC SOLVER (MAXIMIZE SPACING) ──
+                # Pass 1: Seek an absolute empty day (count < 1) to avoid stacking
+                # Pass 2: Only if failed, relax constraint to partial days (count < 2)
                 
-                while True:
-                    is_fri = (walk.weekday() == 4)
-                    is_eid = walk in EID_BLOCK
+                solved = False
+                for max_cap in [1, 2]:
+                    walk = current_walk
+                    local_dir = direction
+                    steps = 0
                     
-                    if not is_fri and not is_eid and allocations.get(walk, 0) < 2:
-                        s_date = walk
-                        # Important: Advance walk for next sub-session immediately to avoid stacking on same day
-                        current_walk = walk + timedelta(days=direction) 
-                        break
-                    
-                    walk += timedelta(days=direction)
-                    steps += 1
-                    
-                    if direction == -1 and walk < PresentationBuilder.SCHEDULE_START_DATE:
-                         walk = anchor + timedelta(days=1)
-                         direction = 1
-                    if steps > 100:
-                         s_date = walk
-                         break
-                
+                    while True:
+                        is_fri = (walk.weekday() == 4)
+                        is_eid = walk in EID_BLOCK
+                        
+                        if not is_fri and not is_eid and allocations.get(walk, 0) < max_cap:
+                            s_date = walk
+                            # Advance starting point for immediate next iteration to sustain spreading
+                            current_walk = walk + timedelta(days=direction) 
+                            solved = True
+                            break
+                        
+                        walk += timedelta(days=local_dir)
+                        steps += 1
+                        
+                        if local_dir == -1 and walk < PresentationBuilder.SCHEDULE_START_DATE:
+                             walk = anchor + timedelta(days=1)
+                             local_dir = 1
+                             
+                        if steps > 100:
+                             break # Try next capacity phase
+                             
+                    if solved: break
+
                 allocations[s_date] = allocations.get(s_date, 0) + 1
 
                 # Construct split metadata

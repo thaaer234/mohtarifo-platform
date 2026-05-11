@@ -44,27 +44,27 @@
     }
 
     /* ═══ Schedule Table ═══ */
-    .schedule-table { width: 100%; border-collapse: collapse; border-radius: var(--radius-sm); overflow: hidden; }
+    .schedule-table { width: 100%; border-collapse: collapse; border-radius: var(--radius-md); overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
     .schedule-table thead th {
         background: linear-gradient(135deg, #3b82f6, #2563eb);
-        color: #fff; padding: 0.5rem 0.3rem; font-size: 0.7rem; font-weight: 700;
+        color: #fff; padding: 0.85rem 0.6rem; font-size: 0.85rem; font-weight: 800;
         border: 1px solid rgba(255,255,255,0.15); text-align: center; white-space: nowrap;
     }
     .schedule-table tbody td {
-        padding: 0.4rem 0.3rem; border: 1px solid #e5e7eb; font-size: 0.75rem;
+        padding: 0.75rem 0.6rem; border: 1px solid #e5e7eb; font-size: 0.9rem; font-weight: 500;
         text-align: center; vertical-align: middle; background: #fff;
     }
-    .schedule-table tbody tr:nth-child(even) td { background: #f8fafc; }
-    .schedule-table tbody tr:hover td { background: #eff6ff; }
+    .schedule-table tbody tr:nth-child(even) td { background: #fbfcfd; }
+    .schedule-table tbody tr:hover td { background: #eff6ff; transform: scale(1.002); transition: all 0.2s ease; }
 
     /* ═══ Badges ═══ */
-    .b-tag { display:inline-block; padding:0.12rem 0.45rem; border-radius:100px; font-weight:700; font-size:0.65rem; white-space:nowrap; }
+    .b-tag { display:inline-block; padding:0.2rem 0.6rem; border-radius:100px; font-weight:800; font-size:0.75rem; white-space:nowrap; }
     .b-ninth { background:#dcfce7; color:#16a34a; }
     .b-science { background:#dbeafe; color:#2563eb; }
     .b-literal { background:#f3e8ff; color:#7c3aed; }
     .b-mixed { background:#fef3c7; color:#d97706; }
 
-    .price-tag { display:inline-block; padding:0.12rem 0.45rem; border-radius:100px; font-weight:800; font-size:0.65rem; }
+    .price-tag { display:inline-block; padding:0.2rem 0.6rem; border-radius:100px; font-weight:900; font-size:0.75rem; }
     .p-75 { background:#dcfce7; color:#16a34a; }
     .p-100 { background:#dbeafe; color:#2563eb; }
     .p-150 { background:#fef3c7; color:#d97706; }
