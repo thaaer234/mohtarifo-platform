@@ -4,25 +4,35 @@
 
 {% block content %}
 <div class="glass-card p-6 mb-6">
-    <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-bold">📅 تقويم جلسات التصوير والامتحانات</h2>
-        <a href="{% url 'production_management:presentation' %}" class="px-4 py-2 rounded-lg gold-gradient text-sm font-bold hover:opacity-90 transition">
-            <i class="fa-solid fa-table ml-1"></i> عرض الجدول الزمني
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-4">
+            <h2 class="text-xl font-bold flex items-center gap-2">
+                <i class="fa-solid fa-calendar-days text-gold"></i> 
+                تقويم الإنتاج
+            </h2>
+            <div class="flex items-center bg-white/80 rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-100 border-l text-royal"><i class="fa-solid fa-chevron-right"></i></button>
+                <div id="calendar-month-label" class="px-4 py-2 font-bold min-w-[120px] text-center text-royal bg-white">الشهر</div>
+                <button onclick="changeMonth(1)" class="p-2 hover:bg-gray-100 border-r text-royal"><i class="fa-solid fa-chevron-left"></i></button>
+            </div>
+        </div>
+        <a href="{% url 'production_management:presentation' %}" class="px-4 py-2 rounded-lg gold-gradient text-sm font-bold hover:opacity-90 transition shadow-md shadow-gold/20 flex items-center gap-2">
+            <i class="fa-solid fa-table"></i> عرض الجدول الزمني
         </a>
     </div>
     <!-- Responsive Wrapping -->
     <div class="overflow-x-auto -mx-2 px-2">
-        <div class="min-w-[600px]">
-            <div id="calendar-grid" class="grid grid-cols-7 gap-2 text-center">
-                <div class="font-bold text-sm py-2 text-gold">السبت</div>
-                <div class="font-bold text-sm py-2 text-gold">الأحد</div>
-                <div class="font-bold text-sm py-2 text-gold">الاثنين</div>
-                <div class="font-bold text-sm py-2 text-gold">الثلاثاء</div>
-                <div class="font-bold text-sm py-2 text-gold">الأربعاء</div>
-                <div class="font-bold text-sm py-2 text-gold">الخميس</div>
-                <div class="font-bold text-sm py-2 text-gold">الجمعة</div>
+        <div class="min-w-[700px]">
+            <div id="calendar-grid" class="grid grid-cols-7 gap-2 text-center border-b border-gray-100 pb-2 mb-2">
+                <div class="font-bold text-sm text-gray-500">السبت</div>
+                <div class="font-bold text-sm text-gray-500">الأحد</div>
+                <div class="font-bold text-sm text-gray-500">الاثنين</div>
+                <div class="font-bold text-sm text-gray-500">الثلاثاء</div>
+                <div class="font-bold text-sm text-gray-500">الأربعاء</div>
+                <div class="font-bold text-sm text-gray-500">الخميس</div>
+                <div class="font-bold text-sm text-red-500">الجمعة</div>
             </div>
-            <div id="calendar-days" class="grid grid-cols-7 gap-2 mt-2"></div>
+            <div id="calendar-days" class="grid grid-cols-7 gap-2"></div>
         </div>
     </div>
 </div>
@@ -74,35 +84,75 @@ const sessions = [
     {% endfor %}
 ];
 
+
+let viewDate = new Date(); // Start with current local time (May 2026)
+let viewYear = viewDate.getFullYear();
+let viewMonth = viewDate.getMonth();
+
+function changeMonth(dir) {
+    viewMonth += dir;
+    if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+    if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+    buildCalendar(viewYear, viewMonth);
+}
+
 function buildCalendar(year, month) {
     const container = document.getElementById('calendar-days');
     const reportBody = document.getElementById('daily-report-body');
+    const label = document.getElementById('calendar-month-label');
     container.innerHTML = '';
     reportBody.innerHTML = '';
 
+    const monthNames = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+    label.innerHTML = `${monthNames[month]} ${year}`;
+
+    const now = new Date();
+    now.setHours(0,0,0,0);
+
     const firstDay = new Date(year, month, 1);
+    // Sat = 6. Start index shift logic for Sat=0
     let startOffset = (firstDay.getDay() + 1) % 7;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
     let reportHtml = '';
 
     for (let i = 0; i < startOffset; i++) {
-        container.innerHTML += '<div class="p-2"></div>';
+        container.innerHTML += '<div class="p-2 opacity-20 bg-gray-50/30 rounded-lg border border-dashed"></div>';
     }
 
     const arabicDayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 
     for (let d = 1; d <= daysInMonth; d++) {
         const dateObj = new Date(year, month, d);
+        dateObj.setHours(0,0,0,0);
         const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
         const isFriday = dateObj.getDay() === 5; 
         const dayName = arabicDayNames[dateObj.getDay()];
         
+        const isToday = dateObj.getTime() === now.getTime();
+        
+        // Diff calc
+        const diffMs = dateObj.getTime() - now.getTime();
+        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        let diffHtml = '';
+        if (diffDays === 0) {
+             diffHtml = `<span class="text-[8px] bg-royal text-white px-1 rounded font-bold shadow-sm animate-pulse">اليوم</span>`;
+        } else if (diffDays > 0) {
+             diffHtml = `<span class="text-[8px] text-gray-400 font-normal">باقي ${diffDays}ي</span>`;
+        }
+
         const exams = sessions.filter(s => s.exam === dateStr);
         const shoots = sessions.filter(s => s.shoot === dateStr);
         
-        let cls = 'p-2 rounded-lg border text-sm min-h-[80px] flex flex-col transition shadow-sm ';
-        let content = `<div class="flex justify-between items-center mb-1"><span class="font-bold text-gray-700">${d}</span>`;
+        let cls = 'p-2 rounded-lg border text-sm min-h-[90px] flex flex-col transition relative group shadow-sm bg-white ';
+        if (isToday) {
+            cls += 'ring-2 ring-blue-400 border-blue-300 z-10 ';
+        }
+
+        let content = `<div class="flex justify-between items-start mb-1">
+            <span class="font-bold text-sm ${isToday ? 'text-blue-700 bg-blue-50 rounded-full w-5 h-5 flex items-center justify-center' : 'text-gray-700'}">${d}</span>
+            <div class="flex flex-col items-end gap-0.5">${diffHtml}</div>
+        </div>`;
         
         let rowStatusHtml = '';
         let rowSessionsHtml = '-';
@@ -110,57 +160,57 @@ function buildCalendar(year, month) {
 
         if (isFriday) {
             cls += 'bg-gray-200 border-gray-300 text-gray-400 ';
-            content += `<span class="text-[8px] font-bold text-gray-500">مغلق</span></div>`;
-            content += `<div class="flex-1 flex items-center justify-center text-[9px] italic">عطلة</div>`;
-            
-            rowStatusHtml = `<span class="bg-gray-200 text-gray-600 px-2 py-1 rounded text-xs">عطلة أسبوعية</span>`;
+            content += `<div class="flex-1 flex flex-col items-center justify-center text-[9px] italic text-gray-500"><i class="fa-solid fa-mug-hot mb-1"></i>عطلة</div>`;
+            rowStatusHtml = `<span class="bg-gray-200 text-gray-600 px-2 py-1 rounded text-xs">عطلة نهاية الأسبوع</span>`;
             rowAvailabilityHtml = `<span class="font-bold text-gray-400">0 / 0</span>`;
         } else if (shoots.length >= 2) {
-            cls += 'bg-red-100 border-red-300 ';
-            content += `<span class="text-[9px] font-bold text-red-600 px-1 bg-red-200 rounded">ممتلئ</span></div>`;
-            
+            cls += 'bg-rose-50 border-rose-200 ';
             let innerSessions = [];
             shoots.forEach(s => {
                 const isConfirmed = s.status === 'confirmed';
-                content += `<div class="text-[9px] font-semibold text-red-700 bg-white/50 px-1 rounded mb-0.5 truncate">
+                const txt = `<div class="text-[9px] font-semibold text-rose-700 bg-white border border-rose-100 px-1 rounded mb-0.5 truncate shadow-sm">
                     ${isConfirmed ? '⭐ ' : '🎬 '}${s.teacher}
                 </div>`;
-                innerSessions.push(`<span class="inline-block bg-white border border-red-200 px-1.5 rounded text-xs text-red-700 mr-1">${isConfirmed ? '⭐ ' : ''}${s.teacher}</span>`);
+                content += txt;
+                innerSessions.push(`<span class="inline-block bg-white border border-rose-200 px-1.5 rounded text-xs text-rose-700 mr-1 shadow-sm">${isConfirmed ? '⭐ ' : ''}${s.teacher}</span>`);
             });
-            
-            rowStatusHtml = `<span class="bg-red-100 text-red-700 border border-red-300 px-2 py-1 rounded text-xs font-bold">⛔ ممتلئ بالكامل</span>`;
+            rowStatusHtml = `<span class="bg-rose-100 text-rose-700 border border-rose-300 px-2 py-1 rounded text-xs font-bold">⛔ ممتلئ</span>`;
             rowSessionsHtml = innerSessions.join(' ');
-            rowAvailabilityHtml = `<b class="text-red-600">0 شاغر</b>`;
+            rowAvailabilityHtml = `<b class="text-rose-600">0 متاح</b>`;
         } else if (shoots.length === 1) {
             cls += 'bg-amber-50 border-amber-200 ';
-            content += `<span class="text-[9px] font-bold text-amber-600">شاغر 1</span></div>`;
             const s = shoots[0];
             const isConfirmed = s.status === 'confirmed';
-            content += `<div class="text-[9px] font-semibold text-amber-800 bg-white/50 px-1 rounded mb-0.5 truncate">
+            content += `<div class="text-[9px] font-semibold text-amber-800 bg-white border border-amber-100 px-1 rounded mb-0.5 truncate shadow-sm">
                 ${isConfirmed ? '⭐ ' : '🎬 '}${s.teacher}
             </div>`;
+            content += `<div class="text-[8px] font-bold text-emerald-600 text-center mt-auto bg-emerald-50 border border-emerald-100 rounded py-0.5">شاغر 1</div>`;
             
-            rowStatusHtml = `<span class="bg-amber-100 text-amber-800 border border-amber-300 px-2 py-1 rounded text-xs font-bold">⚠️ محجوز جزئياً</span>`;
-            rowSessionsHtml = `<span class="inline-block bg-white border px-1.5 rounded text-xs text-amber-800">${isConfirmed ? '⭐ ' : ''}${s.teacher}</span>`;
-            rowAvailabilityHtml = `<b class="text-amber-600">1 مقعد متاح</b>`;
+            rowStatusHtml = `<span class="bg-amber-100 text-amber-800 border border-amber-300 px-2 py-1 rounded text-xs font-bold">⚠️ محجوز 50%</span>`;
+            rowSessionsHtml = `<span class="inline-block bg-white border border-amber-200 px-1.5 rounded text-xs text-amber-800 shadow-sm">${isConfirmed ? '⭐ ' : ''}${s.teacher}</span>`;
+            rowAvailabilityHtml = `<b class="text-amber-600">1 متاح</b>`;
         } else {
-            cls += 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100 cursor-pointer ';
-            content += `<span class="text-[9px] font-bold text-emerald-600">متاح</span></div>`;
+            cls += 'bg-emerald-50/50 border-emerald-200 hover:bg-emerald-50 hover:shadow-md cursor-pointer ';
+            content += `<div class="text-[9px] font-bold text-emerald-600 mt-auto text-center border border-emerald-200 border-dashed rounded py-1 bg-emerald-100/50"><i class="fa-solid fa-plus text-[8px] ml-1"></i>متاح</div>`;
             
             rowStatusHtml = `<span class="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-1 rounded text-xs font-bold">✅ متاح كلياً</span>`;
-            rowAvailabilityHtml = `<b class="text-emerald-600">2 مقعد متاح</b>`;
+            rowAvailabilityHtml = `<b class="text-emerald-600">2 متاح</b>`;
         }
 
         if (exams.length > 0) {
             let examText = exams.map(e => e.subject).join('، ');
-            content += `<div class="mt-auto text-[8px] font-bold text-blue-700 border-t border-blue-200/30 pt-0.5 truncate">📋 ${examText}</div>`;
+            content += `<div class="mt-1 text-[8px] font-bold text-blue-700 bg-blue-100/50 border border-blue-200 rounded px-1 py-0.5 truncate"><i class="fa-solid fa-scroll ml-1"></i>${examText}</div>`;
         }
 
         container.innerHTML += `<div class="${cls}">${content}</div>`;
         
-        // Add Row to Linear Report
-        reportHtml += `<tr class="hover:bg-gray-50 transition ${isFriday ? 'bg-gray-50/50 opacity-70' : ''}">
-            <td class="p-3 whitespace-nowrap font-medium">${d}/${month+1} - ${dayName}</td>
+        // Linear Report Add
+        reportHtml += `<tr class="hover:bg-gray-50 transition ${isFriday ? 'bg-gray-50 opacity-60' : ''} ${isToday ? 'bg-blue-50/50' : ''}">
+            <td class="p-3 whitespace-nowrap font-bold flex items-center gap-2">
+                ${isToday ? '<span class="w-1.5 h-1.5 rounded-full bg-blue-600 inline-block"></span>' : ''}
+                ${d}/${month+1} - ${dayName}
+                <span class="text-[10px] text-gray-400 font-normal">${diffHtml}</span>
+            </td>
             <td class="p-3">${rowStatusHtml}</td>
             <td class="p-3">${rowSessionsHtml}</td>
             <td class="p-3">${rowAvailabilityHtml}</td>
@@ -169,7 +219,7 @@ function buildCalendar(year, month) {
     reportBody.innerHTML = reportHtml;
 }
 
-// Show June 2026
-buildCalendar(2026, 5);
+// Initialize with current system time automatically
+buildCalendar(viewYear, viewMonth);
 </script>
 {% endblock %}
