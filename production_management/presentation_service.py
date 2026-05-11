@@ -211,8 +211,8 @@ class PresentationBuilder:
             'ninth_count': sum(1 for r in all_rows if r['branch_code'] == 'ninth'),
             'science_count': sum(1 for r in all_rows if r['branch_code'] == 'science'),
             'literal_count': sum(1 for r in all_rows if r['branch_code'] == 'literal'),
-            'first_exam': min(r['exam_date'] for r in all_rows) if all_rows else None,
-            'last_exam': max(r['exam_date'] for r in all_rows) if all_rows else None,
+            'first_exam': min((r['exam_date'] for r in all_rows if r['exam_date']), default=None),
+            'last_exam': max((r['exam_date'] for r in all_rows if r['exam_date']), default=None),
         }
 
         return {
