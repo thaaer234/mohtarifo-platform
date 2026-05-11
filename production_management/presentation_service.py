@@ -1,110 +1,142 @@
 """
-Presentation Builder Service
-Builds the full exam production presentation data with smart scheduling,
-pricing logic, and teacher card generation.
+Production Schedule Builder Service
+Builds the full auto-generated production schedule from TeacherProductionSession data.
+Calculates shooting dates, production times, costs, priorities.
 """
 from datetime import date, timedelta
 from collections import OrderedDict
-from django.db.models import Q, Sum, Count
 from .models import TeacherProductionSession, ProductionCost, ProductionStatus
 
 
+ARABIC_DAYS = {
+    0: 'الاثنين',
+    1: 'الثلاثاء',
+    2: 'الأربعاء',
+    3: 'الخميس',
+    4: 'الجمعة',
+    5: 'السبت',
+    6: 'الأحد',
+}
+
+
 class PresentationBuilder:
-    """
-    Builds presentation slides from TeacherProductionSession data.
-    Applies smart scheduling and pricing rules.
-    """
+    """Builds production schedule data from TeacherProductionSession records."""
 
-    # ───────── Pricing Rules ─────────
+    # ── Pricing Rules ──
     PRICING_RULES = {
-        'ninth': {
-            'default': 75000,
-        },
-        'literal': {
-            'default': 100000,
-            'الفلسفة': 150000,
-        },
-        'science': {
-            'default': 100000,
-            'الرياضيات': 200000,
-            'الفيزياء': 150000,
-        },
+        'ninth': {'default': 75000},
+        'literal': {'default': 100000, 'الفلسفة': 150000},
+        'science': {'default': 100000, 'الرياضيات': 200000, 'الفيزياء': 150000},
     }
 
-    # ───────── Production Duration (hours) ─────────
+    # ── Production Duration (hours) ──
     PRODUCTION_HOURS = {
-        'science': {'shoot_min': 4, 'shoot_max': 6, 'edit_min': 5, 'edit_max': 8},
-        'literal': {'shoot_min': 2, 'shoot_max': 4, 'edit_min': 3, 'edit_max': 5},
-        'ninth': {'shoot_min': 3, 'shoot_max': 5, 'edit_min': 4, 'edit_max': 6},
-        'other': {'shoot_min': 3, 'shoot_max': 5, 'edit_min': 4, 'edit_max': 6},
+        'science':  {'shoot_min': 4, 'shoot_max': 6, 'edit_min': 5, 'edit_max': 8, 'design': 1,   'review': 1,    'upload': 1},
+        'literal':  {'shoot_min': 2, 'shoot_max': 4, 'edit_min': 3, 'edit_max': 5, 'design': 0.5, 'review': 0.5,  'upload': 0.5},
+        'ninth':    {'shoot_min': 3, 'shoot_max': 5, 'edit_min': 4, 'edit_max': 6, 'design': 0.75,'review': 0.5,  'upload': 0.5},
+        'other':    {'shoot_min': 3, 'shoot_max': 5, 'edit_min': 4, 'edit_max': 6, 'design': 0.5, 'review': 0.5,  'upload': 0.5},
     }
 
-    # ───────── Subject Categories ─────────
-    SCIENTIFIC_SUBJECTS = ['الرياضيات', 'الفيزياء', 'الكيمياء', 'العلوم', 'فيزياء وكيمياء']
-    LANGUAGE_SUBJECTS = ['الإنكليزية', 'الفرنسية', 'العربية']
-    THEORY_SUBJECTS = ['الاجتماعيات', 'الجغرافيا', 'التاريخ', 'الفلسفة', 'الديانة']
+    # ── Subject Categories ──
+    SCIENTIFIC_SUBJECTS = ['الرياضيات', 'الفيزياء', 'الكيمياء', 'العلوم', 'فيزياء وكيمياء', 'علم الأحياء']
+    LANGUAGE_SUBJECTS = ['الإنكليزية', 'الفرنسية', 'العربية', 'اللغة الأجنبية']
+    THEORY_SUBJECTS = ['الاجتماعيات', 'الجغرافيا', 'التاريخ', 'الفلسفة', 'الديانة', 'التربية الدينية']
 
     SCHEDULE_START_DATE = date(2026, 5, 17)
 
+    # ── Exam durations (hours) based on subject type ──
+    EXAM_DURATIONS = {
+        'الرياضيات': {'science': '3:30', 'ninth': '2', 'literal': '2'},
+        'الفيزياء': {'science': '3', 'ninth': '2', 'literal': '2'},
+        'فيزياء وكيمياء': {'ninth': '2'},
+        'الكيمياء': {'science': '2'},
+        'العلوم': {'science': '2', 'ninth': '2'},
+        'علم الأحياء': {'science': '2:30'},
+        'الإنكليزية': {'science': '2', 'ninth': '1:30', 'literal': '2:30'},
+        'الفرنسية': {'science': '2', 'ninth': '1:30', 'literal': '2:30'},
+        'العربية': {'science': '2:30', 'ninth': '2:30', 'literal': '2:30'},
+        'الفلسفة': {'literal': '3'},
+        'الجغرافيا': {'literal': '2:30'},
+        'التاريخ': {'literal': '2'},
+        'الاجتماعيات': {'ninth': '2'},
+        'الديانة': {'science': '1:30', 'ninth': '1:30', 'literal': '1:30'},
+        'التربية الدينية': {'science': '1:30', 'ninth': '1:30', 'literal': '1:30'},
+    }
+
     @classmethod
     def get_platform_price(cls, subject, branch):
-        """Calculate platform price based on subject and branch rules."""
-        branch_rules = cls.PRICING_RULES.get(branch, cls.PRICING_RULES.get('other', {'default': 100000}))
+        branch_rules = cls.PRICING_RULES.get(branch, {'default': 100000})
         return branch_rules.get(subject, branch_rules.get('default', 100000))
 
     @classmethod
     def get_production_hours(cls, subject, branch):
-        """Get estimated production hours based on subject type."""
         if subject in cls.SCIENTIFIC_SUBJECTS:
-            hours = cls.PRODUCTION_HOURS.get('science', cls.PRODUCTION_HOURS['other'])
+            return cls.PRODUCTION_HOURS.get('science', cls.PRODUCTION_HOURS['other'])
         elif subject in cls.LANGUAGE_SUBJECTS:
-            hours = cls.PRODUCTION_HOURS.get('ninth', cls.PRODUCTION_HOURS['other'])
+            return cls.PRODUCTION_HOURS.get('ninth', cls.PRODUCTION_HOURS['other'])
         else:
-            hours = cls.PRODUCTION_HOURS.get('literal', cls.PRODUCTION_HOURS['other'])
-        return hours
+            return cls.PRODUCTION_HOURS.get('literal', cls.PRODUCTION_HOURS['other'])
 
     @classmethod
-    def calculate_shooting_date(cls, exam_date, subject, branch, current_schedule_date=None):
-        """
-        Smart scheduling: calculate optimal shooting date.
-        - Prioritize materials closest to exam date
-        - Start from SCHEDULE_START_DATE
-        - Add buffer before exam
-        """
-        if current_schedule_date is None:
-            current_schedule_date = cls.SCHEDULE_START_DATE
+    def get_exam_duration(cls, subject, branch):
+        durations = cls.EXAM_DURATIONS.get(subject, {})
+        return durations.get(branch, '2')
 
+    @classmethod
+    def format_duration(cls, hours):
+        """Format hours to display like '5h', '30m', '1h 30m'."""
+        if isinstance(hours, str):
+            return hours
+        if hours >= 1:
+            h = int(hours)
+            m = int((hours - h) * 60)
+            if m > 0:
+                return f"{h}h {m}m"
+            return f"{h}h"
+        else:
+            return f"{int(hours * 60)}m"
+
+    @classmethod
+    def calculate_shooting_date(cls, exam_date, subject, branch, current_date=None):
+        if current_date is None:
+            current_date = cls.SCHEDULE_START_DATE
         hours = cls.get_production_hours(subject, branch)
-        total_production_days = max(3, (hours['edit_max'] + hours['shoot_max']) // 8 + 2)
+        total_days = max(3, (hours['edit_max'] + hours['shoot_max']) // 8 + 2)
+        latest = exam_date - timedelta(days=total_days)
+        shoot = max(current_date, cls.SCHEDULE_START_DATE)
+        if shoot > latest:
+            shoot = latest
+        # Skip Fridays
+        if shoot.weekday() == 4:
+            shoot -= timedelta(days=1)
+        return shoot
 
-        # Shooting must be at least total_production_days before exam
-        latest_shooting = exam_date - timedelta(days=total_production_days)
-
-        # Use the current schedule date or latest possible
-        shooting_date = max(current_schedule_date, cls.SCHEDULE_START_DATE)
-        if shooting_date > latest_shooting:
-            shooting_date = latest_shooting
-
-        return shooting_date
+    @classmethod
+    def get_production_cost(cls, subject, branch):
+        """Estimate production cost based on subject complexity."""
+        hours = cls.get_production_hours(subject, branch)
+        total_hours = hours['shoot_max'] + hours['edit_max'] + hours['design'] + hours['review'] + hours['upload']
+        # Cost per hour estimate (in thousands)
+        cost_per_hour = 15  # 15K per hour
+        return int(total_hours * cost_per_hour)
 
     @classmethod
     def build_presentation_data(cls):
-        """Build the full presentation data structure."""
         sessions = TeacherProductionSession.objects.all().select_related(
             'cost', 'room'
         ).order_by('exam_date', 'teacher_name')
 
         if not sessions.exists():
-            return cls._build_default_presentation()
+            return cls._empty_data()
 
-        # Build rows with pricing and scheduling
         all_rows = []
         schedule_date = cls.SCHEDULE_START_DATE
 
-        for session in sessions:
+        for i, session in enumerate(sessions):
             price = cls.get_platform_price(session.subject, session.branch)
+            hours = cls.get_production_hours(session.subject, session.branch)
 
-            # Use existing shooting_date or calculate
+            # Shooting date
             if session.shooting_date:
                 shooting_date = session.shooting_date
             else:
@@ -112,40 +144,50 @@ class PresentationBuilder:
                     session.exam_date, session.subject, session.branch, schedule_date
                 )
 
-            hours = cls.get_production_hours(session.subject, session.branch)
-
-            # Update cost if exists
+            # Cost
             if hasattr(session, 'cost') and session.cost:
-                actual_price = session.cost.platform_price
+                actual_price = float(session.cost.platform_price) if session.cost.platform_price else price
+                prod_cost = float(session.cost.production_cost) if session.cost.production_cost else cls.get_production_cost(session.subject, session.branch)
             else:
                 actual_price = price
+                prod_cost = cls.get_production_cost(session.subject, session.branch)
 
             row = {
                 'id': session.id,
+                'row_number': i + 1,
                 'teacher_name': session.teacher_name,
                 'subject': session.subject,
                 'branch': session.get_branch_display(),
                 'branch_code': session.branch,
+                'session_type': 'جلسة',
                 'exam_date': session.exam_date,
+                'exam_date_str': session.exam_date.strftime('%Y-%m-%d') if session.exam_date else '',
+                'day_name': ARABIC_DAYS.get(session.exam_date.weekday(), '') if session.exam_date else '',
+                'exam_time': session.exam_time.strftime('%H:%M') if session.exam_time else '09:00',
+                'exam_duration': cls.get_exam_duration(session.subject, session.branch),
+                'production_cost': prod_cost,
+                'platform_price': actual_price,
+                'price_display': cls._format_price(actual_price),
+                'priority': i + 1,
                 'shooting_date': shooting_date,
+                'shooting_date_str': shooting_date.strftime('%Y-%m-%d') if shooting_date else '',
+                'shooting_time': '09:00',
+                'shoot_hours': cls.format_duration(hours['shoot_max']),
+                'montage_hours': cls.format_duration(hours['edit_max']),
+                'design_hours': cls.format_duration(hours['design']),
+                'review_hours': cls.format_duration(hours['review']),
+                'upload_hours': cls.format_duration(hours['upload']),
                 'status': session.status,
                 'status_display': session.get_status_display(),
-                'priority': session.priority,
-                'platform_price': actual_price if actual_price else price,
-                'price_display': cls._format_price(actual_price if actual_price else price),
-                'shoot_hours': f"{hours['shoot_min']}-{hours['shoot_max']}",
-                'edit_hours': f"{hours['edit_min']}-{hours['edit_max']}",
                 'notes': session.notes or '',
             }
             all_rows.append(row)
-
-            # Advance schedule_date
             schedule_date = shooting_date + timedelta(days=1)
 
-        # Split into slide groups (10 per slide)
+        # Split into chunks of 10
         grid_slides = cls._chunk_list(all_rows, 10)
 
-        # Build teacher cards (group by teacher)
+        # Teacher cards
         teacher_cards = cls._build_teacher_cards(all_rows)
 
         # Stats
@@ -159,8 +201,6 @@ class PresentationBuilder:
             'ninth_count': sum(1 for r in all_rows if r['branch_code'] == 'ninth'),
             'science_count': sum(1 for r in all_rows if r['branch_code'] == 'science'),
             'literal_count': sum(1 for r in all_rows if r['branch_code'] == 'literal'),
-            'scheduled_count': sum(1 for r in all_rows if r['status'] == 'scheduled'),
-            'completed_count': sum(1 for r in all_rows if r['status'] == 'completed'),
             'first_exam': min(r['exam_date'] for r in all_rows) if all_rows else None,
             'last_exam': max(r['exam_date'] for r in all_rows) if all_rows else None,
         }
@@ -175,61 +215,41 @@ class PresentationBuilder:
 
     @classmethod
     def _build_teacher_cards(cls, all_rows):
-        """Group sessions by teacher for individual cards."""
         teachers = OrderedDict()
         for row in all_rows:
             name = row['teacher_name']
             if name not in teachers:
-                teachers[name] = {
-                    'name': name,
-                    'sessions': [],
-                    'total_price': 0,
-                }
+                teachers[name] = {'name': name, 'sessions': [], 'total_price': 0}
             teachers[name]['sessions'].append(row)
             teachers[name]['total_price'] += row['platform_price']
 
-        # Only include teachers with multiple sessions or special pricing
         cards = []
         for name, data in teachers.items():
             data['total_price_display'] = cls._format_price(data['total_price'])
             data['session_count'] = len(data['sessions'])
             cards.append(data)
-
         return cards
 
     @classmethod
-    def _build_default_presentation(cls):
-        """Return empty presentation structure when no data exists."""
+    def _empty_data(cls):
         return {
-            'all_rows': [],
-            'grid_slides': [],
-            'teacher_cards': [],
+            'all_rows': [], 'grid_slides': [], 'teacher_cards': [],
             'stats': {
-                'total_sessions': 0,
-                'total_teachers': 0,
-                'total_subjects': 0,
-                'total_revenue': '0',
-                'total_revenue_raw': 0,
-                'ninth_count': 0,
-                'science_count': 0,
-                'literal_count': 0,
-                'scheduled_count': 0,
-                'completed_count': 0,
-                'first_exam': None,
-                'last_exam': None,
+                'total_sessions': 0, 'total_teachers': 0, 'total_subjects': 0,
+                'total_revenue': '0', 'total_revenue_raw': 0,
+                'ninth_count': 0, 'science_count': 0, 'literal_count': 0,
+                'first_exam': None, 'last_exam': None,
             },
             'schedule_start': cls.SCHEDULE_START_DATE,
         }
 
     @staticmethod
     def _format_price(amount):
-        """Format price in thousands (e.g., 75,000 → '75 ألف')."""
         if not amount:
             return '0'
-        thousands = int(amount / 1000)
+        thousands = int(float(amount) / 1000)
         return f"{thousands:,} ألف"
 
     @staticmethod
-    def _chunk_list(lst, chunk_size):
-        """Split a list into chunks."""
-        return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
+    def _chunk_list(lst, size):
+        return [lst[i:i + size] for i in range(0, len(lst), size)]
