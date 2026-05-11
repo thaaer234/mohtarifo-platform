@@ -254,25 +254,24 @@ class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
                 continue
 
             if ex_date:
-                s_date = PresentationBuilder.calculate_shooting_date(ex_date, subject, branch, schedule_date)
+                # Get default anchor (usually few days before exam)
+                s_date = PresentationBuilder.calculate_shooting_date(ex_date, subject, branch, PresentationBuilder.SCHEDULE_START_DATE)
             else:
-                s_date = schedule_date
+                s_date = PresentationBuilder.SCHEDULE_START_DATE
 
-            # Conflict Solver: Max 2 per day
-            while allocations.get(s_date, 0) >= 2:
-                s_date -= timedelta(days=1)
-                if s_date < PresentationBuilder.SCHEDULE_START_DATE:
-                     s_date = schedule_date
-                     while allocations.get(s_date, 0) >= 2:
-                         s_date += timedelta(days=1)
-                     break
-            
-            if s_date.weekday() == 4: 
-                s_date -= timedelta(days=1)
+            # ── THE UNBREAKABLE SOLVER ──
+            # Start from candidate, step FORWARD until we hit a Non-Friday Day with < 2 items.
+            # This yields a PERFECT, collision-free allocation matrix.
+            walk = s_date
+            while True:
+                is_friday = (walk.weekday() == 4)
+                if not is_friday and allocations.get(walk, 0) < 2:
+                    s_date = walk
+                    break
+                walk += timedelta(days=1)
 
+            # ── LOCK ALLOCATION ──
             allocations[s_date] = allocations.get(s_date, 0) + 1
-            if allocations.get(schedule_date, 0) >= 2:
-                schedule_date += timedelta(days=1)
 
             price = course.price_cents / 100 if course.price_cents else PresentationBuilder.get_platform_price(subject, branch)
 
