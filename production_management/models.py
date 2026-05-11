@@ -43,10 +43,10 @@ class ProductionStatus(models.TextChoices):
 
 class TeacherProductionSession(models.Model):
     class BranchChoices(models.TextChoices):
-        SCIENCE = 'science', _('Science')
-        LITERAL = 'literal', _('Literal')
-        NINTH = 'ninth', _('Ninth Grade')
-        OTHER = 'other', _('Other')
+        SCIENCE = 'science', _('علمي')
+        LITERAL = 'literal', _('أدبي')
+        NINTH = 'ninth', _('تاسع')
+        OTHER = 'other', _('أخرى')
 
     # Link to external Teacher model if exists, otherwise text
     teacher_name = models.CharField(max_length=255) 

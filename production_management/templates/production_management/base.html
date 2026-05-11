@@ -121,7 +121,10 @@
                 <i class="fa-solid fa-print"></i> نظام الطباعة
             </a>
             <a href="{% url 'production_management:presentation' %}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 hover:text-gold transition font-semibold {% if request.resolver_match.url_name == 'presentation' %}bg-gold text-white shadow-lg{% endif %}">
-                <i class="fa-solid fa-presentation-screen"></i> العرض التقديمي
+                <i class="fa-solid fa-table-list"></i> الجدول الزمني
+            </a>
+            <a href="{% url 'production_management:teacher_cards_print' %}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 hover:text-gold transition font-semibold {% if request.resolver_match.url_name == 'teacher_cards_print' %}bg-gold text-white shadow-lg{% endif %}">
+                <i class="fa-solid fa-id-badge"></i> بطاقات الإنتاج
             </a>
         </nav>
     </aside>

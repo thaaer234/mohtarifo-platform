@@ -206,3 +206,32 @@ class PresentationAPIView(LoginRequiredMixin, IsProductionStaffMixin, TemplateVi
             },
         }
         return JsonResponse(data, json_dumps_params={'ensure_ascii': False})
+
+
+class TeacherCardsPrintView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
+    """Separate print page for teacher cards with premium design."""
+    template_name = 'production_management/teacher_cards_print.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        presentation = PresentationBuilder.build_presentation_data()
+
+        # Add teacher photo paths from Course model if available
+        from learning.models import Course
+        for card in presentation.get('teacher_cards', []):
+            # Try to find teacher photo from courses
+            teacher_name = card['name']
+            course = Course.objects.filter(
+                instructor__first_name__icontains=teacher_name.split()[0] if teacher_name.split() else ''
+            ).first()
+            if course and course.teacher_photo:
+                card['photo_url'] = course.teacher_photo.url
+            else:
+                card['photo_url'] = None
+
+            for session in card['sessions']:
+                session['exam_date_str'] = session['exam_date'].strftime('%d-%m-%Y') if session['exam_date'] else ''
+                session['shooting_date_str'] = session['shooting_date'].strftime('%d-%m-%Y') if session['shooting_date'] else ''
+
+        context.update(presentation)
+        return context

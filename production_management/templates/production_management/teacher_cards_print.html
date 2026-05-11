@@ -1,0 +1,372 @@
+{% extends "dashboard/base_print_dashboard.html" %}
+{% load static %}
+
+{% block title %}بطاقات المدرسين - برنامج الجلسات الامتحانية 2026{% endblock %}
+{% block report_name %}بطاقات المدرسين - الجلسات الامتحانية 2026{% endblock %}
+{% block report_subtitle %}معهد اليمان • بطاقات إنتاج فردية لكل مدرس{% endblock %}
+
+{% block extra_meta %}
+<div>👨‍🏫 عدد المدرسين: {{ stats.total_teachers }}</div>
+<div>🎬 الجلسات: {{ stats.total_sessions }}</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    @page { size: A4 landscape !important; margin: 0.8cm; }
+    @media print {
+        body { font-size: 8pt; padding: 0; }
+        .page-wrapper { padding: 0.5rem; }
+        .report-header { margin-bottom: 0.5rem; padding-bottom: 0.4rem; }
+        .report-banner { margin-bottom: 0.5rem; padding: 0.4rem; }
+        .cards-grid { gap: 0.6rem; }
+        .tc { padding: 0.6rem; }
+        .page-break { page-break-before: always; }
+    }
+
+    .cards-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.2rem;
+    }
+
+    /* ═══ Teacher Card ═══ */
+    .tc {
+        border: 1.5px solid var(--border-light);
+        border-radius: 16px;
+        padding: 1rem;
+        background: #fff;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        gap: 1rem;
+        transition: var(--transition-smooth);
+    }
+    .tc:hover {
+        border-color: var(--brand-gold);
+        box-shadow: 0 8px 30px rgba(197,160,89,0.12);
+    }
+
+    /* ── Photo Side ── */
+    .tc-photo {
+        width: 140px;
+        min-height: 160px;
+        border-radius: 12px;
+        overflow: hidden;
+        flex-shrink: 0;
+        position: relative;
+        background: linear-gradient(135deg, #1e3a5f, #2563eb);
+    }
+    .tc-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .tc-photo-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+    }
+    .tc-photo-placeholder .initials {
+        font-size: 2.5rem;
+        font-weight: 900;
+        opacity: 0.9;
+        line-height: 1;
+    }
+    .tc-photo-name {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(transparent, rgba(0,0,0,0.7));
+        color: #fff;
+        padding: 0.5rem;
+        font-weight: 800;
+        font-size: 0.8rem;
+        text-align: center;
+    }
+
+    /* ── Info Side ── */
+    .tc-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    /* ── Badges Row ── */
+    .tc-badges {
+        display: flex;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+    }
+    .tc-badge {
+        display: inline-block;
+        padding: 0.2rem 0.7rem;
+        border-radius: 100px;
+        font-weight: 700;
+        font-size: 0.72rem;
+    }
+    .tc-badge-branch {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    .tc-badge-subject {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    .tc-badge-ninth { background: #dcfce7; color: #16a34a; }
+    .tc-badge-science { background: #dbeafe; color: #1e40af; }
+    .tc-badge-literal { background: #f3e8ff; color: #7c3aed; }
+
+    /* ── Info Rows ── */
+    .tc-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.78rem;
+    }
+    .tc-row-item {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    .tc-row-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+    }
+    .tc-row-icon.exam-icon { background: #fee2e2; color: #dc2626; }
+    .tc-row-icon.time-icon { background: #fef3c7; color: #d97706; }
+    .tc-row-icon.shoot-icon { background: #dbeafe; color: #2563eb; }
+    .tc-row-icon.cost-icon { background: #f3e8ff; color: #7c3aed; }
+    .tc-row-label {
+        font-size: 0.65rem;
+        color: var(--text-muted);
+        font-weight: 600;
+    }
+    .tc-row-value {
+        font-family: 'Inter', monospace;
+        font-weight: 700;
+        color: var(--primary-dark);
+        font-size: 0.82rem;
+    }
+
+    /* ── Platform Price ── */
+    .tc-price {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.35rem 1rem;
+        border-radius: 100px;
+        font-weight: 800;
+        font-size: 0.85rem;
+    }
+    .tc-price-75 { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46; }
+    .tc-price-100 { background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: #1e40af; }
+    .tc-price-150 { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; }
+    .tc-price-200 { background: linear-gradient(135deg, #fee2e2, #fecaca); color: #991b1b; }
+    .tc-price-label {
+        font-size: 0.65rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        margin-right: 0.3rem;
+    }
+
+    /* ── Production Timeline ── */
+    .tc-timeline {
+        display: flex;
+        align-items: center;
+        gap: 0;
+        margin-top: auto;
+    }
+    .tc-timeline-label {
+        font-size: 0.6rem;
+        color: var(--text-muted);
+        font-weight: 700;
+        margin-left: 0.5rem;
+        white-space: nowrap;
+    }
+    .tc-timeline-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        flex: 1;
+    }
+    .tc-timeline-dot {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.65rem;
+        color: #fff;
+        font-weight: 700;
+        z-index: 2;
+        position: relative;
+    }
+    .tc-timeline-step:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 14px;
+        left: -50%;
+        right: 50%;
+        height: 2px;
+        background: #e5e7eb;
+        z-index: 1;
+    }
+    .dot-shoot { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    .dot-edit { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .dot-design { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .dot-review { background: linear-gradient(135deg, #10b981, #059669); }
+    .dot-upload { background: linear-gradient(135deg, #ec4899, #db2777); }
+    .tc-timeline-text {
+        font-size: 0.55rem;
+        color: var(--text-muted);
+        margin-top: 0.2rem;
+        font-weight: 600;
+    }
+
+    /* ── Multi session table ── */
+    .tc-sessions {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.72rem;
+        margin-top: 0.3rem;
+    }
+    .tc-sessions th {
+        background: #f8fafc;
+        color: var(--primary-dark);
+        padding: 0.3rem 0.4rem;
+        font-size: 0.65rem;
+        font-weight: 700;
+        border: 1px solid #e5e7eb;
+        text-align: center;
+    }
+    .tc-sessions td {
+        padding: 0.25rem 0.4rem;
+        border: 1px solid #f0f0f0;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block report_body %}
+
+<div class="cards-grid">
+{% for card in teacher_cards %}
+    {% for session in card.sessions %}
+    <div class="tc">
+        <!-- Photo Side -->
+        <div class="tc-photo">
+            {% if card.photo_url %}
+                <img src="{{ card.photo_url }}" alt="{{ card.name }}">
+            {% else %}
+                <div class="tc-photo-placeholder">
+                    <span class="initials">{{ card.name|truncatechars:2 }}</span>
+                </div>
+            {% endif %}
+            <div class="tc-photo-name">{{ card.name }}</div>
+        </div>
+
+        <!-- Info Side -->
+        <div class="tc-info">
+            <!-- Badges -->
+            <div class="tc-badges">
+                <span class="tc-badge tc-badge-{{ session.branch_code }}">الفرع: {{ session.branch }}</span>
+                <span class="tc-badge tc-badge-subject">{{ session.subject }}</span>
+            </div>
+
+            <!-- Exam Date + Time -->
+            <div class="tc-row">
+                <div class="tc-row-item">
+                    <div class="tc-row-icon exam-icon">📅</div>
+                    <div>
+                        <div class="tc-row-label">موعد الامتحان</div>
+                        <div class="tc-row-value">{{ session.exam_date_str }}</div>
+                    </div>
+                </div>
+                <div class="tc-row-item">
+                    <div class="tc-row-icon time-icon">⏰</div>
+                    <div>
+                        <div class="tc-row-label">الوقت</div>
+                        <div class="tc-row-value">{{ session.exam_time }} صباحاً</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shooting Date + Cost -->
+            <div class="tc-row">
+                <div class="tc-row-item">
+                    <div class="tc-row-icon shoot-icon">🎬</div>
+                    <div>
+                        <div class="tc-row-label">تاريخ التصوير</div>
+                        <div class="tc-row-value">{{ session.shooting_date_str }}</div>
+                    </div>
+                </div>
+                <div class="tc-row-item">
+                    <div class="tc-row-icon cost-icon">💰</div>
+                    <div>
+                        <div class="tc-row-label">التكلفة</div>
+                        <div class="tc-row-value">{{ session.production_cost }} ل.س</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Platform Price -->
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+                {% if session.platform_price >= 200000 %}
+                    <span class="tc-price tc-price-200">{{ session.price_display }}</span>
+                {% elif session.platform_price >= 150000 %}
+                    <span class="tc-price tc-price-150">{{ session.price_display }}</span>
+                {% elif session.platform_price >= 100000 %}
+                    <span class="tc-price tc-price-100">{{ session.price_display }}</span>
+                {% else %}
+                    <span class="tc-price tc-price-75">{{ session.price_display }}</span>
+                {% endif %}
+                <span class="tc-price-label">السعر المنصة</span>
+            </div>
+
+            <!-- Production Timeline -->
+            <div style="display:flex; align-items:center; gap:0.3rem; margin-top:auto;">
+                <span class="tc-timeline-label">مراحل الإنتاج</span>
+                <div class="tc-timeline" style="flex:1;">
+                    <div class="tc-timeline-step">
+                        <div class="tc-timeline-dot dot-shoot">📹</div>
+                        <span class="tc-timeline-text">تصوير</span>
+                    </div>
+                    <div class="tc-timeline-step">
+                        <div class="tc-timeline-dot dot-edit">✂️</div>
+                        <span class="tc-timeline-text">مونتاج</span>
+                    </div>
+                    <div class="tc-timeline-step">
+                        <div class="tc-timeline-dot dot-design">🎨</div>
+                        <span class="tc-timeline-text">تصميم</span>
+                    </div>
+                    <div class="tc-timeline-step">
+                        <div class="tc-timeline-dot dot-review">✅</div>
+                        <span class="tc-timeline-text">مراجعة</span>
+                    </div>
+                    <div class="tc-timeline-step">
+                        <div class="tc-timeline-dot dot-upload">☁️</div>
+                        <span class="tc-timeline-text">رفع</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% endfor %}
+</div>
+
+{% endblock %}
