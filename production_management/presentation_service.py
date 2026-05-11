@@ -125,6 +125,8 @@ class PresentationBuilder:
         sessions = TeacherProductionSession.objects.all().select_related(
             'cost', 'room', 'course', 'course__instructor', 
             'course__subject', 'course__instructor__instructor_profile'
+        ).exclude(
+            exam_date__isnull=True
         ).order_by('shooting_date', 'exam_date', 'teacher_name')
 
         if not sessions.exists():
