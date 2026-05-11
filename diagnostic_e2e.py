@@ -5,6 +5,9 @@ import traceback
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
+from django.conf import settings
+settings.ALLOWED_HOSTS = ['*']
+
 from django.test import Client
 from django.contrib.auth import get_user_model
 
