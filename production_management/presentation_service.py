@@ -104,7 +104,8 @@ class PresentationBuilder:
         if not exam_date:
             return current_date
         hours = cls.get_production_hours(subject, branch)
-        total_days = max(3, (hours['edit_max'] + hours['shoot_max']) // 8 + 2)
+        # Enforce rigorous safety buffer: Minimum 7 days strictly before exam
+        total_days = max(7, (hours['edit_max'] + hours['shoot_max']) // 8 + 2)
         latest = exam_date - timedelta(days=total_days)
         shoot = max(current_date, cls.SCHEDULE_START_DATE)
         if shoot > latest:

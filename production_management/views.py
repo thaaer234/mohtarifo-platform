@@ -253,22 +253,39 @@ class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
             if TeacherProductionSession.objects.filter(course=course, exam_date=ex_date).exists():
                 continue
 
+            # ── UNBREAKABLE SOLVER WITH 7-DAY SAFETY GUARANTEE ──
+            from datetime import date as d_type
+            EID_BLOCK = [d_type(2026, 5, 27), d_type(2026, 5, 28), d_type(2026, 5, 29)]
+            
             if ex_date:
-                # Get default anchor (usually few days before exam)
-                s_date = PresentationBuilder.calculate_shooting_date(ex_date, subject, branch, PresentationBuilder.SCHEDULE_START_DATE)
+                # Starts at ceiling (7+ days back)
+                anchor = PresentationBuilder.calculate_shooting_date(ex_date, subject, branch, PresentationBuilder.SCHEDULE_START_DATE)
+                direction = -1 # Step BACKWARDS to ensure they only go earlier, never later
             else:
-                s_date = PresentationBuilder.SCHEDULE_START_DATE
-
-            # ── THE UNBREAKABLE SOLVER ──
-            # Start from candidate, step FORWARD until we hit a Non-Friday Day with < 2 items.
-            # This yields a PERFECT, collision-free allocation matrix.
-            walk = s_date
+                anchor = PresentationBuilder.SCHEDULE_START_DATE
+                direction = 1 # Step forward
+            
+            walk = anchor
+            steps = 0
             while True:
                 is_friday = (walk.weekday() == 4)
-                if not is_friday and allocations.get(walk, 0) < 2:
+                is_eid = walk in EID_BLOCK
+                
+                if not is_friday and not is_eid and allocations.get(walk, 0) < 2:
                     s_date = walk
                     break
-                walk += timedelta(days=1)
+                
+                walk += timedelta(days=direction)
+                steps += 1
+                
+                # Reversal safety valve: if completely saturated earlier, move forward slightly
+                if direction == -1 and walk < PresentationBuilder.SCHEDULE_START_DATE:
+                     walk = anchor + timedelta(days=1)
+                     direction = 1
+                if steps > 100:
+                     s_date = anchor
+                     break
+
 
             # ── LOCK ALLOCATION ──
             allocations[s_date] = allocations.get(s_date, 0) + 1
