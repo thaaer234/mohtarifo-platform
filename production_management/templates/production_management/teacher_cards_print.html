@@ -12,12 +12,24 @@
 
 {% block extra_css %}
 <style>
-    @page { size: A4 landscape !important; margin: 0.8cm; }
+    @page { size: A4 portrait !important; margin: 0.6cm; }
     @media print {
-        body { font-size: 8pt; padding: 0; background: #f8fafc !important; -webkit-print-color-adjust: exact !important; }
-        .page-wrapper { padding: 0.5rem; max-width: 100%; }
-        .cards-grid { display: flex !important; flex-direction: column; gap: 1.5rem !important; }
-        .master-tc { page-break-inside: avoid; }
+        body { font-size: 8.5pt; padding: 0; background: #f8fafc !important; -webkit-print-color-adjust: exact !important; }
+        .page-wrapper { padding: 0.5cm 0; max-width: 100%; }
+        .cards-grid {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.8cm !important;
+            height: calc(100vh - 1.2cm); /* Full print page height */
+            justify-content: flex-start;
+            page-break-after: always;
+        }
+        .master-tc {
+            flex: 1;
+            min-height: 46%; /* Take almost half the height gracefully */
+            max-height: 48%;
+            page-break-inside: avoid;
+        }
     }
 
     .cards-grid {
@@ -257,8 +269,9 @@
 
 {% block report_body %}
 
+{% for chunk in card_chunks %}
 <div class="cards-grid">
-{% for card in teacher_cards %}
+{% for card in chunk %}
     <div class="master-tc">
         
         <!-- ═══ LEFT SIDE: Content Data ═══ -->
@@ -351,4 +364,5 @@
     </div>
 {% endfor %}
 </div>
+{% endfor %}
 {% endblock %}

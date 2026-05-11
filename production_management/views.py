@@ -503,6 +503,9 @@ class TeacherCardsPrintView(LoginRequiredMixin, IsProductionStaffMixin, Template
                 session['shooting_date_str'] = session['shooting_date'].strftime('%d-%m-%Y') if session['shooting_date'] else ''
 
         context.update(presentation)
+        # Split into pairs of 2 for exact printing control per page
+        t_cards = presentation.get('teacher_cards', [])
+        context['card_chunks'] = [t_cards[i:i + 2] for i in range(0, len(t_cards), 2)]
         return context
 
 
