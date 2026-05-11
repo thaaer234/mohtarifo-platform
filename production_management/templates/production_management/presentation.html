@@ -129,8 +129,6 @@
             <th>النوع</th>
             <th>تاريخ الامتحان</th>
             <th>اليوم</th>
-            <th>وقت الامتحان</th>
-            <th>المدة</th>
             <th>التكلفة</th>
             <th>السعر المنصة</th>
             <th>الأولوية</th>
@@ -157,8 +155,6 @@
             <td>{{ row.session_type }}</td>
             <td class="time-cell">{{ row.exam_date_str }}</td>
             <td>{{ row.day_name }}</td>
-            <td class="time-cell">{{ row.exam_time }}</td>
-            <td class="time-cell">{{ row.exam_duration }}h</td>
             <td class="time-cell">{{ row.production_cost }}</td>
             <td>
                 {% if row.platform_price >= 200000 %}<span class="price-tag p-200">{{ row.price_display }}</span>
