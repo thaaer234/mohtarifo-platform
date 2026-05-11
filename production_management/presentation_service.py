@@ -43,7 +43,7 @@ class PresentationBuilder:
     LANGUAGE_SUBJECTS = ['الإنكليزية', 'الفرنسية', 'العربية', 'اللغة الأجنبية']
     THEORY_SUBJECTS = ['الاجتماعيات', 'الجغرافيا', 'التاريخ', 'الفلسفة', 'الديانة', 'التربية الدينية']
 
-    SCHEDULE_START_DATE = date(2026, 5, 17)
+    SCHEDULE_START_DATE = date(2026, 5, 19)
 
     # ── Exam durations (hours) based on subject type ──
     EXAM_DURATIONS = {

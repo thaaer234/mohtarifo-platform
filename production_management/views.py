@@ -279,7 +279,7 @@ class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
                 s_date = None
                 # ── HARD-BOUNDED SPATIAL SCHEDULER (17/5 - 15/6) ──
                 from datetime import date as d_t
-                HARD_END = d_t(2026, 6, 15)
+                HARD_END = d_t(2026, 6, 22)
                 
                 solved = False
                 # We iterate capacities: First try 1 per day. If box fills up, allow 2 per day.
