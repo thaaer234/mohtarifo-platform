@@ -79,10 +79,45 @@ const sessions = [
         subject: "{{ s.subject }}",
         exam: "{{ s.exam_date|date:'Y-m-d' }}",
         shoot: "{{ s.shooting_date|date:'Y-m-d' }}",
+        duration: {{ s.shooting_duration_days|default:1 }},
         status: "{{ s.status }}"
     },
     {% endfor %}
 ];
+
+// SMART HELPER: Resolves if a specific date is part of a multi-day session span
+function checkSessionOnDate(session, checkStr) {
+    if (!session.shoot) return false;
+    const parts = session.shoot.split('-');
+    let current = new Date(parts[0], parts[1]-1, parts[2]);
+    current.setHours(0,0,0,0);
+    
+    let validDaysNeeded = session.duration || 1;
+    let dayCount = 0;
+    
+    while (dayCount < validDaysNeeded) {
+        // Is valid work day logic (matches Python and UI logic)
+        const y = current.getFullYear();
+        const m = current.getMonth();
+        const d = current.getDate();
+        
+        const isFri = current.getDay() === 5;
+        const isEid = (y === 2026 && m === 4 && (d === 27 || d === 28 || d === 29));
+        
+        const iso = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        
+        if (!isFri && !isEid) {
+             if (iso === checkStr) return true;
+             dayCount++;
+        }
+        
+        current.setDate(current.getDate() + 1);
+        
+        // Safeguard against runaway loop
+        if (dayCount > 10 || current.getFullYear() > 2026) break; 
+    }
+    return false;
+}
 
 
 let viewDate = new Date(); // Start with current local time (May 2026)
@@ -143,7 +178,7 @@ function buildCalendar(year, month) {
         }
 
         const exams = sessions.filter(s => s.exam === dateStr);
-        const shoots = sessions.filter(s => s.shoot === dateStr);
+        const shoots = sessions.filter(s => checkSessionOnDate(s, dateStr));
         
         let cls = 'p-2 rounded-lg border text-sm min-h-[90px] flex flex-col transition relative group shadow-sm bg-white ';
         if (isToday) {

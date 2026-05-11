@@ -66,6 +66,7 @@ class TeacherProductionSession(models.Model):
     
     shooting_date = models.DateField(null=True, blank=True)
     shooting_time = models.TimeField(null=True, blank=True)
+    shooting_duration_days = models.PositiveIntegerField(default=1, verbose_name=_('عدد أيام التصوير'))
     
     status = models.CharField(max_length=20, choices=ProductionStatus.choices, default=ProductionStatus.SCHEDULED)
     priority = models.IntegerField(default=1) # Higher is higher priority
