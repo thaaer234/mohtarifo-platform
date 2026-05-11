@@ -135,3 +135,29 @@ class ProductionSchedule(models.Model):
     is_working_day = models.BooleanField(default=True)
     daily_capacity_hours = models.DecimalField(max_digits=6, decimal_places=2, default=24.0)
     notes = models.TextField(blank=True, null=True)
+
+
+class ExamScheduleEntry(models.Model):
+    """Stores exam dates per subject/branch - fed from the scanner or manual entry."""
+    class BranchChoices(models.TextChoices):
+        SCIENCE = 'science', _('علمي')
+        LITERAL = 'literal', _('أدبي')
+        NINTH = 'ninth', _('تاسع')
+
+    subject_name = models.CharField(max_length=255, verbose_name=_('اسم المادة'))
+    branch = models.CharField(max_length=50, choices=BranchChoices.choices, verbose_name=_('الفرع'))
+    exam_date = models.DateField(verbose_name=_('تاريخ الامتحان'))
+    exam_time = models.TimeField(null=True, blank=True, verbose_name=_('وقت الامتحان'))
+    duration = models.CharField(max_length=10, default='2', verbose_name=_('المدة (ساعات)'))
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = _('موعد امتحان')
+        verbose_name_plural = _('جدول الامتحانات')
+        unique_together = [('subject_name', 'branch')]
+        ordering = ['exam_date']
+
+    def __str__(self):
+        return f"{self.subject_name} ({self.get_branch_display()}) - {self.exam_date}"

@@ -5,15 +5,17 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from django.http import JsonResponse
-from datetime import timedelta
+from django.views.decorators.http import require_POST
+from datetime import timedelta, date, time as dt_time
 import json
 
 from .models import (
     TeacherProductionSession, ProductionTask, ProductionMember,
-    ProductionCost, ProductionStatus
+    ProductionCost, ProductionStatus, ExamScheduleEntry
 )
 from .services import SmartSchedulingEngine
 from .presentation_service import PresentationBuilder
+from learning.models import Course
 
 class IsProductionStaffMixin(UserPassesTestMixin):
     def test_func(self):
@@ -145,6 +147,131 @@ class PrintEngineView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
 class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
     template_name = 'production_management/scanner.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['exam_entries'] = ExamScheduleEntry.objects.filter(is_active=True)
+        context['branches'] = ExamScheduleEntry.BranchChoices.choices
+        return context
+
+    def post(self, request, *args, **kwargs):
+        """Save exam schedule entries from scanner form."""
+        action = request.POST.get('action')
+
+        if action == 'save_entries':
+            subjects = request.POST.getlist('subject_name')
+            branches = request.POST.getlist('branch')
+            dates = request.POST.getlist('exam_date')
+            times = request.POST.getlist('exam_time')
+            durations = request.POST.getlist('duration')
+
+            saved = 0
+            for i in range(len(subjects)):
+                if not subjects[i] or not dates[i]:
+                    continue
+                exam_time = None
+                if i < len(times) and times[i]:
+                    try:
+                        parts = times[i].split(':')
+                        exam_time = dt_time(int(parts[0]), int(parts[1]))
+                    except (ValueError, IndexError):
+                        exam_time = dt_time(9, 0)
+
+                ExamScheduleEntry.objects.update_or_create(
+                    subject_name=subjects[i].strip(),
+                    branch=branches[i] if i < len(branches) else 'ninth',
+                    defaults={
+                        'exam_date': dates[i],
+                        'exam_time': exam_time,
+                        'duration': durations[i] if i < len(durations) else '2',
+                        'is_active': True,
+                    }
+                )
+                saved += 1
+
+            # Auto-generate production sessions from courses
+            self._auto_generate_sessions()
+            return redirect('production_management:scanner')
+
+        elif action == 'delete_entry':
+            entry_id = request.POST.get('entry_id')
+            ExamScheduleEntry.objects.filter(id=entry_id).delete()
+            return redirect('production_management:scanner')
+
+        elif action == 'add_entry':
+            ExamScheduleEntry.objects.update_or_create(
+                subject_name=request.POST.get('subject_name', '').strip(),
+                branch=request.POST.get('branch', 'ninth'),
+                defaults={
+                    'exam_date': request.POST.get('exam_date'),
+                    'exam_time': dt_time(8, 30),
+                    'duration': request.POST.get('duration', '2'),
+                    'is_active': True,
+                }
+            )
+            self._auto_generate_sessions()
+            return redirect('production_management:scanner')
+
+        return redirect('production_management:scanner')
+
+    def _auto_generate_sessions(self):
+        """Auto-generate production sessions from courses + exam schedule."""
+        exam_entries = ExamScheduleEntry.objects.filter(is_active=True)
+        if not exam_entries.exists():
+            return
+
+        TRACK_MAP = {'scientific': 'science', 'literary': 'literal', 'ninth': 'ninth', 'general': 'literal'}
+        courses = Course.objects.filter(
+            status__in=['published', 'review', 'draft']
+        ).select_related('subject', 'instructor')
+
+        schedule_date = PresentationBuilder.SCHEDULE_START_DATE
+
+        for course in courses:
+            teacher_name = course.instructor.get_full_name() or course.instructor.username
+            subject_name = course.subject.name
+            branch = TRACK_MAP.get(course.academic_track, 'ninth')
+
+            # Find matching exam entry
+            exam = self._find_exam(subject_name, branch, exam_entries)
+            if not exam:
+                continue
+
+            # Skip if already exists
+            if TeacherProductionSession.objects.filter(
+                teacher_name=teacher_name, subject=subject_name,
+                branch=branch, exam_date=exam.exam_date
+            ).exists():
+                continue
+
+            shooting_date = PresentationBuilder.calculate_shooting_date(
+                exam.exam_date, subject_name, branch, schedule_date
+            )
+            price = course.price_cents / 100 if course.price_cents else PresentationBuilder.get_platform_price(subject_name, branch)
+
+            session = TeacherProductionSession.objects.create(
+                teacher_name=teacher_name,
+                subject=subject_name,
+                branch=branch,
+                exam_date=exam.exam_date,
+                exam_time=exam.exam_time,
+                shooting_date=shooting_date,
+                status='scheduled',
+            )
+            ProductionCost.objects.create(session=session, platform_price=price)
+            schedule_date = shooting_date + timedelta(days=1)
+
+    def _find_exam(self, subject_name, branch, entries):
+        """Fuzzy match subject name to exam schedule entry."""
+        # Exact match
+        exact = entries.filter(subject_name=subject_name, branch=branch).first()
+        if exact:
+            return exact
+        # Partial match
+        for entry in entries.filter(branch=branch):
+            if entry.subject_name in subject_name or subject_name in entry.subject_name:
+                return entry
+        return None
+
 
 class PresentationView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
     """
@@ -216,18 +343,40 @@ class TeacherCardsPrintView(LoginRequiredMixin, IsProductionStaffMixin, Template
         context = super().get_context_data(**kwargs)
         presentation = PresentationBuilder.build_presentation_data()
 
-        # Add teacher photo paths from Course model if available
-        from learning.models import Course
         for card in presentation.get('teacher_cards', []):
-            # Try to find teacher photo from courses
             teacher_name = card['name']
-            course = Course.objects.filter(
-                instructor__first_name__icontains=teacher_name.split()[0] if teacher_name.split() else ''
-            ).first()
-            if course and course.teacher_photo:
-                card['photo_url'] = course.teacher_photo.url
-            else:
-                card['photo_url'] = None
+            parts = teacher_name.split()
+
+            # Try multiple strategies to find teacher photo
+            photo_url = None
+            course = None
+
+            # Strategy 1: Match by full name in instructor
+            if len(parts) >= 2:
+                course = Course.objects.filter(
+                    instructor__first_name__icontains=parts[0],
+                    instructor__last_name__icontains=parts[-1]
+                ).first()
+
+            # Strategy 2: Match by first name only
+            if not course and parts:
+                course = Course.objects.filter(
+                    instructor__first_name__icontains=parts[0]
+                ).first()
+
+            # Strategy 3: Match by teacher_name in session
+            if not course:
+                course = Course.objects.filter(
+                    subject__name__icontains=card['sessions'][0]['subject'] if card['sessions'] else ''
+                ).first()
+
+            if course:
+                if course.teacher_photo:
+                    photo_url = course.teacher_photo.url
+                elif course.cover:
+                    photo_url = course.cover.url
+
+            card['photo_url'] = photo_url
 
             for session in card['sessions']:
                 session['exam_date_str'] = session['exam_date'].strftime('%d-%m-%Y') if session['exam_date'] else ''

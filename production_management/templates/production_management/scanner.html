@@ -1,107 +1,153 @@
 {% extends 'production_management/base.html' %}
 
-{% block page_title %}قارئ برنامج الامتحان الذكي (OCR + AI){% endblock %}
+{% block page_title %}قارئ برنامج الامتحان وإدارة المواعيد{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto space-y-6" x-data="{ step: 1, isUploading: false }">
-    
-    <!-- Steps Indicator -->
-    <div class="flex items-center justify-between px-12 mb-8 relative">
-        <div class="absolute left-16 right-16 top-1/2 h-1 bg-gray-200 -z-10 -translate-y-1/2"></div>
-        <div class="absolute left-16 right-16 top-1/2 h-1 bg-gold -z-10 -translate-y-1/2 transition-all duration-500" :style="'width: ' + ((step-1)/2)*100 + '%'"></div>
-        
-        <div class="flex flex-col items-center">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white transition-colors duration-300" :class="step >= 1 ? 'bg-gold' : 'bg-gray-300'">1</div>
-            <span class="text-xs mt-2 font-semibold text-royal">رفع الصورة</span>
+<div class="max-w-5xl mx-auto space-y-6">
+
+    <!-- ═══ Header ═══ -->
+    <div class="flex items-center justify-between">
+        <div>
+            <p class="text-gray-500 text-sm">أدخل مواعيد الامتحانات لكل مادة وفرع، وسيتم توليد جدول الإنتاج تلقائياً من الدورات الموجودة على المنصة</p>
         </div>
-        <div class="flex flex-col items-center">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white transition-colors duration-300" :class="step >= 2 ? 'bg-gold' : 'bg-gray-300'">2</div>
-            <span class="text-xs mt-2 font-semibold text-royal">التحليل الذكي</span>
-        </div>
-        <div class="flex flex-col items-center">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white transition-colors duration-300" :class="step >= 3 ? 'bg-gold' : 'bg-gray-300'">3</div>
-            <span class="text-xs mt-2 font-semibold text-royal">المراجعة والاعتماد</span>
-        </div>
+        <a href="{% url 'production_management:presentation' %}" class="px-4 py-2 rounded-lg gold-gradient text-sm font-bold hover:opacity-90 transition" target="_blank">
+            <i class="fa-solid fa-table-list ml-1"></i> عرض الجدول الزمني
+        </a>
     </div>
 
-    <!-- Step 1: Upload -->
-    <div x-show="step === 1" class="glass-card p-12 text-center border-2 border-dashed border-gray-300 hover:border-gold transition-colors duration-300 rounded-2xl cursor-pointer" @click="$refs.fileInput.click()">
-        <input type="file" x-ref="fileInput" class="hidden" @change="isUploading = true; setTimeout(() => { step = 2; isUploading = false; }, 1500)">
-        
-        <div x-show="!isUploading">
-            <div class="w-20 h-20 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
-                <i class="fa-solid fa-cloud-arrow-up"></i>
+    <!-- ═══ Add New Entry ═══ -->
+    <div class="glass-card p-5">
+        <h3 class="text-lg font-bold text-royal mb-4"><i class="fa-solid fa-plus-circle ml-2 text-gold"></i> إضافة موعد امتحان جديد</h3>
+        <form method="post" class="flex flex-wrap items-end gap-3">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_entry">
+            <div class="flex-1 min-w-[150px]">
+                <label class="block text-xs font-bold text-gray-600 mb-1">اسم المادة</label>
+                <input type="text" name="subject_name" required placeholder="مثال: الرياضيات"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-gold focus:ring-2 focus:ring-gold/20 outline-none text-sm">
             </div>
-            <h3 class="text-2xl font-bold text-royal mb-2">اسحب وأفلت صورة برنامج الامتحان هنا</h3>
-            <p class="text-gray-500 mb-6">أو انقر لاختيار ملف (يدعم PNG, JPG, PDF)</p>
-            <button class="bg-royal text-white px-8 py-3 rounded-xl font-bold hover:shadow-lg transition">تصفح الملفات</button>
-        </div>
-        
-        <div x-show="isUploading" class="py-8">
-            <i class="fa-solid fa-circle-notch fa-spin text-5xl text-gold mb-4"></i>
-            <h3 class="text-xl font-bold text-royal">جاري رفع الصورة...</h3>
-        </div>
-    </div>
-
-    <!-- Step 2: OCR Processing (Simulated) -->
-    <div x-show="step === 2" class="glass-card p-12 text-center rounded-2xl" x-init="$watch('step', value => { if(value === 2) setTimeout(() => step = 3, 3000) })">
-        <div class="relative w-32 h-32 mx-auto mb-6">
-            <div class="absolute inset-0 border-4 border-gray-100 rounded-full"></div>
-            <div class="absolute inset-0 border-4 border-gold rounded-full border-t-transparent animate-spin"></div>
-            <i class="fa-solid fa-microchip text-4xl text-royal absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></i>
-        </div>
-        <h3 class="text-2xl font-bold text-royal mb-2">محرك الذكاء الصناعي يقوم بتحليل الصورة</h3>
-        <p class="text-gray-500">جاري استخراج النصوص (OCR) وفهم بنية الجدول والتواريخ والمواد...</p>
-        
-        <div class="mt-8 space-y-2 max-w-sm mx-auto text-sm text-right text-gray-500 font-mono">
-            <p class="flex items-center gap-2"><i class="fa-solid fa-check text-green-500"></i> تم التعرف على النص بنجاح</p>
-            <p class="flex items-center gap-2 animate-pulse"><i class="fa-solid fa-spinner fa-spin text-gold"></i> جاري مطابقة المواد والفروع...</p>
-        </div>
-    </div>
-
-    <!-- Step 3: Review -->
-    <div x-show="step === 3" style="display: none;" class="glass-card p-6 rounded-2xl">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-bold text-royal">مراجعة النتائج المستخرجة</h3>
-            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold"><i class="fa-solid fa-check-circle mr-1"></i> دقة عالية 98%</span>
-        </div>
-        
-        <div class="overflow-x-auto border border-gray-200 rounded-lg mb-6">
-            <table class="w-full text-sm text-right">
-                <thead class="bg-gray-50 text-royal font-bold">
-                    <tr>
-                        <th class="px-4 py-3 border-b">المادة</th>
-                        <th class="px-4 py-3 border-b">الفرع</th>
-                        <th class="px-4 py-3 border-b">تاريخ الامتحان المستخرج</th>
-                        <th class="px-4 py-3 border-b">تاريخ التصوير المقترح</th>
-                        <th class="px-4 py-3 border-b">إجراء</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-3"><input type="text" value="الرياضيات" class="border p-1 rounded w-full"></td>
-                        <td class="px-4 py-3"><select class="border p-1 rounded w-full"><option selected>علمي</option></select></td>
-                        <td class="px-4 py-3 text-red-600 font-bold"><input type="date" value="2026-06-13" class="border p-1 rounded w-full"></td>
-                        <td class="px-4 py-3 text-royal font-bold">2026-06-03</td>
-                        <td class="px-4 py-3"><button class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button></td>
-                    </tr>
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-3"><input type="text" value="اللغة العربية" class="border p-1 rounded w-full"></td>
-                        <td class="px-4 py-3"><select class="border p-1 rounded w-full"><option selected>أدبي</option></select></td>
-                        <td class="px-4 py-3 text-red-600 font-bold"><input type="date" value="2026-06-21" class="border p-1 rounded w-full"></td>
-                        <td class="px-4 py-3 text-royal font-bold">2026-06-12</td>
-                        <td class="px-4 py-3"><button class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        
-        <div class="flex justify-end gap-4">
-            <button @click="step = 1" class="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition">إلغاء وإعادة الرفع</button>
-            <button class="gold-gradient px-8 py-2 rounded-lg text-white font-bold hover:shadow-lg transition">
-                <i class="fa-solid fa-calendar-check mr-2"></i> اعتماد وبناء خطة الإنتاج
+            <div class="min-w-[120px]">
+                <label class="block text-xs font-bold text-gray-600 mb-1">الفرع</label>
+                <select name="branch" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-gold outline-none text-sm">
+                    {% for value, label in branches %}
+                    <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="min-w-[150px]">
+                <label class="block text-xs font-bold text-gray-600 mb-1">تاريخ الامتحان</label>
+                <input type="date" name="exam_date" required class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-gold outline-none text-sm">
+            </div>
+            <div class="min-w-[100px]">
+                <label class="block text-xs font-bold text-gray-600 mb-1">المدة (ساعات)</label>
+                <input type="text" name="duration" value="2" class="w-full px-3 py-2 rounded-lg border border-gray-200 focus:border-gold outline-none text-sm">
+            </div>
+            <button type="submit" class="px-5 py-2 rounded-lg bg-royal text-white font-bold hover:bg-royal/90 transition text-sm">
+                <i class="fa-solid fa-plus ml-1"></i> إضافة
             </button>
+        </form>
+    </div>
+
+    <!-- ═══ Current Exam Schedule ═══ -->
+    <div class="glass-card p-5">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-royal">
+                <i class="fa-solid fa-calendar-days ml-2 text-gold"></i>
+                جدول الامتحانات الحالي
+                <span class="text-sm text-gray-400 font-normal mr-2">({{ exam_entries.count }} مادة)</span>
+            </h3>
         </div>
+
+        {% if exam_entries %}
+        <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="save_entries">
+            <div class="overflow-x-auto border border-gray-200 rounded-lg mb-4">
+                <table class="w-full text-sm text-right">
+                    <thead class="bg-gray-50 text-royal font-bold">
+                        <tr>
+                            <th class="px-4 py-3 border-b">#</th>
+                            <th class="px-4 py-3 border-b">المادة</th>
+                            <th class="px-4 py-3 border-b">الفرع</th>
+                            <th class="px-4 py-3 border-b">تاريخ الامتحان</th>
+                            <th class="px-4 py-3 border-b">وقت الامتحان</th>
+                            <th class="px-4 py-3 border-b">المدة</th>
+                            <th class="px-4 py-3 border-b">إجراء</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for entry in exam_entries %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 text-gray-400 font-bold">{{ forloop.counter }}</td>
+                            <td class="px-4 py-3">
+                                <input type="text" name="subject_name" value="{{ entry.subject_name }}"
+                                    class="border border-gray-200 p-1.5 rounded-lg w-full text-sm focus:border-gold outline-none">
+                            </td>
+                            <td class="px-4 py-3">
+                                <select name="branch" class="border border-gray-200 p-1.5 rounded-lg w-full text-sm focus:border-gold outline-none">
+                                    {% for value, label in branches %}
+                                    <option value="{{ value }}" {% if value == entry.branch %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td class="px-4 py-3">
+                                <input type="date" name="exam_date" value="{{ entry.exam_date|date:'Y-m-d' }}"
+                                    class="border border-gray-200 p-1.5 rounded-lg w-full text-sm focus:border-gold outline-none text-red-600 font-bold">
+                            </td>
+                            <td class="px-4 py-3">
+                                <input type="time" name="exam_time" value="{{ entry.exam_time|time:'H:i' }}"
+                                    class="border border-gray-200 p-1.5 rounded-lg w-full text-sm focus:border-gold outline-none">
+                            </td>
+                            <td class="px-4 py-3">
+                                <input type="text" name="duration" value="{{ entry.duration }}"
+                                    class="border border-gray-200 p-1.5 rounded-lg w-16 text-sm text-center focus:border-gold outline-none">
+                            </td>
+                            <td class="px-4 py-3">
+                                <button type="submit" form="delete-{{ entry.id }}" class="text-red-500 hover:text-red-700 transition">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-end gap-3">
+                <button type="submit" class="gold-gradient px-8 py-2.5 rounded-lg text-white font-bold hover:shadow-lg transition">
+                    <i class="fa-solid fa-save ml-2"></i> حفظ التعديلات وتوليد الجدول
+                </button>
+            </div>
+        </form>
+
+        <!-- Delete forms -->
+        {% for entry in exam_entries %}
+        <form id="delete-{{ entry.id }}" method="post" style="display:none;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_entry">
+            <input type="hidden" name="entry_id" value="{{ entry.id }}">
+        </form>
+        {% endfor %}
+
+        {% else %}
+        <div class="text-center py-12 text-gray-400">
+            <i class="fa-solid fa-calendar-xmark text-4xl mb-3"></i>
+            <p class="font-semibold mb-1">لم يتم إضافة مواعيد امتحانات بعد</p>
+            <p class="text-sm">أضف مواعيد الامتحانات من الأعلى ليتم توليد جدول الإنتاج تلقائياً من الدورات الموجودة</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- ═══ Info Box ═══ -->
+    <div class="glass-card p-5 border-r-4 border-gold">
+        <h4 class="font-bold text-royal text-sm mb-2"><i class="fa-solid fa-info-circle ml-2 text-gold"></i> كيف يعمل النظام؟</h4>
+        <ul class="text-sm text-gray-600 space-y-1.5 list-disc list-inside">
+            <li>أدخل مواعيد الامتحانات لكل مادة وفرع (من برنامج وزارة التربية)</li>
+            <li>عند الحفظ، يقوم النظام بمطابقة المواد مع <strong>الدورات الموجودة على المنصة</strong></li>
+            <li>يتم <strong>توليد جدول الإنتاج تلقائياً</strong> لكل دورة (تاريخ التصوير، المونتاج، التصميم...)</li>
+            <li>الأسعار تُؤخذ من <strong>سعر الدورة على المنصة</strong></li>
+            <li>يمكنك تعديل أي تاريخ ثم الضغط على "حفظ التعديلات"</li>
+        </ul>
     </div>
 </div>
 {% endblock %}
