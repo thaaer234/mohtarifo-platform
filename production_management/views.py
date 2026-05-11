@@ -279,6 +279,7 @@ class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
                 final_span = []
                 s_date = None
                 solved = False
+                current_walk = anchor
                 
                 # ATOMIC BLOCK VALIDATOR
                 for max_cap in [1, 2, 3]:
