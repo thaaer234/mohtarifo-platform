@@ -208,16 +208,27 @@ class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
                     'is_active': True,
                 }
             )
-            self._auto_generate_sessions()
+            self._auto_generate_sessions(clear_existing=True)
             return redirect('production_management:scanner')
+
+        elif action == 'regenerate_schedule':
+            # The master button requested by the user
+            self._auto_generate_sessions(clear_existing=True)
+            return redirect('production_management:scanner')
+
 
         return redirect('production_management:scanner')
 
-    def _auto_generate_sessions(self):
+    def _auto_generate_sessions(self, clear_existing=True):
         """Auto-generate production sessions from courses + exam schedule."""
         exam_entries = ExamScheduleEntry.objects.filter(is_active=True)
         if not exam_entries.exists():
             return
+
+        # Clear ALL strictly 'scheduled' ones that have NOT been confirmed or processed yet.
+        # Keeps confirmed, completed, and operational workflow states 100% untouched.
+        if clear_existing:
+            TeacherProductionSession.objects.filter(status='scheduled').delete()
 
         TRACK_MAP = {'scientific': 'science', 'literary': 'literal', 'ninth': 'ninth', 'general': 'literal'}
         courses = Course.objects.filter(
