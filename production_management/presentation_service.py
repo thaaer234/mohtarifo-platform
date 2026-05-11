@@ -181,6 +181,7 @@ class PresentationBuilder:
                 'status_display': session.get_status_display(),
                 'notes': session.notes or '',
                 'photo_url': session.teacher_photo_url,
+                'static_photo_path': session.course.instructor_cover_static_path if session.course else None,
             }
             all_rows.append(row)
             schedule_date = shooting_date + timedelta(days=1)
@@ -224,7 +225,8 @@ class PresentationBuilder:
                     'name': name, 
                     'sessions': [], 
                     'total_price': 0,
-                    'photo_url': row.get('photo_url')
+                    'photo_url': row.get('photo_url'),
+                    'static_photo_path': row.get('static_photo_path')
                 }
             teachers[name]['sessions'].append(row)
             teachers[name]['total_price'] += row['platform_price']
@@ -232,6 +234,8 @@ class PresentationBuilder:
             # Update photo if missing
             if not teachers[name]['photo_url'] and row.get('photo_url'):
                 teachers[name]['photo_url'] = row.get('photo_url')
+            if not teachers[name]['static_photo_path'] and row.get('static_photo_path'):
+                teachers[name]['static_photo_path'] = row.get('static_photo_path')
 
         cards = []
         for name, data in teachers.items():

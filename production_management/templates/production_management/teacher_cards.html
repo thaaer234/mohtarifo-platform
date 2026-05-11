@@ -1,4 +1,5 @@
 {% extends "production_management/base.html" %}
+{% load static %}
 {% block title %}بطاقات المدرسين - نظام الإنتاج{% endblock %}
 {% block page_title %}<i class="fa-solid fa-id-card mr-2 text-gold"></i> بطاقات المدرسين{% endblock %}
 
@@ -14,12 +15,18 @@
 {% for session in sessions %}
     <div class="glass-card p-5 hover:shadow-lg">
         <div class="flex items-center gap-3 mb-3 pb-3 border-b border-gray-100">
-            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-royal to-blue-500 flex items-center justify-center text-white font-bold text-lg border-2 border-gold">
-                {{ session.teacher_name|truncatechars:2 }}
+            <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-gold bg-gradient-to-br from-royal to-blue-500 flex items-center justify-center text-white font-bold flex-shrink-0">
+                {% if session.course and session.course.instructor_cover_static_path %}
+                    <img src="{% static session.course.instructor_cover_static_path %}" class="w-full h-full object-cover">
+                {% elif session.teacher_photo_url %}
+                    <img src="{{ session.teacher_photo_url }}" class="w-full h-full object-cover">
+                {% else %}
+                    {{ session.instructor_name|truncatechars:2 }}
+                {% endif %}
             </div>
             <div>
-                <h3 class="font-bold text-royal">{{ session.teacher_name }}</h3>
-                <p class="text-xs text-gray-500">{{ session.subject }} - {{ session.get_branch_display }}</p>
+                <h3 class="font-bold text-royal">{{ session.instructor_name }}</h3>
+                <p class="text-xs text-gray-500">{{ session.subject_name }} - {{ session.get_branch_display }}</p>
             </div>
         </div>
         <div class="space-y-2 text-sm">

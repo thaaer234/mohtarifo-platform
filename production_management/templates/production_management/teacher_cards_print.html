@@ -269,7 +269,9 @@
     <div class="tc">
         <!-- Photo Side -->
         <div class="tc-photo">
-            {% if card.photo_url %}
+            {% if card.static_photo_path %}
+                <img src="{% static card.static_photo_path %}" alt="{{ card.name }}">
+            {% elif card.photo_url %}
                 <img src="{{ card.photo_url }}" alt="{{ card.name }}">
             {% else %}
                 <div class="tc-photo-placeholder">
