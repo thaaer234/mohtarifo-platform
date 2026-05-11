@@ -4,13 +4,16 @@ from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
+from django.http import JsonResponse
 from datetime import timedelta
+import json
 
 from .models import (
     TeacherProductionSession, ProductionTask, ProductionMember,
     ProductionCost, ProductionStatus
 )
 from .services import SmartSchedulingEngine
+from .presentation_service import PresentationBuilder
 
 class IsProductionStaffMixin(UserPassesTestMixin):
     def test_func(self):
@@ -141,3 +144,65 @@ class PrintEngineView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
 
 class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
     template_name = 'production_management/scanner.html'
+
+
+class PresentationView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
+    """
+    Interactive Presentation View for Exam Production Program.
+    Generates a full slideshow with grid tables, teacher cards,
+    smart scheduling, and pricing.
+    """
+    template_name = 'production_management/presentation.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        presentation = PresentationBuilder.build_presentation_data()
+        context.update(presentation)
+
+        # Serialize dates for JavaScript
+        for slide in context.get('grid_slides', []):
+            for row in slide:
+                row['exam_date_str'] = row['exam_date'].strftime('%d-%m-%Y') if row['exam_date'] else ''
+                row['shooting_date_str'] = row['shooting_date'].strftime('%d-%m-%Y') if row['shooting_date'] else ''
+
+        for card in context.get('teacher_cards', []):
+            for session in card['sessions']:
+                session['exam_date_str'] = session['exam_date'].strftime('%d-%m-%Y') if session['exam_date'] else ''
+                session['shooting_date_str'] = session['shooting_date'].strftime('%d-%m-%Y') if session['shooting_date'] else ''
+
+        return context
+
+
+class PresentationAPIView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
+    """JSON API for presentation data."""
+
+    def get(self, request, *args, **kwargs):
+        presentation = PresentationBuilder.build_presentation_data()
+
+        # Convert dates to strings for JSON
+        def serialize_row(row):
+            return {
+                'id': row['id'],
+                'teacher_name': row['teacher_name'],
+                'subject': row['subject'],
+                'branch': row['branch'],
+                'branch_code': row['branch_code'],
+                'exam_date': row['exam_date'].strftime('%d-%m-%Y') if row['exam_date'] else '',
+                'shooting_date': row['shooting_date'].strftime('%d-%m-%Y') if row['shooting_date'] else '',
+                'status': row['status'],
+                'status_display': row['status_display'],
+                'platform_price': float(row['platform_price']),
+                'price_display': row['price_display'],
+                'shoot_hours': row['shoot_hours'],
+                'edit_hours': row['edit_hours'],
+            }
+
+        data = {
+            'rows': [serialize_row(r) for r in presentation['all_rows']],
+            'stats': {
+                'total_sessions': presentation['stats']['total_sessions'],
+                'total_teachers': presentation['stats']['total_teachers'],
+                'total_revenue': presentation['stats']['total_revenue'],
+            },
+        }
+        return JsonResponse(data, json_dumps_params={'ensure_ascii': False})

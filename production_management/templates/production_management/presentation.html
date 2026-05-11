@@ -1,0 +1,344 @@
+{% extends "dashboard/base_print_dashboard.html" %}
+{% load static %}
+
+{% block title %}برنامج تصوير ومونتاج الجلسات الامتحانية 2026 - معهد اليمان{% endblock %}
+
+{% block report_name %}برنامج تصوير ومونتاج الجلسات الامتحانية 2026{% endblock %}
+{% block report_subtitle %}معهد اليمان • خطة الإنتاج الشاملة • جدولة ذكية{% endblock %}
+
+{% block extra_meta %}
+<div>🎬 إجمالي الجلسات: {{ stats.total_sessions }}</div>
+<div>💰 إجمالي الإيرادات: {{ stats.total_revenue }}</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ═══ A4 Landscape ═══ */
+    @page {
+        size: A4 landscape !important;
+        margin: 0.8cm;
+    }
+    @media print {
+        body { font-size: 9pt; }
+        .page-wrapper { padding: 0.5rem; }
+        .report-header { margin-bottom: 0.75rem; padding-bottom: 0.6rem; }
+        .report-banner { margin-bottom: 1rem; padding: 0.6rem; }
+        .report-banner h2 { font-size: 1.1rem; }
+        .section-title { margin: 0.8rem 0 0.5rem 0; font-size: 0.9rem; }
+        .stats-grid { margin-bottom: 0.8rem; gap: 0.4rem; }
+        .stat-box { padding: 0.4rem; }
+        .stat-box .val { font-size: 1rem; }
+        .stat-box .lbl { font-size: 0.6rem; }
+        table { font-size: 0.7rem; margin-bottom: 0.5rem; }
+        th { padding: 0.35rem 0.3rem; font-size: 0.7rem; }
+        td { padding: 0.3rem; }
+        .teacher-cards-grid { gap: 0.5rem; }
+        .t-card { padding: 0.5rem; }
+        .pricing-legend { margin-bottom: 0.5rem; padding: 0.4rem; }
+        .page-break { page-break-before: always; }
+    }
+
+    /* ═══ Pricing Badges ═══ */
+    .price-tag {
+        display: inline-block; padding: 0.15rem 0.5rem; border-radius: 100px;
+        font-weight: 800; font-size: 0.72rem; white-space: nowrap;
+    }
+    .price-75 { background: rgba(16,185,129,0.1); color: #059669; }
+    .price-100 { background: rgba(59,130,246,0.1); color: #2563eb; }
+    .price-150 { background: rgba(245,158,11,0.1); color: #d97706; }
+    .price-200 { background: rgba(239,68,68,0.1); color: #dc2626; }
+
+    /* ═══ Branch Badges ═══ */
+    .branch-tag {
+        display: inline-block; padding: 0.15rem 0.5rem; border-radius: 100px;
+        font-weight: 700; font-size: 0.7rem; white-space: nowrap;
+    }
+    .branch-ninth { background: rgba(16,185,129,0.1); color: #059669; }
+    .branch-science { background: rgba(59,130,246,0.1); color: #2563eb; }
+    .branch-literal { background: rgba(139,92,246,0.1); color: #7c3aed; }
+
+    /* ═══ Status Badge ═══ */
+    .status-tag {
+        display: inline-block; padding: 0.15rem 0.5rem; border-radius: 100px;
+        font-weight: 700; font-size: 0.68rem;
+    }
+    .status-scheduled { background: rgba(245,158,11,0.1); color: #d97706; }
+    .status-shooting { background: rgba(59,130,246,0.1); color: #2563eb; }
+    .status-editing { background: rgba(139,92,246,0.1); color: #7c3aed; }
+    .status-completed { background: rgba(16,185,129,0.1); color: #059669; }
+
+    /* ═══ Row Number ═══ */
+    .row-num {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 22px; height: 22px; border-radius: 50%;
+        background: var(--bg-surface-elevated); border: 1px solid var(--border-light);
+        font-size: 0.7rem; font-weight: 800; color: var(--text-muted);
+    }
+
+    /* ═══ Pricing Legend ═══ */
+    .pricing-legend {
+        display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;
+        padding: 0.6rem 1rem; background: var(--bg-surface-elevated);
+        border: 1px solid var(--border-light); border-radius: var(--radius-md);
+        margin-bottom: 1.2rem; font-size: 0.78rem;
+    }
+    .pricing-legend .legend-title {
+        font-weight: 800; color: var(--primary-dark); margin-left: 1rem;
+    }
+
+    /* ═══ Teacher Cards ═══ */
+    .teacher-cards-grid {
+        display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;
+    }
+    .t-card {
+        border: 1.5px solid var(--border-light); border-radius: var(--radius-md);
+        padding: 0.8rem; background: var(--bg-surface); transition: var(--transition-smooth);
+        position: relative; overflow: hidden;
+    }
+    .t-card::before {
+        content: ''; position: absolute; top: 0; right: 0; left: 0; height: 3px;
+        background: linear-gradient(90deg, var(--brand-gold), var(--info));
+    }
+    .t-card:hover { border-color: var(--brand-gold); box-shadow: var(--shadow-glow); }
+    .t-card-header {
+        display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border-light); padding-bottom: 0.5rem;
+    }
+    .t-avatar {
+        width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+        background: linear-gradient(135deg, var(--primary-dark), var(--info));
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-weight: 800; font-size: 0.85rem;
+        border: 2px solid var(--brand-gold);
+    }
+    .t-name { font-weight: 800; color: var(--primary-dark); font-size: 0.85rem; }
+    .t-meta { font-size: 0.7rem; color: var(--text-muted); }
+    .t-card table { font-size: 0.72rem; margin-bottom: 0; }
+    .t-card th { padding: 0.3rem 0.4rem; font-size: 0.68rem; }
+    .t-card td { padding: 0.25rem 0.4rem; }
+
+    /* ═══ Production Hours ═══ */
+    .hours-bar {
+        display: inline-block; height: 5px; border-radius: 3px;
+        background: linear-gradient(90deg, var(--brand-gold), var(--info));
+        vertical-align: middle; margin-left: 4px;
+    }
+
+    /* ═══ Schedule Info Box ═══ */
+    .schedule-info {
+        display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.2rem;
+    }
+    .schedule-box {
+        flex: 1; min-width: 200px; padding: 0.6rem 1rem;
+        border: 1px solid var(--border-light); border-radius: var(--radius-md);
+        background: var(--bg-surface-elevated); font-size: 0.8rem;
+    }
+    .schedule-box .sb-label { font-weight: 800; color: var(--primary-dark); margin-bottom: 0.2rem; }
+    .schedule-box .sb-value { color: var(--brand-gold-dark); font-weight: 700; }
+</style>
+{% endblock %}
+
+{% block report_body %}
+
+<!-- ═══ Statistics Cards ═══ -->
+<div class="stats-grid">
+    <div class="stat-box">
+        <span class="lbl">🎬 إجمالي الجلسات</span>
+        <span class="val">{{ stats.total_sessions }}</span>
+    </div>
+    <div class="stat-box">
+        <span class="lbl">👨‍🏫 عدد المدرسين</span>
+        <span class="val">{{ stats.total_teachers }}</span>
+    </div>
+    <div class="stat-box">
+        <span class="lbl">💰 إجمالي الإيرادات</span>
+        <span class="val" style="color: var(--success);">{{ stats.total_revenue }}</span>
+    </div>
+    <div class="stat-box">
+        <span class="lbl">🟢 جلسات تاسع</span>
+        <span class="val" style="color: #059669;">{{ stats.ninth_count }}</span>
+    </div>
+    <div class="stat-box">
+        <span class="lbl">🔵 جلسات علمي</span>
+        <span class="val" style="color: #2563eb;">{{ stats.science_count }}</span>
+    </div>
+    <div class="stat-box">
+        <span class="lbl">🟣 جلسات أدبي</span>
+        <span class="val" style="color: #7c3aed;">{{ stats.literal_count }}</span>
+    </div>
+</div>
+
+<!-- ═══ Schedule Info ═══ -->
+<div class="schedule-info">
+    <div class="schedule-box">
+        <div class="sb-label">📅 بدء الجدولة</div>
+        <div class="sb-value">17-05-2026</div>
+    </div>
+    {% if stats.first_exam %}
+    <div class="schedule-box">
+        <div class="sb-label">🏁 أول امتحان</div>
+        <div class="sb-value">{{ stats.first_exam|date:"d-m-Y" }}</div>
+    </div>
+    {% endif %}
+    {% if stats.last_exam %}
+    <div class="schedule-box">
+        <div class="sb-label">🔚 آخر امتحان</div>
+        <div class="sb-value">{{ stats.last_exam|date:"d-m-Y" }}</div>
+    </div>
+    {% endif %}
+    <div class="schedule-box">
+        <div class="sb-label">📊 عدد المواد</div>
+        <div class="sb-value">{{ stats.total_subjects }}</div>
+    </div>
+</div>
+
+<!-- ═══ Pricing Legend ═══ -->
+<div class="pricing-legend">
+    <span class="legend-title">💲 دليل التسعير:</span>
+    <span><span class="price-tag price-75">75 ألف</span> مواد تاسع</span>
+    <span><span class="price-tag price-100">100 ألف</span> أدبي</span>
+    <span><span class="price-tag price-150">150 ألف</span> فلسفة / فيزياء علمي</span>
+    <span><span class="price-tag price-200">200 ألف</span> رياضيات علمي</span>
+</div>
+
+<!-- ═══ MAIN TABLE: All Sessions ═══ -->
+<h3 class="section-title">📋 جدول الإنتاج الشامل</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th style="width:30px;">#</th>
+            <th>المدرّس</th>
+            <th>المادة</th>
+            <th>الفرع</th>
+            <th>📅 تاريخ الامتحان</th>
+            <th>🎬 تاريخ التصوير</th>
+            <th>⏱ تصوير</th>
+            <th>✂️ مونتاج</th>
+            <th>💰 سعر المنصة</th>
+            <th>الحالة</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in all_rows %}
+        <tr>
+            <td class="text-center"><span class="row-num">{{ forloop.counter }}</span></td>
+            <td style="font-weight:700; color:var(--primary-dark);">{{ row.teacher_name }}</td>
+            <td>{{ row.subject }}</td>
+            <td class="text-center">
+                <span class="branch-tag branch-{{ row.branch_code }}">{{ row.branch }}</span>
+            </td>
+            <td class="text-center font-mono">{{ row.exam_date_str }}</td>
+            <td class="text-center font-mono">{{ row.shooting_date_str }}</td>
+            <td class="text-center">
+                {{ row.shoot_hours }} س
+                <span class="hours-bar" style="width: {% widthratio row.platform_price 200000 40 %}px;"></span>
+            </td>
+            <td class="text-center">
+                {{ row.edit_hours }} س
+                <span class="hours-bar" style="width: {% widthratio row.platform_price 200000 50 %}px;"></span>
+            </td>
+            <td class="text-center">
+                {% if row.platform_price >= 200000 %}
+                    <span class="price-tag price-200">{{ row.price_display }}</span>
+                {% elif row.platform_price >= 150000 %}
+                    <span class="price-tag price-150">{{ row.price_display }}</span>
+                {% elif row.platform_price >= 100000 %}
+                    <span class="price-tag price-100">{{ row.price_display }}</span>
+                {% else %}
+                    <span class="price-tag price-75">{{ row.price_display }}</span>
+                {% endif %}
+            </td>
+            <td class="text-center">
+                <span class="status-tag status-{{ row.status }}">{{ row.status_display }}</span>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="10" class="text-center" style="padding:2rem; color:var(--text-muted);">
+                ⚠️ لا توجد جلسات إنتاجية. استخدم الأمر <code>python manage.py seed_exam_sessions</code> لإدخال البيانات.
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    {% if all_rows %}
+    <tfoot>
+        <tr>
+            <td colspan="8" style="text-align:right; font-weight:800;">الإجمالي ({{ stats.total_sessions }} جلسة)</td>
+            <td class="text-center" style="font-weight:900; color:var(--brand-gold-dark);">{{ stats.total_revenue }}</td>
+            <td></td>
+        </tr>
+    </tfoot>
+    {% endif %}
+</table>
+
+<!-- ═══ PAGE BREAK: Teacher Cards ═══ -->
+<div class="page-break"></div>
+
+<h3 class="section-title">🪪 بطاقات المدرسين</h3>
+
+<div class="teacher-cards-grid">
+    {% for card in teacher_cards %}
+    <div class="t-card">
+        <div class="t-card-header">
+            <div class="t-avatar">{{ card.name|truncatechars:2 }}</div>
+            <div>
+                <div class="t-name">{{ card.name }}</div>
+                <div class="t-meta">{{ card.session_count }} جلسة • إجمالي: {{ card.total_price_display }}</div>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>المادة</th>
+                    <th>الفرع</th>
+                    <th>الامتحان</th>
+                    <th>التصوير</th>
+                    <th>السعر</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in card.sessions %}
+                <tr>
+                    <td style="font-weight:600;">{{ s.subject }}</td>
+                    <td class="text-center"><span class="branch-tag branch-{{ s.branch_code }}">{{ s.branch }}</span></td>
+                    <td class="text-center font-mono">{{ s.exam_date_str }}</td>
+                    <td class="text-center font-mono">{{ s.shooting_date_str }}</td>
+                    <td class="text-center">
+                        {% if s.platform_price >= 200000 %}<span class="price-tag price-200">{{ s.price_display }}</span>
+                        {% elif s.platform_price >= 150000 %}<span class="price-tag price-150">{{ s.price_display }}</span>
+                        {% elif s.platform_price >= 100000 %}<span class="price-tag price-100">{{ s.price_display }}</span>
+                        {% else %}<span class="price-tag price-75">{{ s.price_display }}</span>{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- ═══ Scheduling Logic Note ═══ -->
+<div class="page-break"></div>
+<h3 class="section-title">⚙️ منطق الجدولة الذكية</h3>
+
+<div class="schedule-info" style="margin-bottom:0.8rem;">
+    <div class="schedule-box" style="flex:1;">
+        <div class="sb-label">🔬 المواد العلمية</div>
+        <div class="sb-value">تصوير: 4-6 ساعات • مونتاج: 5-8 ساعات</div>
+    </div>
+    <div class="schedule-box" style="flex:1;">
+        <div class="sb-label">🌍 اللغات</div>
+        <div class="sb-value">تصوير: 3-5 ساعات • مونتاج: 4-6 ساعات</div>
+    </div>
+    <div class="schedule-box" style="flex:1;">
+        <div class="sb-label">📖 المواد النظرية</div>
+        <div class="sb-value">تصوير: 2-4 ساعات • مونتاج: 3-5 ساعات</div>
+    </div>
+</div>
+
+<div class="alert-box alert-success">
+    ✅ الأولوية للمواد التي امتحانها أقرب • بدء الجدولة من 17-05-2026 • إضافة Buffer زمني قبل الامتحان
+</div>
+
+{% endblock %}

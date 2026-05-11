@@ -15,4 +15,6 @@ urlpatterns = [
     path('financial/', views.FinancialStatsView.as_view(), name='financial_stats'),
     path('print/', views.PrintEngineView.as_view(), name='print_engine'),
     path('scanner/', views.ScannerView.as_view(), name='scanner'),
+    path('presentation/', views.PresentationView.as_view(), name='presentation'),
+    path('api/presentation/', views.PresentationAPIView.as_view(), name='presentation_api'),
 ]
