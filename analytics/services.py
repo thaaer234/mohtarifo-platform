@@ -110,19 +110,34 @@ class TrackingService:
         """
         try:
             from .models import LandingVisit
-            import user_agents
             
             ua_string = request.META.get('HTTP_USER_AGENT', '')
-            user_agent = user_agents.parse(ua_string)
             
+            try:
+                import user_agents
+                user_agent = user_agents.parse(ua_string)
+                is_mobile = user_agent.is_mobile
+                is_tablet = user_agent.is_tablet
+                is_bot = user_agent.is_bot
+                os_family = user_agent.os.family
+                browser_family = user_agent.browser.family
+            except ImportError:
+                # Manual fallback if library is missing on production server
+                ua_lower = ua_string.lower()
+                is_bot = 'bot' in ua_lower or 'spider' in ua_lower or 'crawl' in ua_lower
+                is_tablet = 'tablet' in ua_lower or 'ipad' in ua_lower
+                is_mobile = 'mobile' in ua_lower or 'android' in ua_lower or 'iphone' in ua_lower
+                os_family = 'Windows' if 'windows' in ua_lower else 'Android' if 'android' in ua_lower else 'iOS' if 'iphone' in ua_lower else 'Mac' if 'mac' in ua_lower else 'Unknown'
+                browser_family = 'Chrome' if 'chrome' in ua_lower and 'edg' not in ua_lower else 'Edge' if 'edg' in ua_lower else 'Safari' if 'safari' in ua_lower else 'Firefox' if 'firefox' in ua_lower else 'Unknown'
+
             # Categorize device
             device_type = "pc"
-            if user_agent.is_mobile:
-                device_type = "mobile"
-            elif user_agent.is_tablet:
-                device_type = "tablet"
-            elif user_agent.is_bot:
+            if is_bot:
                 device_type = "bot"
+            elif is_tablet:
+                device_type = "tablet"
+            elif is_mobile:
+                device_type = "mobile"
                 
             # Extract IP Address
             x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
