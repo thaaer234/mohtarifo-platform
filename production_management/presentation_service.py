@@ -110,8 +110,8 @@ class PresentationBuilder:
         shoot = max(current_date, cls.SCHEDULE_START_DATE)
         if shoot > latest:
             shoot = latest
-        # Skip Fridays
-        if shoot.weekday() == 4:
+        # Skip Eid Holidays 2026 (roughly May 27, 28, 29)
+        while shoot.year == 2026 and shoot.month == 5 and shoot.day in [27, 28, 29]:
             shoot -= timedelta(days=1)
         return shoot
 
