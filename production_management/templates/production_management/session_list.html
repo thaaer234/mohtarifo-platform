@@ -43,7 +43,7 @@
             </thead>
             <tbody class="divide-y divide-gray-100">
                 {% for session in sessions %}
-                <tr class="hover:bg-gray-50 transition relative"
+                <tr class="hover:bg-gray-50 transition relative {% if session.status == 'confirmed' %}bg-yellow-50{% endif %}"
                     x-data="{
                         edit: false,
                         saving: false,

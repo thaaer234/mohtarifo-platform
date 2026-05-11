@@ -10,24 +10,52 @@
             <i class="fa-solid fa-table ml-1"></i> عرض الجدول الزمني
         </a>
     </div>
-    <div id="calendar-grid" class="grid grid-cols-7 gap-2 text-center">
-        <div class="font-bold text-sm py-2 text-gold">السبت</div>
-        <div class="font-bold text-sm py-2 text-gold">الأحد</div>
-        <div class="font-bold text-sm py-2 text-gold">الاثنين</div>
-        <div class="font-bold text-sm py-2 text-gold">الثلاثاء</div>
-        <div class="font-bold text-sm py-2 text-gold">الأربعاء</div>
-        <div class="font-bold text-sm py-2 text-gold">الخميس</div>
-        <div class="font-bold text-sm py-2 text-gold">الجمعة</div>
+    <!-- Responsive Wrapping -->
+    <div class="overflow-x-auto -mx-2 px-2">
+        <div class="min-w-[600px]">
+            <div id="calendar-grid" class="grid grid-cols-7 gap-2 text-center">
+                <div class="font-bold text-sm py-2 text-gold">السبت</div>
+                <div class="font-bold text-sm py-2 text-gold">الأحد</div>
+                <div class="font-bold text-sm py-2 text-gold">الاثنين</div>
+                <div class="font-bold text-sm py-2 text-gold">الثلاثاء</div>
+                <div class="font-bold text-sm py-2 text-gold">الأربعاء</div>
+                <div class="font-bold text-sm py-2 text-gold">الخميس</div>
+                <div class="font-bold text-sm py-2 text-gold">الجمعة</div>
+            </div>
+            <div id="calendar-days" class="grid grid-cols-7 gap-2 mt-2"></div>
+        </div>
     </div>
-    <div id="calendar-days" class="grid grid-cols-7 gap-2 mt-2"></div>
 </div>
 
 <!-- Legend -->
-<div class="glass-card p-4">
-    <div class="flex flex-wrap gap-4 text-sm">
-        <span><span class="inline-block w-3 h-3 rounded-full bg-red-400 ml-1"></span> يوم امتحان</span>
-        <span><span class="inline-block w-3 h-3 rounded-full bg-blue-400 ml-1"></span> يوم تصوير</span>
-        <span><span class="inline-block w-3 h-3 rounded-full bg-green-400 ml-1"></span> جلسة مكتملة</span>
+<div class="glass-card p-4 grid grid-cols-2 md:grid-cols-5 gap-4 text-sm mb-6">
+    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-emerald-100 border border-emerald-300"></span> متاح كلياً</div>
+    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-amber-50 border border-amber-200"></span> محجوز جزئياً (1/2)</div>
+    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-red-100 border border-red-300"></span> ممتلئ كلياً (2/2)</div>
+    <div class="flex items-center gap-2"><span class="w-3 h-3 rounded bg-gray-200 border border-gray-300"></span> عطلة / الجمعة</div>
+    <div class="flex items-center gap-2"><span>⭐</span> مصادق عليه</div>
+</div>
+
+<!-- Detailed Daily Report Section -->
+<div class="glass-card p-6">
+    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-clipboard-list text-royal"></i>
+        تقرير الشواغر والأيام المفصل
+    </h3>
+    <div class="overflow-x-auto">
+        <table class="w-full text-sm text-right border-collapse">
+            <thead>
+                <tr class="bg-gray-50 border-b text-gray-600 font-bold">
+                    <th class="p-3">التاريخ</th>
+                    <th class="p-3">حالة الإشغال</th>
+                    <th class="p-3">الجلسات المجدولة</th>
+                    <th class="p-3">المقاعد المتاحة</th>
+                </tr>
+            </thead>
+            <tbody id="daily-report-body" class="divide-y divide-gray-100">
+                <!-- Will be populated via JS -->
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}
@@ -48,34 +76,97 @@ const sessions = [
 
 function buildCalendar(year, month) {
     const container = document.getElementById('calendar-days');
+    const reportBody = document.getElementById('daily-report-body');
     container.innerHTML = '';
+    reportBody.innerHTML = '';
+
     const firstDay = new Date(year, month, 1);
-    // Saturday = 6 in JS, we want Saturday first
     let startOffset = (firstDay.getDay() + 1) % 7;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    let reportHtml = '';
 
     for (let i = 0; i < startOffset; i++) {
         container.innerHTML += '<div class="p-2"></div>';
     }
 
+    const arabicDayNames = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+
     for (let d = 1; d <= daysInMonth; d++) {
+        const dateObj = new Date(year, month, d);
         const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const isFriday = dateObj.getDay() === 5; 
+        const dayName = arabicDayNames[dateObj.getDay()];
+        
         const exams = sessions.filter(s => s.exam === dateStr);
         const shoots = sessions.filter(s => s.shoot === dateStr);
-        let cls = 'p-2 rounded-lg border text-sm min-h-[60px] ';
-        let content = `<div class="font-bold">${d}</div>`;
+        
+        let cls = 'p-2 rounded-lg border text-sm min-h-[80px] flex flex-col transition shadow-sm ';
+        let content = `<div class="flex justify-between items-center mb-1"><span class="font-bold text-gray-700">${d}</span>`;
+        
+        let rowStatusHtml = '';
+        let rowSessionsHtml = '-';
+        let rowAvailabilityHtml = '';
 
-        if (exams.length) {
-            cls += 'bg-red-50 border-red-200 ';
-            exams.forEach(e => { content += `<div class="text-[10px] text-red-600 truncate">📋 ${e.subject}</div>`; });
-        } else if (shoots.length) {
-            cls += 'bg-blue-50 border-blue-200 ';
-            shoots.forEach(s => { content += `<div class="text-[10px] text-blue-600 truncate">🎬 ${s.teacher}</div>`; });
+        if (isFriday) {
+            cls += 'bg-gray-200 border-gray-300 text-gray-400 ';
+            content += `<span class="text-[8px] font-bold text-gray-500">مغلق</span></div>`;
+            content += `<div class="flex-1 flex items-center justify-center text-[9px] italic">عطلة</div>`;
+            
+            rowStatusHtml = `<span class="bg-gray-200 text-gray-600 px-2 py-1 rounded text-xs">عطلة أسبوعية</span>`;
+            rowAvailabilityHtml = `<span class="font-bold text-gray-400">0 / 0</span>`;
+        } else if (shoots.length >= 2) {
+            cls += 'bg-red-100 border-red-300 ';
+            content += `<span class="text-[9px] font-bold text-red-600 px-1 bg-red-200 rounded">ممتلئ</span></div>`;
+            
+            let innerSessions = [];
+            shoots.forEach(s => {
+                const isConfirmed = s.status === 'confirmed';
+                content += `<div class="text-[9px] font-semibold text-red-700 bg-white/50 px-1 rounded mb-0.5 truncate">
+                    ${isConfirmed ? '⭐ ' : '🎬 '}${s.teacher}
+                </div>`;
+                innerSessions.push(`<span class="inline-block bg-white border border-red-200 px-1.5 rounded text-xs text-red-700 mr-1">${isConfirmed ? '⭐ ' : ''}${s.teacher}</span>`);
+            });
+            
+            rowStatusHtml = `<span class="bg-red-100 text-red-700 border border-red-300 px-2 py-1 rounded text-xs font-bold">⛔ ممتلئ بالكامل</span>`;
+            rowSessionsHtml = innerSessions.join(' ');
+            rowAvailabilityHtml = `<b class="text-red-600">0 شاغر</b>`;
+        } else if (shoots.length === 1) {
+            cls += 'bg-amber-50 border-amber-200 ';
+            content += `<span class="text-[9px] font-bold text-amber-600">شاغر 1</span></div>`;
+            const s = shoots[0];
+            const isConfirmed = s.status === 'confirmed';
+            content += `<div class="text-[9px] font-semibold text-amber-800 bg-white/50 px-1 rounded mb-0.5 truncate">
+                ${isConfirmed ? '⭐ ' : '🎬 '}${s.teacher}
+            </div>`;
+            
+            rowStatusHtml = `<span class="bg-amber-100 text-amber-800 border border-amber-300 px-2 py-1 rounded text-xs font-bold">⚠️ محجوز جزئياً</span>`;
+            rowSessionsHtml = `<span class="inline-block bg-white border px-1.5 rounded text-xs text-amber-800">${isConfirmed ? '⭐ ' : ''}${s.teacher}</span>`;
+            rowAvailabilityHtml = `<b class="text-amber-600">1 مقعد متاح</b>`;
         } else {
-            cls += 'bg-white border-gray-100 ';
+            cls += 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100 cursor-pointer ';
+            content += `<span class="text-[9px] font-bold text-emerald-600">متاح</span></div>`;
+            
+            rowStatusHtml = `<span class="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-1 rounded text-xs font-bold">✅ متاح كلياً</span>`;
+            rowAvailabilityHtml = `<b class="text-emerald-600">2 مقعد متاح</b>`;
         }
+
+        if (exams.length > 0) {
+            let examText = exams.map(e => e.subject).join('، ');
+            content += `<div class="mt-auto text-[8px] font-bold text-blue-700 border-t border-blue-200/30 pt-0.5 truncate">📋 ${examText}</div>`;
+        }
+
         container.innerHTML += `<div class="${cls}">${content}</div>`;
+        
+        // Add Row to Linear Report
+        reportHtml += `<tr class="hover:bg-gray-50 transition ${isFriday ? 'bg-gray-50/50 opacity-70' : ''}">
+            <td class="p-3 whitespace-nowrap font-medium">${d}/${month+1} - ${dayName}</td>
+            <td class="p-3">${rowStatusHtml}</td>
+            <td class="p-3">${rowSessionsHtml}</td>
+            <td class="p-3">${rowAvailabilityHtml}</td>
+        </tr>`;
     }
+    reportBody.innerHTML = reportHtml;
 }
 
 // Show June 2026

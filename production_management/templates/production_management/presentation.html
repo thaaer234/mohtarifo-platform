@@ -91,6 +91,12 @@
     /* ═══ Time cell ═══ */
     .time-cell { font-family:'Inter',monospace; font-weight:600; font-size:0.7rem; color:var(--text-secondary); }
     .teacher-cell { font-weight:700; color:var(--primary-dark); text-align:right!important; white-space:nowrap; }
+
+    /* ═══ Highlight Confirmed Rows ═══ */
+    .schedule-table tbody tr.tr-confirmed td { 
+        background-color: #ffffdf !important; /* Extremely light yellow highlight */
+        border-bottom-color: #facc15 !important;
+    }
 </style>
 {% endblock %}
 
@@ -139,7 +145,7 @@
     </thead>
     <tbody>
         {% for row in slide %}
-        <tr>
+        <tr class="{% if row.status == 'confirmed' %}tr-confirmed{% endif %}">
             <td class="teacher-cell">{{ row.teacher_name }}</td>
             <td>{{ row.subject }}</td>
             <td>

@@ -197,7 +197,7 @@
                 </thead>
                 <tbody>
                     {% for session in sessions %}
-                    <tr>
+                    <tr {% if session.status == 'confirmed' %}style="background-color: #ffffdf !important;"{% endif %}>
                         <td class="font-bold">{{ forloop.counter }}</td>
                         <td class="font-semibold royal-text">{{ session.teacher_name }}</td>
                         <td>{{ session.subject }}</td>

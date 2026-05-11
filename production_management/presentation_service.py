@@ -4,6 +4,7 @@ Builds the full auto-generated production schedule from TeacherProductionSession
 Calculates shooting dates, production times, costs, priorities.
 """
 from datetime import date, timedelta
+from django.db.models import Case, When, IntegerField
 from collections import OrderedDict
 from .models import TeacherProductionSession, ProductionCost, ProductionStatus
 
@@ -124,10 +125,16 @@ class PresentationBuilder:
 
     @classmethod
     def build_presentation_data(cls):
-        sessions = TeacherProductionSession.objects.all().select_related(
+        sessions = TeacherProductionSession.objects.annotate(
+            status_rank=Case(
+                When(status='confirmed', then=0),
+                default=1,
+                output_field=IntegerField(),
+            )
+        ).select_related(
             'cost', 'room', 'course', 'course__instructor', 
             'course__subject', 'course__instructor__instructor_profile'
-        ).order_by('shooting_date', 'exam_date', 'teacher_name')
+        ).order_by('status_rank', 'shooting_date', 'exam_date', 'teacher_name')
 
         if not sessions.exists():
             return cls._empty_data()
@@ -179,7 +186,7 @@ class PresentationBuilder:
                 'priority': i + 1,
                 'shooting_date': shooting_date,
                 'shooting_date_str': shooting_date.strftime('%Y-%m-%d') if shooting_date else '',
-                'shooting_time': '09:00',
+                'shooting_time': session.shooting_time.strftime('%H:%M') if session.shooting_time else '20:00',
                 'shoot_hours': cls.format_duration(hours['shoot_max']),
                 'montage_hours': cls.format_duration(hours['edit_max']),
                 'design_hours': cls.format_duration(hours['design']),
