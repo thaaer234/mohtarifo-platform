@@ -470,7 +470,7 @@
             onclone: (clonedDoc) => {
                 const cloneEl = clonedDoc.getElementById(elementId);
                 if(cloneEl) {
-                    cloneEl.style.width = "1100px"; // Force optimal printing width
+                    cloneEl.style.width = "850px"; // Shortened optimal printing width
                     cloneEl.style.height = "auto";  // Let flex scale content freely
                     cloneEl.style.minHeight = "400px"; 
                     cloneEl.style.borderRadius = "24px";
@@ -523,7 +523,7 @@
                     onclone: (clonedDoc) => {
                          const cloneItem = clonedDoc.getElementById(cardId);
                          if(cloneItem) {
-                             cloneItem.style.width = "1100px";
+                             cloneItem.style.width = "850px"; // Shortened width
                              cloneItem.style.height = "auto";
                              cloneItem.style.minHeight = "400px";
                              cloneItem.style.boxShadow = "none";
