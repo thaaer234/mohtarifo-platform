@@ -31,15 +31,15 @@ class ProductionRoom(models.Model):
         return self.name
 
 class ProductionStatus(models.TextChoices):
-    SCHEDULED = 'scheduled', _('Scheduled')
-    SHOOTING = 'shooting', _('Shooting')
-    EDITING = 'editing', _('Editing')
-    REVIEWING = 'reviewing', _('Reviewing')
-    DESIGNING = 'designing', _('Designing')
-    READY = 'ready', _('Ready to Upload')
-    COMPLETED = 'completed', _('Completed')
-    DELAYED = 'delayed', _('Delayed')
-    CANCELED = 'canceled', _('Canceled')
+    SCHEDULED = 'scheduled', _('مجدول')
+    SHOOTING = 'shooting', _('تصوير')
+    EDITING = 'editing', _('مونتاج')
+    REVIEWING = 'reviewing', _('مراجعة')
+    DESIGNING = 'designing', _('تصميم')
+    READY = 'ready', _('جاهز للرفع')
+    COMPLETED = 'completed', _('مكتمل')
+    DELAYED = 'delayed', _('متأخر')
+    CANCELED = 'canceled', _('ملغي')
 
 class TeacherProductionSession(models.Model):
     class BranchChoices(models.TextChoices):

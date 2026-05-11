@@ -1,0 +1,39 @@
+{% extends "production_management/base.html" %}
+{% block title %}فريق الإنتاج - نظام الإنتاج{% endblock %}
+{% block page_title %}<i class="fa-solid fa-users mr-2 text-gold"></i> فريق الإنتاج{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+{% for member in members %}
+    <div class="glass-card p-5">
+        <div class="flex items-center gap-3 mb-3">
+            <img src="https://ui-avatars.com/api/?name={{ member.user.get_full_name|default:member.user.username }}&background=1D3557&color=fff&size=48"
+                 class="w-12 h-12 rounded-full border-2 border-gold">
+            <div>
+                <h3 class="font-bold text-royal">{{ member.user.get_full_name|default:member.user.username }}</h3>
+                <span class="px-2 py-0.5 rounded-full text-xs font-bold
+                    {% if member.role == 'manager' %}bg-yellow-100 text-yellow-700
+                    {% elif member.role == 'cameraman' %}bg-blue-100 text-blue-700
+                    {% elif member.role == 'editor' %}bg-purple-100 text-purple-700
+                    {% else %}bg-gray-100 text-gray-600{% endif %}">
+                    {{ member.get_role_display }}
+                </span>
+            </div>
+        </div>
+        <div class="text-xs text-gray-400">
+            <span>📅 انضم: {{ member.created_at|date:"d-m-Y" }}</span>
+            {% if member.is_active %}
+                <span class="mr-2 text-green-500">● نشط</span>
+            {% else %}
+                <span class="mr-2 text-red-500">● غير نشط</span>
+            {% endif %}
+        </div>
+    </div>
+{% empty %}
+    <div class="col-span-3 text-center py-12 text-gray-400">
+        <i class="fa-solid fa-users-slash text-4xl mb-3"></i>
+        <p>لم يتم إضافة أعضاء فريق الإنتاج بعد</p>
+    </div>
+{% endfor %}
+</div>
+{% endblock %}
