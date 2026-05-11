@@ -283,24 +283,15 @@ class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
                     num_days = 2
 
 
-                # ── ULTIMATE FAIL-SAFE & BULLETPROOF WRAPPER ──
-                
-                if ex_date:
-                    anchor = PresentationBuilder.calculate_shooting_date(ex_date, subject, branch, PresentationBuilder.SCHEDULE_START_DATE)
-                    direction = -1 
-                else:
-                    anchor = PresentationBuilder.SCHEDULE_START_DATE
-                    direction = 1
+                anchor = PresentationBuilder.SCHEDULE_START_DATE
                 
                 final_span = []
                 s_date = None
                 solved = False
-                current_walk = anchor
                 
                 # ATOMIC BLOCK VALIDATOR
                 for max_cap in [1, 2, 3]:
-                    walk = current_walk
-                    local_dir = direction
+                    walk = anchor
                     steps = 0
                     while True:
                         if walk > HARD_END: break
@@ -311,6 +302,11 @@ class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
                         
                         while len(candidate_span) < num_days:
                             if b_walk > HARD_END:
+                                 is_valid_start = False
+                                 break
+                            
+                            # 🛑 CRITICAL HARD BOUNDARY: Cannot shoot ON or AFTER exam date!
+                            if ex_date and b_walk >= ex_date:
                                  is_valid_start = False
                                  break
                             
@@ -325,16 +321,12 @@ class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
                         if is_valid_start and len(candidate_span) == num_days:
                             s_date = walk 
                             final_span = candidate_span
-                            current_walk = walk + timedelta(days=direction)
                             solved = True
                             break
                         
-                        walk += timedelta(days=local_dir)
+                        walk += timedelta(days=1)
                         steps += 1
-                        if local_dir == -1 and walk < PresentationBuilder.SCHEDULE_START_DATE:
-                             walk = anchor + timedelta(days=1)
-                             local_dir = 1
-                        if steps > 60: break
+                        if steps > 90: break
                         
                     if solved: break
 
