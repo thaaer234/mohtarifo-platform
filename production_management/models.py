@@ -61,7 +61,7 @@ class TeacherProductionSession(models.Model):
     subject = models.CharField(max_length=255)
     branch = models.CharField(max_length=50, choices=BranchChoices.choices)
     
-    exam_date = models.DateField()
+    exam_date = models.DateField(null=True, blank=True)
     exam_time = models.TimeField(null=True, blank=True)
     
     shooting_date = models.DateField(null=True, blank=True)
