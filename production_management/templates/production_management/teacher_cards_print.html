@@ -43,6 +43,7 @@
     /* ═══ Master Card Container ═══ */
     .master-tc {
         display: flex;
+        position: relative; /* For Action Overlay Anchoring */
         background: #ffffff;
         border-radius: 24px;
         border: 1px solid #e2e8f0;
@@ -51,6 +52,61 @@
         min-height: 280px;
         direction: rtl;
     }
+
+    /* Floating Controls System */
+    .control-panel {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        background: rgba(15, 23, 42, 0.95);
+        backdrop-filter: blur(10px);
+        color: #fff;
+        padding: 1rem;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        z-index: 9999;
+        border: 1px solid rgba(255,255,255,0.1);
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+        width: 240px;
+        direction: rtl;
+    }
+    .control-title { font-weight: 800; font-size: 0.95rem; color: #fbbf24; display:flex; align-items:center; gap:5px; margin-bottom:0.3rem; }
+    .toggle-item { display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; font-weight:600; }
+    .toggle-item input { width:16px; height:16px; cursor:pointer; accent-color: #fbbf24; }
+    .btn-export-all { background:linear-gradient(135deg, #10b981, #059669); color:#fff; border:none; padding:0.6rem; border-radius:8px; font-weight:800; font-size:0.8rem; cursor:pointer; transition:all 0.2s; text-align:center; }
+    .btn-export-all:hover { opacity:0.9; transform:translateY(-1px); }
+    
+    /* Master Card Button Overlay for screen only */
+    .card-actions-overlay {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 50;
+        display: flex;
+        gap: 5px;
+    }
+    .btn-download-card {
+        background: rgba(255,255,255,0.9);
+        color: #1e293b;
+        border: 1px solid #e2e8f0;
+        padding: 0.4rem 0.6rem;
+        border-radius: 8px;
+        font-weight: 800;
+        font-size: 0.7rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: all 0.2s ease;
+    }
+    .btn-download-card:hover { background: #fbbf24; border-color: #d97706; color: #fff; }
+    
+    /* Dynamic Hiding Logic */
+    body.hide-shoot-dates .date-hl { display: none !important; }
+    body.hide-costs .cost-banner { display: none !important; }
 
     /* ── RIGHT SIDE: Big Vertical Photo ── */
     .master-right {
@@ -268,13 +324,34 @@
 {% endblock %}
 
 {% block report_body %}
+<!-- Control Panel for Live Settings & Export -->
+<div class="control-panel no-print">
+    <div class="control-title">⚙️ خيارات العرض والتصدير</div>
+    <label class="toggle-item">
+        <input type="checkbox" onchange="document.body.classList.toggle('hide-shoot-dates', this.checked)">
+        <span>إخفاء تاريخ التصوير</span>
+    </label>
+    <label class="toggle-item">
+        <input type="checkbox" onchange="document.body.classList.toggle('hide-costs', this.checked)">
+        <span>إخفاء سعر التكلفة</span>
+    </label>
+    <hr style="border:0; border-top:1px solid rgba(255,255,255,0.1); margin:0.2rem 0;">
+    <button class="btn-export-all" onclick="downloadAllCards()">📦 تصدير الكل كـ PNG مرتبة</button>
+</div>
+
 <!-- Page break to separate official header/stats onto Page 1 and cards starting from Page 2 -->
 <div style="page-break-after: always;" class="print-only-break"></div>
 
 {% for chunk in card_chunks %}
 <div class="cards-grid">
 {% for card in chunk %}
-    <div class="master-tc">
+    <div class="master-tc" id="card-node-{{ forloop.parentloop.counter0 }}-{{ forloop.counter0 }}">
+        <!-- Screen-only Overlay Actions -->
+        <div class="card-actions-overlay no-print">
+            <button class="btn-download-card" onclick="downloadCardAsPng('card-node-{{ forloop.parentloop.counter0 }}-{{ forloop.counter0 }}', '{{ card.name|escapejs }}')">
+                📥 تحميل PNG
+            </button>
+        </div>
         
         <!-- ═══ LEFT SIDE: Content Data ═══ -->
         <div class="master-left">
@@ -367,4 +444,79 @@
 {% endfor %}
 </div>
 {% endfor %}
+{% endblock %}
+
+{% block extra_js %}
+<!-- High Resolution HTML Canvas Rendering Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+    function downloadCardAsPng(elementId, teacherName) {
+        const element = document.getElementById(elementId);
+        if(!element) return;
+
+        // Display feedback in the clicked button
+        const triggerBtn = window.event ? window.event.currentTarget : null;
+        const originalHtml = triggerBtn ? triggerBtn.innerHTML : "";
+        if(triggerBtn) triggerBtn.innerHTML = "⏳ جاري المعالجة...";
+
+        // Render with ultra-high scale for premium crispness
+        html2canvas(element, {
+            scale: 3, // High res multiple
+            useCORS: true, // For external loaded profile pictures
+            backgroundColor: "#ffffff",
+            ignoreElements: (el) => el.classList.contains('no-print') || el.classList.contains('card-actions-overlay')
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `بطاقة_إنتاج_${teacherName.trim().replace(/\s+/g, '_')}.png`;
+            link.href = canvas.toDataURL("image/png", 1.0);
+            link.click();
+            
+            if(triggerBtn) triggerBtn.innerHTML = "✅ تم الحفظ";
+            setTimeout(() => { if(triggerBtn) triggerBtn.innerHTML = originalHtml; }, 2500);
+        }).catch(err => {
+            console.error("Canvas capture failed:", err);
+            alert("عذراً، فشل تصدير الصورة. جرب متصفح آخر.");
+            if(triggerBtn) triggerBtn.innerHTML = originalHtml;
+        });
+    }
+
+    async function downloadAllCards() {
+        const allCards = document.querySelectorAll('.master-tc');
+        const mainBtn = document.querySelector('.btn-export-all');
+        if(!allCards.length) return;
+
+        const backupHtml = mainBtn.innerHTML;
+        mainBtn.style.pointerEvents = "none";
+        mainBtn.style.opacity = "0.7";
+
+        for(let i = 0; i < allCards.length; i++) {
+            mainBtn.innerHTML = `⏳ تصدير ${i+1} من ${allCards.length}...`;
+            const card = allCards[i];
+            const rawName = card.querySelector('.master-right-name') ? card.querySelector('.master-right-name').innerText : `مدرس_${i}`;
+            
+            // Gentle delay to prevent browser hanging
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            try {
+                const canvas = await html2canvas(card, {
+                    scale: 3,
+                    useCORS: true,
+                    backgroundColor: "#ffffff",
+                    ignoreElements: (el) => el.classList.contains('no-print') || el.classList.contains('card-actions-overlay')
+                });
+                const link = document.createElement('a');
+                link.download = `بطاقة_${rawName.trim().replace(/\s+/g, '_')}.png`;
+                link.href = canvas.toDataURL("image/png", 1.0);
+                link.click();
+            } catch(e) {
+                console.error("Error in batch export of index " + i, e);
+            }
+        }
+
+        mainBtn.innerHTML = "✅ اكتمل تصدير الكل!";
+        mainBtn.style.pointerEvents = "auto";
+        mainBtn.style.opacity = "1";
+        setTimeout(() => { mainBtn.innerHTML = backupHtml; }, 4000);
+    }
+</script>
 {% endblock %}
