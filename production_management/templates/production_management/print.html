@@ -1,0 +1,239 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>تقرير عمليات الإنتاج - معهد اليمان</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: white;
+            color: #1D3557;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Print Specific Styles */
+        @page {
+            size: A4 landscape; /* Default landscape for big tables */
+            margin: 15mm;
+        }
+
+        @media print {
+            body {
+                background: none;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+            .print-container {
+                width: 100%;
+                max-width: none;
+                padding: 0;
+                box-shadow: none;
+            }
+            /* Watermark for print */
+            .watermark {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) rotate(-45deg);
+                font-size: 8rem;
+                color: rgba(212, 175, 55, 0.05); /* Very light gold */
+                z-index: -1;
+                pointer-events: none;
+                white-space: nowrap;
+            }
+            /* Footer page numbers - pure CSS technique */
+            #footer-page-numbers {
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+                text-align: center;
+                font-size: 10px;
+                color: #888;
+            }
+            #footer-page-numbers::after {
+                content: "صفحة " counter(page);
+            }
+        }
+
+        /* Screen Preview Styles */
+        .print-container {
+            max-width: 297mm; /* A4 landscape width */
+            margin: 20px auto;
+            background: white;
+            padding: 20mm;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 10px 8px;
+            text-align: right;
+            font-size: 12px;
+        }
+        th {
+            background-color: #1D3557;
+            color: white;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .gold-text { color: #D4AF37; }
+        .royal-text { color: #1D3557; }
+        .gold-border { border-bottom: 3px solid #D4AF37; }
+        
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+        }
+        
+        .signature-section {
+            margin-top: 50px;
+            display: flex;
+            justify-content: space-between;
+            page-break-inside: avoid;
+        }
+        .signature-box {
+            text-align: center;
+            width: 200px;
+        }
+        .signature-line {
+            border-bottom: 1px solid #1D3557;
+            margin-top: 40px;
+        }
+
+        /* Watermark Preview */
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 8rem;
+            color: rgba(212, 175, 55, 0.05);
+            z-index: 0;
+            pointer-events: none;
+            white-space: nowrap;
+            font-weight: 800;
+        }
+        
+        .content-layer {
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Toolbar for screen only -->
+    <div class="no-print bg-gray-100 p-4 border-b flex justify-between items-center mb-6">
+        <div class="flex gap-4 items-center">
+            <h2 class="font-bold text-royal">خيارات الطباعة</h2>
+            <select class="border p-2 rounded text-sm bg-white outline-none">
+                <option>جدول الإنتاج الكامل</option>
+                <option>برنامج التصوير اليومي</option>
+                <option>جدول المونتاج</option>
+            </select>
+        </div>
+        <button onclick="window.print()" class="bg-royal text-white px-6 py-2 rounded font-bold hover:bg-opacity-90 shadow">
+            <i class="fa-solid fa-print"></i> طباعة / تصدير PDF
+        </button>
+    </div>
+
+    <!-- The Print Document -->
+    <div class="print-container">
+        <div class="watermark">معهد اليمان</div>
+        
+        <div class="content-layer">
+            <!-- Header -->
+            <div class="header-section gold-border">
+                <div>
+                    <h1 class="text-2xl font-bold royal-text">معهد اليمان التعليمي</h1>
+                    <p class="text-sm text-gray-500 mt-1">قسم الإنتاج الرقمي - محترفو التعليم</p>
+                </div>
+                <div class="text-left">
+                    <h2 class="text-xl font-bold gold-text">تقرير عمليات الإنتاج</h2>
+                    <p class="text-xs text-gray-400 mt-1" id="current-date"></p>
+                </div>
+            </div>
+
+            <!-- Report Details -->
+            <div class="mb-6">
+                <p class="text-sm font-semibold royal-text">نوع التقرير: <span class="font-normal text-gray-700">الجدول الشامل للجلسات الامتحانية</span></p>
+                <p class="text-sm font-semibold royal-text mt-1">الفترة الزمنية: <span class="font-normal text-gray-700">كافة الفترات</span></p>
+            </div>
+
+            <!-- Table -->
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>المدرس</th>
+                        <th>المادة</th>
+                        <th>الفرع</th>
+                        <th>موعد الامتحان</th>
+                        <th>تاريخ التصوير</th>
+                        <th>الحالة</th>
+                        <th>المسؤول</th>
+                        <th>ملاحظات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for session in sessions %}
+                    <tr>
+                        <td class="font-bold">{{ forloop.counter }}</td>
+                        <td class="font-semibold royal-text">{{ session.teacher_name }}</td>
+                        <td>{{ session.subject }}</td>
+                        <td>{{ session.get_branch_display }}</td>
+                        <td style="color: #e53e3e; font-weight: bold;">{{ session.exam_date|date:"Y-m-d" }}</td>
+                        <td style="color: #2b6cb0; font-weight: bold;">{{ session.shooting_date|date:"Y-m-d"|default:"-" }}</td>
+                        <td>{{ session.get_status_display }}</td>
+                        <td>-</td>
+                        <td class="text-xs text-gray-500">{{ session.notes|default:"" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 30px;">لا يوجد بيانات للطباعة</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Signatures -->
+            <div class="signature-section">
+                <div class="signature-box">
+                    <p class="text-sm font-bold royal-text">مدير الإنتاج</p>
+                    <div class="signature-line"></div>
+                </div>
+                <div class="signature-box">
+                    <p class="text-sm font-bold royal-text">الإدارة العامة</p>
+                    <div class="signature-line"></div>
+                </div>
+            </div>
+            
+            <div id="footer-page-numbers"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('current-date').innerText = 'تاريخ الإصدار: ' + new Date().toLocaleDateString('ar-EG');
+    </script>
+</body>
+</html>

@@ -10,3 +10,4 @@ dj-database-url==2.3.0
 django-import-export==4.3.7
 django-redis==5.4.0
 qrcode==8.0
+whitenoise==6.8.2

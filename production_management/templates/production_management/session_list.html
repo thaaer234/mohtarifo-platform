@@ -1,0 +1,84 @@
+{% extends 'production_management/base.html' %}
+
+{% block page_title %}الجلسات الامتحانية{% endblock %}
+
+{% block content %}
+<div class="glass-card bg-white p-6 rounded-xl">
+    <!-- Toolbar -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <form class="flex items-center gap-2" method="GET">
+            <input type="text" name="q" placeholder="ابحث عن مدرس أو مادة..." value="{{ request.GET.q }}" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-gold outline-none w-64 text-sm">
+            <select name="status" class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-gold outline-none text-sm">
+                <option value="">كل الحالات</option>
+                <option value="scheduled" {% if request.GET.status == 'scheduled' %}selected{% endif %}>مجدول</option>
+                <option value="shooting" {% if request.GET.status == 'shooting' %}selected{% endif %}>قيد التصوير</option>
+                <option value="editing" {% if request.GET.status == 'editing' %}selected{% endif %}>قيد المونتاج</option>
+            </select>
+            <button type="submit" class="bg-royal text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition text-sm font-semibold">بحث</button>
+        </form>
+        
+        <div class="flex items-center gap-2">
+            <a href="{% url 'production_management:session_create' %}" class="gold-gradient text-white px-4 py-2 rounded-lg hover:shadow-lg transition text-sm font-semibold">
+                <i class="fa-solid fa-plus mr-1"></i> جلسة جديدة
+            </a>
+            <button class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition text-sm font-semibold">
+                <i class="fa-solid fa-file-excel text-green-600"></i> تصدير
+            </button>
+        </div>
+    </div>
+
+    <!-- Huge Table -->
+    <div class="overflow-x-auto rounded-lg border border-gray-200">
+        <table class="w-full text-sm text-right">
+            <thead class="bg-gray-50 text-gray-700 font-bold">
+                <tr>
+                    <th class="px-4 py-3 border-b">المدرس</th>
+                    <th class="px-4 py-3 border-b">المادة</th>
+                    <th class="px-4 py-3 border-b">موعد الامتحان</th>
+                    <th class="px-4 py-3 border-b">تاريخ التصوير</th>
+                    <th class="px-4 py-3 border-b">التكلفة (ل.س)</th>
+                    <th class="px-4 py-3 border-b">الحالة</th>
+                    <th class="px-4 py-3 border-b">إجراءات</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for session in sessions %}
+                <tr class="hover:bg-gray-50 transition">
+                    <td class="px-4 py-3 font-semibold text-royal">{{ session.teacher_name }}</td>
+                    <td class="px-4 py-3">
+                        {{ session.subject }} 
+                        <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">{{ session.get_branch_display }}</span>
+                    </td>
+                    <td class="px-4 py-3 text-red-600 font-bold">{{ session.exam_date|date:"Y-m-d" }}</td>
+                    <td class="px-4 py-3 text-royal">{{ session.shooting_date|date:"Y-m-d"|default:"-" }}</td>
+                    <td class="px-4 py-3">{{ session.cost.production_cost|default:"0" }}</td>
+                    <td class="px-4 py-3">
+                        {% if session.status == 'scheduled' %}
+                            <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-calendar mr-1"></i>مجدول</span>
+                        {% elif session.status == 'shooting' %}
+                            <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-video mr-1"></i>قيد التصوير</span>
+                        {% elif session.status == 'editing' %}
+                            <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-cut mr-1"></i>قيد المونتاج</span>
+                        {% elif session.status == 'reviewing' %}
+                            <span class="bg-orange-100 text-orange-700 px-2 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-eye mr-1"></i>مراجعة</span>
+                        {% elif session.status == 'completed' %}
+                            <span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold"><i class="fa-solid fa-check mr-1"></i>مكتمل</span>
+                        {% else %}
+                            <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs font-bold">{{ session.get_status_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-3">
+                        <button class="text-blue-500 hover:text-blue-700"><i class="fa-solid fa-pen"></i></button>
+                        <button class="text-red-500 hover:text-red-700 mr-2"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-8 text-gray-500">لا يوجد بيانات لعرضها</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

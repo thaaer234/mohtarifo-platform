@@ -1,0 +1,59 @@
+{% extends 'production_management/base.html' %}
+
+{% block page_title %}إنشاء جلسة امتحانية بجدولة ذكية{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto glass-card p-8 rounded-xl relative overflow-hidden">
+    <!-- Decorative background -->
+    <div class="absolute -top-24 -right-24 w-48 h-48 bg-gold rounded-full opacity-10 blur-2xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 -left-24 w-48 h-48 bg-royal rounded-full opacity-10 blur-2xl pointer-events-none"></div>
+
+    <div class="mb-8 text-center">
+        <h3 class="text-2xl font-bold text-royal mb-2">محرك الجدولة الذكية (Auto Scheduling)</h3>
+        <p class="text-sm text-gray-500">أدخل تفاصيل الامتحان وسيقوم المحرك بحساب أفضل توقيت للتصوير والمونتاج تلقائياً.</p>
+    </div>
+
+    <form method="POST" class="space-y-6">
+        {% csrf_token %}
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label class="block text-sm font-semibold text-royal mb-2">اسم المدرس</label>
+                <input type="text" name="teacher_name" required class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-gold outline-none transition bg-white/50" placeholder="مثال: أحمد محمد">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-semibold text-royal mb-2">المادة</label>
+                <input type="text" name="subject" required class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-gold outline-none transition bg-white/50" placeholder="مثال: الرياضيات">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-semibold text-royal mb-2">الفرع</label>
+                <select name="branch" required class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-gold outline-none transition bg-white/50">
+                    <option value="science">علمي</option>
+                    <option value="literal">أدبي</option>
+                    <option value="ninth">تاسع</option>
+                    <option value="other">أخرى</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-semibold text-royal mb-2">تاريخ الامتحان</label>
+                <input type="date" name="exam_date" required class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-gold outline-none transition bg-white/50">
+            </div>
+            
+            <div class="md:col-span-2">
+                <label class="block text-sm font-semibold text-royal mb-2">وقت الامتحان (اختياري)</label>
+                <input type="time" name="exam_time" class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-gold outline-none transition bg-white/50">
+            </div>
+        </div>
+
+        <div class="mt-8 flex justify-end gap-4 border-t border-gray-100 pt-6">
+            <a href="{% url 'production_management:session_list' %}" class="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition">إلغاء</a>
+            <button type="submit" class="gold-gradient px-8 py-3 rounded-lg text-white font-bold hover:shadow-lg transition">
+                <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> جدولة ذكية
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

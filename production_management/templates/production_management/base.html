@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}نظام إدارة الإنتاج - محترفو التعليم{% endblock %}</title>
+    <!-- TailwindCSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        royal: '#1D3557',
+                        gold: '#D4AF37',
+                        luxwhite: '#F8F9FA',
+                    },
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #F8F9FA;
+            color: #1D3557;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(29, 53, 87, 0.05);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            box-shadow: 0 15px 35px rgba(29, 53, 87, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .gold-gradient {
+            background: linear-gradient(135deg, #D4AF37 0%, #AA8A2A 100%);
+            color: white;
+        }
+        
+        .royal-gradient {
+            background: linear-gradient(135deg, #1D3557 0%, #152740 100%);
+            color: white;
+        }
+
+        .smooth-transition {
+            transition: all 0.3s ease-in-out;
+        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D4AF37; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #1D3557; 
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-luxwhite min-h-screen flex text-royal">
+
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-l border-gray-200 shadow-lg hidden md:block">
+        <div class="p-6 text-center border-b border-gray-100">
+            <h1 class="text-2xl font-bold text-royal">
+                <i class="fa-solid fa-film text-gold mr-2"></i>
+                نظام الإنتاج
+            </h1>
+            <p class="text-xs text-gray-500 mt-2">محترفو التعليم</p>
+        </div>
+        <nav class="p-4 space-y-2">
+            <a href="{% url 'production_management:dashboard' %}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 hover:text-gold transition font-semibold {% if request.resolver_match.url_name == 'dashboard' %}bg-royal-gradient text-gold shadow-md{% endif %}">
+                <i class="fa-solid fa-chart-line"></i> لوحة العمليات
+            </a>
+            <a href="{% url 'production_management:session_list' %}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 hover:text-gold transition font-semibold">
+                <i class="fa-solid fa-table-list"></i> الجلسات الامتحانية
+            </a>
+            <a href="{% url 'production_management:kanban_board' %}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 hover:text-gold transition font-semibold">
+                <i class="fa-solid fa-columns"></i> لوحة Kanban
+            </a>
+            <a href="{% url 'production_management:teacher_cards' %}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 hover:text-gold transition font-semibold">
+                <i class="fa-solid fa-id-card"></i> بطاقات المدرسين
+            </a>
+            <a href="{% url 'production_management:calendar' %}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 hover:text-gold transition font-semibold">
+                <i class="fa-solid fa-calendar-alt"></i> التقويم الذكي
+            </a>
+            <a href="{% url 'production_management:scanner' %}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 hover:text-gold transition font-semibold">
+                <i class="fa-solid fa-robot"></i> الذكاء الصناعي (OCR)
+            </a>
+            <a href="{% url 'production_management:team_management' %}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 hover:text-gold transition font-semibold">
+                <i class="fa-solid fa-users"></i> فريق الإنتاج
+            </a>
+            <a href="{% url 'production_management:financial_stats' %}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 hover:text-gold transition font-semibold">
+                <i class="fa-solid fa-money-bill-wave"></i> الإحصائيات المالية
+            </a>
+            <a href="{% url 'production_management:print_engine' %}" class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-50 hover:text-gold transition font-semibold">
+                <i class="fa-solid fa-print"></i> نظام الطباعة
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col">
+        <!-- Header -->
+        <header class="h-20 bg-white/80 backdrop-blur-md border-b border-gray-200 px-8 flex items-center justify-between sticky top-0 z-50 shadow-sm">
+            <h2 class="text-xl font-bold text-royal">
+                {% block page_title %}لوحة العمليات المركزية{% endblock %}
+            </h2>
+            <div class="flex items-center gap-4">
+                <button class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gold hover:text-white transition">
+                    <i class="fa-regular fa-bell"></i>
+                </button>
+                <div class="flex items-center gap-2 border-r border-gray-200 pr-4">
+                    <img src="https://ui-avatars.com/api/?name={{ request.user.username }}&background=1D3557&color=fff" class="w-10 h-10 rounded-full shadow-md">
+                    <div class="text-sm font-semibold">{{ request.user.username }}</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="p-8 flex-1 overflow-y-auto">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
