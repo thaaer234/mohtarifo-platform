@@ -73,11 +73,12 @@
                 <i class="fa-solid fa-microchip text-4xl text-royal absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></i>
             </div>
             <h3 class="text-2xl font-bold text-royal mb-2">محرك الذكاء الصناعي يقوم بتحليل الصورة</h3>
-            <p class="text-gray-500">جاري استخراج النصوص (OCR) وفهم بنية الجدول والتواريخ والمواد...</p>
+            <p class="text-gray-500 font-bold text-gold animate-pulse" x-text="ocrStatus">جاري البدء...</p>
 
-            <div class="mt-8 space-y-2 max-w-sm mx-auto text-sm text-right text-gray-500 font-mono">
-                <p class="flex items-center gap-2"><i class="fa-solid fa-check text-green-500"></i> تم التعرف على النص بنجاح</p>
-                <p class="flex items-center gap-2 animate-pulse"><i class="fa-solid fa-spinner fa-spin text-gold"></i> جاري مطابقة المواد والفروع...</p>
+            <div class="mt-8 space-y-2 max-w-sm mx-auto text-sm text-right text-gray-500 font-mono bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <p class="flex items-center gap-2"><i class="fa-solid fa-microchip text-blue-500"></i> محرك Tesseract AI مفعّل</p>
+                <p class="flex items-center gap-2"><i class="fa-solid fa-language text-green-500"></i> حزمة اللغة العربية مُحمّلة</p>
+                <p class="flex items-center gap-2 animate-pulse"><i class="fa-solid fa-spinner fa-spin text-gold"></i> جاري العمل على الاستخراج المباشر...</p>
             </div>
         </div>
 
@@ -259,48 +260,150 @@
 {% endblock %}
 
 {% block extra_scripts %}
+<!-- Loading Real OCR Library -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
 <script>
 function scannerApp() {
     return {
         mode: 'scanner',
         step: 1,
         isUploading: false,
-        scannedRows: [],
+        ocrStatus: 'جاري تهيئة محرك البحث...',
 
         handleUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
-            this.isUploading = true;
 
-            // Simulate upload
-            setTimeout(() => {
-                this.isUploading = false;
-                this.step = 2;
-                // Simulate OCR processing
-                setTimeout(() => {
-                    this.step = 3;
-                    this.populateScannedRows();
-                }, 3000);
-            }, 1500);
+            this.isUploading = true;
+            this.step = 2;
+            this.ocrStatus = 'جاري قراءة الصورة...';
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                await this.performRealOCR(e.target.result);
+            };
+            reader.readAsDataURL(file);
         },
 
-        populateScannedRows() {
-            // After OCR, populate the review table with editable rows
+        async performRealOCR(imageData) {
+            try {
+                this.ocrStatus = 'جاري تحميل حزم اللغة العربية (قد يستغرق لحظات)...';
+                
+                const worker = await Tesseract.createWorker('ara+eng');
+                this.ocrStatus = 'جاري المسح الضوئي واستخراج النصوص...';
+                
+                const result = await worker.recognize(imageData);
+                const text = result.data.text;
+                
+                this.ocrStatus = 'جاري تحليل البيانات ومطابقتها...';
+                await worker.terminate();
+
+                const parsedData = this.parseExamData(text);
+                this.populateScannedRows(parsedData);
+                
+                this.isUploading = false;
+                this.step = 3;
+            } catch (error) {
+                console.error('OCR Error:', error);
+                alert('حدث خطأ أثناء قراءة الصورة. يرجى التأكد من وضوح الصورة والمحاولة مرة أخرى.');
+                this.step = 1;
+                this.isUploading = false;
+            }
+        },
+
+        parseExamData(rawText) {
+            // Dictionary of expected keywords on exams
+            const subjects = [
+                {keywords: ['رياضيات', 'الرياضيات'], canonical: 'الرياضيات', branch: 'science'},
+                {keywords: ['فيزياء', 'الفيزياء'], canonical: 'الفيزياء', branch: 'science'},
+                {keywords: ['كيمياء', 'الكيمياء'], canonical: 'الكيمياء', branch: 'science'},
+                {keywords: ['علوم', 'العلوم', 'احياء', 'الأحياء'], canonical: 'العلوم', branch: 'science'},
+                {keywords: ['فلسفة', 'الفلسفة'], canonical: 'الفلسفة', branch: 'literal'},
+                {keywords: ['جغرافيا', 'الجغرافيا'], canonical: 'الجغرافيا', branch: 'literal'},
+                {keywords: ['تاريخ', 'التاريخ'], canonical: 'التاريخ', branch: 'literal'},
+                {keywords: ['اجتماعيات', 'الاجتماعيات'], canonical: 'الاجتماعيات', branch: 'ninth'},
+                {keywords: ['عربي', 'العربية'], canonical: 'اللغة العربية', branch: 'ninth'},
+                {keywords: ['انكليزي', 'إنكليزي', 'انكليزية', 'الإنكليزية'], canonical: 'اللغة الانكليزية', branch: 'ninth'},
+                {keywords: ['فرنسي', 'فرنسية', 'الفرنسية'], canonical: 'اللغة الفرنسية', branch: 'ninth'},
+                {keywords: ['ديانة', 'الديانة', 'اسلامية', 'التربية'], canonical: 'التربية الاسلامية', branch: 'ninth'}
+            ];
+
+            // Simple date extractor regex (matches DD-MM-YYYY or DD/MM)
+            const datePattern = /(\d{1,2}[\/\-.]\d{1,2}[\/\-.]202[56])/g;
+            const foundDates = rawText.match(datePattern) || [];
+            
+            const lines = rawText.split('\n').filter(l => l.trim().length > 4);
+            const detected = [];
+            let dateIndex = 0;
+
+            // Iterate detected lines attempting cross-mapping
+            lines.forEach((line, i) => {
+                for (let sub of subjects) {
+                    for (let kw of sub.keywords) {
+                        if (line.includes(kw)) {
+                            // Basic heuristic: check current or next line for date
+                            let lineDate = null;
+                            const match = line.match(/(\d{1,2}[\/\-.]\d{1,2})/);
+                            
+                            if (match) {
+                                // Rough reformatting if we find something that looks like date
+                                const parts = match[0].split(/[\/\-.]/);
+                                const day = parts[0].padStart(2, '0');
+                                const month = parts[1].padStart(2, '0');
+                                lineDate = `2026-${month}-${day}`;
+                            } else if (foundDates.length > dateIndex) {
+                                // Fallback to any pooled date we pulled
+                                const d = foundDates[dateIndex];
+                                const parts = d.split(/[\/\-.]/);
+                                lineDate = `2026-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                                dateIndex++;
+                            } else {
+                                // Default sensible date
+                                lineDate = '2026-06-01';
+                            }
+
+                            detected.push({
+                                subject: sub.canonical,
+                                branch: sub.branch,
+                                date: lineDate,
+                                time: '08:30',
+                                duration: sub.branch === 'science' ? '3' : '2'
+                            });
+                            break; // stop after first keyword found for this subject
+                        }
+                    }
+                }
+            });
+
+            // Deduplicate and return
+            const unique = [];
+            const seen = new Set();
+            detected.forEach(item => {
+                const key = `${item.subject}-${item.branch}`;
+                if (!seen.has(key)) {
+                    seen.add(key);
+                    unique.push(item);
+                }
+            });
+
+            // If absolutely nothing found, present at least one placeholder row so they know it ran
+            if (unique.length === 0) {
+                return [{subject: 'مادة غير معروفة (يرجى التعديل)', branch: 'ninth', date: '2026-06-01', time: '08:30', duration: '2'}];
+            }
+
+            return unique;
+        },
+
+        populateScannedRows(data) {
             const tbody = document.getElementById('scanned-rows');
             if (!tbody) return;
 
-            // Example: these would come from actual OCR results
-            const sampleData = [
-                {subject: 'الرياضيات', branch: 'science', date: '2026-06-13', time: '08:30', duration: '3:30'},
-                {subject: 'الفيزياء', branch: 'science', date: '2026-06-06', time: '08:30', duration: '3'},
-                {subject: 'اللغة العربية', branch: 'literal', date: '2026-06-25', time: '08:30', duration: '2:30'},
-            ];
-
             tbody.innerHTML = '';
-            sampleData.forEach((row, i) => {
+            data.forEach((row, i) => {
                 tbody.innerHTML += `
                 <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-3"><input type="text" name="subject_name" value="${row.subject}" class="border p-1.5 rounded-lg w-full text-sm focus:border-gold outline-none"></td>
+                    <td class="px-4 py-3"><input type="text" name="subject_name" value="${row.subject}" class="border p-1.5 rounded-lg w-full text-sm focus:border-gold outline-none" required></td>
                     <td class="px-4 py-3">
                         <select name="branch" class="border p-1.5 rounded-lg w-full text-sm">
                             <option value="ninth" ${row.branch==='ninth'?'selected':''}>تاسع</option>
@@ -308,7 +411,7 @@ function scannerApp() {
                             <option value="literal" ${row.branch==='literal'?'selected':''}>أدبي</option>
                         </select>
                     </td>
-                    <td class="px-4 py-3"><input type="date" name="exam_date" value="${row.date}" class="border p-1.5 rounded-lg w-full text-sm text-red-600 font-bold"></td>
+                    <td class="px-4 py-3"><input type="date" name="exam_date" value="${row.date}" class="border p-1.5 rounded-lg w-full text-sm text-red-600 font-bold" required></td>
                     <td class="px-4 py-3"><input type="time" name="exam_time" value="${row.time}" class="border p-1.5 rounded-lg w-full text-sm"></td>
                     <td class="px-4 py-3"><input type="text" name="duration" value="${row.duration}" class="border p-1.5 rounded-lg w-16 text-sm text-center"></td>
                     <td class="px-4 py-3"><button type="button" onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button></td>

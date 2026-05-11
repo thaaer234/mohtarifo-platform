@@ -7,256 +7,244 @@
 
 {% block extra_meta %}
 <div>👨‍🏫 عدد المدرسين: {{ stats.total_teachers }}</div>
-<div>🎬 الجلسات: {{ stats.total_sessions }}</div>
-{% endblock %}
-
-{% block extra_css %}
-<style>
-    @page { size: A4 landscape !important; margin: 0.8cm; }
-    @media print {
-        body { font-size: 8pt; padding: 0; }
-        .page-wrapper { padding: 0.5rem; }
-        .report-header { margin-bottom: 0.5rem; padding-bottom: 0.4rem; }
-        .report-banner { margin-bottom: 0.5rem; padding: 0.4rem; }
-        .cards-grid { gap: 0.6rem; }
-        .tc { padding: 0.6rem; }
-        .page-break { page-break-before: always; }
+<div>🎬 الجلسات: {{ stat    @media print {
+        body { font-size: 8pt; padding: 0; background: #f8fafc !important; -webkit-print-color-adjust: exact !important; }
+        .page-wrapper { padding: 0.5rem; max-width: 100%; }
+        .cards-grid { display: flex !important; flex-direction: column; gap: 1.5rem !important; }
+        .master-tc { page-break-inside: avoid; }
     }
 
     .cards-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1.2rem;
-    }
-
-    /* ═══ Teacher Card ═══ */
-    .tc {
-        border: 1.5px solid var(--border-light);
-        border-radius: 16px;
-        padding: 1rem;
-        background: #fff;
-        position: relative;
-        overflow: hidden;
         display: flex;
-        gap: 1rem;
-        transition: var(--transition-smooth);
-    }
-    .tc:hover {
-        border-color: var(--brand-gold);
-        box-shadow: 0 8px 30px rgba(197,160,89,0.12);
+        flex-direction: column;
+        gap: 1.5rem;
+        max-width: 1100px;
+        margin: 0 auto;
     }
 
-    /* ── Photo Side ── */
-    .tc-photo {
-        width: 140px;
-        min-height: 160px;
-        border-radius: 12px;
+    /* ═══ Master Card Container ═══ */
+    .master-tc {
+        display: flex;
+        background: #ffffff;
+        border-radius: 24px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
         overflow: hidden;
-        flex-shrink: 0;
-        position: relative;
-        background: linear-gradient(135deg, #1e3a5f, #2563eb);
+        min-height: 280px;
+        direction: rtl;
     }
-    .tc-photo img {
+
+    /* ── RIGHT SIDE: Big Vertical Photo ── */
+    .master-right {
+        width: 260px;
+        position: relative;
+        flex-shrink: 0;
+        background: linear-gradient(135deg, #1e293b, #0f172a);
+    }
+    .master-right img {
         width: 100%;
         height: 100%;
         object-fit: cover;
+        object-position: center 15%;
     }
-    .tc-photo-placeholder {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-    }
-    .tc-photo-placeholder .initials {
-        font-size: 2.5rem;
-        font-weight: 900;
-        opacity: 0.9;
-        line-height: 1;
-    }
-    .tc-photo-name {
+    .master-right-name {
         position: absolute;
         bottom: 0;
         left: 0;
         right: 0;
-        background: linear-gradient(transparent, rgba(0,0,0,0.7));
-        color: #fff;
-        padding: 0.5rem;
-        font-weight: 800;
-        font-size: 0.8rem;
+        background: linear-gradient(transparent, rgba(30, 41, 59, 0.95));
+        color: #ffffff;
         text-align: center;
+        padding: 2rem 1rem 1rem;
+        font-size: 1.4rem;
+        font-weight: 900;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
 
-    /* ── Info Side ── */
-    .tc-info {
+    /* ── LEFT SIDE: Multi-Content Stack ── */
+    .master-left {
         flex: 1;
+        padding: 1rem 1.2rem;
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 0.7rem;
+        background: #ffffff;
     }
 
-    /* ── Badges Row ── */
-    .tc-badges {
+    /* ── Header Row ── */
+    .master-header {
         display: flex;
-        gap: 0.4rem;
-        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
     }
-    .tc-badge {
-        display: inline-block;
+    .badge-top-left {
+        border: 1px solid #eab308;
+        color: #854d0e;
+        background: #fefce8;
+        font-weight: 700;
+        font-size: 0.7rem;
         padding: 0.2rem 0.7rem;
-        border-radius: 100px;
-        font-weight: 700;
-        font-size: 0.72rem;
+        border-radius: 6px;
     }
-    .tc-badge-branch {
-        background: #dbeafe;
-        color: #1e40af;
-    }
-    .tc-badge-subject {
-        background: #d1fae5;
-        color: #065f46;
-    }
-    .tc-badge-ninth { background: #dcfce7; color: #16a34a; }
-    .tc-badge-science { background: #dbeafe; color: #1e40af; }
-    .tc-badge-literal { background: #f3e8ff; color: #7c3aed; }
-
-    /* ── Info Rows ── */
-    .tc-row {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        font-size: 0.78rem;
-    }
-    .tc-row-item {
-        display: flex;
-        align-items: center;
-        gap: 0.3rem;
-    }
-    .tc-row-icon {
-        width: 28px;
-        height: 28px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-        flex-shrink: 0;
-    }
-    .tc-row-icon.exam-icon { background: #fee2e2; color: #dc2626; }
-    .tc-row-icon.time-icon { background: #fef3c7; color: #d97706; }
-    .tc-row-icon.shoot-icon { background: #dbeafe; color: #2563eb; }
-    .tc-row-icon.cost-icon { background: #f3e8ff; color: #7c3aed; }
-    .tc-row-label {
-        font-size: 0.65rem;
-        color: var(--text-muted);
-        font-weight: 600;
-    }
-    .tc-row-value {
-        font-family: 'Inter', monospace;
-        font-weight: 700;
-        color: var(--primary-dark);
-        font-size: 0.82rem;
-    }
-
-    /* ── Platform Price ── */
-    .tc-price {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.35rem 1rem;
-        border-radius: 100px;
+    .badge-multi {
+        background: linear-gradient(90deg, #3b82f6, #2563eb);
+        color: #ffffff;
         font-weight: 800;
-        font-size: 0.85rem;
-    }
-    .tc-price-75 { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46; }
-    .tc-price-100 { background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: #1e40af; }
-    .tc-price-150 { background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e; }
-    .tc-price-200 { background: linear-gradient(135deg, #fee2e2, #fecaca); color: #991b1b; }
-    .tc-price-label {
-        font-size: 0.65rem;
-        color: var(--text-muted);
-        font-weight: 600;
-        margin-right: 0.3rem;
+        font-size: 0.75rem;
+        padding: 0.3rem 0.8rem;
+        border-radius: 100px;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
     }
 
-    /* ── Production Timeline ── */
-    .tc-timeline {
+    /* ── Flex-Items Container (Generic Horizontal Flow) ── */
+    .h-items-grid {
         display: flex;
-        align-items: center;
-        gap: 0;
-        margin-top: auto;
+        gap: 0.8rem;
+        justify-content: flex-start;
     }
-    .tc-timeline-label {
-        font-size: 0.6rem;
-        color: var(--text-muted);
+    .h-item {
+        flex: 1;
+        min-width: 0; /* Prevent overflow */
+    }
+
+    /* ── 1. Subject + Dates ── */
+    .session-box {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 0.5rem;
+        text-align: center;
+        position: relative;
+    }
+    .session-box-title {
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: #1e40af;
+        margin-bottom: 0.2rem;
+    }
+    .session-box-date {
+        font-size: 0.65rem;
+        color: #64748b;
+        font-weight: 600;
+    }
+    .date-hl {
+        color: #b45309;
         font-weight: 700;
-        margin-left: 0.5rem;
-        white-space: nowrap;
     }
-    .tc-timeline-step {
+
+    /* ── 2. Platform Prices Green Banner ── */
+    .price-banner {
+        background: #ecfdf5;
+        border: 1px solid #10b981;
+        border-radius: 10px;
+        display: flex;
+        padding: 0.5rem 0;
+    }
+    .price-item {
+        flex: 1;
+        text-align: center;
+        border-left: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .price-item:first-child { border-left: none; }
+    .price-lbl {
+        font-size: 0.65rem;
+        color: #065f46;
+        font-weight: 600;
+        margin-bottom: 0.1rem;
+    }
+    .price-val {
+        font-size: 1rem;
+        font-weight: 900;
+        color: #059669;
+    }
+
+    /* ── 3. Production Cost Row ── */
+    .cost-banner {
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-radius: 10px;
+        display: flex;
+        padding: 0.4rem 0;
+    }
+    .cost-item {
+        flex: 1;
+        text-align: center;
+        border-left: 1px solid rgba(251, 191, 36, 0.3);
+    }
+    .cost-item:first-child { border-left: none; }
+    .cost-lbl {
+        font-size: 0.6rem;
+        color: #78350f;
+        font-weight: 600;
+    }
+    .cost-val {
+        font-size: 0.9rem;
+        font-weight: 800;
+        color: #d97706;
+    }
+
+    /* ── 4. Shared Timeline ── */
+    .timeline-banner {
+        margin-top: auto;
+        background: #fcfdfe;
+        border: 1px solid #e0e7ff;
+        border-radius: 12px;
+        padding: 0.6rem 1rem;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        position: relative;
-        flex: 1;
     }
-    .tc-timeline-dot {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
+    .timeline-title {
+        text-align: center;
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: #1e3a8a;
+        margin-bottom: 0.4rem;
+    }
+    .timeline-line {
         display: flex;
         align-items: center;
-        justify-content: center;
-        font-size: 0.65rem;
-        color: #fff;
-        font-weight: 700;
-        z-index: 2;
+        justify-content: space-between;
         position: relative;
+        margin-top: 0.5rem;
     }
-    .tc-timeline-step:not(:last-child)::after {
+    .timeline-line::before {
         content: '';
         position: absolute;
-        top: 14px;
-        left: -50%;
-        right: 50%;
+        top: 50%;
+        left: 0;
+        right: 0;
         height: 2px;
-        background: #e5e7eb;
-        z-index: 1;
+        background: #bfdbfe;
+        z-index: 0;
     }
-    .dot-shoot { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-    .dot-edit { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
-    .dot-design { background: linear-gradient(135deg, #f59e0b, #d97706); }
-    .dot-review { background: linear-gradient(135deg, #10b981, #059669); }
-    .dot-upload { background: linear-gradient(135deg, #ec4899, #db2777); }
-    .tc-timeline-text {
-        font-size: 0.55rem;
-        color: var(--text-muted);
-        margin-top: 0.2rem;
-        font-weight: 600;
-    }
-
-    /* ── Multi session table ── */
-    .tc-sessions {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.72rem;
-        margin-top: 0.3rem;
-    }
-    .tc-sessions th {
-        background: #f8fafc;
-        color: var(--primary-dark);
-        padding: 0.3rem 0.4rem;
-        font-size: 0.65rem;
+    .tl-node {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: #1e3a8a;
+        color: white;
         font-weight: 700;
-        border: 1px solid #e5e7eb;
-        text-align: center;
+        font-size: 0.7rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 2;
+        position: relative;
+        box-shadow: 0 0 0 4px #ffffff;
     }
-    .tc-sessions td {
-        padding: 0.25rem 0.4rem;
-        border: 1px solid #f0f0f0;
-        text-align: center;
+    .tl-node-active { background: #1e3a8a; }
+    .tl-node-light { background: #60a5fa; }
+    
+    .tl-label {
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.58rem;
+        color: #475569;
+        font-weight: 600;
+        margin-top: 4px;
+        white-space: nowrap;
     }
 </style>
 {% endblock %}
@@ -265,110 +253,96 @@
 
 <div class="cards-grid">
 {% for card in teacher_cards %}
-    {% for session in card.sessions %}
-    <div class="tc">
-        <!-- Photo Side -->
-        <div class="tc-photo">
+    <div class="master-tc">
+        
+        <!-- ═══ LEFT SIDE: Content Data ═══ -->
+        <div class="master-left">
+            
+            <!-- Header Info -->
+            <div class="master-header">
+                <div class="badge-top-left">
+                    {% if card.sessions|first %}{{ card.sessions|first.branch }}{% endif %}
+                </div>
+                <div class="badge-multi">
+                    {% if card.session_count > 1 %}متعدد المواد{% else %}مادة واحدة{% endif %}
+                </div>
+            </div>
+
+            <!-- Row 1: Sessions Grid (Subjects + Dates) -->
+            <div class="h-items-grid">
+                {% for s in card.sessions %}
+                <div class="h-item session-box">
+                    <div class="session-box-title">{{ s.subject }}</div>
+                    <div class="session-box-date">الامتحان: {{ s.exam_date_str }}</div>
+                    <div class="session-box-date date-hl">التصوير: {{ s.shooting_date_str }}</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Row 2: Platform Price Banner -->
+            <div class="price-banner">
+                {% for s in card.sessions %}
+                <div class="price-item">
+                    <div class="price-lbl">سعر {{ s.subject }}</div>
+                    <div class="price-val">{{ s.price_display }}</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Row 3: Cost Banner -->
+            <div class="cost-banner">
+                {% for s in card.sessions %}
+                <div class="cost-item">
+                    <div class="cost-lbl">تكلفة {{ s.subject }}</div>
+                    <div class="cost-val">{{ s.production_cost }}</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Row 4: Timeline (Shared for Teacher) -->
+            <div class="timeline-banner">
+                <div class="timeline-title">📈 مراحل الإنتاج - المواد النقدية/النظرية</div>
+                <div class="timeline-line">
+                    <div style="position:relative;">
+                        <div class="tl-node tl-node-active">1</div>
+                        <div class="tl-label">التصوير</div>
+                    </div>
+                    <div style="position:relative;">
+                        <div class="tl-node tl-node-active">2</div>
+                        <div class="tl-label">المونتاج</div>
+                    </div>
+                    <div style="position:relative;">
+                        <div class="tl-node">3</div>
+                        <div class="tl-label">المراجعة</div>
+                    </div>
+                    <div style="position:relative;">
+                        <div class="tl-node">4</div>
+                        <div class="tl-label">التصميم</div>
+                    </div>
+                    <div style="position:relative;">
+                        <div class="tl-node">5</div>
+                        <div class="tl-label">الرفع</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ═══ RIGHT SIDE: Teacher Portrait ═══ -->
+        <div class="master-right">
             {% if card.static_photo_path %}
                 <img src="{% static card.static_photo_path %}" alt="{{ card.name }}">
             {% elif card.photo_url %}
                 <img src="{{ card.photo_url }}" alt="{{ card.name }}">
             {% else %}
-                <div class="tc-photo-placeholder">
-                    <span class="initials">{{ card.name|truncatechars:2 }}</span>
+                <div style="height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; opacity:0.5;">
+                    <div style="font-size:3rem; font-weight:900;">{{ card.name|truncatechars:2 }}</div>
                 </div>
             {% endif %}
-            <div class="tc-photo-name">{{ card.name }}</div>
+            <div class="master-right-name">{{ card.name }}</div>
         </div>
 
-        <!-- Info Side -->
-        <div class="tc-info">
-            <!-- Badges -->
-            <div class="tc-badges">
-                <span class="tc-badge tc-badge-{{ session.branch_code }}">الفرع: {{ session.branch }}</span>
-                <span class="tc-badge tc-badge-subject">{{ session.subject }}</span>
-            </div>
-
-            <!-- Exam Date + Time -->
-            <div class="tc-row">
-                <div class="tc-row-item">
-                    <div class="tc-row-icon exam-icon">📅</div>
-                    <div>
-                        <div class="tc-row-label">موعد الامتحان</div>
-                        <div class="tc-row-value">{{ session.exam_date_str }}</div>
-                    </div>
-                </div>
-                <div class="tc-row-item">
-                    <div class="tc-row-icon time-icon">⏰</div>
-                    <div>
-                        <div class="tc-row-label">الوقت</div>
-                        <div class="tc-row-value">{{ session.exam_time }} صباحاً</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Shooting Date + Cost -->
-            <div class="tc-row">
-                <div class="tc-row-item">
-                    <div class="tc-row-icon shoot-icon">🎬</div>
-                    <div>
-                        <div class="tc-row-label">تاريخ التصوير</div>
-                        <div class="tc-row-value">{{ session.shooting_date_str }}</div>
-                    </div>
-                </div>
-                <div class="tc-row-item">
-                    <div class="tc-row-icon cost-icon">💰</div>
-                    <div>
-                        <div class="tc-row-label">التكلفة</div>
-                        <div class="tc-row-value">{{ session.production_cost }} ل.س</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Platform Price -->
-            <div style="display:flex; align-items:center; gap:0.5rem;">
-                {% if session.platform_price >= 200000 %}
-                    <span class="tc-price tc-price-200">{{ session.price_display }}</span>
-                {% elif session.platform_price >= 150000 %}
-                    <span class="tc-price tc-price-150">{{ session.price_display }}</span>
-                {% elif session.platform_price >= 100000 %}
-                    <span class="tc-price tc-price-100">{{ session.price_display }}</span>
-                {% else %}
-                    <span class="tc-price tc-price-75">{{ session.price_display }}</span>
-                {% endif %}
-                <span class="tc-price-label">السعر المنصة</span>
-            </div>
-
-            <!-- Production Timeline -->
-            <div style="display:flex; align-items:center; gap:0.3rem; margin-top:auto;">
-                <span class="tc-timeline-label">مراحل الإنتاج</span>
-                <div class="tc-timeline" style="flex:1;">
-                    <div class="tc-timeline-step">
-                        <div class="tc-timeline-dot dot-shoot">📹</div>
-                        <span class="tc-timeline-text">تصوير</span>
-                    </div>
-                    <div class="tc-timeline-step">
-                        <div class="tc-timeline-dot dot-edit">✂️</div>
-                        <span class="tc-timeline-text">مونتاج</span>
-                    </div>
-                    <div class="tc-timeline-step">
-                        <div class="tc-timeline-dot dot-design">🎨</div>
-                        <span class="tc-timeline-text">تصميم</span>
-                    </div>
-                    <div class="tc-timeline-step">
-                        <div class="tc-timeline-dot dot-review">✅</div>
-                        <span class="tc-timeline-text">مراجعة</span>
-                    </div>
-                    <div class="tc-timeline-step">
-                        <div class="tc-timeline-dot dot-upload">☁️</div>
-                        <span class="tc-timeline-text">رفع</span>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
-    {% endfor %}
 {% endfor %}
 </div>
-
 {% endblock %}
