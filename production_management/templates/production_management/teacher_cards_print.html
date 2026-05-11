@@ -267,7 +267,7 @@
             <!-- Header Info -->
             <div class="master-header">
                 <div class="badge-top-left">
-                    {% if card.sessions|first %}{{ card.sessions|first.branch }}{% endif %}
+                    {% if card.sessions.0 %}{{ card.sessions.0.branch }}{% endif %}
                 </div>
                 <div class="badge-multi">
                     {% if card.session_count > 1 %}متعدد المواد{% else %}مادة واحدة{% endif %}
