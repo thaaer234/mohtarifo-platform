@@ -448,26 +448,25 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- High Resolution HTML Canvas Rendering Library -->
+<!-- High Resolution and Archive Handling Libraries -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
 <script>
     function downloadCardAsPng(elementId, teacherName) {
         const element = document.getElementById(elementId);
         if(!element) return;
 
-        // Display feedback in the clicked button
         const triggerBtn = window.event ? window.event.currentTarget : null;
         const originalHtml = triggerBtn ? triggerBtn.innerHTML : "";
         if(triggerBtn) triggerBtn.innerHTML = "⏳ جاري المعالجة...";
 
-        // Render with ultra-high scale and FORCED layout for premium crispness consistent with print
         html2canvas(element, {
             scale: 3, 
             useCORS: true, 
             backgroundColor: "#ffffff",
             ignoreElements: (el) => el.classList.contains('no-print') || el.classList.contains('card-actions-overlay'),
             onclone: (clonedDoc) => {
-                // FORCE exact high fidelity print proportion inside the snapshot clone
                 const cloneEl = clonedDoc.getElementById(elementId);
                 if(cloneEl) {
                     cloneEl.style.width = "1000px";
@@ -487,7 +486,7 @@
             setTimeout(() => { if(triggerBtn) triggerBtn.innerHTML = originalHtml; }, 2500);
         }).catch(err => {
             console.error("Canvas capture failed:", err);
-            alert("عذراً، فشل تصدير الصورة. جرب متصفح آخر.");
+            alert("عذراً، فشل تصدير الصورة.");
             if(triggerBtn) triggerBtn.innerHTML = originalHtml;
         });
     }
@@ -501,13 +500,16 @@
         mainBtn.style.pointerEvents = "none";
         mainBtn.style.opacity = "0.7";
 
+        // Initialize ZIP container
+        const zip = new JSZip();
+
         for(let i = 0; i < allCards.length; i++) {
-            mainBtn.innerHTML = `⏳ تصدير ${i+1} من ${allCards.length}...`;
+            mainBtn.innerHTML = `⏳ جاري تجهيز الصورة ${i+1} من ${allCards.length}...`;
             const card = allCards[i];
             const rawName = card.querySelector('.master-right-name') ? card.querySelector('.master-right-name').innerText : `مدرس_${i}`;
             
-            // Gentle delay to prevent browser hanging
-            await new Promise(resolve => setTimeout(resolve, 300));
+            // Minor yielding timeout for visual updates
+            await new Promise(resolve => setTimeout(resolve, 150));
 
             try {
                 const cardId = card.id;
@@ -526,19 +528,38 @@
                          }
                     }
                 });
-                const link = document.createElement('a');
-                link.download = `بطاقة_${rawName.trim().replace(/\s+/g, '_')}.png`;
-                link.href = canvas.toDataURL("image/png", 1.0);
-                link.click();
+
+                // Extract clean Base64 directly from data URL
+                const imgBase64 = canvas.toDataURL("image/png", 1.0).replace(/^data:image\/(png|jpg);base64,/, "");
+                
+                // Pack file into Zip
+                const fileIndex = String(i + 1).padStart(2, '0');
+                const cleanName = rawName.trim().replace(/\s+/g, '_');
+                zip.file(`${fileIndex}_بطاقة_${cleanName}.png`, imgBase64, {base64: true});
+
             } catch(e) {
-                console.error("Error in batch export of index " + i, e);
+                console.error("Error packaging card index " + i, e);
             }
         }
 
-        mainBtn.innerHTML = "✅ اكتمل تصدير الكل!";
-        mainBtn.style.pointerEvents = "auto";
-        mainBtn.style.opacity = "1";
-        setTimeout(() => { mainBtn.innerHTML = backupHtml; }, 4000);
+        mainBtn.innerHTML = "📦 جاري إنشاء ملف ZIP المضغوط...";
+        
+        // Generate ZIP data blob and initiate user download
+        zip.generateAsync({type:"blob", compression: "DEFLATE"}).then(function(content) {
+            const blobUrl = window.URL.createObjectURL(content);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = "بطاقات_المدرسين_النهائية.zip";
+            link.click();
+            
+            // Cleanup
+            setTimeout(() => window.URL.revokeObjectURL(blobUrl), 10000);
+
+            mainBtn.innerHTML = "✅ اكتمل تنزيل الملف المضغوط!";
+            mainBtn.style.pointerEvents = "auto";
+            mainBtn.style.opacity = "1";
+            setTimeout(() => { mainBtn.innerHTML = backupHtml; }, 4000);
+        });
     }
 </script>
 {% endblock %}
