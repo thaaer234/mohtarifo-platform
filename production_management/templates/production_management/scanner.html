@@ -485,8 +485,8 @@ function scannerApp() {
                         let cleanDuration = exam.duration || '2';
                         let cleanTime = exam.start_time || '08:30';
 
-                        // SPECIAL RULE: Ninth grade "علوم عامة" needs to split into Physics, Chemistry, and Sciences
-                        if (backendBranch === 'ninth' && (cleanSubject === 'علوم عامة' || cleanSubject.includes('علوم'))) {
+                        // SPECIAL RULE 1: Ninth grade "علوم عامة" needs to split into Physics, Chemistry, and Sciences
+                        if (backendBranch === 'ninth' && (cleanSubject === 'علوم عامة' || cleanSubject.includes('علوم عامة') || cleanSubject.includes('العلوم العامة'))) {
                             // Generate 3 distinct lines sharing the same date
                             const sublist = ['الفيزياء', 'الكيمياء', 'العلوم'];
                             sublist.forEach(s => {
@@ -498,7 +498,21 @@ function scannerApp() {
                                     duration: cleanDuration
                                 });
                             });
-                        } else {
+                        } 
+                        // SPECIAL RULE 2: "اللغة الأجنبية" automatically splits into French and English if encountered
+                        else if (cleanSubject === 'اللغة الأجنبية' || cleanSubject === 'اللغة الاجنبية') {
+                            const sublist = ['اللغة الإنكليزية', 'اللغة الفرنسية'];
+                            sublist.forEach(s => {
+                                parsedRows.push({
+                                    subject: s,
+                                    branch: backendBranch,
+                                    date: exam.date,
+                                    time: cleanTime,
+                                    duration: cleanDuration
+                                });
+                            });
+                        }
+                        else {
                             // Standard direct addition
                             parsedRows.push({
                                 subject: cleanSubject,

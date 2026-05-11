@@ -272,15 +272,67 @@ class ScannerView(LoginRequiredMixin, IsProductionStaffMixin, TemplateView):
             schedule_date = shooting_date + timedelta(days=1)
 
     def _find_exam(self, subject_name, branch, entries):
-        """Fuzzy match subject name to exam schedule entry."""
-        # Exact match
-        exact = entries.filter(subject_name=subject_name, branch=branch).first()
-        if exact:
-            return exact
-        # Partial match
-        for entry in entries.filter(branch=branch):
-            if entry.subject_name in subject_name or subject_name in entry.subject_name:
+        """Intelligent semantic resolver linking platform courses to official exam schedules."""
+        
+        def normalize(s):
+            if not s: return ""
+            s = s.strip().replace(' ', '')
+            # Standardize Alefs
+            s = s.replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا')
+            # Standardize Teh Marbuta
+            s = s.replace('ة', 'ه')
+            # Standardize Kaf/Jeem variances for English (الانكليزية / الانجليزية)
+            s = s.replace('ج', 'ك') # Common mapping for English in some dialects
+            return s
+
+        norm_subject = normalize(subject_name)
+        branch_entries = entries.filter(branch=branch)
+
+        # 1. Direct Normalized Exact Match
+        for entry in branch_entries:
+            if normalize(entry.subject_name) == norm_subject:
                 return entry
+
+        # 2. Semantic Alias Expansion Map
+        # Translates specific platform course names back to generalized exam categories.
+        ALIAS_MAP = {
+            'اللغة الفرنسية': ['الفرنسية', 'اللغة الأجنبية', 'اللغة الاجنبية', 'فرنسي'],
+            'اللغة الإنكليزية': ['الإنكليزية', 'اللغة الأجنبية', 'اللغة الاجنبية', 'الانجليزية', 'إنكليزي'],
+            'اللغة الانكليزية': ['الانكليزية', 'اللغة الأجنبية', 'اللغة الاجنبية', 'الانجليزية', 'انكليزي'],
+            'الفيزياء': ['فيزياء', 'علوم عامة', 'العلوم العامة'],
+            'الكيمياء': ['كيمياء', 'علوم عامة', 'العلوم العامة'],
+            'العلوم': ['العلوم', 'علم الأحياء', 'احياء', 'علوم عامة', 'العلوم العامة'],
+            'علم الأحياء': ['العلوم', 'الاحياء', 'احياء'],
+            'الاجتماعيات': ['اجتماعيات', 'التاريخ', 'الجغرافية', 'التربية الوطنية'],
+            'التربية الدينية': ['الديانة', 'اسلامية', 'التربية الاسلامية', 'دين']
+        }
+
+        # Check if current subject has established aliases
+        candidate_aliases = []
+        for key, list_val in ALIAS_MAP.items():
+            if normalize(key) == norm_subject:
+                candidate_aliases.extend([normalize(x) for x in list_val])
+                break
+
+        if candidate_aliases:
+            for entry in branch_entries:
+                ne = normalize(entry.subject_name)
+                if ne in candidate_aliases:
+                    return entry
+
+        # 3. Fuzzy Substring Containment Fallback
+        for entry in branch_entries:
+            ne = normalize(entry.subject_name)
+            if ne in norm_subject or norm_subject in ne:
+                return entry
+                
+        # 4. Reverse Fuzzy Check: If exam entry matches one of our aliases via substring
+        for entry in branch_entries:
+            ne = normalize(entry.subject_name)
+            for alias in candidate_aliases:
+                if ne in alias or alias in ne:
+                    return entry
+
         return None
 
 
