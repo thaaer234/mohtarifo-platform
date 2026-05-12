@@ -4288,20 +4288,35 @@ def admin_whatsapp_control(request):
     import time
     import threading
     from django.contrib.auth import get_user_model
-    from accounts.models import StudentProfile
+    from accounts.models import StudentProfile, AcademicBranch
 
     User = get_user_model()
 
-    # Helper for background broadcasts with dynamic tag replacement
+    # Helper for background broadcasts with advanced humanized anti-spam throttle
     def _background_broadcast(student_list, raw_message):
+        import random
+        
+        sent_count = 0
         for profile in student_list:
             if profile and profile.phone:
                 student_user = profile.user
                 student_name = student_user.get_full_name() or student_user.username
-                # Personalize the message per student!
                 personalized = raw_message.replace("{name}", student_name).replace("{الاسم}", student_name)
+                
+                # Trigger immediate message push
                 send_whatsapp_message(profile.phone, personalized)
-                time.sleep(2) # Anti-spam spacing
+                sent_count += 1
+                
+                # 1. Advanced Jitter: Simulate natural typing & thinking gap
+                # Introduce randomized sleeping interval between 4 to 8 seconds
+                natural_delay = random.uniform(4.0, 8.0)
+                time.sleep(natural_delay)
+                
+                # 2. Batch Breather: Every 12 messages, take a deep human pause (coffee break)
+                # Rest for 20 to 45 seconds to totally break sequential pattern
+                if sent_count % 12 == 0:
+                    deep_pause = random.uniform(20.0, 45.0)
+                    time.sleep(deep_pause)
 
     if request.method == "POST":
         # 1. Handle Logout
@@ -4327,16 +4342,18 @@ def admin_whatsapp_control(request):
                 messages.warning(request, "يرجى ملء الرقم والرسالة.")
             return redirect("dashboard:admin_whatsapp_control")
 
-        # 3. Handle Advanced Segmentation Broadcast
+        # 3. Handle Advanced Segmentation Broadcast with Branch Filtering
         elif "send_broadcast" in request.POST:
             target_type = request.POST.get("target_type", "subscribed")
             message_body = request.POST.get("message", "").strip()
+            branch_filter = request.POST.get("branch_filter", "").strip()
             
             if not message_body:
                 messages.warning(request, "لا يمكن إطلاق حملة برسالة فارغة.")
                 return redirect("dashboard:admin_whatsapp_control")
 
             profiles = []
+            msg_segment = ""
             
             if target_type == "subscribed":
                 # Subscribed to a specific course
@@ -4350,20 +4367,32 @@ def admin_whatsapp_control(request):
                 for grant in grants:
                     p = getattr(grant.user, 'student_profile', None)
                     if p and p.phone:
-                        profiles.append(p)
+                        # Apply manual filtering by branch name string in profile if selected
+                        if not branch_filter or p.track == branch_filter:
+                            profiles.append(p)
                 msg_segment = f"المشتركين في دورة ({course.title})"
 
             elif target_type == "all_registered":
                 # Everyone with a student profile and phone registered
-                active_profiles = StudentProfile.objects.exclude(phone__isnull=True).exclude(phone="").select_related('user')
-                profiles = list(active_profiles)
+                qs = StudentProfile.objects.exclude(phone__isnull=True).exclude(phone="").select_related('user')
+                if branch_filter:
+                    qs = qs.filter(track=branch_filter)
+                profiles = list(qs)
                 msg_segment = "جميع المسجلين بالمنصة"
 
             elif target_type == "unsubscribed_any":
                 # Registered students who DO NOT have any active access grants yet!
                 active_grants_user_ids = AccessGrant.objects.values_list('user_id', flat=True)
-                profiles = list(StudentProfile.objects.exclude(phone__isnull=True).exclude(phone="").exclude(user_id__in=active_grants_user_ids).select_related('user'))
+                qs = StudentProfile.objects.exclude(phone__isnull=True).exclude(phone="").exclude(user_id__in=active_grants_user_ids).select_related('user')
+                if branch_filter:
+                    qs = qs.filter(track=branch_filter)
+                profiles = list(qs)
                 msg_segment = "المسجلين غير المشتركين بأي مادة"
+            
+            if branch_filter:
+                msg_segment += f" - فرع ({branch_filter})"
+            else:
+                msg_segment += " - جميع الفروع"
             
             if not profiles:
                 messages.info(request, f"لم يتم العثور على طلاب تطابق شريحة ({msg_segment}).")
@@ -4397,8 +4426,10 @@ def admin_whatsapp_control(request):
             return redirect("dashboard:admin_whatsapp_control")
 
     status_data = get_whatsapp_status()
-    courses = Course.objects.filter(status="published").only("id", "title").order_by("title")
+    # Fetch with related instructor information to display instructor name in selection list
+    courses = Course.objects.filter(status="published").select_related("instructor").order_by("title")
     db_templates = WhatsAppTemplate.objects.all()
+    branches = AcademicBranch.objects.filter(is_active=True).order_by("sort_order", "name")
 
     return render(request, "dashboard/admin_whatsapp_control.html", {
         "status": status_data.get("status", "offline"),
@@ -4406,5 +4437,6 @@ def admin_whatsapp_control(request):
         "has_qr": status_data.get("hasQr", False),
         "wa_user": status_data.get("user"),
         "courses": courses,
-        "templates": db_templates
+        "templates": db_templates,
+        "branches": branches
     })
