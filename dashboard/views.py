@@ -373,6 +373,20 @@ self.addEventListener("fetch", (event) => {
     return response
 
 
+def favicon_view(request):
+    import os
+    from django.conf import settings
+    from django.http import FileResponse, Http404
+    path = os.path.join(settings.BASE_DIR, 'static', 'favicon.ico')
+    if os.path.exists(path):
+        return FileResponse(open(path, 'rb'), content_type='image/x-icon')
+    # Fallback to existing location
+    path = os.path.join(settings.BASE_DIR, 'static', 'dashboard', 'icons', 'icon-192.ico')
+    if os.path.exists(path):
+        return FileResponse(open(path, 'rb'), content_type='image/x-icon')
+    raise Http404()
+
+
 def robots_txt(request):
     site_url = _site_url(request)
     lines = [
