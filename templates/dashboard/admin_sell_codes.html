@@ -93,10 +93,10 @@
         overflow: hidden;
     }
     /* Card elements extracted from print view */
-    .watermark { position: absolute; inset: 0; background-image: url("{% static 'dashboard/img/card_assets/image1.png' %}"); background-size: 640px auto; background-position: 150px 66px; background-repeat: no-repeat; opacity: .045; }
+    .watermark { position: absolute; inset: 0; background-image: url("{% static_data_uri 'dashboard/img/card_assets/image1.png' %}"); background-size: 640px auto; background-position: 150px 66px; background-repeat: no-repeat; opacity: .045; }
     .card-logo { position: absolute; left: 42px; top: 16px; height: 40px; width: auto; object-fit: contain; z-index: 20; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08)); }
     .side-pattern { position: absolute; left: 0; top: 0; width: 29px; height: 100%; overflow: hidden; background: #fff; border-left: 0; border-right: 1px solid rgba(0, 0, 0, .2); }
-    .side-pattern::before { content: ""; position: absolute; inset: -18px -11px; background-image: url("{% static 'dashboard/img/card_assets/image3.png' %}"); background-size: 76px auto; background-repeat: repeat-y; opacity: .64; }
+    .side-pattern::before { content: ""; position: absolute; inset: -18px -11px; background-image: url("{% static_data_uri 'dashboard/img/card_assets/image3.png' %}"); background-size: 76px auto; background-repeat: repeat-y; opacity: .64; }
     .page-num { position: absolute; left: -6px; bottom: -6px; width: 42px; height: 42px; border-radius: 50%; color: #fff; background: var(--gold); font-size: 22px; line-height: 42px; font-weight: 700; text-align: center; direction: ltr; }
     .front .page-num { left: auto; right: -6px; bottom: -6px; }
 
@@ -417,7 +417,7 @@
                                 <div class="watermark"></div>
                                 <div class="side-pattern"></div>
                                 <img class="card-logo" src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo">
-                                <img class="front-hero" src="{% static 'dashboard/img/card_assets/image4.svg' %}" alt="">
+                                <img class="front-hero" src="{% static_data_uri 'dashboard/img/card_assets/image4.svg' %}" alt="">
                                 <div class="title-frame"></div>
                                 <div class="front-title">{% if sold_code.course %}مادة {{ sold_code.course.subject.name|default:sold_code.course.title }}{% else %}باقة {{ sold_code.package.name }}{% endif %}</div>
                                 <div class="front-info">
@@ -445,7 +445,7 @@
                                 <div class="watermark"></div>
                                 <div class="side-pattern"></div>
                                 <img class="card-logo" src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo">
-                                <img class="back-hero" src="{% static 'dashboard/img/card_assets/image5.svg' %}" alt="">
+                                <img class="back-hero" src="{% static_data_uri 'dashboard/img/card_assets/image5.svg' %}" alt="">
                                 <div class="vertical-rule"></div>
                                 <div class="back-title-frame"></div>
                                 <div class="back-title">خطوات التسجيل والحضور:</div>
@@ -466,7 +466,7 @@
                                     <p>هل يستخدم الكود لأكثر من حساب؟ الكود يربط بجهاز واحد فقط.</p>
                                     <p>أحتاج مساعدة تقنية؟ فريقنا جاهز لمساعدتك عبر الواتساب.</p>
                                 </div>
-                                <img class="help-figure" src="{% static 'dashboard/img/card_assets/image6.svg' %}" alt="">
+                                <img class="help-figure" src="{% static_data_uri 'dashboard/img/card_assets/image6.svg' %}" alt="">
                                 <div class="socials">
                                     <div class="social"><span class="social-icon">☎</span><span>+963 984 011 372</span></div>
                                     <div class="social"><span class="social-icon">f</span><span>bakaloria.syria</span></div>
@@ -677,6 +677,9 @@
         // Temporarily force scale to 1 during capture for maximum quality
         const originalTransform = element.style.transform;
         element.style.transform = 'scale(1)';
+        
+        // Force a distinct frame update cycle so elements properly snap back into place before capture
+        await new Promise(r => requestAnimationFrame(() => setTimeout(r, 100)));
 
         try {
             const canvas = await html2canvas(element, {
@@ -685,6 +688,8 @@
                 allowTaint: true,
                 backgroundColor: "#ffffff",
                 logging: false,
+                width: 791,
+                height: 374,
                 windowWidth: 791,
                 windowHeight: 374
             });
