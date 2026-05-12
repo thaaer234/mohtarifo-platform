@@ -239,7 +239,7 @@
                         <select id="course-select" class="form-select" style="border-radius: 12px; padding: 12px; background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.08); color: var(--text-primary);" onchange="loadCodesFor('course', this.value)">
                             <option value="">-- اختر المادة --</option>
                             {% for course in courses %}
-                                <option value="{{ course.id }}">{{ course.title }} - أ. {{ course.instructor.get_full_name|default:course.instructor.username }}</option>
+                                <option value="{{ course.id }}">{{ course.title }} - أ. {{ course.instructor.get_full_name|default:course.instructor.username }} ({{ course.get_academic_track_display }})</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -573,7 +573,7 @@
                 <label style="color: #e2e8f0; font-size: 0.85rem; font-weight: bold; margin-bottom: 0.5rem; display: block;">اختر المادة:</label>
                 <select name="batch_course_id" class="form-select" style="background: #000; border-color: #333; color: #fff; padding: 10px; border-radius: 10px; width: 100%;">
                     <option value="">-- اختر --</option>
-                    {% for c in courses %}<option value="{{ c.id }}">{{ c.title }}</option>{% endfor %}
+                    {% for c in courses %}<option value="{{ c.id }}">{{ c.title }} - أ. {{ c.instructor.get_full_name|default:c.instructor.username }} ({{ c.get_academic_track_display }})</option>{% endfor %}
                 </select>
             </div>
 
