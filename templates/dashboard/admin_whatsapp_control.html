@@ -167,13 +167,18 @@
                                 <div>
                                     <div class="flex-between mb-2">
                                         <strong style="color: var(--brand-gold); font-size: 0.95rem;">{{ tmp.title }}</strong>
-                                        <form method="post" style="margin: 0;" onsubmit="return confirm('هل تريد حذف هذا القالب؟')">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="template_id" value="{{ tmp.id }}">
-                                            <button type="submit" name="delete_template" class="btn-icon danger-hover" style="background: transparent; border: none; cursor: pointer; padding: 2px;" title="حذف القالب">
-                                                <i data-lucide="trash-2" style="width: 14px; color:rgba(255,255,255,0.2);"></i>
+                                        <div style="display: flex; align-items: center; gap: 6px;">
+                                            <button type="button" class="btn-icon gold-hover" style="background: transparent; border: none; cursor: pointer; padding: 2px;" title="تعديل ومعاينة" onclick="openEditModal({{ tmp.id }}, `{{ tmp.title|escapejs }}`, `{{ tmp.content|escapejs }}`)">
+                                                <i data-lucide="edit-3" style="width: 14px; color:rgba(255,255,255,0.4);"></i>
                                             </button>
-                                        </form>
+                                            <form method="post" style="margin: 0;" onsubmit="return confirm('هل تريد حذف هذا القالب؟')">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="template_id" value="{{ tmp.id }}">
+                                                <button type="submit" name="delete_template" class="btn-icon danger-hover" style="background: transparent; border: none; cursor: pointer; padding: 2px;" title="حذف القالب">
+                                                    <i data-lucide="trash-2" style="width: 14px; color:rgba(255,255,255,0.2);"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </div>
                                     <p style="font-size: 0.82rem; color: var(--text-muted); white-space: pre-wrap; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 1rem;">{{ tmp.content }}</p>
                                 </div>
@@ -217,6 +222,48 @@
                 </article>
             {% endif %}
 
+            <!-- Template Edit & Intelligent Preview Modal -->
+            <div id="template-modal" class="hidden" style="position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); z-index:9999; backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; padding: 1.5rem;">
+                <div class="premium-card reveal-up" style="max-width: 650px; width: 100%; background: #131316; border: 1px solid var(--border-light); box-shadow: 0 30px 70px rgba(0,0,0,0.7); padding: 2rem; position: relative; border-radius: 24px;">
+                    <div class="flex-between mb-6">
+                        <h3 style="color: var(--brand-gold); display: flex; align-items: center; gap: 0.6rem; font-size: 1.2rem; margin:0;"><i data-lucide="edit-2"></i> تعديل ومعاينة قالب الرسالة</h3>
+                        <button type="button" onclick="closeEditModal()" style="background: rgba(255,255,255,0.05); border:none; color: #888; width: 32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor: pointer; transition:all 0.2s;" class="danger-hover"><i data-lucide="x" style="width: 18px;"></i></button>
+                    </div>
+
+                    <form method="post" class="flex flex-col gap-5">
+                        {% csrf_token %}
+                        <input type="hidden" name="template_id" id="modal-template-id">
+                        
+                        <div class="form-group">
+                            <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 6px; font-weight:bold;">📌 عنوان القالب:</label>
+                            <input type="text" name="template_title" id="modal-template-title" required style="width:100%; background: rgba(0,0,0,0.35); border:1px solid var(--border-strong); border-radius: 12px; color:#fff; padding: 0.75rem; font-size: 0.9rem;">
+                        </div>
+
+                        <div class="form-group">
+                            <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 6px; font-weight:bold;">✍️ محتوى الرسالة:</label>
+                            <textarea name="template_content" id="modal-template-content" rows="6" required style="width:100%; background: rgba(0,0,0,0.35); border:1px solid var(--border-strong); border-radius: 12px; color:#fff; padding: 0.75rem; font-size: 0.85rem; resize: vertical; font-family: inherit; line-height:1.6;" oninput="updateLivePreview()"></textarea>
+                            <span style="font-size: 0.72rem; color: var(--brand-gold); margin-top:4px; display:block;">💡 نصيحة: استخدم `{name}` للاسم، وصيغة `{مذكر|مؤنث}` لتبديل الكلمات حسب جنس المستلم تلقائياً!</span>
+                        </div>
+
+                        <!-- Live Intelligent Preview Widget -->
+                        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-light); border-radius: 16px; padding: 1.2rem;">
+                            <div class="flex-between mb-3" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.65rem;">
+                                <strong style="font-size: 0.85rem; color: #eee; display:flex; align-items:center; gap:6px;"><i data-lucide="eye" style="width:16px; color:var(--brand-gold);"></i> معاينة ذكاء اللغة الحية:</strong>
+                                <div class="flex gap-1" style="background: rgba(0,0,0,0.3); padding: 4px; border-radius: 25px; border: 1px solid rgba(255,255,255,0.05);">
+                                    <button type="button" id="btn-preview-male" class="active-preview" onclick="setPreviewGender('male')" style="border:none; background:transparent; border-radius: 20px; color: #888; padding: 3px 12px; font-size: 0.72rem; cursor: pointer; transition: all 0.3s;">👨 ذكر</button>
+                                    <button type="button" id="btn-preview-female" onclick="setPreviewGender('female')" style="border:none; background:transparent; border-radius: 20px; color: #888; padding: 3px 12px; font-size: 0.72rem; cursor: pointer; transition: all 0.3s;">👩 أنثى</button>
+                                </div>
+                            </div>
+                            <div id="modal-preview-box" style="font-size: 0.82rem; line-height: 1.65; color: #ddd; white-space: pre-wrap; max-height: 160px; overflow-y: auto; padding: 0.2rem; font-family: inherit; direction: rtl;"></div>
+                        </div>
+
+                        <div class="flex-end gap-3 mt-2">
+                            <button type="button" class="btn btn-glass btn-sm" onclick="closeEditModal()" style="border-radius:10px; font-weight:bold;">إلغاء</button>
+                            <button type="submit" name="edit_template" class="btn btn-gold btn-sm" style="font-weight: bold; border-radius:10px; padding: 0.6rem 1.5rem;">✅ حفظ التغييرات</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
 
         <!-- Right Aside Tools -->
@@ -309,6 +356,14 @@
     @media (max-width: 768px) {
         .grid-3-col { grid-template-columns: 1fr !important; }
     }
+    
+    #template-modal.hidden { display: none !important; }
+    .active-preview {
+        background: var(--brand-gold) !important;
+        color: #000 !important;
+        font-weight: bold;
+    }
+    .gold-hover:hover i { color: var(--brand-gold) !important; }
 </style>
 
 <script>
@@ -340,6 +395,59 @@
         if (quickArea) {
             quickArea.value = text;
         }
+    }
+
+    let currentPreviewGender = 'male';
+
+    function openEditModal(id, title, content) {
+        document.getElementById('modal-template-id').value = id;
+        document.getElementById('modal-template-title').value = title;
+        document.getElementById('modal-template-content').value = content;
+        
+        document.getElementById('template-modal').classList.remove('hidden');
+        setPreviewGender('male'); // Default preview to male
+        setTimeout(() => { lucide.createIcons(); }, 10); // Refesh Icons
+    }
+
+    function closeEditModal() {
+        document.getElementById('template-modal').classList.add('hidden');
+    }
+
+    function setPreviewGender(gender) {
+        currentPreviewGender = gender;
+        
+        const btnMale = document.getElementById('btn-preview-male');
+        const btnFemale = document.getElementById('btn-preview-female');
+        
+        if (gender === 'male') {
+            btnMale.classList.add('active-preview');
+            btnFemale.classList.remove('active-preview');
+        } else {
+            btnFemale.classList.add('active-preview');
+            btnMale.classList.remove('active-preview');
+        }
+        
+        updateLivePreview();
+    }
+
+    function updateLivePreview() {
+        const content = document.getElementById('modal-template-content').value;
+        const previewBox = document.getElementById('modal-preview-box');
+        
+        // 1. Replace {name} with an appropriate mock name
+        let mockName = currentPreviewGender === 'male' ? 'أحمد' : 'شام';
+        let processed = content.replace(/{name}/gi, `<strong>${mockName}</strong>`);
+        
+        // 2. Match grammar brackets {word1|word2}
+        // Regex to find matches like {يا بطل|يا بطلة}
+        const regex = /{([^{}|]+)\|([^{}|]+)}/g;
+        
+        processed = processed.replace(regex, function(match, p1, p2) {
+            const choice = currentPreviewGender === 'male' ? p1 : p2;
+            return `<span style="color: var(--brand-gold); border-bottom: 1px dashed rgba(197, 160, 89, 0.4);">${choice}</span>`;
+        });
+        
+        previewBox.innerHTML = processed || '<em style="color:#666;">أدخل نص الرسالة لعرض المعاينة هنا...</em>';
     }
 </script>
 

@@ -4449,7 +4449,19 @@ def admin_whatsapp_control(request):
                 messages.warning(request, "يرجى ملء عنوان ومحتوى القالب.")
             return redirect("dashboard:admin_whatsapp_control")
 
-        # 5. Delete Saved Template
+        # 5. Edit Existing Saved Template
+        elif "edit_template" in request.POST:
+            template_id = request.POST.get("template_id")
+            title = request.POST.get("template_title", "").strip()
+            content = request.POST.get("template_content", "").strip()
+            if title and content:
+                WhatsAppTemplate.objects.filter(id=template_id).update(title=title, content=content)
+                messages.success(request, "✅ تم حفظ تعديلات القالب بنجاح.")
+            else:
+                messages.warning(request, "يرجى عدم ترك عنوان أو محتوى القالب فارغاً.")
+            return redirect("dashboard:admin_whatsapp_control")
+
+        # 6. Delete Saved Template
         elif "delete_template" in request.POST:
             template_id = request.POST.get("template_id")
             WhatsAppTemplate.objects.filter(id=template_id).delete()

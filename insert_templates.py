@@ -83,14 +83,14 @@ for branch, exams in official_schedule.items():
         
         title = f"📢 {branch_display}: {subj} ({date})"
         
-        # Premium template text utilizing dynamic gender bracket syntax:
-        # E.g. {أهلاً بك يا بطل|أهلاً بكِ يا بطلة} / {استعد|استعدي}
+        # Using triple curly braces in f-string produces one literal curly brace in the final output.
+        # Or simpler, use direct strings without f-string formatting to avoid double curly brace complexity.
         content = (
-            f"مرحباً {greeting} {{name}}! ✨🌟\n\n"
-            f"اقترب موعد امتحانك القادم في مادة ({subj}) لفرع {branch_name_ar}، والمقرر يوم {day} المصادف لـ ({date}). 📅🎯\n\n"
-            f"{hook}\n\n"
-            "فريق منصة محترفو التعليم يثق تماماً بقدراتك وتعبك طوال العام، ويتمنى لك كل التوفيق والسداد والتفوق المبهر في قاعة الامتحان. 🚀💖\n\n"
-            f"{{استعد|استعدي}} جيداً، ونحن ننتظر أخبارك المفرحة قريباً جداً! 🔥🙏"
+            "مرحباً {" + greeting + "} {name}! ✨🌟\n\n" +
+            f"اقترب موعد امتحانك القادم في مادة ({subj}) لفرع {branch_name_ar}، والمقرر يوم {day} المصادف لـ ({date}). 📅🎯\n\n" +
+            f"{hook}\n\n" +
+            "فريق منصة محترفو التعليم يثق تماماً بقدراتك وتعبك طوال العام، ويتمنى لك كل التوفيق والسداد والتفوق المبهر في قاعة الامتحان. 🚀💖\n\n" +
+            "{استعد|استعدي} جيداً، ونحن ننتظر أخبارك المفرحة قريباً جداً! 🔥🙏"
         )
         
         WhatsAppTemplate.objects.create(title=title, content=content)
