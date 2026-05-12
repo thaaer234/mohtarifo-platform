@@ -3,14 +3,27 @@
 {% load inline_static %}
 {% block title %}شاشة بيع الأكواد الموحدة{% endblock %}
 
+{% block extra_css %}
 <style>
-    /* Card Design Assets - Inspired by Center Card print layout but scoped for Modal Preview */
+    /* Card Design Assets - Replicated Exactly from the Print-Batch Cards Template for 100% consistency */
+    @font-face {
+        font-family: "AlJazeera";
+        src: url("{% static 'dashboard/img/card_assets/FONT/ArbFONTS-Al-Jazeera-Arabic-Regular.ttf' %}") format("truetype");
+        font-weight: 400;
+    }
+    @font-face {
+        font-family: "AlJazeera";
+        src: url("{% static 'dashboard/img/card_assets/FONT/ArbFONTS-Al-Jazeera-Arabic-Bold.ttf' %}") format("truetype");
+        font-weight: 700;
+    }
+
     :root {
         --card-w: 791px;
         --card-h: 374px;
         --gold: #8f6f3d;
         --gold-dark: #5d4524;
         --ink: #0b0b0b;
+        --soft: #f5f5f5;
     }
 
     /* Print styles optimized for thermal receipt / standard card printing */
@@ -53,7 +66,7 @@
         }
     }
 
-    /* Scoped styles for Visual Card (Center Matching) */
+    /* Scoped styles for Visual Card (Exact Copy from admin_print_batch_cards.html) */
     .scaled-card-preview {
         position: relative;
         width: 100%;
@@ -75,52 +88,64 @@
         transform-origin: top left;
         background: #fff;
         color: var(--ink);
-        font-family: "Cairo", Tahoma, Arial, sans-serif;
+        font-family: "AlJazeera", Tahoma, Arial, sans-serif;
         direction: rtl;
+        overflow: hidden;
     }
-    /* Card elements extracted from print view but fit in wrapper */
+    /* Card elements extracted from print view */
     .watermark { position: absolute; inset: 0; background-image: url("{% static 'dashboard/img/card_assets/image1.png' %}"); background-size: 640px auto; background-position: 150px 66px; background-repeat: no-repeat; opacity: .045; }
-    .card-logo { position: absolute; left: 42px; top: 16px; height: 40px; width: auto; z-index: 20; }
-    .side-pattern { position: absolute; left: 0; top: 0; width: 29px; height: 100%; overflow: hidden; background: #fff; border-right: 1px solid rgba(0, 0, 0, .2); }
+    .card-logo { position: absolute; left: 42px; top: 16px; height: 40px; width: auto; object-fit: contain; z-index: 20; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.08)); }
+    .side-pattern { position: absolute; left: 0; top: 0; width: 29px; height: 100%; overflow: hidden; background: #fff; border-left: 0; border-right: 1px solid rgba(0, 0, 0, .2); }
     .side-pattern::before { content: ""; position: absolute; inset: -18px -11px; background-image: url("{% static 'dashboard/img/card_assets/image3.png' %}"); background-size: 76px auto; background-repeat: repeat-y; opacity: .64; }
-    
+    .page-num { position: absolute; left: -6px; bottom: -6px; width: 42px; height: 42px; border-radius: 50%; color: #fff; background: var(--gold); font-size: 22px; line-height: 42px; font-weight: 700; text-align: center; direction: ltr; }
+    .front .page-num { left: auto; right: -6px; bottom: -6px; }
+
     .front-hero { position: absolute; left: -4px; top: 62px; width: 418px; height: 246px; object-fit: contain; }
-    .title-frame { position: absolute; right: 12px; top: 17px; width: 373px; height: 80px; border-radius: 13px; background: linear-gradient(#95763f, #816537); box-shadow: inset 0 7px 11px rgba(255, 255, 255, .16), inset 0 -6px 9px rgba(0, 0, 0, .18); }
-    .front-title { position: absolute; right: 20px; top: 18px; width: 357px; height: 76px; color: #fff; font-size: 38px; line-height: 76px; font-weight: 700; text-align: center; white-space: nowrap; font-family: 'Cairo', sans-serif;}
+    .title-frame { position: absolute; right: 12px; top: 17px; width: 373px; height: 80px; border-radius: 13px; background: linear-gradient(#95763f, #816537); border: 0; box-shadow: inset 0 7px 11px rgba(255, 255, 255, .16), inset 0 -6px 9px rgba(0, 0, 0, .18); }
+    .front-title { position: absolute; right: 20px; top: 18px; width: 357px; height: 76px; color: #fff; font-size: 41px; line-height: 76px; font-weight: 700; text-align: center; white-space: nowrap; }
     
-    .front-info { position: absolute; right: 27px; top: 116px; width: 330px; font-size: 23px; line-height: 1.9; font-weight: 700; text-align: right; }
+    .front-info { position: absolute; right: 27px; top: 116px; width: 330px; font-size: 25px; line-height: 1.98; font-weight: 700; text-align: right; }
     .front-info .line { position: relative; white-space: nowrap; }
-    .front-info .line::before { content: "❖"; color: var(--gold); font-size: 22px; margin-left: 10px; }
+    .front-info .line::before { content: "❖"; color: var(--gold); font-size: 24px; margin-left: 12px; }
     .front-info strong { color: var(--gold); }
     
     .coupon-box { position: absolute; right: 12px; top: 218px; width: 367px; height: 102px; border: 1.5px solid #111; border-radius: 18px; background: linear-gradient(90deg, #fafafa, #ededed); box-shadow: inset 0 0 18px rgba(0, 0, 0, .08); }
     .coupon-qr { position: absolute; left: 10px; top: 10px; width: 79px; height: 79px; padding: 4px; border: 1px solid #111; border-radius: 11px; background: #fff; }
     .coupon-qr img, .platform-qr img { width: 100%; height: 100%; display: block; }
-    .coupon-meta { position: absolute; right: 16px; top: 11px; width: 228px; font-size: 14px; line-height: 1.7; font-weight: 700; text-align: right; }
-    .coupon-meta div { position: relative; padding-right: 16px; white-space: nowrap; }
-    .coupon-meta div::before { content: ""; position: absolute; right: 0; top: 10px; width: 5px; height: 5px; background: #111; }
-    .coupon-code { position: absolute; right: 35px; top: 67px; width: 172px; color: var(--gold); direction: ltr; font-size: 16px; font-weight: 700; text-align: center; letter-spacing: .5px; font-family: 'Courier New', Courier, monospace; }
-    .front-slogan { position: absolute; left: 70px; top: 342px; width: 650px; color: var(--gold-dark); font-size: 18px; line-height: 1.35; font-weight: 700; text-align: center; white-space: nowrap; }
+    .coupon-meta { position: absolute; right: 16px; top: 11px; width: 228px; font-size: 15px; line-height: 1.78; font-weight: 700; text-align: right; }
+    .coupon-meta div { position: relative; padding-right: 18px; white-space: nowrap; }
+    .coupon-meta div::before { content: ""; position: absolute; right: 0; top: 11px; width: 5px; height: 5px; background: #111; }
+    .coupon-code { position: absolute; right: 35px; top: 67px; width: 172px; color: var(--gold); direction: ltr; font-size: 16.5px; line-height: 1.02; font-weight: 700; text-align: center; letter-spacing: .5px; overflow-wrap: normal; word-break: normal; font-family: Tahoma, Arial, sans-serif; }
+    .front-slogan { position: absolute; left: 70px; top: 342px; width: 650px; color: var(--gold-dark); font-size: 20px; line-height: 1.35; font-weight: 700; text-align: center; white-space: nowrap; }
 
     .back-hero { position: absolute; left: 42px; top: 57px; width: 210px; height: 262px; object-fit: contain; }
     .vertical-rule { position: absolute; left: 251px; top: 43px; width: 1px; height: 281px; background: var(--gold); }
     .vertical-rule::before, .vertical-rule::after { content: ""; position: absolute; left: -4px; width: 8px; height: 8px; background: var(--gold); transform: rotate(45deg); }
     .vertical-rule::before { top: 0; } .vertical-rule::after { bottom: 0; }
-    .back-title-frame { position: absolute; right: 42px; top: 25px; width: 450px; height: 61px; border-radius: 10px; background: linear-gradient(#333, #151515); border: 2px solid #2d2d2d; }
-    .back-title { position: absolute; right: 54px; top: 27px; width: 426px; height: 56px; color: #fff; font-size: 32px; line-height: 56px; font-weight: 700; text-align: center; white-space: nowrap; }
-    .steps { position: absolute; right: 34px; top: 99px; width: 492px; font-size: 12.5px; line-height: 1.9; font-weight: 700; text-align: right; list-style-position: inside; margin: 0; padding: 0; }
+    .back-title-frame { position: absolute; right: 42px; top: 25px; width: 450px; height: 61px; border-radius: 10px; background: linear-gradient(#333, #151515); border: 2px solid #2d2d2d; box-shadow: inset 0 6px 9px rgba(255,255,255,.12), inset 0 -7px 10px rgba(0,0,0,.45); }
+    .back-title { position: absolute; right: 54px; top: 27px; width: 426px; height: 56px; color: #fff; font-size: 35px; line-height: 56px; font-weight: 700; text-align: center; white-space: nowrap; }
+    .steps { position: absolute; right: 34px; top: 99px; width: 492px; font-size: 12.7px; line-height: 1.95; font-weight: 700; text-align: right; list-style-position: inside; margin: 0; padding: 0; }
+    .steps li { margin: 0; white-space: nowrap; }
+
     .platform-card { position: absolute; left: 270px; top: 210px; width: 103px; height: 164px; border-radius: 19px 19px 0 0; background: var(--gold); color: #fff; text-align: center; font-weight: 700; padding-top: 7px; }
     .platform-qr { width: 86px; height: 86px; margin: 0 auto 9px; padding: 4px; border-radius: 13px; background: #fff; border: 1px solid #ddd; }
-    .platform-name { font-size: 12px; line-height: 1.7; }
+    .platform-name { font-size: 12.5px; line-height: 1.7; }
     .faq-top-line { position: absolute; right: 88px; top: 214px; width: 285px; height: 1px; background: var(--gold); }
-    .faq { position: absolute; right: 74px; top: 218px; width: 366px; font-size: 10.5px; line-height: 1.8; font-weight: 700; text-align: right; }
-    .faq-title { color: var(--gold); font-size: 16px; margin-bottom: 5px; }
-    .faq p { position: relative; margin: 0 0 3px; padding-right: 15px; white-space: nowrap; }
-    .faq p::before { content: "❖"; position: absolute; right: 0; top: 0; color: var(--gold); font-size: 10px; }
-    .help-figure { position: absolute; right: -52px; top: 218px; width: 134px; height: 160px; object-fit: contain; opacity: .9; transform: rotate(-12deg); }
+    .faq-top-line::before, .faq-top-line::after { content: ""; position: absolute; top: -4px; width: 8px; height: 8px; background: var(--gold); transform: rotate(45deg); }
+    .faq-top-line::before { right: -4px; } .faq-top-line::after { left: -4px; }
+
+    .faq { position: absolute; right: 74px; top: 218px; width: 366px; font-size: 10.8px; line-height: 1.9; font-weight: 700; text-align: right; }
+    .faq-title { color: var(--gold); font-size: 17px; margin-bottom: 6px; }
+    .faq p { position: relative; margin: 0 0 3px; padding-right: 17px; white-space: nowrap; }
+    .faq p::before { content: "❖"; position: absolute; right: 0; top: 0; color: var(--gold); font-size: 11px; }
+    
+    .help-figure { position: absolute; right: -52px; top: 218px; width: 134px; height: 160px; object-fit: contain; opacity: .9; transform: rotate(-12deg); transform-origin: center; }
     .socials { position: absolute; right: 54px; bottom: 18px; width: 330px; display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 10px; direction: ltr; align-items: center; font-size: 10px; font-weight: 400; white-space: nowrap; }
     .social { display: inline-flex; align-items: center; justify-content: center; gap: 7px; color: #111; }
-    .social-icon { width: 22px; height: 22px; border: 2px solid var(--gold); color: var(--gold); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+    .social-icon { width: 22px; height: 22px; border: 2px solid var(--gold); color: var(--gold); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; line-height: 1;}
+    .instagram-icon { position: relative; font-size: 0; }
+    .instagram-icon::before { content: ""; width: 12px; height: 12px; border: 1.6px solid currentColor; border-radius: 4px; display: block; }
+    .instagram-icon::after { content: ""; position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; border: 1.4px solid currentColor; border-radius: 50%; transform: translate(-50%, -50%); box-shadow: 4px -4px 0 -3px currentColor; }
 
     /* Modal Toggle Tabs */
     .modal-tab {
@@ -139,27 +164,8 @@
         border-color: rgba(var(--brand-gold-rgb), 0.3);
     }
 
-    /* Style for Copy Feedback */
-    .copy-success {
-        background: #10b981 !important;
-        color: #fff !important;
-    }
-
-    .loading-overlay {
-        position: absolute;
-        inset: 0;
-        background: rgba(0,0,0,0.7);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #fff;
-        font-weight: bold;
-        z-index: 100;
-        border-radius: 12px;
-        backdrop-filter: blur(4px);
-    }
-
-    /* Standard Modal styling for the generate batch action */
+    .copy-success { background: #10b981 !important; color: #fff !important; }
+    
     .generic-modal-overlay {
         display: none; 
         position: fixed; 
@@ -182,8 +188,13 @@
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
     }
 </style>
-<!-- Add html2canvas dependency -->
+{% endblock %}
+
+{% block extra_js %}
+<!-- Add html2canvas dependency formally so it is collected in DOM before runtime execution -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+{% endblock %}
+
 
 {% block breadcrumbs %}
 <div class="breadcrumb animate-fade-up no-print">
@@ -402,7 +413,7 @@
                     <div style="position: relative;">
                         <p style="font-size: 0.75rem; color: var(--brand-gold); margin-bottom: 0.5rem; font-weight: bold; text-align: center;">وجه البطاقة (الأمامي)</p>
                         <div class="scaled-card-preview" id="card-front-preview">
-                            <div class="scaled-card-wrapper" id="html-to-image-front">
+                            <div class="scaled-card-wrapper front" id="html-to-image-front">
                                 <div class="watermark"></div>
                                 <div class="side-pattern"></div>
                                 <img class="card-logo" src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo">
@@ -410,18 +421,19 @@
                                 <div class="title-frame"></div>
                                 <div class="front-title">{% if sold_code.course %}مادة {{ sold_code.course.subject.name|default:sold_code.course.title }}{% else %}باقة {{ sold_code.package.name }}{% endif %}</div>
                                 <div class="front-info">
-                                    <div class="line">المدرس: <strong>{% if sold_code.course %}{{ sold_code.course.instructor.get_full_name|default:"نخبة التعليم" }}{% else %}نخبة المدرسين{% endif %}</strong></div>
-                                    <div class="line">الكورس: <strong>{% if sold_code.course %}{{ sold_code.course.title }}{% else %}{{ sold_code.package.name }}{% endif %}</strong></div>
+                                    <div class="line">اسم المدرس : <strong>{% if sold_code.course %}{{ sold_code.course.instructor.get_full_name|default:"نخبة المدرسين" }}{% else %}نخبة المدرسين{% endif %}</strong></div>
+                                    <div class="line">اسم الكورس : <strong>{% if sold_code.course %}{{ sold_code.course.title }}{% else %}{{ sold_code.package.name }}{% endif %}</strong></div>
                                 </div>
                                 <div class="coupon-box">
                                     <div class="coupon-qr"><img src="data:image/png;base64,{{ sold_code_qr }}" alt=""></div>
                                     <div class="coupon-meta">
-                                        <div>مصدر البيع: الإدارة المباشرة</div>
-                                        <div>صالح لغاية: {{ sold_code.valid_until|date:"Y/m/d"|default:"غير محدود" }}</div>
+                                        <div>مصدر البيع : {{ sold_code.sales_center.name|default:"حساب شام كاش" }}</div>
+                                        <div>تاريخ صلاحية الكود : {{ sold_code.valid_until|date:"Y/m/d"|default:"غير محدود" }}</div>
                                     </div>
                                     <div class="coupon-code">{{ sold_code.code }}</div>
                                 </div>
                                 <div class="front-slogan">نحن قوم نحترف التعليم واهتمامنا بالتفاصيل يصنع الفرق</div>
+                                <div class="page-num">01</div>
                             </div>
                         </div>
                     </div>
@@ -429,7 +441,7 @@
                     <div style="position: relative;">
                         <p style="font-size: 0.75rem; color: var(--brand-gold); margin-bottom: 0.5rem; font-weight: bold; text-align: center;">خلفية البطاقة (الخطوات)</p>
                         <div class="scaled-card-preview" id="card-back-preview">
-                            <div class="scaled-card-wrapper" id="html-to-image-back">
+                            <div class="scaled-card-wrapper back" id="html-to-image-back">
                                 <div class="watermark"></div>
                                 <div class="side-pattern"></div>
                                 <img class="card-logo" src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo">
@@ -438,10 +450,10 @@
                                 <div class="back-title-frame"></div>
                                 <div class="back-title">خطوات التسجيل والحضور:</div>
                                 <ol class="steps">
-                                    <li>افتح رابط المنصة: اكتب على جوجل (محترفو التعليم).</li>
-                                    <li>أنشئ حسابك أو سجل دخولك عبر رقم هاتفك الشخصي.</li>
-                                    <li>اذهب إلى "تفعيل الكود" وأدخل الرمز المكتوب بالوجه المقابل.</li>
-                                    <li>ابدأ الحضور أونلاين: ستظهر لك الجلسات فوراً، بالتوفيق!</li>
+                                    <li>افتح رابط المنصة: اكتب على جوجل (منصة محترفو التعليم) أو امسح الرمز في الأسفل.</li>
+                                    <li>أنشئ حسابك، اضغط على "إنشاء حساب جديد" وأدخل معلوماتك الشخصية بدقة.</li>
+                                    <li>ادخل كودك الخاص: اذهب إلى "تفعيل الكود" وأدخل الكود الموضح في وجه البطاقة.</li>
+                                    <li>ابدأ الحضور أونلاين: ستظهر لك الجلسات مرتبة، بالتوفيق!</li>
                                 </ol>
                                 <div class="platform-card">
                                     <div class="platform-qr"><img src="data:image/png;base64,{{ platform_qr }}" alt=""></div>
@@ -449,18 +461,20 @@
                                 </div>
                                 <div class="faq-top-line"></div>
                                 <div class="faq">
-                                    <div class="faq-title">دعم فني وتقني:</div>
-                                    <p>في حال واجهت مشكلة في الدخول، لا تتردد بمراسلتنا.</p>
-                                    <p>الكود المرفق يرتبط بحساب وجهاز واحد لضمان الخصوصية.</p>
-                                    <p>المنصة متاحة 24/7، استمتع بمشاهدة دروسك في أي وقت.</p>
+                                    <div class="faq-title">أسئلة شائعة:</div>
+                                    <p>نسيت كلمة المرور؟ تواصل معنا عبر الواتساب على الرقم أدناه.</p>
+                                    <p>هل يستخدم الكود لأكثر من حساب؟ الكود يربط بجهاز واحد فقط.</p>
+                                    <p>أحتاج مساعدة تقنية؟ فريقنا جاهز لمساعدتك عبر الواتساب.</p>
                                 </div>
                                 <img class="help-figure" src="{% static 'dashboard/img/card_assets/image6.svg' %}" alt="">
                                 <div class="socials">
-                                    <div class="social"><span class="social-icon">☎</span><span>{{ CONTACT_WHATSAPP_LOCAL|default:"+963 984 011 372" }}</span></div>
-                                    <div class="social"><span class="social-icon">f</span><span>mohtarifo</span></div>
-                                    <div class="social"><span class="social-icon">📸</span><span>pro_academy</span></div>
+                                    <div class="social"><span class="social-icon">☎</span><span>+963 984 011 372</span></div>
+                                    <div class="social"><span class="social-icon">f</span><span>bakaloria.syria</span></div>
+                                    <div class="social"><span class="social-icon instagram-icon"></span><span>education_pros1</span></div>
                                 </div>
+                                <div class="page-num">02</div>
                             </div>
+
                         </div>
                     </div>
                 </div>
