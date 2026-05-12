@@ -4219,31 +4219,36 @@ def admin_action_migrate_thair(request):
     from django.shortcuts import redirect
 
     target = _get_sham_cash_center()
-    sources = SalesCenter.objects.filter(name__icontains="ثائر")
-
-    if not sources.exists():
-        messages.warning(request, "لم يتم العثور على أي مراكز بيع قديمة تحت اسم (ثائر) لنقل بياناتها.")
-        return redirect("dashboard:admin_sell_codes")
-
+    pattern = "ثائر"
+    
     try:
         with transaction.atomic():
-            total_batches = 0
-            total_codes = 0
-            moved_names = []
-            for src in sources:
-                if src.id == target.id:
-                    continue
-                batch_count = AccessCodeBatch.objects.filter(sales_center=src).update(sales_center=target)
-                code_count = AccessCode.objects.filter(sales_center=src).update(sales_center=target)
-                total_batches += batch_count
-                total_codes += code_count
-                moved_names.append(src.name)
+            # 1. Find any batches whose NAME contains the pattern
+            target_batches = AccessCodeBatch.objects.filter(name__icontains=pattern).exclude(sales_center=target)
+            batch_ids = list(target_batches.values_list('id', flat=True))
+            updated_batches_by_name = target_batches.update(sales_center=target)
+            
+            # Move codes of those specific batches
+            updated_codes_by_batch_link = 0
+            if batch_ids:
+                updated_codes_by_batch_link = AccessCode.objects.filter(batch_id__in=batch_ids).exclude(sales_center=target).update(sales_center=target)
 
-            if total_batches == 0 and total_codes == 0:
-                messages.info(request, "لا توجد بيانات معلقة أو أكواد في هذه الحسابات القديمة ليتم دمجها.")
+            # 2. Move everything linked to any center containing "ثائر"
+            legacy_centers = SalesCenter.objects.filter(name__icontains=pattern).exclude(id=target.id)
+            updated_batches_by_center = 0
+            updated_codes_by_center = 0
+            if legacy_centers.exists():
+                updated_batches_by_center = AccessCodeBatch.objects.filter(sales_center__in=legacy_centers).update(sales_center=target)
+                updated_codes_by_center = AccessCode.objects.filter(sales_center__in=legacy_centers).update(sales_center=target)
+
+            final_batch_total = updated_batches_by_name + updated_batches_by_center
+            final_code_total = updated_codes_by_batch_link + updated_codes_by_center
+
+            if final_batch_total == 0 and final_code_total == 0:
+                messages.info(request, f"تم التحقق، لا يوجد حالياً أي دفعات أو أكواد تحمل اسم ({pattern}) لنقلها.")
             else:
-                messages.success(request, f"✅ تمت عملية الدمج بنجاح! تم نقل {total_batches} دفعة و {total_codes} كود من الحسابات ({', '.join(moved_names)}) إلى حساب شام كاش المركزي.")
+                messages.success(request, f"✅ اكتمل الدمج! تم نقل إجمالي {final_batch_total} دفعة و {final_code_total} كود إلى حساب شام كاش بنجاح.")
     except Exception as e:
-        messages.error(request, f"فشلت عملية النقل بسبب خطأ فني: {str(e)}")
+        messages.error(request, f"فشلت عملية النقل: {str(e)}")
 
     return redirect("dashboard:admin_sell_codes")
