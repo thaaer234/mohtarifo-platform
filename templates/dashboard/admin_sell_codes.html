@@ -674,16 +674,32 @@
         const element = document.getElementById(elementId);
         if (!element) return;
 
-        // Temporarily force scale to 1 during capture for maximum quality
-        const originalTransform = element.style.transform;
-        element.style.transform = 'scale(1)';
+        // BUG FIX: Deep Clone and Re-root the element to the absolute document body
+        // This detaches it from modal scroll offsets, overflow containers, and parent transformations
+        // that cause HTML2Canvas to render elements shifted or misaligned!
+        const clone = element.cloneNode(true);
         
-        // Force a distinct frame update cycle so elements properly snap back into place before capture
+        // Apply absolute fixed resets ensuring absolute positioning logic begins from 0,0 context
+        clone.style.position = 'fixed';
+        clone.style.top = '0px';
+        clone.style.left = '0px';
+        clone.style.width = '791px';
+        clone.style.height = '374px';
+        clone.style.transform = 'none';
+        clone.style.zIndex = '-999999';
+        clone.style.visibility = 'visible';
+        clone.style.opacity = '1';
+        clone.style.margin = '0';
+        clone.style.border = 'none';
+        
+        document.body.appendChild(clone);
+
+        // Small frame delay ensuring absolute positioning is fully baked into visual tree
         await new Promise(r => requestAnimationFrame(() => setTimeout(r, 100)));
 
         try {
-            const canvas = await html2canvas(element, {
-                scale: 2, // High quality capture
+            const canvas = await html2canvas(clone, {
+                scale: 2.5, // Even higher resolution since it is now stable
                 useCORS: true,
                 allowTaint: true,
                 backgroundColor: "#ffffff",
@@ -691,20 +707,24 @@
                 width: 791,
                 height: 374,
                 windowWidth: 791,
-                windowHeight: 374
+                windowHeight: 374,
+                scrollX: 0,
+                scrollY: 0,
+                x: 0,
+                y: 0
             });
             
-            // Restore scaling
-            element.style.transform = originalTransform;
+            // Cleanup instantly
+            document.body.removeChild(clone);
 
             const link = document.createElement('a');
             link.download = fileName + '.png';
-            link.href = canvas.toDataURL("image/png");
+            link.href = canvas.toDataURL("image/png", 1.0);
             link.click();
             return true;
         } catch (e) {
             console.error("Error converting HTML to canvas:", e);
-            element.style.transform = originalTransform;
+            if (clone.parentNode) document.body.removeChild(clone);
             return false;
         }
     }
