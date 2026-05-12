@@ -4074,16 +4074,27 @@ def admin_sell_codes(request):
     sold_id = request.GET.get("sold_id")
     sold_code = None
     sold_price_syp = 0
+    sold_code_qr = None
+    platform_qr = None
+    
     if sold_id:
         sold_code = AccessCode.objects.filter(id=sold_id, sale_status="sold").select_related("course", "package", "course__instructor").first()
-        if sold_code and sold_code.sold_price_cents:
-            sold_price_syp = int(sold_code.sold_price_cents / 100)
+        if sold_code:
+            if sold_code.sold_price_cents:
+                sold_price_syp = int(sold_code.sold_price_cents / 100)
+            
+            # Generate QR codes for visual card rendering
+            sold_code_qr = _generate_qr_base64(sold_code.code)
+            platform_url = request.build_absolute_uri("/")
+            platform_qr = _generate_qr_base64(platform_url)
         
     context = {
         "courses": courses,
         "packages": packages,
         "sold_code": sold_code,
         "sold_price_syp": sold_price_syp,
+        "sold_code_qr": sold_code_qr,
+        "platform_qr": platform_qr,
     }
     return render(request, "dashboard/admin_sell_codes.html", context)
 

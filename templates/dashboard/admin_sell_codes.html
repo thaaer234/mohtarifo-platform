@@ -1,16 +1,26 @@
 {% extends "dashboard/base.html" %}
+{% load static %}
+{% load inline_static %}
 {% block title %}شاشة بيع الأكواد الموحدة{% endblock %}
 
-{% block extra_css %}
 <style>
+    /* Card Design Assets - Inspired by Center Card print layout but scoped for Modal Preview */
+    :root {
+        --card-w: 791px;
+        --card-h: 374px;
+        --gold: #8f6f3d;
+        --gold-dark: #5d4524;
+        --ink: #0b0b0b;
+    }
+
     /* Print styles optimized for thermal receipt / standard card printing */
     @media print {
         body {
             background: #fff !important;
             color: #000 !important;
         }
-        /* Hide everything on the page during print except the voucher */
-        body > * {
+        /* Hide everything on the page during print except the active print context */
+        body > *:not(#print-voucher-overlay) {
             display: none !important;
         }
         #print-voucher-overlay {
@@ -23,8 +33,10 @@
             background: #fff !important;
             padding: 0 !important;
             margin: 0 !important;
+            overflow: visible !important;
         }
         #print-voucher-card {
+            display: block !important;
             border: none !important;
             box-shadow: none !important;
             width: 80mm !important; /* Perfect standard width for thermal receipt printers */
@@ -36,9 +48,95 @@
             text-align: center !important;
             direction: rtl !important;
         }
-        .no-print {
+        .no-print, .card-render-view {
             display: none !important;
         }
+    }
+
+    /* Scoped styles for Visual Card (Center Matching) */
+    .scaled-card-preview {
+        position: relative;
+        width: 100%;
+        max-width: 450px;
+        aspect-ratio: 791 / 374;
+        background: #fff;
+        overflow: hidden;
+        border-radius: 12px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        border: 1px solid rgba(0,0,0,0.1);
+        margin: 0 auto;
+    }
+    .scaled-card-wrapper {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 791px;
+        height: 374px;
+        transform-origin: top left;
+        background: #fff;
+        color: var(--ink);
+        font-family: "Cairo", Tahoma, Arial, sans-serif;
+        direction: rtl;
+    }
+    /* Card elements extracted from print view but fit in wrapper */
+    .watermark { position: absolute; inset: 0; background-image: url("{% static 'dashboard/img/card_assets/image1.png' %}"); background-size: 640px auto; background-position: 150px 66px; background-repeat: no-repeat; opacity: .045; }
+    .card-logo { position: absolute; left: 42px; top: 16px; height: 40px; width: auto; z-index: 20; }
+    .side-pattern { position: absolute; left: 0; top: 0; width: 29px; height: 100%; overflow: hidden; background: #fff; border-right: 1px solid rgba(0, 0, 0, .2); }
+    .side-pattern::before { content: ""; position: absolute; inset: -18px -11px; background-image: url("{% static 'dashboard/img/card_assets/image3.png' %}"); background-size: 76px auto; background-repeat: repeat-y; opacity: .64; }
+    
+    .front-hero { position: absolute; left: -4px; top: 62px; width: 418px; height: 246px; object-fit: contain; }
+    .title-frame { position: absolute; right: 12px; top: 17px; width: 373px; height: 80px; border-radius: 13px; background: linear-gradient(#95763f, #816537); box-shadow: inset 0 7px 11px rgba(255, 255, 255, .16), inset 0 -6px 9px rgba(0, 0, 0, .18); }
+    .front-title { position: absolute; right: 20px; top: 18px; width: 357px; height: 76px; color: #fff; font-size: 38px; line-height: 76px; font-weight: 700; text-align: center; white-space: nowrap; font-family: 'Cairo', sans-serif;}
+    
+    .front-info { position: absolute; right: 27px; top: 116px; width: 330px; font-size: 23px; line-height: 1.9; font-weight: 700; text-align: right; }
+    .front-info .line { position: relative; white-space: nowrap; }
+    .front-info .line::before { content: "❖"; color: var(--gold); font-size: 22px; margin-left: 10px; }
+    .front-info strong { color: var(--gold); }
+    
+    .coupon-box { position: absolute; right: 12px; top: 218px; width: 367px; height: 102px; border: 1.5px solid #111; border-radius: 18px; background: linear-gradient(90deg, #fafafa, #ededed); box-shadow: inset 0 0 18px rgba(0, 0, 0, .08); }
+    .coupon-qr { position: absolute; left: 10px; top: 10px; width: 79px; height: 79px; padding: 4px; border: 1px solid #111; border-radius: 11px; background: #fff; }
+    .coupon-qr img, .platform-qr img { width: 100%; height: 100%; display: block; }
+    .coupon-meta { position: absolute; right: 16px; top: 11px; width: 228px; font-size: 14px; line-height: 1.7; font-weight: 700; text-align: right; }
+    .coupon-meta div { position: relative; padding-right: 16px; white-space: nowrap; }
+    .coupon-meta div::before { content: ""; position: absolute; right: 0; top: 10px; width: 5px; height: 5px; background: #111; }
+    .coupon-code { position: absolute; right: 35px; top: 67px; width: 172px; color: var(--gold); direction: ltr; font-size: 16px; font-weight: 700; text-align: center; letter-spacing: .5px; font-family: 'Courier New', Courier, monospace; }
+    .front-slogan { position: absolute; left: 70px; top: 342px; width: 650px; color: var(--gold-dark); font-size: 18px; line-height: 1.35; font-weight: 700; text-align: center; white-space: nowrap; }
+
+    .back-hero { position: absolute; left: 42px; top: 57px; width: 210px; height: 262px; object-fit: contain; }
+    .vertical-rule { position: absolute; left: 251px; top: 43px; width: 1px; height: 281px; background: var(--gold); }
+    .vertical-rule::before, .vertical-rule::after { content: ""; position: absolute; left: -4px; width: 8px; height: 8px; background: var(--gold); transform: rotate(45deg); }
+    .vertical-rule::before { top: 0; } .vertical-rule::after { bottom: 0; }
+    .back-title-frame { position: absolute; right: 42px; top: 25px; width: 450px; height: 61px; border-radius: 10px; background: linear-gradient(#333, #151515); border: 2px solid #2d2d2d; }
+    .back-title { position: absolute; right: 54px; top: 27px; width: 426px; height: 56px; color: #fff; font-size: 32px; line-height: 56px; font-weight: 700; text-align: center; white-space: nowrap; }
+    .steps { position: absolute; right: 34px; top: 99px; width: 492px; font-size: 12.5px; line-height: 1.9; font-weight: 700; text-align: right; list-style-position: inside; margin: 0; padding: 0; }
+    .platform-card { position: absolute; left: 270px; top: 210px; width: 103px; height: 164px; border-radius: 19px 19px 0 0; background: var(--gold); color: #fff; text-align: center; font-weight: 700; padding-top: 7px; }
+    .platform-qr { width: 86px; height: 86px; margin: 0 auto 9px; padding: 4px; border-radius: 13px; background: #fff; border: 1px solid #ddd; }
+    .platform-name { font-size: 12px; line-height: 1.7; }
+    .faq-top-line { position: absolute; right: 88px; top: 214px; width: 285px; height: 1px; background: var(--gold); }
+    .faq { position: absolute; right: 74px; top: 218px; width: 366px; font-size: 10.5px; line-height: 1.8; font-weight: 700; text-align: right; }
+    .faq-title { color: var(--gold); font-size: 16px; margin-bottom: 5px; }
+    .faq p { position: relative; margin: 0 0 3px; padding-right: 15px; white-space: nowrap; }
+    .faq p::before { content: "❖"; position: absolute; right: 0; top: 0; color: var(--gold); font-size: 10px; }
+    .help-figure { position: absolute; right: -52px; top: 218px; width: 134px; height: 160px; object-fit: contain; opacity: .9; transform: rotate(-12deg); }
+    .socials { position: absolute; right: 54px; bottom: 18px; width: 330px; display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 10px; direction: ltr; align-items: center; font-size: 10px; font-weight: 400; white-space: nowrap; }
+    .social { display: inline-flex; align-items: center; justify-content: center; gap: 7px; color: #111; }
+    .social-icon { width: 22px; height: 22px; border: 2px solid var(--gold); color: var(--gold); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+
+    /* Modal Toggle Tabs */
+    .modal-tab {
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+        background: rgba(255,255,255,0.05);
+        color: var(--text-secondary);
+        border: 1px solid transparent;
+    }
+    .modal-tab.active {
+        background: rgba(var(--brand-gold-rgb), 0.15);
+        color: var(--brand-gold);
+        border-color: rgba(var(--brand-gold-rgb), 0.3);
     }
 
     /* Style for Copy Feedback */
@@ -46,8 +144,23 @@
         background: #10b981 !important;
         color: #fff !important;
     }
+
+    .loading-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: bold;
+        z-index: 100;
+        border-radius: 12px;
+        backdrop-filter: blur(4px);
+    }
 </style>
-{% endblock %}
+<!-- Add html2canvas dependency -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 {% block breadcrumbs %}
 <div class="breadcrumb animate-fade-up no-print">
@@ -179,82 +292,183 @@
     </div>
 </div>
 
-<!-- SUCCESS SOLD MODAL (Card & Printing) -->
+<!-- SUCCESS SOLD MODAL (Enhanced with WhatsApp & Official Card View) -->
 {% if sold_code %}
-<div id="print-voucher-overlay" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); z-index: 99999; display: flex; align-items: center; justify-content: center; padding: 2rem; overflow-y: auto;">
-    <div style="max-width: 480px; width: 100%; display: flex; flex-direction: column; gap: 1.5rem;" class="no-print animate-fade-up">
+<div id="print-voucher-overlay" style="position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); z-index: 99999; display: flex; align-items: flex-start; justify-content: center; padding: 2rem 1rem; overflow-y: auto;">
+    <div style="max-width: 900px; width: 100%; display: flex; flex-direction: column; gap: 1.5rem;" class="no-print animate-fade-up">
         
         <!-- Header Controls -->
-        <div class="flex-between" style="background: rgba(255,255,255,0.03); padding: 1rem 1.5rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);">
-            <div style="display: flex; align-items: center; gap: 0.5rem; color: #10b981;">
-                <i data-lucide="check-circle-2"></i>
-                <span style="font-weight: 900; font-size: 1.1rem;">تم تسجيل عملية البيع بنجاح!</span>
+        <div class="flex-between" style="background: rgba(255,255,255,0.05); padding: 1.25rem 2rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(10px);">
+            <div style="display: flex; align-items: center; gap: 0.75rem; color: #10b981;">
+                <div style="width: 40px; height: 40px; background: rgba(16, 185, 129, 0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="check-circle-2" style="width: 24px; height: 24px;"></i>
+                </div>
+                <div>
+                    <h3 style="font-weight: 900; font-size: 1.25rem; margin: 0; color: #fff;">نجحت العملية!</h3>
+                    <p style="font-size: 0.85rem; color: #10b981; margin: 0;">تم تسجيل بيع الكود وتوليد البطاقات بنجاح.</p>
+                </div>
             </div>
-            <button onclick="closeModal()" style="background: rgba(255,255,255,0.05); border: none; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); cursor: pointer;"><i data-lucide="x" style="width: 16px;"></i></button>
+            <button onclick="closeModal()" style="background: rgba(255,0,0,0.1); border: 1px solid rgba(255,0,0,0.2); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; color: #f87171; cursor: pointer; transition: 0.3s;" onmouseover="this.style.background='rgba(255,0,0,0.3)'" onmouseout="this.style.background='rgba(255,0,0,0.1)'"><i data-lucide="x" style="width: 20px;"></i></button>
         </div>
 
-        <!-- Printable Voucher Card -->
-        <div id="print-voucher-card" style="background: #ffffff; color: #0f172a; border-radius: 24px; padding: 2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 2px dashed #c5a059; text-align: center; font-family: 'Cairo', sans-serif; direction: rtl; position: relative;">
+        <!-- Split Layout Content -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;">
             
-            <!-- Branding Header -->
-            <div style="margin-bottom: 1.5rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 1rem;">
-                <h2 style="font-size: 1.5rem; font-weight: 900; color: #000; margin: 0; font-family: 'Cairo', sans-serif;">محترفو التعليم</h2>
-                <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem; font-weight: bold; letter-spacing: 0.5px;">PRO ACADEMY</p>
+            <!-- RIGHT COLUMN: WhatsApp Actions & Card Viewer -->
+            <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <!-- View Toggle -->
+                <div style="display: flex; gap: 0.75rem; background: rgba(0,0,0,0.3); padding: 6px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.05);">
+                    <div id="view-btn-card" class="modal-tab active" style="flex: 1; text-align: center;" onclick="switchModalView('card')">
+                        <i data-lucide="credit-card" style="width: 16px; vertical-align: middle; margin-left: 4px;"></i> تصميم بطاقة المركز
+                    </div>
+                    <div id="view-btn-receipt" class="modal-tab" style="flex: 1; text-align: center;" onclick="switchModalView('receipt')">
+                        <i data-lucide="printer" style="width: 16px; vertical-align: middle; margin-left: 4px;"></i> قسيمة حرارية
+                    </div>
+                </div>
+
+                <!-- 1. Official Card Rendering View (The User requested this design) -->
+                <div id="card-view-container" class="card-render-view" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <!-- FRONT PREVIEW -->
+                    <div style="position: relative;">
+                        <p style="font-size: 0.75rem; color: var(--brand-gold); margin-bottom: 0.5rem; font-weight: bold; text-align: center;">وجه البطاقة (الأمامي)</p>
+                        <div class="scaled-card-preview" id="card-front-preview">
+                            <div class="scaled-card-wrapper" id="html-to-image-front">
+                                <div class="watermark"></div>
+                                <div class="side-pattern"></div>
+                                <img class="card-logo" src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo">
+                                <img class="front-hero" src="{% static 'dashboard/img/card_assets/image4.svg' %}" alt="">
+                                <div class="title-frame"></div>
+                                <div class="front-title">{% if sold_code.course %}مادة {{ sold_code.course.subject.name|default:sold_code.course.title }}{% else %}باقة {{ sold_code.package.name }}{% endif %}</div>
+                                <div class="front-info">
+                                    <div class="line">المدرس: <strong>{% if sold_code.course %}{{ sold_code.course.instructor.get_full_name|default:"نخبة التعليم" }}{% else %}نخبة المدرسين{% endif %}</strong></div>
+                                    <div class="line">الكورس: <strong>{% if sold_code.course %}{{ sold_code.course.title }}{% else %}{{ sold_code.package.name }}{% endif %}</strong></div>
+                                </div>
+                                <div class="coupon-box">
+                                    <div class="coupon-qr"><img src="data:image/png;base64,{{ sold_code_qr }}" alt=""></div>
+                                    <div class="coupon-meta">
+                                        <div>مصدر البيع: الإدارة المباشرة</div>
+                                        <div>صالح لغاية: {{ sold_code.valid_until|date:"Y/m/d"|default:"غير محدود" }}</div>
+                                    </div>
+                                    <div class="coupon-code">{{ sold_code.code }}</div>
+                                </div>
+                                <div class="front-slogan">نحن قوم نحترف التعليم واهتمامنا بالتفاصيل يصنع الفرق</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- BACK PREVIEW -->
+                    <div style="position: relative;">
+                        <p style="font-size: 0.75rem; color: var(--brand-gold); margin-bottom: 0.5rem; font-weight: bold; text-align: center;">خلفية البطاقة (الخطوات)</p>
+                        <div class="scaled-card-preview" id="card-back-preview">
+                            <div class="scaled-card-wrapper" id="html-to-image-back">
+                                <div class="watermark"></div>
+                                <div class="side-pattern"></div>
+                                <img class="card-logo" src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo">
+                                <img class="back-hero" src="{% static 'dashboard/img/card_assets/image5.svg' %}" alt="">
+                                <div class="vertical-rule"></div>
+                                <div class="back-title-frame"></div>
+                                <div class="back-title">خطوات التسجيل والحضور:</div>
+                                <ol class="steps">
+                                    <li>افتح رابط المنصة: اكتب على جوجل (محترفو التعليم).</li>
+                                    <li>أنشئ حسابك أو سجل دخولك عبر رقم هاتفك الشخصي.</li>
+                                    <li>اذهب إلى "تفعيل الكود" وأدخل الرمز المكتوب بالوجه المقابل.</li>
+                                    <li>ابدأ الحضور أونلاين: ستظهر لك الجلسات فوراً، بالتوفيق!</li>
+                                </ol>
+                                <div class="platform-card">
+                                    <div class="platform-qr"><img src="data:image/png;base64,{{ platform_qr }}" alt=""></div>
+                                    <div class="platform-name">منصة<br>محترفو التعليم</div>
+                                </div>
+                                <div class="faq-top-line"></div>
+                                <div class="faq">
+                                    <div class="faq-title">دعم فني وتقني:</div>
+                                    <p>في حال واجهت مشكلة في الدخول، لا تتردد بمراسلتنا.</p>
+                                    <p>الكود المرفق يرتبط بحساب وجهاز واحد لضمان الخصوصية.</p>
+                                    <p>المنصة متاحة 24/7، استمتع بمشاهدة دروسك في أي وقت.</p>
+                                </div>
+                                <img class="help-figure" src="{% static 'dashboard/img/card_assets/image6.svg' %}" alt="">
+                                <div class="socials">
+                                    <div class="social"><span class="social-icon">☎</span><span>{{ CONTACT_WHATSAPP_LOCAL|default:"+963 984 011 372" }}</span></div>
+                                    <div class="social"><span class="social-icon">f</span><span>mohtarifo</span></div>
+                                    <div class="social"><span class="social-icon">📸</span><span>pro_academy</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Thermal Receipt View (Existing design) -->
+                <div id="receipt-view-container" style="display: none; text-align: center;">
+                    <div id="print-voucher-card" style="background: #ffffff; color: #0f172a; border-radius: 20px; padding: 1.5rem; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 2px dashed #c5a059; text-align: center; font-family: 'Cairo', sans-serif; direction: rtl; max-width: 350px; margin: 0 auto;">
+                        <div style="margin-bottom: 1rem; border-bottom: 2px solid #f1f5f9; padding-bottom: 0.75rem;">
+                            <h2 style="font-size: 1.35rem; font-weight: 900; color: #000; margin: 0;">محترفو التعليم</h2>
+                            <p style="font-size: 0.7rem; color: #64748b; margin-top: 0.2rem; font-weight: bold;">قسيمة شراء إدارة مباشرة</p>
+                        </div>
+                        <div style="background: #f8fafc; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; border: 1px solid #e2e8f0;">
+                            <span style="font-size: 0.75rem; color: #64748b; font-weight: bold; display: block;">التفعيل:</span>
+                            <strong style="font-size: 1.1rem; color: #0f172a; font-weight: 900; display: block; line-height: 1.4;">
+                                {% if sold_code.course %}{{ sold_code.course.title }}{% elif sold_code.package %}{{ sold_code.package.name }}{% endif %}
+                            </strong>
+                        </div>
+                        <div style="background: #fffbeb; border: 2px solid #fef3c7; border-radius: 12px; padding: 1.25rem 0.5rem; margin-bottom: 1rem;">
+                            <span style="font-size: 0.7rem; color: #b45309; font-weight: 800; display: block; margin-bottom: 0.25rem;">الكود:</span>
+                            <span id="target-copy-code" style="font-size: 1.6rem; font-weight: 900; color: #d97706; font-family: 'Courier New', monospace; letter-spacing: 1px;">{{ sold_code.code }}</span>
+                        </div>
+                        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; color: #334155; margin-bottom: 1rem; border-top: 1px dashed #cbd5e1; padding-top: 0.75rem;">
+                            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 6px 0; text-align: right; color: #64748b;">اسم الطالب:</td><td style="padding: 6px 0; font-weight: 900; text-align: left;">{{ sold_code.assigned_student_name }}</td></tr>
+                            <tr style="border-bottom: 1px solid #f1f5f9;"><td style="padding: 6px 0; text-align: right; color: #64748b;">رقم الهاتف:</td><td style="padding: 6px 0; font-weight: 900; text-align: left;">{{ sold_code.assigned_student_phone }}</td></tr>
+                            <tr><td style="padding: 6px 0; text-align: right; color: #64748b;">المبلغ:</td><td style="padding: 6px 0; font-weight: 900; text-align: left;">{{ sold_price_syp }} ل.س</td></tr>
+                        </table>
+                    </div>
+                </div>
             </div>
 
-            <!-- Course Title Details -->
-            <div style="background: #f8fafc; border-radius: 16px; padding: 1.25rem; margin-bottom: 1.5rem; border: 1px solid #e2e8f0;">
-                <span style="font-size: 0.8rem; color: #64748b; font-weight: bold; display: block; margin-bottom: 0.25rem;">بطاقة تفعيل محتوى:</span>
-                <strong style="font-size: 1.25rem; color: #0f172a; font-weight: 900; display: block; line-height: 1.4;">
-                    {% if sold_code.course %}
-                        {{ sold_code.course.title }}
-                        <span style="font-size: 0.95rem; color: #475569; display: block; margin-top: 0.25rem; font-weight: bold;">أ. {{ sold_code.course.instructor.get_full_name|default:sold_code.course.instructor.username }}</span>
-                    {% elif sold_code.package %}
-                        {{ sold_code.package.name }} (باقة كاملة)
-                    {% endif %}
-                </strong>
+            <!-- LEFT COLUMN: Action Panel & WhatsApp Magic -->
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 24px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;">
+                
+                <!-- Direct Share to Student on WhatsApp -->
+                <div style="background: rgba(37, 211, 102, 0.06); border: 1px solid rgba(37, 211, 102, 0.2); border-radius: 18px; padding: 1.5rem;">
+                    <h4 style="color: #4ade80; display: flex; align-items: center; gap: 0.5rem; margin-top: 0; margin-bottom: 0.75rem; font-size: 1.1rem; font-weight: 900;">
+                        <i data-lucide="message-square"></i> إرسال البيانات لواتساب الطالب
+                    </h4>
+                    <p style="color: #cbd5e1; font-size: 0.85rem; margin-bottom: 1.25rem; line-height: 1.6;">
+                        اضغط على <strong>تحميل صور البطاقة</strong> أولاً لحفظها، ثم انقر على <strong>إرسال عبر واتساب</strong> لفتح محادثة مع الطالب وإرفاق الصور مع الرسالة الجاهزة.
+                    </p>
+                    
+                    <div style="display: grid; gap: 0.75rem;">
+                        <button id="download-cards-btn" onclick="downloadCardImages()" class="btn" style="background: #0284c7; color: white; border: none; padding: 0.9rem; border-radius: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 0.6rem; width: 100%; cursor: pointer; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);">
+                            <i data-lucide="download-cloud"></i> 1. تحميل صور البطاقة (وجه وخلف)
+                        </button>
+
+                        <button id="send-whatsapp-btn" onclick="sendToWhatsApp()" class="btn" style="background: #25D366; color: white; border: none; padding: 1rem; border-radius: 12px; font-weight: 900; font-size: 1.05rem; display: flex; align-items: center; justify-content: center; gap: 0.6rem; width: 100%; cursor: pointer; box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4); margin-top: 0.5rem;">
+                            <i data-lucide="send"></i> 2. فتح دردشة وإرسال الرسالة
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Action Buttons Section for Local Copy & Prints -->
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <h4 style="color: var(--text-secondary); font-size: 0.9rem; font-weight: 900; margin-bottom: 0.25rem; padding-right: 0.25rem;">خيارات محلية للإدارة:</h4>
+                    
+                    <button id="copy-btn" onclick="copyCode()" class="btn btn-secondary" style="background: rgba(255,255,255,0.05); color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 0.85rem; border-radius: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%;">
+                        <i data-lucide="copy"></i> نسخ الكود فقط
+                    </button>
+
+                    <button onclick="window.print()" class="btn btn-primary btn-glow" style="padding: 0.85rem; border-radius: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%;">
+                        <i data-lucide="printer"></i> طباعة فورية للوصل
+                    </button>
+                </div>
+
+                <!-- Quick Preview of the generated Message text -->
+                <div style="margin-top: auto; padding-top: 1.25rem; border-top: 1px dashed rgba(255,255,255,0.1);">
+                    <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold; display: block; margin-bottom: 0.5rem;">معاينة نص الرسالة المجهزة:</span>
+                    <div style="background: rgba(0,0,0,0.25); padding: 0.75rem; border-radius: 10px; font-size: 0.8rem; color: #e2e8f0; line-height: 1.6; font-family: 'Courier New', Courier, monospace; white-space: pre-wrap;" id="wp-msg-preview">أهلاً {{ sold_code.assigned_student_name }}.
+تم بنجاح شراء تفعيل لـ: {% if sold_code.course %}{{ sold_code.course.title }}{% else %}{{ sold_code.package.name }}{% endif %}.
+
+كود التفعيل الخاص بك هو:
+{{ sold_code.code }}
+
+تمنياتنا لك بالتوفيق - أكاديمية محترفو التعليم.</div>
+                </div>
             </div>
-
-            <!-- CODE BLOCK (Huge & Stunning) -->
-            <div style="background: #fffbeb; border: 2px solid #fef3c7; border-radius: 16px; padding: 1.5rem 1rem; margin-bottom: 1.5rem; position: relative;">
-                <span style="font-size: 0.8rem; color: #b45309; font-weight: 800; display: block; margin-bottom: 0.5rem; letter-spacing: 1px;">كود التفعيل (أدخله في حسابك)</span>
-                <span id="target-copy-code" style="font-size: 1.85rem; font-weight: 900; color: #d97706; font-family: 'Courier New', Courier, monospace; letter-spacing: 2px; display: block;">{{ sold_code.code }}</span>
-            </div>
-
-            <!-- Student info & receipt footer details -->
-            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; color: #334155; margin-bottom: 1.5rem; border-top: 1px dashed #cbd5e1; padding-top: 1rem;">
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding: 8px 0; font-weight: bold; text-align: right; color: #64748b;">اسم الطالب:</td>
-                    <td style="padding: 8px 0; font-weight: 900; text-align: left; color: #0f172a;">{{ sold_code.assigned_student_name }}</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding: 8px 0; font-weight: bold; text-align: right; color: #64748b;">رقم الهاتف:</td>
-                    <td style="padding: 8px 0; font-weight: 900; text-align: left; color: #0f172a;">{{ sold_code.assigned_student_phone }}</td>
-                </tr>
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding: 8px 0; font-weight: bold; text-align: right; color: #64748b;">قيمة الدفع:</td>
-                    <td style="padding: 8px 0; font-weight: 900; text-align: left; color: #0f172a;">{{ sold_price_syp }} ل.س</td>
-                </tr>
-                <tr>
-                    <td style="padding: 8px 0; font-weight: bold; text-align: right; color: #64748b;">البائع:</td>
-                    <td style="padding: 8px 0; font-weight: 900; text-align: left; color: #0f172a;">{{ sold_code.sold_by.get_full_name|default:sold_code.sold_by.username }}</td>
-                </tr>
-            </table>
-
-            <!-- Quick Instructions -->
-            <div style="background: #f8fafc; border-radius: 12px; padding: 0.75rem; font-size: 0.75rem; color: #64748b; line-height: 1.5; font-weight: bold;">
-                تعليمات التفعيل: سجل دخولك للمنصة، توجه لتبويب التفعيل واكتب الكود أعلاه بدقة لتفعيل محتواك فوراً.
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="no-print">
-            <button id="copy-btn" onclick="copyCode()" class="btn btn-secondary w-full" style="padding: 1rem; border-radius: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 0.5rem; height: 50px;">
-                <i data-lucide="copy"></i> نسخ الكود
-            </button>
-            <button onclick="window.print()" class="btn btn-primary btn-glow w-full" style="padding: 1rem; border-radius: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 0.5rem; height: 50px;">
-                <i data-lucide="printer"></i> طباعة كرت التفعيل
-            </button>
         </div>
     </div>
 </div>
@@ -262,6 +476,139 @@
 
 <script>
     let currentType = 'course';
+
+    // --------------------------------------------------------------------------
+    // Responsive Card scaling for dynamic fits on modal load
+    // --------------------------------------------------------------------------
+    function adjustCardScaling() {
+        const wrapperFront = document.getElementById('html-to-image-front');
+        const wrapperBack = document.getElementById('html-to-image-back');
+        if (!wrapperFront) return;
+
+        const container = wrapperFront.parentElement;
+        const containerWidth = container.offsetWidth;
+        const baseWidth = 791; // match original aspect
+        const scale = containerWidth / baseWidth;
+
+        wrapperFront.style.transform = `scale(${scale})`;
+        if (wrapperBack) wrapperBack.style.transform = `scale(${scale})`;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        adjustCardScaling();
+        window.addEventListener('resize', adjustCardScaling);
+    });
+    // Small delay to trigger again once font is fully renderable
+    setTimeout(adjustCardScaling, 500);
+
+    function switchModalView(view) {
+        const btnCard = document.getElementById('view-btn-card');
+        const btnReceipt = document.getElementById('view-btn-receipt');
+        const containerCard = document.getElementById('card-view-container');
+        const containerReceipt = document.getElementById('receipt-view-container');
+
+        if (view === 'card') {
+            btnCard.classList.add('active');
+            btnReceipt.classList.remove('active');
+            containerCard.style.display = 'flex';
+            containerReceipt.style.display = 'none';
+            // Trigger resize scaling fix
+            setTimeout(adjustCardScaling, 10);
+        } else {
+            btnCard.classList.remove('active');
+            btnReceipt.classList.add('active');
+            containerCard.style.display = 'none';
+            containerReceipt.style.display = 'block';
+        }
+    }
+
+    // --------------------------------------------------------------------------
+    // Functionality for HTML2CANVAS & WhatsApp Share
+    // --------------------------------------------------------------------------
+    
+    async function generateImageOfElement(elementId, fileName) {
+        const element = document.getElementById(elementId);
+        if (!element) return;
+
+        // Temporarily force scale to 1 during capture for maximum quality
+        const originalTransform = element.style.transform;
+        element.style.transform = 'scale(1)';
+
+        try {
+            const canvas = await html2canvas(element, {
+                scale: 2, // High quality capture
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: "#ffffff",
+                logging: false,
+                windowWidth: 791,
+                windowHeight: 374
+            });
+            
+            // Restore scaling
+            element.style.transform = originalTransform;
+
+            const link = document.createElement('a');
+            link.download = fileName + '.png';
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+            return true;
+        } catch (e) {
+            console.error("Error converting HTML to canvas:", e);
+            element.style.transform = originalTransform;
+            return false;
+        }
+    }
+
+    async function downloadCardImages() {
+        const btn = document.getElementById('download-cards-btn');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="lucide-loader"></i> جاري معالجة الصور...';
+
+        try {
+            // Force to view card first so layout computes
+            switchModalView('card');
+            await new Promise(r => setTimeout(r, 100)); 
+            
+            // 1. Download Front
+            await generateImageOfElement('html-to-image-front', 'Front-Card-{{ sold_code.assigned_student_name|default:"student" }}');
+            
+            // Small buffer
+            await new Promise(r => setTimeout(r, 300)); 
+            
+            // 2. Download Back
+            await generateImageOfElement('html-to-image-back', 'Back-Card-{{ sold_code.assigned_student_name|default:"student" }}');
+            
+            btn.style.background = '#059669';
+            btn.innerHTML = '<i class="lucide-check"></i> تم التحميل بنجاح!';
+            setTimeout(() => {
+                btn.style.background = '#0284c7';
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }, 3000);
+        } catch (e) {
+            alert("حدث خطأ غير متوقع أثناء توليد الصور.");
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    function sendToWhatsApp() {
+        const phone = '{{ sold_code.assigned_student_phone }}';
+        const text = document.getElementById('wp-msg-preview').innerText;
+        
+        // Clean number (strip formatting, prefix syria if missing etc.)
+        let cleanPhone = phone.replace(/\D/g,'');
+        if (cleanPhone.startsWith('0')) {
+            cleanPhone = '963' + cleanPhone.substring(1);
+        } else if (!cleanPhone.startsWith('963') && cleanPhone.length === 9) {
+             cleanPhone = '963' + cleanPhone;
+        }
+        
+        const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+        window.open(url, '_blank');
+    }
 
     function switchType(type) {
         currentType = type;
@@ -363,10 +710,10 @@
     }
 
     function copyCode() {
-        const codeText = document.getElementById('target-copy-code').textContent;
+        const codeText = document.getElementById('target-copy-code') ? document.getElementById('target-copy-code').innerText : '{{ sold_code.code }}';
         const copyBtn = document.getElementById('copy-btn');
         
-        navigator.clipboard.writeText(codeText).then(() => {
+        navigator.clipboard.writeText(codeText.trim()).then(() => {
             const originalHTML = copyBtn.innerHTML;
             copyBtn.innerHTML = '<i class="lucide-check"></i> تم نسخ الكود!';
             copyBtn.classList.add('copy-success');
