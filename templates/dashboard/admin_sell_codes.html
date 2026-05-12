@@ -796,7 +796,7 @@
         remainingBadge.style.display = 'none';
 
         try {
-            const url = `{% url 'dashboard:get_available_codes_api' %}?${type === 'course' ? 'course_id' : 'package_id'}=${id}`;
+            const url = `{% url 'dashboard:get_available_codes_api' %}?${type === 'course' ? 'course_id' : 'package_id'}=${id}&sales_center_id={{ sham_center_id }}`;
             const response = await fetch(url);
             const data = await response.json();
 

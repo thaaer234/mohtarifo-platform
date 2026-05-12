@@ -4172,13 +4172,22 @@ def get_available_codes_api(request):
     from django.http import JsonResponse
     course_id = request.GET.get("course_id")
     package_id = request.GET.get("package_id")
+    sales_center_id = request.GET.get("sales_center_id")
     from billing.models import AccessCode
     
+    filters = {"status": "active", "sale_status__in": ["available", "reserved"]}
     if course_id:
-        codes = AccessCode.objects.filter(course_id=course_id, status="active", sale_status__in=["available", "reserved"]).values("id", "code")[:100]
+        filters["course_id"] = course_id
     elif package_id:
-        codes = AccessCode.objects.filter(package_id=package_id, status="active", sale_status__in=["available", "reserved"]).values("id", "code")[:100]
+        filters["package_id"] = package_id
     else:
-        codes = []
+        return JsonResponse({"codes": []})
         
+    if sales_center_id:
+        if sales_center_id.isdigit():
+            filters["sales_center_id"] = sales_center_id
+        elif sales_center_id == "none":
+            filters["sales_center__isnull"] = True
+            
+    codes = AccessCode.objects.filter(**filters).values("id", "code")[:100]
     return JsonResponse({"codes": list(codes)})
