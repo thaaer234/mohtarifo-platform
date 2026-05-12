@@ -379,6 +379,11 @@ def favicon_view(request):
     import os
     from django.conf import settings
     from django.http import FileResponse, Http404
+    # Check the new canonical location
+    path = os.path.join(settings.BASE_DIR, 'static', 'images', 'favicon.ico')
+    if os.path.exists(path):
+        return FileResponse(open(path, 'rb'), content_type='image/x-icon')
+    # Check legacy location
     path = os.path.join(settings.BASE_DIR, 'static', 'favicon.ico')
     if os.path.exists(path):
         return FileResponse(open(path, 'rb'), content_type='image/x-icon')
@@ -386,6 +391,21 @@ def favicon_view(request):
     path = os.path.join(settings.BASE_DIR, 'static', 'dashboard', 'icons', 'icon-192.ico')
     if os.path.exists(path):
         return FileResponse(open(path, 'rb'), content_type='image/x-icon')
+    raise Http404()
+
+
+def favicon_png_view(request):
+    import os
+    from django.conf import settings
+    from django.http import FileResponse, Http404
+    # Check our new standard directory
+    path = os.path.join(settings.BASE_DIR, 'static', 'images', 'favicon.png')
+    if os.path.exists(path):
+        return FileResponse(open(path, 'rb'), content_type='image/png')
+    # Fallback
+    path = os.path.join(settings.BASE_DIR, 'static', 'favicon.png')
+    if os.path.exists(path):
+        return FileResponse(open(path, 'rb'), content_type='image/png')
     raise Http404()
 
 
@@ -4076,28 +4096,8 @@ def admin_sell_codes(request):
                 student_phone = student_phone.strip()
                 student_name = sanitize_plain_text(student_name.strip())
                 
-                student, created = User.objects.get_or_create(
-                    username=student_phone,
-                    defaults={"first_name": student_name, "is_active": True},
-                )
-                if created:
-                    student.set_unusable_password()
-                    student.save(update_fields=["password"])
-                elif student_name and not student.get_full_name():
-                    student.first_name = student_name
-                    student.save(update_fields=["first_name"])
-                    
-                track = ""
-                if access_code.course:
-                    track = access_code.course.get_academic_track_display()
-                elif access_code.package:
-                    track = access_code.package.get_package_track_display()
-                    
-                StudentProfile.objects.get_or_create(
-                    user=student,
-                    defaults={"phone": student_phone, "track": track},
-                )
-                
+                # Record assignment to code itself without creating system account (student will register manually)
+
                 access_code.assigned_student_name = student_name
                 access_code.assigned_student_phone = student_phone
                 access_code.sale_status = "sold"

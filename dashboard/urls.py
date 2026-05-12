@@ -8,6 +8,7 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("robots.txt", views.robots_txt, name="robots_txt"),
     path("favicon.ico", views.favicon_view, name="favicon_ico"),
+    path("favicon.png", views.favicon_png_view, name="favicon_png"),
     path("sitemap.xml", views.sitemap_xml, name="sitemap_xml"),
     path("manifest.webmanifest", views.pwa_manifest, name="pwa_manifest"),
     path("sw.js", views.service_worker, name="service_worker"),
