@@ -130,8 +130,15 @@
     </script>
     <style>
         /* Dynamic Staff Navigation Overrides to ensure 0 overlap and single-line premium aesthetic */
-        body:has(.badge-gold) .navbar {
-            max-width: 1400px !important; /* Expand capacity */
+        body:has(.badge-gold) .navbar:not(.navbar-scrolled) {
+            max-width: 1400px !important; /* Expand capacity for floating mode */
+        }
+        body:has(.badge-gold) .navbar.navbar-scrolled {
+            max-width: 100% !important; /* Go edge-to-edge when scrolled */
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            border-radius: 0 !important;
         }
         body:has(.badge-gold) .nav-links {
             gap: 0.6rem !important; /* Dramatically reduce the 2rem gap */
