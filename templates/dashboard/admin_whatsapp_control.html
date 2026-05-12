@@ -1,131 +1,211 @@
 {% extends "dashboard/base.html" %}
 {% load static %}
 
-{% block title %}بوابة WhatsApp الداخلية | لوحة الإدارة{% endblock %}
+{% block title %}بوابة WhatsApp | مركز التواصل الذكي{% endblock %}
 
 {% block content %}
 <div class="whatsapp-control-container reveal-up">
     <header class="mb-6">
-        <div class="badge badge-gold mb-2">أدوات النظام والنظام المستقل</div>
-        <h1 class="page-title"><i data-lucide="message-circle" class="inline-ico"></i> إدارة بوابة الواتساب المجانية</h1>
-        <p class="text-muted">تحكم بحالة الاتصال ومسح الـ QR Code مباشرةً من هنا دون الدخول للسيرفر.</p>
+        <div class="badge badge-gold mb-2">مركز المراسلة الذكي CRM</div>
+        <h1 class="page-title"><i data-lucide="message-circle" class="inline-ico"></i> إدارة بوابة التواصل والواتساب</h1>
+        <p class="text-muted">راقب حالة الرقم النشط، أرسل تنبيهات فردية، أو أطلق حملات إعلانية للطلاب بضغطة زر.</p>
     </header>
 
-    <div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 380px; gap: 2rem;">
+    <div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem;">
         
-        <!-- Status Panel -->
-        <article class="premium-card glass-panel">
-            <div class="panel-head flex-between align-center mb-6" style="border-bottom: 1px solid var(--border-light); padding-bottom: 1.5rem;">
-                <div>
-                    <h3>حالة الاتصال الحالية</h3>
-                    <small class="text-muted">تُحدث تلقائياً كل 10 ثوانٍ.</small>
-                </div>
-                <div class="status-indicator">
-                    {% if status == 'connected' %}
-                        <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 800; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem;">
-                            <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block; box-shadow: 0 0 8px #10b981;"></span> متصل ومفعل
-                        </span>
-                    {% elif status == 'offline' %}
-                        <span class="badge" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid #ef4444; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 800;">
-                            الخدمة متوقفة (Offline)
-                        </span>
-                    {% else %}
-                        <span class="badge" style="background: rgba(197, 160, 89, 0.1); color: var(--brand-gold); border: 1px solid var(--brand-gold); padding: 0.5rem 1rem; border-radius: 20px; font-weight: 800;">
-                            قيد الانتظار / غير مرتبطة
-                        </span>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="interaction-zone" style="text-align: center; padding: 2rem 1rem;">
-                {% if status == 'connected' %}
-                    <div class="connected-state">
-                        <div class="icon-ring success mb-6">
-                            <i data-lucide="check-circle-2" style="width: 64px; height: 64px; color: #10b981;"></i>
-                        </div>
-                        <h2 style="color: var(--text-primary);">البوابة تعمل بنجاح! ✅</h2>
-                        <p class="text-muted mb-6" style="max-width: 500px; margin: 0 auto 2rem auto;">
-                            الآن يتم إرسال رسائل الترحيب التلقائية للطلاب بنجاح عند الاشتراك في أي دورة عبر رقم الواتساب المربوط حالياً.
-                        </p>
-                        <form method="post">
-                            {% csrf_token %}
-                            <button type="submit" name="logout" class="btn btn-danger" onclick="return confirm('هل أنت متأكد أنك تريد قطع الاتصال بهذا الرقم؟ سيطلب منك مسح QR جديد لاحقاً.')" style="font-weight: bold;">
-                                <i data-lucide="log-out"></i> تسجيل خروج من هذا الرقم
-                            </button>
-                        </form>
+        <!-- Left Side: Main Workspace -->
+        <div class="workspace-main flex flex-col gap-6">
+            
+            <!-- 1. Connection State Card -->
+            <article class="premium-card glass-panel">
+                <div class="panel-head flex-between align-center mb-6 pb-4" style="border-bottom: 1px solid var(--border-light);">
+                    <div>
+                        <h3 style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="cpu" style="color: var(--brand-gold);"></i> حالة الخادم والبوابة</h3>
+                        <small class="text-muted">يُحدث تلقائياً.</small>
                     </div>
-                {% elif status == 'offline' %}
-                    <div class="offline-state">
-                        <div class="icon-ring danger mb-6">
-                            <i data-lucide="alert-triangle" style="width: 64px; height: 64px; color: #ef4444;"></i>
-                        </div>
-                        <h2 style="color: var(--text-primary);">الخادم غير مستجيب</h2>
-                        <p class="text-muted">تأكد أنك قمت بتشغيل خدمة Node.js على السيرفر عبر الأمر <code>systemctl start whatsapp_service</code></p>
-                        <a href="." class="btn btn-secondary mt-4"><i data-lucide="refresh-cw"></i> إعادة التحقق</a>
-                    </div>
-                {% else %}
-                    <div class="scanning-state">
-                        {% if has_qr %}
-                            <h3 style="color: var(--text-primary); margin-bottom: 1.5rem;">قم بمسح الرمز المربع لربط الواتساب</h3>
-                            <div class="qr-wrapper" style="background: white; padding: 1rem; border-radius: 20px; display: inline-block; box-shadow: 0 10px 30px rgba(0,0,0,0.3); margin-bottom: 1.5rem; position: relative;">
-                                <img src="{{ qr }}" alt="WhatsApp QR Code" style="display: block; width: 280px; height: 280px;">
-                            </div>
-                            <p class="text-muted" style="max-width: 400px; margin: 0 auto;">
-                                افتح تطبيق الواتساب بهاتفك، اذهب للإعدادات -> الأجهزة المرتبطة -> ثم مسح هذا الرمز.
-                            </p>
+                    <div class="status-indicator">
+                        {% if status == 'connected' %}
+                            <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 800; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <span class="pulse-green"></span> متصل بالكامل
+                            </span>
+                        {% elif status == 'offline' %}
+                            <span class="badge" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid #ef4444; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 800;">
+                                غير متصل (Offline)
+                            </span>
                         {% else %}
-                            <div class="loading-state">
-                                <div class="spinner-gold mb-4"></div>
-                                <h3>جاري توليد رمز الاتصال...</h3>
-                                <p class="text-muted">انتظر قليلاً وسيعمل الرمز تلقائياً.</p>
-                            </div>
+                            <span class="badge badge-pulse-gold">
+                                بانتظار الربط
+                            </span>
                         {% endif %}
                     </div>
-                {% endif %}
-            </div>
-        </article>
+                </div>
 
-        <!-- Instruction Side Panel -->
-        <aside>
-            <div class="premium-card" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-light); padding: 1.5rem; border-radius: 20px;">
-                <h4 class="mb-4" style="color: var(--brand-gold); display: flex; align-items: center; gap: 0.5rem;">
-                    <i data-lucide="info" style="width: 20px;"></i> حول هذه الميزة
+                <div class="interaction-zone" style="text-align: center; padding: 1rem 0;">
+                    {% if status == 'connected' %}
+                        <!-- Profile Card & Logout Option -->
+                        <div class="connected-profile-card" style="background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 20px; border: 1px solid var(--border-light); text-align: right; display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                                <div class="avatar-placeholder" style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-size: 1.8rem; box-shadow: 0 8px 20px rgba(37, 211, 102, 0.3);">
+                                    <i data-lucide="smartphone"></i>
+                                </div>
+                                <div>
+                                    <h3 style="margin: 0; color: var(--text-primary);">رقم الإرسال: {{ wa_user.phone|default:"غير محدد" }}</h3>
+                                    <p style="margin: 5px 0 0 0; color: var(--text-muted); font-size: 0.9rem;">الاسم المكتشف: <strong>{{ wa_user.name|default:"رقم الدعم الفني" }}</strong></p>
+                                </div>
+                            </div>
+                            <form method="post">
+                                {% csrf_token %}
+                                <button type="submit" name="logout" class="btn btn-danger btn-sm" onclick="return confirm('هل تود تسجيل الخروج وربط هاتف آخر؟')" style="border-radius: 12px;">
+                                    <i data-lucide="log-out"></i> قطع الاتصال
+                                </button>
+                            </form>
+                        </div>
+                    {% elif status == 'offline' %}
+                        <div class="offline-state" style="padding: 2rem;">
+                            <div class="icon-ring danger mb-4"><i data-lucide="alert-circle" style="width: 48px; height: 48px; color:#ef4444;"></i></div>
+                            <h2>خادم Node.js متوقف</h2>
+                            <p class="text-muted">تأكد من تشغيل أمر <code>sudo systemctl start whatsapp_service</code> على سيرفر الهوستنجر.</p>
+                            <a href="." class="btn btn-secondary btn-sm mt-4"><i data-lucide="refresh-cw"></i> إعادة محاولة الاتصال</a>
+                        </div>
+                    {% else %}
+                        <div class="scanning-state" style="padding: 1rem;">
+                            {% if has_qr %}
+                                <h3 class="mb-4">امسح الرمز المربع الآن للربط والتفعيل 📱✨</h3>
+                                <div class="qr-wrapper" style="background: white; padding: 1.2rem; border-radius: 24px; display: inline-block; box-shadow: 0 20px 50px rgba(0,0,0,0.4); margin-bottom: 1.5rem;">
+                                    <img src="{{ qr }}" alt="WhatsApp Link QR" style="display: block; width: 250px; height: 250px; filter: contrast(1.1);">
+                                </div>
+                                <p class="text-muted" style="font-size: 0.95rem; max-width: 450px; margin: 0 auto;">
+                                    توجه لواتساب على هاتفك -> الإعدادات -> الأجهزة المرتبطة -> ثم اضغط "ربط جهاز" ووجه الكاميرا نحو الشاشة.
+                                </p>
+                            {% else %}
+                                <div class="loading-box" style="padding: 3rem 0;">
+                                    <div class="spinner-gold mb-4"></div>
+                                    <h3 style="color: var(--brand-gold);">جاري التواصل مع سيرفرات WhatsApp...</h3>
+                                    <p class="text-muted">قد يستغرق هذا بضع ثوانٍ إضافية في المرة الأولى، يرجى الصبر.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </article>
+
+            {% if status == 'connected' %}
+            <!-- 2. Interactive Sending Hub (Only visible when connected) -->
+            <div class="actions-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                
+                <!-- Card A: Instant Individual Messaging -->
+                <article class="premium-card glass-panel" style="padding: 1.8rem;">
+                    <h3 class="mb-2" style="color: var(--text-primary);"><i data-lucide="send" class="inline-ico"></i> إرسال رسالة سريعة</h3>
+                    <p class="text-muted mb-5" style="font-size: 0.85rem;">أرسل رسالة لأي رقم هاتف مباشرةً للتحقق أو مراسلة طالب معين.</p>
+                    
+                    <form method="post" class="elegant-form flex flex-col gap-4">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label style="font-size: 0.85rem; display: block; margin-bottom: 5px; color: var(--text-muted);">رقم الهاتف (مع النداء، مثلاً 9639xxxxxxxx)</label>
+                            <input type="text" name="phone" placeholder="مثال: 963930111222" required style="background: var(--bg-input); border: 1px solid var(--border-light); padding: 0.75rem; border-radius: 12px; color: white; width: 100%;">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 0.85rem; display: block; margin-bottom: 5px; color: var(--text-muted);">نص الرسالة</label>
+                            <textarea name="message" rows="3" placeholder="اكتب رسالتك هنا..." required style="background: var(--bg-input); border: 1px solid var(--border-light); padding: 0.75rem; border-radius: 12px; color: white; width: 100%; resize: none;"></textarea>
+                        </div>
+                        <button type="submit" name="send_single" class="btn btn-gold w-100 mt-2" style="border-radius: 12px; font-weight: bold;">
+                            <i data-lucide="send"></i> إرسال فوراً
+                        </button>
+                    </form>
+                </article>
+
+                <!-- Card B: Course Broadcast Messaging -->
+                <article class="premium-card glass-panel" style="padding: 1.8rem;">
+                    <h3 class="mb-2" style="color: #47a1ff;"><i data-lucide="megaphone" class="inline-ico" style="color: #47a1ff;"></i> إعلان جماعي لدورة</h3>
+                    <p class="text-muted mb-5" style="font-size: 0.85rem;">أطلق حملة إعلامية لكافة طلاب دورة محددة في وقت واحد وبأمان تام.</p>
+                    
+                    <form method="post" class="elegant-form flex flex-col gap-4">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label style="font-size: 0.85rem; display: block; margin-bottom: 5px; color: var(--text-muted);">اختر الدورة التعليمية المستهدفة</label>
+                            <select name="course_id" required style="background: var(--bg-input); border: 1px solid var(--border-light); padding: 0.75rem; border-radius: 12px; color: white; width: 100%;">
+                                <option value="">-- اختر الدورة --</option>
+                                {% for course in courses %}
+                                    <option value="{{ course.id }}">{{ course.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 0.85rem; display: block; margin-bottom: 5px; color: var(--text-muted);">نص الرسالة الجماعية للطلاب</label>
+                            <textarea name="message" rows="3" placeholder="مثال: نذكركم أعزائنا الطلاب بموعد المحاضرة غداً..." required style="background: var(--bg-input); border: 1px solid var(--border-light); padding: 0.75rem; border-radius: 12px; color: white; width: 100%; resize: none;"></textarea>
+                        </div>
+                        <button type="submit" name="send_broadcast" class="btn btn-primary w-100 mt-2" onclick="return confirm('هل أنت متأكد من إطلاق الحملة لجميع المشتركين؟ سيتم الإرسال بتأخير أمني طفيف بين الأرقام.')" style="background: #47a1ff; border-color:#47a1ff; color:#000; font-weight:bold; border-radius:12px;">
+                            <i data-lucide="rocket"></i> أطلق حملة الإرسال
+                        </button>
+                    </form>
+                </article>
+                
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!-- Right Side: Sidebar Tools/Stats -->
+        <aside class="flex flex-col gap-6">
+            <div class="premium-card glass-panel" style="padding: 1.5rem;">
+                <h4 class="mb-4" style="color: var(--brand-gold); font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i data-lucide="shield-check"></i> سياسات الإرسال الآمن
                 </h4>
-                <ul class="info-list" style="list-style: none; padding: 0; margin: 0; font-size: 0.9rem; color: var(--text-muted); line-height: 1.8;">
-                    <li class="mb-3">⚡ **مجانية بالكامل**: تعمل على خادمك الخاص دون اشتراكات شهرية لأطراف ثالثة.</li>
-                    <li class="mb-3">🔐 **آمنة داخلياً**: التواصل يتم محلياً (127.0.0.1) بين دجانجو والبوابة عبر مفتاح تشفير داخلي.</li>
-                    <li>🚀 **تلقائية بالكامل**: لا يتدخل أي موظف بالإرسال، النظام هو من يتولى الترحيب بطلابك فوراً.</li>
-                </ul>
+                <div class="policy-content" style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.8;">
+                    <p class="mb-3">🛡️ **تأخير زمني تلقائي (Anti-Spam):** عند الإرسال الجماعي، يقوم خادمنا بوضع فاصل 2 ثانية بين كل رسالة تلقائياً لحماية رقمك من الحظر.</p>
+                    <p class="mb-3">📲 **الأرقام الدولية:** تأكد أن الأرقام مسجلة مع كود الدولة (مثلاً 963 لـسوريا) ليتم إيصالها بنجاح.</p>
+                    <p>**🆓 تكلفة صفرية:** كافة الرسائل المبعوثة من هنا مجانية بالكامل ودون حدود يومية.</p>
+                </div>
+            </div>
+
+            <div class="premium-card glass-panel" style="padding: 1.5rem; background: linear-gradient(135deg, rgba(37, 211, 102, 0.05), rgba(18, 140, 126, 0.05));">
+                <h4 class="mb-3" style="color: #25D366; display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="zap"></i> أتمتة النظام</h4>
+                <p style="font-size: 0.85rem; line-height: 1.6;">النظام الآن مبرمج ليرسل تلقائياً رسالة ترحيب فورية لأي طالب بمجرد قيامه **بتفعيل كود مادة أو باقة** في الحساب.</p>
             </div>
         </aside>
+
     </div>
 </div>
 
 <style>
-    .glass-panel { background: var(--bg-surface-elevated); border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 12px 40px rgba(0,0,0,0.25); padding: 2rem; border-radius: 24px; }
+    .glass-panel { background: var(--bg-surface-elevated); border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 12px 45px rgba(0,0,0,0.25); border-radius: 24px; }
     .inline-ico { vertical-align: middle; margin-left: 0.5rem; color: var(--brand-gold); }
-    .icon-ring { width: 100px; height: 100px; border-radius: 50%; display: grid; place-items: center; margin: 0 auto; }
-    .icon-ring.success { background: rgba(16, 185, 129, 0.1); border: 2px solid rgba(16, 185, 129, 0.2); }
-    .icon-ring.danger { background: rgba(239, 68, 68, 0.1); border: 2px solid rgba(239, 68, 68, 0.2); }
     
+    .pulse-green {
+        width: 10px; height: 10px; border-radius: 50%; background: #10b981; display: inline-block;
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    .badge-pulse-gold {
+        background: rgba(197, 160, 89, 0.15); color: var(--brand-gold); border: 1px solid var(--brand-gold);
+        padding: 0.5rem 1rem; border-radius: 20px; font-weight: 800;
+        animation: blink 1.5s ease-in-out infinite alternate;
+    }
+    @keyframes blink { from { opacity: 0.6; } to { opacity: 1; } }
+
     .spinner-gold {
-        width: 50px;
-        height: 50px;
-        border: 4px solid rgba(197, 160, 89, 0.1);
-        border-left-color: var(--brand-gold);
-        border-radius: 50%;
-        display: inline-block;
-        animation: spin 1s linear infinite;
+        width: 48px; height: 48px; border: 4px solid rgba(197, 160, 89, 0.1); border-left-color: var(--brand-gold);
+        border-radius: 50%; display: inline-block; animation: spin 1s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .icon-ring { width: 80px; height: 80px; border-radius: 50%; display: grid; place-items: center; margin: 0 auto; }
+    .icon-ring.danger { background: rgba(239, 68, 68, 0.1); border: 2px solid rgba(239, 68, 68, 0.2); }
 
     @media (max-width: 992px) {
         .dashboard-grid { grid-template-columns: 1fr !important; }
+        .actions-grid { grid-template-columns: 1fr !important; }
     }
 </style>
 
 {% if status != 'connected' and status != 'offline' %}
-<!-- Auto-refresh the page every 8 seconds ONLY if waiting for QR/Scan, to detect scan instantly -->
+<!-- Soft polling to fetch QR or capture successful linking instantly -->
 <script>
     setTimeout(function(){
         window.location.reload();

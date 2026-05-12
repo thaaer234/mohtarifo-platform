@@ -1,4 +1,4 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers } = require('@whiskeysockets/baileys');
 const express = require('express');
 const QRCode = require('qrcode');
 const qrcodeTerminal = require('qrcode-terminal');
@@ -9,7 +9,6 @@ const pino = require('pino');
 // Initialize configurations
 const PORT = process.env.PORT || 3001;
 const AUTH_PATH = path.join(__dirname, 'auth_info');
-const QR_FILE_PATH = path.join(__dirname, 'qr.png');
 const API_SECRET = process.env.WHATSAPP_API_SECRET || 'mohtarifo_internal_secret_123';
 
 let sock = null;
@@ -29,8 +28,8 @@ async function connectToWhatsApp() {
     sock = makeWASocket({
         auth: state,
         printQRInTerminal: false, 
-        logger: pino({ level: 'silent' }),
-        browser: ['Mohtarifo Web Control', 'Chrome', '1.0.0']
+        logger: logger, // Using elevated logger for live diagnostics
+        browser: Browsers.ubuntu('Chrome') // Standard recognized signature
     });
 
     sock.ev.on('creds.update', saveCreds);
@@ -83,7 +82,12 @@ app.get('/status', (req, res) => {
     res.json({ 
         status: connectionStatus,
         hasQr: !!latestQRData,
-        qr: latestQRData 
+        qr: latestQRData,
+        user: (connectionStatus === 'connected' && sock?.user) ? {
+            id: sock.user.id,
+            name: sock.user.name,
+            phone: sock.user.id.split(':')[0]
+        } : null
     });
 });
 

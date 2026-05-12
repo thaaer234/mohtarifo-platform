@@ -61,7 +61,7 @@ from .forms import (
 from .models import CatalogSection, StudentNotification
 from .seo import _site_url
 from .security import sanitize_plain_text, validate_syrian_mobile
-from .whatsapp_utils import get_whatsapp_status, logout_whatsapp
+from .whatsapp_utils import get_whatsapp_status, logout_whatsapp, send_whatsapp_message
 
 
 def _is_admin_user(user):
@@ -4256,16 +4256,77 @@ def admin_action_migrate_thair(request):
 
 @admin_required
 def admin_whatsapp_control(request):
-    if request.method == "POST" and "logout" in request.POST:
-        result = logout_whatsapp()
-        if result.get("status") == "success":
-            messages.success(request, "تم تسجيل الخروج بنجاح.")
-        else:
-            messages.error(request, "فشل تسجيل الخروج.")
-        return redirect("dashboard:admin_whatsapp_control")
+    import time
+    import threading
+    from django.contrib.auth import get_user_model
+
+    # Helper for background broadcasts
+    def _background_broadcast(student_list, message_text):
+        for profile in student_list:
+            if profile and profile.phone:
+                send_whatsapp_message(profile.phone, message_text)
+                time.sleep(2) # Safe delay between messages to prevent spam blocks
+
+    if request.method == "POST":
+        # 1. Handle Logout
+        if "logout" in request.POST:
+            result = logout_whatsapp()
+            if result.get("status") == "success":
+                messages.success(request, "تم تسجيل الخروج بنجاح.")
+            else:
+                messages.error(request, "فشل تسجيل الخروج.")
+            return redirect("dashboard:admin_whatsapp_control")
+        
+        # 2. Handle Single Send
+        elif "send_single" in request.POST:
+            target_phone = request.POST.get("phone", "").strip()
+            message_body = request.POST.get("message", "").strip()
+            if target_phone and message_body:
+                sent = send_whatsapp_message(target_phone, message_body)
+                if sent:
+                    messages.success(request, f"✅ تم إرسال الرسالة بنجاح إلى الرقم {target_phone}")
+                else:
+                    messages.error(request, "❌ فشل الإرسال، تأكد أن البوابة متصلة.")
+            else:
+                messages.warning(request, "يرجى ملء الرقم والرسالة.")
+            return redirect("dashboard:admin_whatsapp_control")
+
+        # 3. Handle Course Broadcast
+        elif "send_broadcast" in request.POST:
+            course_id = request.POST.get("course_id")
+            message_body = request.POST.get("message", "").strip()
+            if not course_id or not message_body:
+                messages.warning(request, "يرجى اختيار الدورة وكتابة نص الرسالة.")
+            else:
+                course = get_object_or_404(Course, id=course_id)
+                # Fetch students having active access grants to this course
+                grants = AccessGrant.objects.filter(course=course).select_related('user__student_profile')
+                profiles = []
+                for grant in grants:
+                    profile = getattr(grant.user, 'student_profile', None)
+                    if profile and profile.phone:
+                        profiles.append(profile)
+                
+                if not profiles:
+                    messages.info(request, "لا توجد أرقام هواتف مسجلة لطلاب هذه الدورة.")
+                else:
+                    count = len(profiles)
+                    # Fire off in background thread
+                    threading.Thread(
+                        target=_background_broadcast,
+                        args=(profiles, message_body),
+                        daemon=True
+                    ).start()
+                    messages.success(request, f"🚀 بدأت حملة الإرسال! جاري إرسال الرسائل لـ {count} طالب في الخلفية بنجاح.")
+            return redirect("dashboard:admin_whatsapp_control")
+
     status_data = get_whatsapp_status()
+    courses = Course.objects.filter(status="published").only("id", "title").order_by("title")
+
     return render(request, "dashboard/admin_whatsapp_control.html", {
         "status": status_data.get("status", "offline"),
         "qr": status_data.get("qr"),
-        "has_qr": status_data.get("hasQr", False)
+        "has_qr": status_data.get("hasQr", False),
+        "wa_user": status_data.get("user"),
+        "courses": courses
     })
