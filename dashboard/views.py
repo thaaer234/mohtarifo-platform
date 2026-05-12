@@ -59,7 +59,7 @@ from .forms import (
     SalesCenterForm,
     StudentRegistrationForm,
 )
-from .models import CatalogSection, StudentNotification
+from .models import CatalogSection, StudentNotification, WhatsAppTemplate
 from .seo import _site_url
 from .security import sanitize_plain_text, validate_syrian_mobile
 from .whatsapp_utils import get_whatsapp_status, logout_whatsapp, send_whatsapp_message
@@ -4288,13 +4288,20 @@ def admin_whatsapp_control(request):
     import time
     import threading
     from django.contrib.auth import get_user_model
+    from accounts.models import StudentProfile
 
-    # Helper for background broadcasts
-    def _background_broadcast(student_list, message_text):
+    User = get_user_model()
+
+    # Helper for background broadcasts with dynamic tag replacement
+    def _background_broadcast(student_list, raw_message):
         for profile in student_list:
             if profile and profile.phone:
-                send_whatsapp_message(profile.phone, message_text)
-                time.sleep(2) # Safe delay between messages to prevent spam blocks
+                student_user = profile.user
+                student_name = student_user.get_full_name() or student_user.username
+                # Personalize the message per student!
+                personalized = raw_message.replace("{name}", student_name).replace("{الاسم}", student_name)
+                send_whatsapp_message(profile.phone, personalized)
+                time.sleep(2) # Anti-spam spacing
 
     if request.method == "POST":
         # 1. Handle Logout
@@ -4320,42 +4327,84 @@ def admin_whatsapp_control(request):
                 messages.warning(request, "يرجى ملء الرقم والرسالة.")
             return redirect("dashboard:admin_whatsapp_control")
 
-        # 3. Handle Course Broadcast
+        # 3. Handle Advanced Segmentation Broadcast
         elif "send_broadcast" in request.POST:
-            course_id = request.POST.get("course_id")
+            target_type = request.POST.get("target_type", "subscribed")
             message_body = request.POST.get("message", "").strip()
-            if not course_id or not message_body:
-                messages.warning(request, "يرجى اختيار الدورة وكتابة نص الرسالة.")
-            else:
-                course = get_object_or_404(Course, id=course_id)
-                # Fetch students having active access grants to this course
-                grants = AccessGrant.objects.filter(course=course).select_related('user__student_profile')
-                profiles = []
-                for grant in grants:
-                    profile = getattr(grant.user, 'student_profile', None)
-                    if profile and profile.phone:
-                        profiles.append(profile)
+            
+            if not message_body:
+                messages.warning(request, "لا يمكن إطلاق حملة برسالة فارغة.")
+                return redirect("dashboard:admin_whatsapp_control")
+
+            profiles = []
+            
+            if target_type == "subscribed":
+                # Subscribed to a specific course
+                course_id = request.POST.get("course_id")
+                if not course_id:
+                    messages.warning(request, "يرجى تحديد الدورة المستهدفة للإرسال للمشتركين.")
+                    return redirect("dashboard:admin_whatsapp_control")
                 
-                if not profiles:
-                    messages.info(request, "لا توجد أرقام هواتف مسجلة لطلاب هذه الدورة.")
-                else:
-                    count = len(profiles)
-                    # Fire off in background thread
-                    threading.Thread(
-                        target=_background_broadcast,
-                        args=(profiles, message_body),
-                        daemon=True
-                    ).start()
-                    messages.success(request, f"🚀 بدأت حملة الإرسال! جاري إرسال الرسائل لـ {count} طالب في الخلفية بنجاح.")
+                course = get_object_or_404(Course, id=course_id)
+                grants = AccessGrant.objects.filter(course=course).select_related('user__student_profile')
+                for grant in grants:
+                    p = getattr(grant.user, 'student_profile', None)
+                    if p and p.phone:
+                        profiles.append(p)
+                msg_segment = f"المشتركين في دورة ({course.title})"
+
+            elif target_type == "all_registered":
+                # Everyone with a student profile and phone registered
+                active_profiles = StudentProfile.objects.exclude(phone__isnull=True).exclude(phone="").select_related('user')
+                profiles = list(active_profiles)
+                msg_segment = "جميع المسجلين بالمنصة"
+
+            elif target_type == "unsubscribed_any":
+                # Registered students who DO NOT have any active access grants yet!
+                active_grants_user_ids = AccessGrant.objects.values_list('user_id', flat=True)
+                profiles = list(StudentProfile.objects.exclude(phone__isnull=True).exclude(phone="").exclude(user_id__in=active_grants_user_ids).select_related('user'))
+                msg_segment = "المسجلين غير المشتركين بأي مادة"
+            
+            if not profiles:
+                messages.info(request, f"لم يتم العثور على طلاب تطابق شريحة ({msg_segment}).")
+            else:
+                count = len(profiles)
+                # Trigger background broadcasting
+                threading.Thread(
+                    target=_background_broadcast,
+                    args=(profiles, message_body),
+                    daemon=True
+                ).start()
+                messages.success(request, f"🚀 انطلقت حملة الإرسال الذكية لـ ({msg_segment})! سيتم مراسلة {count} طالب في الخلفية.")
+            return redirect("dashboard:admin_whatsapp_control")
+
+        # 4. Save Custom Template
+        elif "add_template" in request.POST:
+            title = request.POST.get("template_title", "").strip()
+            content = request.POST.get("template_content", "").strip()
+            if title and content:
+                WhatsAppTemplate.objects.create(title=title, content=content)
+                messages.success(request, "✅ تم حفظ قالب الرسالة الجديد بنجاح.")
+            else:
+                messages.warning(request, "يرجى ملء عنوان ومحتوى القالب.")
+            return redirect("dashboard:admin_whatsapp_control")
+
+        # 5. Delete Saved Template
+        elif "delete_template" in request.POST:
+            template_id = request.POST.get("template_id")
+            WhatsAppTemplate.objects.filter(id=template_id).delete()
+            messages.success(request, "تم حذف قالب الرسالة بنجاح.")
             return redirect("dashboard:admin_whatsapp_control")
 
     status_data = get_whatsapp_status()
     courses = Course.objects.filter(status="published").only("id", "title").order_by("title")
+    db_templates = WhatsAppTemplate.objects.all()
 
     return render(request, "dashboard/admin_whatsapp_control.html", {
         "status": status_data.get("status", "offline"),
         "qr": status_data.get("qr"),
         "has_qr": status_data.get("hasQr", False),
         "wa_user": status_data.get("user"),
-        "courses": courses
+        "courses": courses,
+        "templates": db_templates
     })

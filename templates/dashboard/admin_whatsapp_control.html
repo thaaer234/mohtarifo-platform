@@ -1,166 +1,239 @@
 {% extends "dashboard/base.html" %}
 {% load static %}
 
-{% block title %}بوابة WhatsApp | مركز التواصل الذكي{% endblock %}
+{% block title %}بوابة WhatsApp | مركز التواصل الذكي وتجزئة الجمهور{% endblock %}
 
 {% block content %}
-<div class="whatsapp-control-container reveal-up">
-    <header class="mb-6">
-        <div class="badge badge-gold mb-2">مركز المراسلة الذكي CRM</div>
-        <h1 class="page-title"><i data-lucide="message-circle" class="inline-ico"></i> إدارة بوابة التواصل والواتساب</h1>
-        <p class="text-muted">راقب حالة الرقم النشط، أرسل تنبيهات فردية، أو أطلق حملات إعلانية للطلاب بضغطة زر.</p>
+<div class="whatsapp-control-container reveal-up" style="padding-bottom: 3rem;">
+    <header class="mb-6 flex-between flex-wrap gap-4">
+        <div>
+            <div class="badge badge-gold mb-2">نظام التسويق الذكي CRM Hub</div>
+            <h1 class="page-title"><i data-lucide="message-circle" class="inline-ico" style="color:#25D366;"></i> إدارة قنوات التواصل والواتساب</h1>
+            <p class="text-muted">تحكم بأجهزة الإرسال، استهدف شرائح الطلاب بدقة، وصمم قوالب رسائلك الخاصة.</p>
+        </div>
+        <div>
+            <a href="{% url 'dashboard:admin_dashboard' %}" class="btn btn-glass btn-sm"><i data-lucide="arrow-right"></i> العودة للرئيسية</a>
+        </div>
     </header>
 
-    <div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem;">
-        
-        <!-- Left Side: Main Workspace -->
-        <div class="workspace-main flex flex-col gap-6">
-            
-            <!-- 1. Connection State Card -->
-            <article class="premium-card glass-panel">
-                <div class="panel-head flex-between align-center mb-6 pb-4" style="border-bottom: 1px solid var(--border-light);">
+    <!-- Status Header Widget -->
+    <article class="premium-card glass-panel mb-8" style="background: linear-gradient(135deg, var(--bg-surface-elevated) 0%, rgba(0,0,0,0.2) 100%); border-radius: 24px;">
+        <div class="flex-between align-center" style="flex-wrap: wrap; gap: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                {% if status == 'connected' %}
+                    <div class="status-orb active">
+                        <i data-lucide="check-circle-2" style="width: 32px; height: 32px; color: #25D366;"></i>
+                    </div>
                     <div>
-                        <h3 style="display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="cpu" style="color: var(--brand-gold);"></i> حالة الخادم والبوابة</h3>
-                        <small class="text-muted">يُحدث تلقائياً.</small>
+                        <h3 style="margin:0; display:flex; align-items:center; gap:0.5rem;">متصل ونشط حالياً <span class="pulse-green"></span></h3>
+                        <p style="margin: 4px 0 0; color: var(--text-muted); font-size: 0.9rem;">الرقم النشط: <strong style="color:var(--text-primary); font-family: monospace;">+{{ wa_user.phone }}</strong> | الاسم المكتشف: <strong>{{ wa_user.name|default:"رقم المنصة" }}</strong></p>
                     </div>
-                    <div class="status-indicator">
-                        {% if status == 'connected' %}
-                            <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 800; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem;">
-                                <span class="pulse-green"></span> متصل بالكامل
-                            </span>
-                        {% elif status == 'offline' %}
-                            <span class="badge" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid #ef4444; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 800;">
-                                غير متصل (Offline)
-                            </span>
-                        {% else %}
-                            <span class="badge badge-pulse-gold">
-                                بانتظار الربط
-                            </span>
-                        {% endif %}
+                {% elif status == 'offline' %}
+                    <div class="status-orb error"><i data-lucide="x-circle" style="width: 32px; height: 32px; color:#ef4444;"></i></div>
+                    <div>
+                        <h3 style="margin:0; color:#ef4444;">بوابة Node.js متوقفة (Offline)</h3>
+                        <p style="margin: 4px 0 0; color: var(--text-muted); font-size: 0.85rem;">الرجاء تشغيل خدمة الخادم عبر: <code>systemctl start whatsapp_service</code></p>
                     </div>
-                </div>
+                {% else %}
+                    <div class="status-orb warning"><div class="spinner-gold" style="width:24px; height:24px; border-width:3px;"></div></div>
+                    <div>
+                        <h3 style="margin:0; color:var(--brand-gold);">بانتظار الربط والمسح</h3>
+                        <p style="margin: 4px 0 0; color: var(--text-muted); font-size: 0.85rem;">جاري توليد الكود، يرجى تجهيز هاتفك لمسح الـ QR بالأسفل.</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            {% if status == 'connected' %}
+                <form method="post" style="margin:0;">
+                    {% csrf_token %}
+                    <button type="submit" name="logout" class="btn btn-danger btn-sm" onclick="return confirm('هل أنت متأكد من رغبتك بقطع الاتصال؟')" style="border-radius: 12px; padding: 0.6rem 1.2rem;">
+                        <i data-lucide="log-out"></i> تسجيل الخروج
+                    </button>
+                </form>
+            {% else %}
+                <a href="." class="btn btn-glass btn-sm"><i data-lucide="refresh-cw"></i> إعادة تحميل الصفحة</a>
+            {% endif %}
+        </div>
+    </article>
 
-                <div class="interaction-zone" style="text-align: center; padding: 1rem 0;">
-                    {% if status == 'connected' %}
-                        <!-- Profile Card & Logout Option -->
-                        <div class="connected-profile-card" style="background: rgba(255,255,255,0.02); padding: 1.5rem; border-radius: 20px; border: 1px solid var(--border-light); text-align: right; display: flex; justify-content: space-between; align-items: center;">
-                            <div style="display: flex; align-items: center; gap: 1.5rem;">
-                                <div class="avatar-placeholder" style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; font-size: 1.8rem; box-shadow: 0 8px 20px rgba(37, 211, 102, 0.3);">
-                                    <i data-lucide="smartphone"></i>
-                                </div>
-                                <div>
-                                    <h3 style="margin: 0; color: var(--text-primary);">رقم الإرسال: {{ wa_user.phone|default:"غير محدد" }}</h3>
-                                    <p style="margin: 5px 0 0 0; color: var(--text-muted); font-size: 0.9rem;">الاسم المكتشف: <strong>{{ wa_user.name|default:"رقم الدعم الفني" }}</strong></p>
-                                </div>
+    <div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 360px; gap: 2rem;">
+        
+        <!-- Left Main Column -->
+        <div class="flex flex-col gap-8">
+            
+            {% if status == 'connected' %}
+                
+                <!-- A. Campaign Sender (Multi-Segment) -->
+                <article class="premium-card glass-panel" style="padding: 2.2rem; border: 1px solid rgba(37, 211, 102, 0.15);">
+                    <h2 class="section-title mb-2" style="color: #fff; display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="megaphone" style="color: #25D366;"></i> محرك الحملات والإرسال الجماعي
+                    </h2>
+                    <p class="text-muted mb-6" style="font-size: 0.9rem;">استهدف شريحة محددة من الطلاب وراسلهم برسائل مخصصة تلقائياً باسم كل طالب.</p>
+                    
+                    <form method="post" class="flex flex-col gap-5">
+                        {% csrf_token %}
+                        
+                        <div class="grid-2-col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                            <!-- 1. Audience Targeting Choice -->
+                            <div class="form-group">
+                                <label style="font-size: 0.85rem; display: block; margin-bottom: 6px; color: var(--text-muted); font-weight: bold;">شريحة الجمهور المستهدفة:</label>
+                                <select name="target_type" id="target-selector" class="form-select w-full" style="background: rgba(0,0,0,0.25); color: #fff; border: 1px solid var(--border-strong);" onchange="toggleCourseSelector(this.value)">
+                                    <option value="subscribed">🎓 المشتركون في كورس/مادة معينة</option>
+                                    <option value="unsubscribed_any">🚫 المسجلون الذين لم يشتركوا بأي مادة بعد (تسويق)</option>
+                                    <option value="all_registered">🌍 جميع المسجلين بالمنصة (كامل القائمة)</option>
+                                </select>
                             </div>
-                            <form method="post">
-                                {% csrf_token %}
-                                <button type="submit" name="logout" class="btn btn-danger btn-sm" onclick="return confirm('هل تود تسجيل الخروج وربط هاتف آخر؟')" style="border-radius: 12px;">
-                                    <i data-lucide="log-out"></i> قطع الاتصال
-                                </button>
-                            </form>
+
+                            <!-- 2. Course Picker (Only relevant when subscribed is chosen) -->
+                            <div class="form-group" id="course-picker-wrapper">
+                                <label style="font-size: 0.85rem; display: block; margin-bottom: 6px; color: var(--text-muted); font-weight: bold;">اختر الدورة التعليمية المستهدفة:</label>
+                                <select name="course_id" id="course-id-select" class="form-select w-full" style="background: rgba(0,0,0,0.25); color: #fff; border: 1px solid var(--border-strong);">
+                                    <option value="">-- اختر الدورة --</option>
+                                    {% for course in courses %}
+                                        <option value="{{ course.id }}">{{ course.title }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
                         </div>
-                    {% elif status == 'offline' %}
-                        <div class="offline-state" style="padding: 2rem;">
-                            <div class="icon-ring danger mb-4"><i data-lucide="alert-circle" style="width: 48px; height: 48px; color:#ef4444;"></i></div>
-                            <h2>خادم Node.js متوقف</h2>
-                            <p class="text-muted">تأكد من تشغيل أمر <code>sudo systemctl start whatsapp_service</code> على سيرفر الهوستنجر.</p>
-                            <a href="." class="btn btn-secondary btn-sm mt-4"><i data-lucide="refresh-cw"></i> إعادة محاولة الاتصال</a>
+
+                        <!-- 3. Message Body with Personalization Alert -->
+                        <div class="form-group">
+                            <div class="flex-between" style="margin-bottom: 6px;">
+                                <label style="font-size: 0.85rem; color: var(--text-muted); font-weight: bold;">نص الرسالة للجماعية:</label>
+                                <span class="badge" style="background: rgba(197,160,89,0.1); color: var(--brand-gold); font-size: 0.75rem;">دعم ذكي: ضع الكلمة <code>{name}</code> لتبديلها تلقائياً باسم كل طالب!</span>
+                            </div>
+                            <textarea name="message" id="broadcast-text-area" rows="5" placeholder="مثال: مرحباً يا {name}، يسعدنا إعلامك بأن..." required style="background: rgba(0,0,0,0.25); border: 1px solid var(--border-strong); padding: 1rem; border-radius: 16px; color: white; width: 100%; font-family: inherit; font-size: 0.95rem; line-height: 1.6; resize: vertical;"></textarea>
+                        </div>
+
+                        <div class="flex-end mt-2">
+                            <button type="submit" name="send_broadcast" class="btn btn-primary" style="background: #25D366; border-color: #25D366; color: #000; font-weight: 800; border-radius: 14px; padding: 0.8rem 2rem;" onclick="return confirm('تحذير أمني: هل أنت متأكد من إطلاق هذه الحملة لجميع طلاب الفئة المحددة؟')">
+                                <i data-lucide="rocket" style="margin-left: 0.5rem;"></i> إطلاق حملة المراسلة الذكية
+                            </button>
+                        </div>
+                    </form>
+                </article>
+
+                <!-- B. Dynamic Saved Templates (CRUD & Application) -->
+                <article class="premium-card glass-panel" style="padding: 2rem;">
+                    <div class="flex-between mb-6">
+                        <div>
+                            <h3 style="margin: 0; display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="folder-heart" style="color: var(--brand-gold);"></i> مكتبة قوالب الرسائل المحفوظة</h3>
+                            <p class="text-muted" style="font-size: 0.85rem; margin: 4px 0 0;">احفظ رسائلك الأكثر استخداماً واستخدمها بنقرة واحدة.</p>
+                        </div>
+                        <button class="btn btn-glass btn-sm" onclick="document.getElementById('new-template-form').classList.toggle('hidden')">
+                            <i data-lucide="plus"></i> إنشاء قالب جديد
+                        </button>
+                    </div>
+
+                    <!-- Inline Collapsible Create Form -->
+                    <div id="new-template-form" class="hidden mb-6" style="background: rgba(255,255,255,0.02); border: 1px dashed var(--border-light); border-radius: 16px; padding: 1.5rem;">
+                        <h4 class="mb-3" style="font-size: 1rem; color: #fff;">تصميم قالب جديد</h4>
+                        <form method="post" class="flex flex-col gap-3">
+                            {% csrf_token %}
+                            <input type="text" name="template_title" placeholder="عنوان القالب (مثلاً: تذكير بالامتحان)" required style="background: var(--bg-input); border: 1px solid var(--border-light); padding: 0.65rem; border-radius: 10px; color: white; font-size: 0.85rem;">
+                            <textarea name="template_content" rows="3" placeholder="اكتب المحتوى هنا... يمكنك استخدام {name}" required style="background: var(--bg-input); border: 1px solid var(--border-light); padding: 0.65rem; border-radius: 10px; color: white; font-size: 0.85rem; resize: none; font-family: inherit;"></textarea>
+                            <div class="flex-end gap-2">
+                                <button type="button" class="btn btn-glass btn-sm" onclick="document.getElementById('new-template-form').classList.add('hidden')">إلغاء</button>
+                                <button type="submit" name="add_template" class="btn btn-gold btn-sm" style="font-weight:bold;">حفظ القالب</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="templates-gallery" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+                        {% for tmp in templates %}
+                            <div class="template-item" style="background: rgba(0,0,0,0.18); border: 1px solid var(--border-light); border-radius: 16px; padding: 1.2rem; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.3s;">
+                                <div>
+                                    <div class="flex-between mb-2">
+                                        <strong style="color: var(--brand-gold); font-size: 0.95rem;">{{ tmp.title }}</strong>
+                                        <form method="post" style="margin: 0;" onsubmit="return confirm('هل تريد حذف هذا القالب؟')">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="template_id" value="{{ tmp.id }}">
+                                            <button type="submit" name="delete_template" class="btn-icon danger-hover" style="background: transparent; border: none; cursor: pointer; padding: 2px;" title="حذف القالب">
+                                                <i data-lucide="trash-2" style="width: 14px; color:rgba(255,255,255,0.2);"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <p style="font-size: 0.82rem; color: var(--text-muted); white-space: pre-wrap; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 1rem;">{{ tmp.content }}</p>
+                                </div>
+                                <button class="btn btn-glass btn-sm w-full" style="font-size: 0.75rem; font-weight: bold; border-radius: 10px;" onclick="applyGlobalTemplate(`{{ tmp.content|escapejs }}`)">
+                                    ⚡ استخدام القالب للإرسال
+                                </button>
+                            </div>
+                        {% empty %}
+                            <p class="text-center text-muted py-6" style="grid-column: 1 / -1; font-size: 0.85rem;">لا توجد قوالب مخصصة محفوظة بعد. قم بإنشاء قالبك الأول الآن!</p>
+                        {% endfor %}
+                    </div>
+                </article>
+
+            {% elif status == 'offline' %}
+                <article class="premium-card glass-panel text-center" style="padding: 4rem 2rem;">
+                    <div class="icon-ring danger mb-4"><i data-lucide="cloud-off" style="width: 48px; height: 48px; color:#ef4444;"></i></div>
+                    <h2 style="font-size: 1.8rem;" class="mb-2">الخدمة منفصلة بالكامل</h2>
+                    <p class="text-muted mb-6" style="max-width: 500px; margin-left: auto; margin-right: auto;">تأكد أن خدمة Node.js تعمل على سيرفر أوبنتو. تواصل مع المشرف الفني لتفعيلها في الخلفية.</p>
+                    <a href="." class="btn btn-secondary"><i data-lucide="refresh-cw"></i> إعادة التحقق من الاتصال</a>
+                </article>
+
+            {% else %}
+                <!-- Pairing QR Card -->
+                <article class="premium-card glass-panel text-center" style="padding: 3rem 2rem;">
+                    {% if has_qr %}
+                        <h2 class="mb-2">📱 اربط هاتفك الآن بالمنصة</h2>
+                        <p class="text-muted mb-6">افتح واتساب بهاتفك -> الأجهزة المرتبطة -> ثم امسح الرمز المربع التالي:</p>
+                        
+                        <div class="qr-shadow-wrapper" style="background: white; padding: 1.5rem; border-radius: 28px; display: inline-block; box-shadow: 0 25px 60px rgba(37, 211, 102, 0.2); margin-bottom: 2rem;">
+                            <img src="{{ qr }}" alt="WhatsApp Link QR" style="display: block; width: 260px; height: 260px;">
+                        </div>
+                        
+                        <div class="loading-dots" style="font-size: 0.85rem; color: var(--brand-gold); font-weight: bold;">
+                            جاري تحديث الصفحة تلقائياً بمجرد الربط...
                         </div>
                     {% else %}
-                        <div class="scanning-state" style="padding: 1rem;">
-                            {% if has_qr %}
-                                <h3 class="mb-4">امسح الرمز المربع الآن للربط والتفعيل 📱✨</h3>
-                                <div class="qr-wrapper" style="background: white; padding: 1.2rem; border-radius: 24px; display: inline-block; box-shadow: 0 20px 50px rgba(0,0,0,0.4); margin-bottom: 1.5rem;">
-                                    <img src="{{ qr }}" alt="WhatsApp Link QR" style="display: block; width: 250px; height: 250px; filter: contrast(1.1);">
-                                </div>
-                                <p class="text-muted" style="font-size: 0.95rem; max-width: 450px; margin: 0 auto;">
-                                    توجه لواتساب على هاتفك -> الإعدادات -> الأجهزة المرتبطة -> ثم اضغط "ربط جهاز" ووجه الكاميرا نحو الشاشة.
-                                </p>
-                            {% else %}
-                                <div class="loading-box" style="padding: 3rem 0;">
-                                    <div class="spinner-gold mb-4"></div>
-                                    <h3 style="color: var(--brand-gold);">جاري التواصل مع سيرفرات WhatsApp...</h3>
-                                    <p class="text-muted">قد يستغرق هذا بضع ثوانٍ إضافية في المرة الأولى، يرجى الصبر.</p>
-                                </div>
-                            {% endif %}
-                        </div>
+                        <div class="spinner-gold mb-4" style="width: 50px; height:50px;"></div>
+                        <h2 class="mb-2" style="color: var(--brand-gold);">توليد قناة اتصال آمنة...</h2>
+                        <p class="text-muted">يستغرق هذا أحياناً 20 ثانية في المرة الأولى أثناء تهيئة جلسة الاتصال مع سيرفرات واتساب.</p>
                     {% endif %}
-                </div>
-            </article>
-
-            {% if status == 'connected' %}
-            <!-- 2. Interactive Sending Hub (Only visible when connected) -->
-            <div class="actions-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-                
-                <!-- Card A: Instant Individual Messaging -->
-                <article class="premium-card glass-panel" style="padding: 1.8rem;">
-                    <h3 class="mb-2" style="color: var(--text-primary);"><i data-lucide="send" class="inline-ico"></i> إرسال رسالة سريعة</h3>
-                    <p class="text-muted mb-5" style="font-size: 0.85rem;">أرسل رسالة لأي رقم هاتف مباشرةً للتحقق أو مراسلة طالب معين.</p>
-                    
-                    <form method="post" class="elegant-form flex flex-col gap-4">
-                        {% csrf_token %}
-                        <div class="form-group">
-                            <label style="font-size: 0.85rem; display: block; margin-bottom: 5px; color: var(--text-muted);">رقم الهاتف (مع النداء، مثلاً 9639xxxxxxxx)</label>
-                            <input type="text" name="phone" placeholder="مثال: 963930111222" required style="background: var(--bg-input); border: 1px solid var(--border-light); padding: 0.75rem; border-radius: 12px; color: white; width: 100%;">
-                        </div>
-                        <div class="form-group">
-                            <label style="font-size: 0.85rem; display: block; margin-bottom: 5px; color: var(--text-muted);">نص الرسالة</label>
-                            <textarea name="message" rows="3" placeholder="اكتب رسالتك هنا..." required style="background: var(--bg-input); border: 1px solid var(--border-light); padding: 0.75rem; border-radius: 12px; color: white; width: 100%; resize: none;"></textarea>
-                        </div>
-                        <button type="submit" name="send_single" class="btn btn-gold w-100 mt-2" style="border-radius: 12px; font-weight: bold;">
-                            <i data-lucide="send"></i> إرسال فوراً
-                        </button>
-                    </form>
                 </article>
-
-                <!-- Card B: Course Broadcast Messaging -->
-                <article class="premium-card glass-panel" style="padding: 1.8rem;">
-                    <h3 class="mb-2" style="color: #47a1ff;"><i data-lucide="megaphone" class="inline-ico" style="color: #47a1ff;"></i> إعلان جماعي لدورة</h3>
-                    <p class="text-muted mb-5" style="font-size: 0.85rem;">أطلق حملة إعلامية لكافة طلاب دورة محددة في وقت واحد وبأمان تام.</p>
-                    
-                    <form method="post" class="elegant-form flex flex-col gap-4">
-                        {% csrf_token %}
-                        <div class="form-group">
-                            <label style="font-size: 0.85rem; display: block; margin-bottom: 5px; color: var(--text-muted);">اختر الدورة التعليمية المستهدفة</label>
-                            <select name="course_id" required style="background: var(--bg-input); border: 1px solid var(--border-light); padding: 0.75rem; border-radius: 12px; color: white; width: 100%;">
-                                <option value="">-- اختر الدورة --</option>
-                                {% for course in courses %}
-                                    <option value="{{ course.id }}">{{ course.title }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label style="font-size: 0.85rem; display: block; margin-bottom: 5px; color: var(--text-muted);">نص الرسالة الجماعية للطلاب</label>
-                            <textarea name="message" rows="3" placeholder="مثال: نذكركم أعزائنا الطلاب بموعد المحاضرة غداً..." required style="background: var(--bg-input); border: 1px solid var(--border-light); padding: 0.75rem; border-radius: 12px; color: white; width: 100%; resize: none;"></textarea>
-                        </div>
-                        <button type="submit" name="send_broadcast" class="btn btn-primary w-100 mt-2" onclick="return confirm('هل أنت متأكد من إطلاق الحملة لجميع المشتركين؟ سيتم الإرسال بتأخير أمني طفيف بين الأرقام.')" style="background: #47a1ff; border-color:#47a1ff; color:#000; font-weight:bold; border-radius:12px;">
-                            <i data-lucide="rocket"></i> أطلق حملة الإرسال
-                        </button>
-                    </form>
-                </article>
-                
-            </div>
             {% endif %}
 
         </div>
 
-        <!-- Right Side: Sidebar Tools/Stats -->
+        <!-- Right Aside Tools -->
         <aside class="flex flex-col gap-6">
+            
+            {% if status == 'connected' %}
+            <!-- Quick Individual Send Widget -->
+            <article class="premium-card glass-panel" style="padding: 1.5rem;">
+                <h4 class="mb-2" style="display: flex; align-items: center; gap: 0.5rem; color: #fff; font-size: 1.1rem;"><i data-lucide="send" style="color: var(--brand-gold);"></i> رسالة فردية فائقة السرعة</h4>
+                <p class="text-muted mb-4" style="font-size: 0.8rem;">لإرسال رسالة فورية سريعة لأي رقم بدون إنشاء حملة.</p>
+                
+                <form method="post" class="flex flex-col gap-3">
+                    {% csrf_token %}
+                    <input type="text" name="phone" placeholder="مثال: 963930000000" required style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-light); padding: 0.6rem; border-radius: 10px; color: white; font-size: 0.85rem;">
+                    <textarea name="message" id="quick-text-area" rows="3" placeholder="اكتب الرسالة السريعة..." required style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-light); padding: 0.6rem; border-radius: 10px; color: white; font-size: 0.85rem; resize: none; font-family: inherit;"></textarea>
+                    <button type="submit" name="send_single" class="btn btn-gold btn-sm w-full" style="font-weight: bold; border-radius: 10px;">
+                        إرسال فوراً
+                    </button>
+                </form>
+            </article>
+            {% endif %}
+
             <div class="premium-card glass-panel" style="padding: 1.5rem;">
-                <h4 class="mb-4" style="color: var(--brand-gold); font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
-                    <i data-lucide="shield-check"></i> سياسات الإرسال الآمن
+                <h4 class="mb-4" style="color: var(--brand-gold); font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i data-lucide="shield-check"></i> إرشادات المراسلة والذكاء
                 </h4>
-                <div class="policy-content" style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.8;">
-                    <p class="mb-3">🛡️ **تأخير زمني تلقائي (Anti-Spam):** عند الإرسال الجماعي، يقوم خادمنا بوضع فاصل 2 ثانية بين كل رسالة تلقائياً لحماية رقمك من الحظر.</p>
-                    <p class="mb-3">📲 **الأرقام الدولية:** تأكد أن الأرقام مسجلة مع كود الدولة (مثلاً 963 لـسوريا) ليتم إيصالها بنجاح.</p>
-                    <p>**🆓 تكلفة صفرية:** كافة الرسائل المبعوثة من هنا مجانية بالكامل ودون حدود يومية.</p>
+                <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.8; display: flex; flex-direction: column; gap: 0.8rem;">
+                    <p>🔄 **تخصيص ديناميكي:** إذا كتبت `{name}` بداخل أي قالب أو رسالة جماعية، سيقوم النظام بتبديلها باسم الطالب الكامل تلقائياً عند الإرسال.</p>
+                    <p>⏱️ **الوقاية من الحظر:** وضعنا مهلة زمنية إجبارية **2 ثانية** في الخلفية بين الأرقام لكي لا يتم تصنيف حسابك كـ "روبوت سبام" من قبل شركة ميتا.</p>
+                    <p>💡 **تسويق الجمهور المفقود:** شريحة "المسجلون غير المشتركين" هي فرصة ذهبية لإرسال عروض حصرية لهم لتحفيزهم على تفعيل المواد!</p>
                 </div>
             </div>
-
-            <div class="premium-card glass-panel" style="padding: 1.5rem; background: linear-gradient(135deg, rgba(37, 211, 102, 0.05), rgba(18, 140, 126, 0.05));">
-                <h4 class="mb-3" style="color: #25D366; display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="zap"></i> أتمتة النظام</h4>
-                <p style="font-size: 0.85rem; line-height: 1.6;">النظام الآن مبرمج ليرسل تلقائياً رسالة ترحيب فورية لأي طالب بمجرد قيامه **بتفعيل كود مادة أو باقة** في الحساب.</p>
+            
+            <div class="premium-card glass-panel" style="padding: 1.5rem; background: linear-gradient(135deg, rgba(37, 211, 102, 0.05), rgba(0,0,0,0)); border-color: rgba(37,211,102,0.15);">
+                <h4 class="mb-2" style="color: #25D366; font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;"><i data-lucide="zap"></i> أتمتة النظام النشطة</h4>
+                <p style="font-size: 0.8rem; line-height: 1.6; color:var(--text-muted);">الآن، يرسل النظام آلياً في الخلفية:
+                    <br>✅ رسالة ترحيب فخمة عند تسجيل الطالب حسابه الجديد.
+                    <br>✅ رسالة تفعيل كود المادة بنجاح بمجرد إدخال الكود.
+                </p>
             </div>
         </aside>
 
@@ -168,68 +241,87 @@
 </div>
 
 <style>
+    .hidden { display: none !important; }
+    .status-orb { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); }
+    .status-orb.active { background: rgba(37, 211, 102, 0.1); border-color: rgba(37, 211, 102, 0.2); }
+    .status-orb.error { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); }
+
     .glass-panel { 
         background: var(--bg-surface-elevated); border: 1px solid rgba(255,255,255,0.05); 
-        box-shadow: 0 15px 45px rgba(0,0,0,0.35); border-radius: 28px; 
+        box-shadow: 0 15px 45px rgba(0,0,0,0.3); border-radius: 24px; 
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .glass-panel:hover { transform: translateY(-4px); box-shadow: 0 20px 60px rgba(0,0,0,0.45); border-color: rgba(255,255,255,0.1); }
-
-    .inline-ico { vertical-align: middle; margin-left: 0.5rem; color: var(--brand-gold); }
+    .glass-panel:hover { transform: translateY(-2px); box-shadow: 0 20px 50px rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.08); }
     
-    .form-group input, .form-group textarea, .form-group select {
-        transition: all 0.3s ease; outline: none !important;
-    }
-    .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
-        border-color: var(--brand-gold) !important;
-        background: rgba(0,0,0,0.4) !important;
-        box-shadow: 0 0 15px rgba(197, 160, 89, 0.15);
-    }
+    .template-item:hover { border-color: var(--brand-gold) !important; background: rgba(197, 160, 89, 0.03) !important; transform: scale(1.01); }
+
+    .inline-ico { vertical-align: middle; margin-left: 0.5rem; }
+    
+    .form-select, input, textarea { outline: none !important; transition: border-color 0.25s, box-shadow 0.25s; }
+    .form-select:focus, input:focus, textarea:focus { border-color: var(--brand-gold) !important; box-shadow: 0 0 12px rgba(197,160,89,0.15) !important; }
 
     .pulse-green {
-        width: 12px; height: 12px; border-radius: 50%; background: #10b981; display: inline-block;
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-        animation: pulse 1.8s infinite;
+        width: 10px; height: 10px; border-radius: 50%; background: #25D366; display: inline-block;
+        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7);
+        animation: pulse 1.5s infinite;
+        margin-right: 8px;
     }
     @keyframes pulse {
-        0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8); }
-        70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-        100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.8); }
+        70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(37, 211, 102, 0); }
+        100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
     }
-
-    .badge-pulse-gold {
-        background: rgba(197, 160, 89, 0.12); color: var(--brand-gold); border: 1px solid var(--brand-gold);
-        padding: 0.6rem 1.2rem; border-radius: 20px; font-weight: 800; font-size: 0.9rem;
-        box-shadow: 0 0 20px rgba(197, 160, 89, 0.15);
-        animation: glow 2s ease-in-out infinite alternate;
-    }
-    @keyframes glow { from { box-shadow: 0 0 10px rgba(197, 160, 89, 0.1); opacity: 0.8; } to { box-shadow: 0 0 25px rgba(197, 160, 89, 0.3); opacity: 1; } }
 
     .spinner-gold {
-        width: 54px; height: 54px; border: 4px solid rgba(197, 160, 89, 0.08); border-left-color: var(--brand-gold);
+        width: 30px; height: 30px; border: 3px solid rgba(197, 160, 89, 0.1); border-left-color: var(--brand-gold);
         border-radius: 50%; display: inline-block; animation: spin 1s linear infinite;
-        filter: drop-shadow(0 0 8px rgba(197, 160, 89, 0.3));
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     
-    .icon-ring { width: 80px; height: 80px; border-radius: 50%; display: grid; place-items: center; margin: 0 auto; transition: transform 0.3s; }
-    .offline-state:hover .icon-ring { transform: scale(1.1) rotate(5deg); }
-    .icon-ring.danger { background: rgba(239, 68, 68, 0.1); border: 2px solid rgba(239, 68, 68, 0.2); }
+    .danger-hover:hover i { color: #ef4444 !important; }
 
-    /* Input Fields Modernization */
-    input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3); font-style: italic; font-size: 0.85rem; }
-    
-    .btn { transition: all 0.25s ease-out; }
-    .btn:active { transform: scale(0.97); }
-
-    @media (max-width: 992px) {
+    @media (max-width: 1100px) {
         .dashboard-grid { grid-template-columns: 1fr !important; }
-        .actions-grid { grid-template-columns: 1fr !important; }
+    }
+    @media (max-width: 768px) {
+        .grid-2-col { grid-template-columns: 1fr !important; }
     }
 </style>
 
+<script>
+    // Toggle Course dropdown visibility based on targeting selection
+    function toggleCourseSelector(val) {
+        const wrapper = document.getElementById('course-picker-wrapper');
+        const selectNode = document.getElementById('course-id-select');
+        if(val === 'subscribed') {
+            wrapper.style.display = 'block';
+            selectNode.required = true;
+        } else {
+            wrapper.style.display = 'none';
+            selectNode.required = false;
+        }
+    }
+
+    // Auto fill selected saved template text into textareas
+    function applyGlobalTemplate(text) {
+        const broadcastArea = document.getElementById('broadcast-text-area');
+        const quickArea = document.getElementById('quick-text-area');
+        
+        if (broadcastArea) {
+            broadcastArea.value = text;
+            // Visual confirmation
+            broadcastArea.focus();
+            broadcastArea.style.borderColor = '#25D366';
+            setTimeout(() => { broadcastArea.style.borderColor = ''; }, 1000);
+        }
+        if (quickArea) {
+            quickArea.value = text;
+        }
+    }
+</script>
+
 {% if status != 'connected' and status != 'offline' %}
-<!-- Soft polling to fetch QR or capture successful linking instantly -->
+<!-- Dynamic background update when waiting for QR link -->
 <script>
     setTimeout(function(){
         window.location.reload();

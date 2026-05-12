@@ -46,3 +46,17 @@ class StudentNotification(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class WhatsAppTemplate(models.Model):
+    title = models.CharField(max_length=100, verbose_name="اسم القالب")
+    content = models.TextField(verbose_name="محتوى الرسالة")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "قالب واتساب"
+        verbose_name_plural = "قوالب الواتساب"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.title
