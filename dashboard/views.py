@@ -557,7 +557,7 @@ def register_view(request):
         student_name = user.get_full_name() or user.username
         welcome_template = (
             f"أهلاً بك يا {student_name} في عائلة محترفو التعليم! ✨🎓\n\n"
-            f"تم إنشاء حسابك التعليمي بنجاح. نحن {سعداء جداً|فخورون جداً} بانضمامك إلينا {يا بطل|يا بطلة} ونتمنى لك رحلة تعليمية مليئة بالتفوق والتميز. 🚀📚"
+            "تم إنشاء حسابك التعليمي بنجاح. نحن {سعداء جداً|فخورون جداً} بانضمامك إلينا {يا بطل|يا بطلة} ونتمنى لك رحلة تعليمية مليئة بالتفوق والتميز. 🚀📚"
         )
         # Parse correct grammar based on selected gender!
         welcome_text = parse_gender_grammar(welcome_template, student_gender)
