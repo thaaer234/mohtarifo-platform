@@ -128,6 +128,40 @@
             });
         })();
     </script>
+    <style>
+        /* Dynamic Staff Navigation Overrides to ensure 0 overlap and single-line premium aesthetic */
+        body:has(.badge-gold) .navbar {
+            max-width: 1400px !important; /* Expand capacity */
+        }
+        body:has(.badge-gold) .nav-links {
+            gap: 0.6rem !important; /* Dramatically reduce the 2rem gap */
+            flex-wrap: nowrap !important;
+        }
+        body:has(.badge-gold) .nav-link {
+            font-size: 0.85rem !important; /* Sleeker for dense navigation */
+            white-space: nowrap;
+            padding: 6px 10px !important;
+            border-radius: 8px;
+        }
+        body:has(.badge-gold) .navbar-container {
+            gap: 1rem;
+            max-width: 100%;
+            padding: 0 1.5rem;
+        }
+        body:has(.badge-gold) .navbar-left,
+        body:has(.badge-gold) .navbar-right {
+            flex-shrink: 0; /* Never compress critical brand/auth info */
+        }
+        /* Soft hover states for all items to feel native */
+        body:has(.badge-gold) .nav-link:hover {
+            background: rgba(var(--brand-gold-rgb), 0.05);
+        }
+        /* Ensure no wrap overflow on standard laptops */
+        @media screen and (max-width: 1300px) {
+            body:has(.badge-gold) .nav-link { font-size: 0.78rem !important; gap: 0.25rem; letter-spacing: -0.2px; }
+            body:has(.badge-gold) .nav-links { gap: 0.4rem !important; }
+        }
+    </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
@@ -155,7 +189,7 @@
                 {% endif %}
             </div>
             
-            <div class="navbar-center desktop-only">
+            <div class="navbar-center desktop-only" style="flex: 1; justify-content: center; display: flex;">
                 <div class="nav-links">
                     {% if user.is_staff %}
                         <a href="{% url 'dashboard:admin_dashboard' %}" class="nav-link {% if request.path == '/admin-dashboard/' %}active{% endif %}">الرئيسية</a>
@@ -164,10 +198,10 @@
                         <a href="{% url 'dashboard:admin_instructors' %}" class="nav-link {% if 'instructors' in request.path %}active{% endif %}">المدرسون</a>
                         <a href="{% url 'dashboard:admin_students' %}" class="nav-link {% if 'students' in request.path %}active{% endif %}">الطلاب</a>
                         <a href="{% url 'dashboard:admin_billing' %}" class="nav-link {% if 'billing' in request.path and 'sell-codes' not in request.path %}active{% endif %}">المالية</a>
-                        <a href="{% url 'accounting_erp:chart_tree' %}" class="nav-link" style="color: #F59E0B; font-weight: 800; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 6px; padding: 4px 8px; background: rgba(245, 158, 11, 0.05);"><i data-lucide="landmark" style="width: 14px; display: inline-block; vertical-align: middle; margin-left: 4px;"></i> النظام المحاسبي 🏛️</a>
-                        <a href="{% url 'production_management:dashboard' %}" class="nav-link" style="color: #3B82F6; font-weight: 800; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 6px; padding: 4px 8px; background: rgba(59, 130, 246, 0.05);"><i data-lucide="film" style="width: 14px; display: inline-block; vertical-align: middle; margin-left: 4px;"></i> نظام الإنتاج 🎬</a>
+                        <a href="{% url 'accounting_erp:chart_tree' %}" class="nav-link" style="color: #F59E0B; font-weight: 800; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 6px; padding: 4px 6px !important; background: rgba(245, 158, 11, 0.05); display: flex; align-items: center; gap: 4px;"><i data-lucide="landmark" style="width: 13px;"></i> النظام المحاسبي</a>
+                        <a href="{% url 'production_management:dashboard' %}" class="nav-link" style="color: #3B82F6; font-weight: 800; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 6px; padding: 4px 6px !important; background: rgba(59, 130, 246, 0.05); display: flex; align-items: center; gap: 4px;"><i data-lucide="film" style="width: 13px;"></i> نظام الإنتاج</a>
 
-                        <a href="{% url 'dashboard:admin_sell_codes' %}" class="nav-link {% if 'sell-codes' in request.path %}active{% endif %}" style="color: var(--brand-gold); font-weight: 800; text-shadow: 0 0 10px rgba(var(--brand-gold-rgb), 0.2);"><i data-lucide="sparkles" style="width: 14px; display: inline-block; vertical-align: middle; margin-left: 2px;"></i> بيع أكواد</a>
+                        <a href="{% url 'dashboard:admin_sell_codes' %}" class="nav-link {% if 'sell-codes' in request.path %}active{% endif %}" style="color: var(--brand-gold); font-weight: 800; display: flex; align-items: center; gap: 4px;"><i data-lucide="sparkles" style="width: 13px;"></i> بيع أكواد</a>
                         <a href="{% url 'dashboard:admin_partners' %}" class="nav-link {% if 'partners' in request.path %}active{% endif %}">الشركاء</a>
                         <a href="{% url 'dashboard:admin_packages' %}" class="nav-link {% if 'packages' in request.path %}active{% endif %}">الباقات</a>
                     {% elif user.is_authenticated %}
