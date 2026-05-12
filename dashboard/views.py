@@ -62,7 +62,7 @@ from .forms import (
 from .models import CatalogSection, StudentNotification, WhatsAppTemplate
 from .seo import _site_url
 from .security import sanitize_plain_text, validate_syrian_mobile
-from .whatsapp_utils import get_whatsapp_status, logout_whatsapp, send_whatsapp_message
+from .whatsapp_utils import get_whatsapp_status, logout_whatsapp, send_whatsapp_message, guess_gender_from_name, parse_gender_grammar
 
 
 def _is_admin_user(user):
@@ -540,6 +540,7 @@ def register_view(request):
     form = StudentRegistrationForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         user = form.save()
+        student_gender = form.cleaned_data["gender"]
         StudentProfile.objects.update_or_create(
             user=user,
             defaults={
@@ -547,16 +548,20 @@ def register_view(request):
                 "track": form.cleaned_data["track"],
                 "governorate": form.cleaned_data["governorate"],
                 "phone": form.cleaned_data["username"],
+                "gender": student_gender,
             },
         )
         
-        # Send instant WhatsApp welcome on new account registration
+        # Send instant WhatsApp welcome on new account registration with personalized grammar!
         student_phone = form.cleaned_data["username"]
         student_name = user.get_full_name() or user.username
-        welcome_text = (
+        welcome_template = (
             f"أهلاً بك يا {student_name} في عائلة محترفو التعليم! ✨🎓\n\n"
-            f"تم إنشاء حسابك التعليمي بنجاح. نحن سعداء بانضمامك إلينا ونتمنى لك رحلة تعليمية مليئة بالتفوق والتميز. 🚀📚"
+            f"تم إنشاء حسابك التعليمي بنجاح. نحن {سعداء جداً|فخورون جداً} بانضمامك إلينا {يا بطل|يا بطلة} ونتمنى لك رحلة تعليمية مليئة بالتفوق والتميز. 🚀📚"
         )
+        # Parse correct grammar based on selected gender!
+        welcome_text = parse_gender_grammar(welcome_template, student_gender)
+        
         threading.Thread(
             target=send_whatsapp_message,
             args=(student_phone, welcome_text),
@@ -4292,7 +4297,7 @@ def admin_whatsapp_control(request):
 
     User = get_user_model()
 
-    # Helper for background broadcasts with advanced humanized anti-spam throttle
+    # Helper for background broadcasts with advanced humanized anti-spam throttle & grammar parser
     def _background_broadcast(student_list, raw_message):
         import random
         
@@ -4301,19 +4306,23 @@ def admin_whatsapp_control(request):
             if profile and profile.phone:
                 student_user = profile.user
                 student_name = student_user.get_full_name() or student_user.username
+                
+                # 1. Basic personalization ({name})
                 personalized = raw_message.replace("{name}", student_name).replace("{الاسم}", student_name)
+                
+                # 2. Intelligent Grammar Restructuring ({مذكر|مؤنث})
+                student_gender = getattr(profile, 'gender', 'unknown')
+                personalized = parse_gender_grammar(personalized, student_gender)
                 
                 # Trigger immediate message push
                 send_whatsapp_message(profile.phone, personalized)
                 sent_count += 1
                 
-                # 1. Advanced Jitter: Simulate natural typing & thinking gap
-                # Introduce randomized sleeping interval between 4 to 8 seconds
+                # 3. Advanced Jitter: Simulate natural typing & thinking gap
                 natural_delay = random.uniform(4.0, 8.0)
                 time.sleep(natural_delay)
                 
-                # 2. Batch Breather: Every 12 messages, take a deep human pause (coffee break)
-                # Rest for 20 to 45 seconds to totally break sequential pattern
+                # 4. Batch Breather: Every 12 messages, take a deep human pause
                 if sent_count % 12 == 0:
                     deep_pause = random.uniform(20.0, 45.0)
                     time.sleep(deep_pause)
@@ -4342,11 +4351,12 @@ def admin_whatsapp_control(request):
                 messages.warning(request, "يرجى ملء الرقم والرسالة.")
             return redirect("dashboard:admin_whatsapp_control")
 
-        # 3. Handle Advanced Segmentation Broadcast with Branch Filtering
+        # 3. Handle Advanced Segmentation Broadcast with Gender Filter
         elif "send_broadcast" in request.POST:
             target_type = request.POST.get("target_type", "subscribed")
             message_body = request.POST.get("message", "").strip()
             branch_filter = request.POST.get("branch_filter", "").strip()
+            gender_filter = request.POST.get("gender_filter", "").strip()  # 'male', 'female', or empty
             
             if not message_body:
                 messages.warning(request, "لا يمكن إطلاق حملة برسالة فارغة.")
@@ -4367,9 +4377,10 @@ def admin_whatsapp_control(request):
                 for grant in grants:
                     p = getattr(grant.user, 'student_profile', None)
                     if p and p.phone:
-                        # Apply manual filtering by branch name string in profile if selected
+                        # Apply manual filtering for branch & gender
                         if not branch_filter or p.track == branch_filter:
-                            profiles.append(p)
+                            if not gender_filter or p.gender == gender_filter:
+                                profiles.append(p)
                 msg_segment = f"المشتركين في دورة ({course.title})"
 
             elif target_type == "all_registered":
@@ -4377,6 +4388,8 @@ def admin_whatsapp_control(request):
                 qs = StudentProfile.objects.exclude(phone__isnull=True).exclude(phone="").select_related('user')
                 if branch_filter:
                     qs = qs.filter(track=branch_filter)
+                if gender_filter:
+                    qs = qs.filter(gender=gender_filter)
                 profiles = list(qs)
                 msg_segment = "جميع المسجلين بالمنصة"
 
@@ -4386,6 +4399,8 @@ def admin_whatsapp_control(request):
                 qs = StudentProfile.objects.filter(user_id__in=active_grants_user_ids).exclude(phone__isnull=True).exclude(phone="").select_related('user')
                 if branch_filter:
                     qs = qs.filter(track=branch_filter)
+                if gender_filter:
+                    qs = qs.filter(gender=gender_filter)
                 profiles = list(qs)
                 msg_segment = "المشتركون الفعّالون (لديهم اشتراك نشط)"
 
@@ -4395,6 +4410,8 @@ def admin_whatsapp_control(request):
                 qs = StudentProfile.objects.exclude(phone__isnull=True).exclude(phone="").exclude(user_id__in=active_grants_user_ids).select_related('user')
                 if branch_filter:
                     qs = qs.filter(track=branch_filter)
+                if gender_filter:
+                    qs = qs.filter(gender=gender_filter)
                 profiles = list(qs)
                 msg_segment = "المسجلين غير المشتركين بأي مادة"
             
@@ -4402,6 +4419,11 @@ def admin_whatsapp_control(request):
                 msg_segment += f" - فرع ({branch_filter})"
             else:
                 msg_segment += " - جميع الفروع"
+                
+            if gender_filter == 'male':
+                msg_segment += " (ذكور فقط)"
+            elif gender_filter == 'female':
+                msg_segment += " (إناث فقط)"
             
             if not profiles:
                 messages.info(request, f"لم يتم العثور على طلاب تطابق شريحة ({msg_segment}).")

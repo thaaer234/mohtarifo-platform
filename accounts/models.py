@@ -31,11 +31,18 @@ class Governorate(models.Model):
 
 
 class StudentProfile(models.Model):
+    GENDER_CHOICES = [
+        ("male", "ذكر"),
+        ("female", "أنثى"),
+        ("unknown", "غير محدد"),
+    ]
+
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="student_profile")
     grade = models.CharField(max_length=80, default="الثالث الثانوي")
     track = models.CharField(max_length=80, blank=True)
     governorate = models.CharField(max_length=80, blank=True)
     phone = models.CharField(max_length=40, blank=True)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default="unknown", verbose_name="الجنس")
     target_exam_date = models.DateField(null=True, blank=True)
     current_level = models.CharField(max_length=80, blank=True)
     xp = models.PositiveIntegerField(default=0)

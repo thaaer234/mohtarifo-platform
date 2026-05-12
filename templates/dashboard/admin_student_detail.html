@@ -31,6 +31,9 @@
                             <span style="color: var(--text-muted); font-size: 0.9rem;">
                                 <i data-lucide="phone" style="width: 14px; vertical-align: middle;"></i> {{ student.student_profile.phone|default:"لا يوجد رقم" }}
                             </span>
+                            <span style="font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 20px; font-weight: bold; background: {% if student.student_profile.gender == 'male' %}rgba(59, 130, 246, 0.15){% elif student.student_profile.gender == 'female' %}rgba(236, 72, 153, 0.15){% else %}rgba(255,255,255,0.1){% endif %}; color: {% if student.student_profile.gender == 'male' %}#3b82f6{% elif student.student_profile.gender == 'female' %}#ec4899{% else %}#888{% endif %}; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,0.05);">
+                                {% if student.student_profile.gender == 'male' %}👨 ذكر{% elif student.student_profile.gender == 'female' %}👩 أنثى{% else %}❓ غير محدد{% endif %}
+                            </span>
                         </div>
                     </div>
                 </div>

@@ -77,3 +77,67 @@ def logout_whatsapp():
         return resp.json()
     except:
         return {"status": "error"}
+
+def guess_gender_from_name(full_name):
+    """
+    Analyzes Levant/Syrian first names to heuristically predict student gender.
+    """
+    if not full_name:
+        return 'unknown'
+    
+    parts = full_name.strip().split()
+    if not parts:
+        return 'unknown'
+        
+    # Normalize string, replacing specific Syrian variants
+    first_name = parts[0].replace('أ', 'ا').replace('إ', 'ا').replace('آ', 'ا').replace('ة', 'ه')
+    
+    # Top Levant Syrian female names
+    female_names = {
+        "شام", "حلا", "لين", "رهف", "رغد", "شهد", "غلا", "نور", "مريم", "رؤى", "ريم", "تسنيم", "فاطمه",
+        "بتول", "تالا", "ماسه", "مياس", "جودي", "مرح", "جنى", "ريتاج", "فرح", "روان", "علا", "غنى", "سيدرا", 
+        "سدره", "هبه", "منى", "ياسمين", "راما", "رشا", "مرام", "رند", "نادين", "لارا", "هديل", "ولاء", "لميس",
+        "نورال", "سلام", "اريج", "وئام", "بيان", "شيرين", "خلود", "شروق", "سجى", "سحر", "سما", "رنا", "هاله",
+        "مي", "ميرنا", "لجين", "جيهان", "غدير", "عبير", "عبير", "فاتن", "ناديا", "نجوى", "نهى", "شوق"
+    }
+    
+    if first_name in female_names:
+        return 'female'
+        
+    # Common male exceptions ending in feminine vowels
+    male_exceptions = {
+        "علاء", "بهاء", "ضياء", "حمزه", "عبيده", "قتيبه", "طلحه", "اسامه", "حذيفه", "عروه", "زكريا", 
+        "يحيى", "مصطفى", "موسى", "عيسى", "طه", "رضا", "مرتضى"
+    }
+    if first_name in male_exceptions:
+        return 'male'
+        
+    # General phonological patterns
+    if first_name.endswith('ه'):  # normalized 'ة'
+        return 'female'
+    if first_name.endswith('ى'):
+        return 'female'
+    if first_name.endswith('اء') and not first_name.endswith('لاء') and not first_name.endswith('هاء'):
+        return 'female'
+        
+    return 'male'
+
+def parse_gender_grammar(text, gender):
+    """
+    Parses syntax like {مذكر|مؤنث} dynamically based on target gender.
+    E.g. "أهلاً {يا بطل|يا بطلة}" becomes "أهلاً يا بطل" for male/unknown, or "أهلاً يا بطلة" for female.
+    """
+    import re
+    if not text:
+        return ""
+        
+    # Find all occurrences of {something | something}
+    matches = re.findall(r'\{([^|]+)\|([^}]+)\}', text)
+    for opt_male, opt_female in matches:
+        original_token = "{" + opt_male + "|" + opt_female + "}"
+        if gender == 'female':
+            text = text.replace(original_token, opt_female.strip())
+        else:
+            # Defaults to male for unknown or male
+            text = text.replace(original_token, opt_male.strip())
+    return text

@@ -73,7 +73,7 @@
                     <form method="post" class="flex flex-col gap-5">
                         {% csrf_token %}
                         
-                        <div class="grid-3-col" style="display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 1rem;">
+                        <div class="grid-campaign-filters" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.2rem;">
                             <!-- 1. Audience Targeting Choice -->
                             <div class="form-group">
                                 <label style="font-size: 0.85rem; display: block; margin-bottom: 6px; color: var(--text-muted); font-weight: bold;">1. نوع الجمهور المستهدف:</label>
@@ -85,7 +85,7 @@
                                 </select>
                             </div>
 
-                            <!-- 2. Academic Branch Filter (Permanent, filters within chosen segment) -->
+                            <!-- 2. Academic Branch Filter -->
                             <div class="form-group">
                                 <label style="font-size: 0.85rem; display: block; margin-bottom: 6px; color: var(--text-muted); font-weight: bold;">2. فلترة حسب الفرع:</label>
                                 <select name="branch_filter" class="form-select w-full" style="background: rgba(0,0,0,0.25); color: #fff; border: 1px solid var(--border-strong); font-size: 0.85rem;">
@@ -96,9 +96,19 @@
                                 </select>
                             </div>
 
-                            <!-- 3. Course Picker (Only relevant when subscribed is chosen) -->
+                            <!-- 3. Gender Filtering (New AI Powered) -->
+                            <div class="form-group">
+                                <label style="font-size: 0.85rem; display: block; margin-bottom: 6px; color: var(--text-muted); font-weight: bold;">3. فلترة حسب الجنس:</label>
+                                <select name="gender_filter" class="form-select w-full" style="background: rgba(0,0,0,0.25); color: #fff; border: 1px solid var(--border-strong); font-size: 0.85rem;">
+                                    <option value="">👫 الكل (ذكور وإناث)</option>
+                                    <option value="male">👨 ذكور فقط</option>
+                                    <option value="female">👩 إناث فقط</option>
+                                </select>
+                            </div>
+
+                            <!-- 4. Course Picker (Only relevant when subscribed is chosen) -->
                             <div class="form-group" id="course-picker-wrapper">
-                                <label style="font-size: 0.85rem; display: block; margin-bottom: 6px; color: var(--text-muted); font-weight: bold;">3. اختر الدورة التعليمية:</label>
+                                <label style="font-size: 0.85rem; display: block; margin-bottom: 6px; color: var(--text-muted); font-weight: bold;">4. اختر الدورة التعليمية:</label>
                                 <select name="course_id" id="course-id-select" class="form-select w-full" style="background: rgba(0,0,0,0.25); color: #fff; border: 1px solid var(--border-strong); font-size: 0.85rem;">
                                     <option value="">-- اختر الدورة التعليمية --</option>
                                     {% for course in courses %}
@@ -234,9 +244,10 @@
                     <i data-lucide="shield-check"></i> إرشادات المراسلة والذكاء
                 </h4>
                 <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.8; display: flex; flex-direction: column; gap: 0.8rem;">
-                    <p>🔄 **تخصيص ديناميكي:** إذا كتبت `{name}` بداخل أي قالب أو رسالة جماعية، سيقوم النظام بتبديلها باسم الطالب الكامل تلقائياً عند الإرسال.</p>
-                    <p>⏱️ **خوارزمية الحماية المتقدمة:** قمنا بتطوير نظام إرسال يحاكي البشر تماماً (فواصل عشوائية 4-8 ثوانٍ بين الأرقام + استراحة قهوة لمدة 30 ثانية كل 12 رسالة) لضمان أعلى درجات الأمان وحماية رقمك من الحظر.</p>
-                    <p>💡 **تسويق الجمهور المفقود:** شريحة "المسجلون غير المشتركين" هي فرصة ذهبية لإرسال عروض حصرية لهم لتحفيزهم على تفعيل المواد!</p>
+                    <p>🔄 **تخصيص ديناميكي:** اكتب `{name}` لتبديلها باسم الطالب الكامل تلقائياً.</p>
+                    <p>🧬 **الذكاء اللغوي للجنس:** قمنا ببرمجة محرك يحلل اسم الطالب ليعرف جنسه! يمكنك كتابة رسالة موحدة بقواعد لغة عربية صحيحة 100% باستخدام صيغة `{المذكر|المؤنث}`!
+                       <br>💡 *مثال:* `"أهلاً {يا بطل|يا بطلة}، هل {أنهيتَ|أنهيتِ} مراجعتك؟"`. سيقوم المحرك بإرسالها سليمة لغوياً للذكور والإناث تلقائياً وبلا أخطاء!</p>
+                    <p>⏱️ **خوارزمية الحماية المتقدمة:** إرسال يحاكي البشر بفواصل عشوائية (4-8 ثوانٍ) + استراحة لمدة 30 ثانية كل 12 رسالة لحماية رقمك تماماً.</p>
                 </div>
             </div>
             

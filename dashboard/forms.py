@@ -30,11 +30,12 @@ class StudentRegistrationForm(UserCreationForm):
     username = forms.CharField(label="رقم الهاتف", max_length=40)
     track = forms.ChoiceField(label="الفرع", choices=[])
     governorate = forms.ChoiceField(label="المحافظة", choices=[])
+    gender = forms.ChoiceField(label="الجنس", choices=[])
     email = forms.EmailField(label="البريد الإلكتروني", required=False)
 
     class Meta:
         model = User
-        fields = ["first_name", "username", "track", "governorate", "email", "password1", "password2"]
+        fields = ["first_name", "username", "track", "governorate", "gender", "email", "password1", "password2"]
         labels = {
             "username": "رقم الهاتف",
         }
@@ -57,8 +58,11 @@ class StudentRegistrationForm(UserCreationForm):
         governorate_choices = [("", "اختر المحافظة")] + [
             (governorate.name, governorate.name) for governorate in Governorate.objects.filter(is_active=True)
         ]
+        gender_choices = [("", "حدد الجنس"), ("male", "ذكر"), ("female", "أنثى")]
+        
         self.fields["track"].choices = branch_choices
         self.fields["governorate"].choices = governorate_choices
+        self.fields["gender"].choices = gender_choices
 
     def clean_first_name(self):
         value = sanitize_plain_text(self.cleaned_data["first_name"], max_length=120)
@@ -101,6 +105,12 @@ class StudentRegistrationForm(UserCreationForm):
         if not value:
             raise ValidationError("اختر المحافظة.")
         return sanitize_plain_text(value, max_length=80)
+
+    def clean_gender(self):
+        value = self.cleaned_data["gender"]
+        if not value:
+            raise ValidationError("يرجى تحديد الجنس (ذكر / أنثى).")
+        return value
 
     def save(self, commit=True):
         user = super().save(commit=False)
