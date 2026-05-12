@@ -4380,6 +4380,15 @@ def admin_whatsapp_control(request):
                 profiles = list(qs)
                 msg_segment = "جميع المسجلين بالمنصة"
 
+            elif target_type == "subscribed_any":
+                # Active subscribers having at least 1 active access grant
+                active_grants_user_ids = AccessGrant.objects.values_list('user_id', flat=True).distinct()
+                qs = StudentProfile.objects.filter(user_id__in=active_grants_user_ids).exclude(phone__isnull=True).exclude(phone="").select_related('user')
+                if branch_filter:
+                    qs = qs.filter(track=branch_filter)
+                profiles = list(qs)
+                msg_segment = "المشتركون الفعّالون (لديهم اشتراك نشط)"
+
             elif target_type == "unsubscribed_any":
                 # Registered students who DO NOT have any active access grants yet!
                 active_grants_user_ids = AccessGrant.objects.values_list('user_id', flat=True)
