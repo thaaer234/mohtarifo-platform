@@ -83,6 +83,7 @@
                             </div>
                             <div class="course-row-meta">
                                 <span>{{ course.subject.name }}</span>
+                                <span class="badge-outline" style="border:1px solid var(--border-light); padding: 0px 3px; border-radius:4px; font-size: 10px;">{{ course.get_academic_track_display }}</span>
                                 <span>{{ course.instructor.get_full_name|default:course.instructor.username }}</span>
                                 <span>{{ course.lessons_total }} قسم</span>
                                 <span>{{ course.codes_total }} كود</span>

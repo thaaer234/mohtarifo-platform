@@ -283,6 +283,10 @@
                     <div class="admin-row-card">
                         <div>
                             <strong>{{ course.title }}</strong>
+                            <span style="display: block; font-size: 0.8rem; opacity: 0.9;">
+                                <i data-lucide="user" style="width:12px; height:12px; vertical-align:text-top;"></i> {{ course.instructor.get_full_name|default:course.instructor.username }} 
+                                <span class="badge" style="font-size:9px; padding:1px 4px; margin-right: 4px; border: 1px solid var(--border-light);">{{ course.get_academic_track_display }}</span>
+                            </span>
                             <span>{{ course.subject.name }} · {{ course.lessons_total }} قسم · {{ course.grants_total }} طالب</span>
                         </div>
                         <div class="row-actions">
@@ -309,7 +313,11 @@
                     <div class="admin-row-card">
                         <div>
                             <strong>{{ batch.name }}</strong>
-                            <span>{{ batch.course.title }} · {% firstof batch.institute.name batch.sales_center.name "مستقل" %}</span>
+                            <span>
+                                {{ batch.course.title }} 
+                                <small style="color:var(--brand-gold);">({{ batch.course.instructor.get_full_name|default:batch.course.instructor.username }})</small> 
+                                · {% firstof batch.institute.name batch.sales_center.name "مستقل" %}
+                            </span>
                         </div>
                         <div class="row-actions">
                             <a href="{% url 'dashboard:download_batch_codes' batch.id %}" title="Excel"><i data-lucide="download"></i></a>

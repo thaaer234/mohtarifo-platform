@@ -228,7 +228,10 @@
                             <tr style="border-bottom: 1px solid var(--border-light);">
                                 <td style="padding: 1.25rem 1rem;">
                                     <strong style="color: var(--text-primary);">{{ row.course.title }}</strong><br>
-                                    <small class="text-muted" style="color: var(--text-muted);">{{ row.course.subject.name }}</small>
+                                    <small class="text-muted" style="color: var(--text-muted);">
+                                        {{ row.course.subject.name }} · {{ row.course.instructor.get_full_name|default:row.course.instructor.username }} 
+                                        <span style="opacity:0.7;">({{ row.course.get_academic_track_display }})</span>
+                                    </small>
                                 </td>
                                 <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;"><strong>{{ row.codes }}</strong></td>
                                 <td class="text-center" style="text-align: center; padding: 1.25rem 1rem; color: #34d399; font-weight: 700;">{{ row.sold }}</td>
@@ -263,7 +266,10 @@
                         <div class="batch-mini-card" style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-light); border-radius: 16px; padding: 1.25rem; transition: all 0.2s ease;">
                             <div class="batch-info">
                                 <strong style="display: block; color: var(--text-primary); margin-bottom: 0.25rem; font-size: 0.95rem;">{{ batch.name }}</strong>
-                                <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">{{ batch.course.title }}</span>
+                                <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">
+                                    {{ batch.course.title }} 
+                                    <small style="color:var(--brand-gold);">({{ batch.course.instructor.get_full_name|default:batch.course.instructor.username }})</small>
+                                </span>
                                 <div class="batch-meta mt-2" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                                     <span class="tag" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 6px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-light); color: var(--text-secondary);"> {% firstof batch.institute.name batch.sales_center.name "مستقل" %} </span>
                                     <span class="tag gold" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 6px; background: rgba(197, 160, 89, 0.05); border: 1px solid rgba(197, 160, 89, 0.2); color: var(--brand-gold); font-weight: 700;">{{ batch.codes.count }} كود</span>
