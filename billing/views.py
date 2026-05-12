@@ -1,3 +1,4 @@
+import threading
 from django.db import transaction
 from django.db import models
 from django.utils import timezone
@@ -5,9 +6,29 @@ from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from dashboard.whatsapp_utils import send_whatsapp_message
+
 from .devices import device_fingerprint
 from .models import AccessCode, AccessGrant, Subscription
 from .serializers import AccessGrantSerializer, RedeemAccessCodeSerializer
+
+def _send_welcome_whatsapp_async(user, target_name):
+    profile = getattr(user, 'student_profile', None)
+    if not profile or not profile.phone:
+        return
+    
+    student_name = user.get_full_name() or user.username
+    message = (
+        f"أهلاً يا {student_name}، نورتنا في منصة محترفو التعليم! ✨\n\n"
+        f"بشرى سارة، تم تفعيل *({target_name})* بنجاح في حسابك.\n"
+        f"تمنياتنا لك بدراسة ممتعة ومليئة بالنجاح والتفوق. 🎓🚀"
+    )
+    # Start sending in background thread so user request doesn't wait
+    threading.Thread(
+        target=send_whatsapp_message,
+        args=(profile.phone, message),
+        daemon=True
+    ).start()
 
 
 class RedeemAccessCodeApiView(APIView):
@@ -75,6 +96,10 @@ class RedeemAccessCodeApiView(APIView):
                     package_grants.append(grant)
                 access_code.redeemed_count += 1
                 access_code.save(update_fields=["redeemed_count", "updated_at"])
+                
+                # Send async notification
+                _send_welcome_whatsapp_async(user, access_code.package.name)
+
                 return Response(
                     {"detail": "Package access code redeemed successfully.", "grants": AccessGrantSerializer(package_grants, many=True).data},
                     status=status.HTTP_201_CREATED,
@@ -122,6 +147,10 @@ class RedeemAccessCodeApiView(APIView):
                         "ends_at": access_code.valid_until,
                     },
                 )
+
+            # Send async notification for single item activation
+            target_title = access_code.course.title if access_code.course else (access_code.lesson.title if access_code.lesson else "مادتك التعليمية")
+            _send_welcome_whatsapp_async(user, target_title)
 
         return Response(
             {"detail": "Access code redeemed successfully.", "grant": AccessGrantSerializer(grant).data},

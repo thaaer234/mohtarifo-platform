@@ -85,4 +85,5 @@ urlpatterns = [
     path("admin-dashboard/tools/backup.json", views.admin_system_backup, name="admin_system_backup"),
     path("instructor/", views.instructor_dashboard, name="instructor_dashboard"),
     path("admin-dashboard/tools/migrate-thair-data/", views.admin_action_migrate_thair, name="admin_action_migrate_thair"),
+    path("admin-dashboard/whatsapp/", views.admin_whatsapp_control, name="admin_whatsapp_control"),
 ]

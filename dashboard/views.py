@@ -61,6 +61,7 @@ from .forms import (
 from .models import CatalogSection, StudentNotification
 from .seo import _site_url
 from .security import sanitize_plain_text, validate_syrian_mobile
+from .whatsapp_utils import get_whatsapp_status, logout_whatsapp
 
 
 def _is_admin_user(user):
@@ -4252,3 +4253,19 @@ def admin_action_migrate_thair(request):
         messages.error(request, f"فشلت عملية النقل: {str(e)}")
 
     return redirect("dashboard:admin_sell_codes")
+
+@admin_required
+def admin_whatsapp_control(request):
+    if request.method == "POST" and "logout" in request.POST:
+        result = logout_whatsapp()
+        if result.get("status") == "success":
+            messages.success(request, "تم تسجيل الخروج بنجاح.")
+        else:
+            messages.error(request, "فشل تسجيل الخروج.")
+        return redirect("dashboard:admin_whatsapp_control")
+    status_data = get_whatsapp_status()
+    return render(request, "dashboard/admin_whatsapp_control.html", {
+        "status": status_data.get("status", "offline"),
+        "qr": status_data.get("qr"),
+        "has_qr": status_data.get("hasQr", False)
+    })

@@ -1,0 +1,136 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+
+{% block title %}بوابة WhatsApp الداخلية | لوحة الإدارة{% endblock %}
+
+{% block content %}
+<div class="whatsapp-control-container reveal-up">
+    <header class="mb-6">
+        <div class="badge badge-gold mb-2">أدوات النظام والنظام المستقل</div>
+        <h1 class="page-title"><i data-lucide="message-circle" class="inline-ico"></i> إدارة بوابة الواتساب المجانية</h1>
+        <p class="text-muted">تحكم بحالة الاتصال ومسح الـ QR Code مباشرةً من هنا دون الدخول للسيرفر.</p>
+    </header>
+
+    <div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 380px; gap: 2rem;">
+        
+        <!-- Status Panel -->
+        <article class="premium-card glass-panel">
+            <div class="panel-head flex-between align-center mb-6" style="border-bottom: 1px solid var(--border-light); padding-bottom: 1.5rem;">
+                <div>
+                    <h3>حالة الاتصال الحالية</h3>
+                    <small class="text-muted">تُحدث تلقائياً كل 10 ثوانٍ.</small>
+                </div>
+                <div class="status-indicator">
+                    {% if status == 'connected' %}
+                        <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid #10b981; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 800; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block; box-shadow: 0 0 8px #10b981;"></span> متصل ومفعل
+                        </span>
+                    {% elif status == 'offline' %}
+                        <span class="badge" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid #ef4444; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 800;">
+                            الخدمة متوقفة (Offline)
+                        </span>
+                    {% else %}
+                        <span class="badge" style="background: rgba(197, 160, 89, 0.1); color: var(--brand-gold); border: 1px solid var(--brand-gold); padding: 0.5rem 1rem; border-radius: 20px; font-weight: 800;">
+                            قيد الانتظار / غير مرتبطة
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="interaction-zone" style="text-align: center; padding: 2rem 1rem;">
+                {% if status == 'connected' %}
+                    <div class="connected-state">
+                        <div class="icon-ring success mb-6">
+                            <i data-lucide="check-circle-2" style="width: 64px; height: 64px; color: #10b981;"></i>
+                        </div>
+                        <h2 style="color: var(--text-primary);">البوابة تعمل بنجاح! ✅</h2>
+                        <p class="text-muted mb-6" style="max-width: 500px; margin: 0 auto 2rem auto;">
+                            الآن يتم إرسال رسائل الترحيب التلقائية للطلاب بنجاح عند الاشتراك في أي دورة عبر رقم الواتساب المربوط حالياً.
+                        </p>
+                        <form method="post">
+                            {% csrf_token %}
+                            <button type="submit" name="logout" class="btn btn-danger" onclick="return confirm('هل أنت متأكد أنك تريد قطع الاتصال بهذا الرقم؟ سيطلب منك مسح QR جديد لاحقاً.')" style="font-weight: bold;">
+                                <i data-lucide="log-out"></i> تسجيل خروج من هذا الرقم
+                            </button>
+                        </form>
+                    </div>
+                {% elif status == 'offline' %}
+                    <div class="offline-state">
+                        <div class="icon-ring danger mb-6">
+                            <i data-lucide="alert-triangle" style="width: 64px; height: 64px; color: #ef4444;"></i>
+                        </div>
+                        <h2 style="color: var(--text-primary);">الخادم غير مستجيب</h2>
+                        <p class="text-muted">تأكد أنك قمت بتشغيل خدمة Node.js على السيرفر عبر الأمر <code>systemctl start whatsapp_service</code></p>
+                        <a href="." class="btn btn-secondary mt-4"><i data-lucide="refresh-cw"></i> إعادة التحقق</a>
+                    </div>
+                {% else %}
+                    <div class="scanning-state">
+                        {% if has_qr %}
+                            <h3 style="color: var(--text-primary); margin-bottom: 1.5rem;">قم بمسح الرمز المربع لربط الواتساب</h3>
+                            <div class="qr-wrapper" style="background: white; padding: 1rem; border-radius: 20px; display: inline-block; box-shadow: 0 10px 30px rgba(0,0,0,0.3); margin-bottom: 1.5rem; position: relative;">
+                                <img src="{{ qr }}" alt="WhatsApp QR Code" style="display: block; width: 280px; height: 280px;">
+                            </div>
+                            <p class="text-muted" style="max-width: 400px; margin: 0 auto;">
+                                افتح تطبيق الواتساب بهاتفك، اذهب للإعدادات -> الأجهزة المرتبطة -> ثم مسح هذا الرمز.
+                            </p>
+                        {% else %}
+                            <div class="loading-state">
+                                <div class="spinner-gold mb-4"></div>
+                                <h3>جاري توليد رمز الاتصال...</h3>
+                                <p class="text-muted">انتظر قليلاً وسيعمل الرمز تلقائياً.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </article>
+
+        <!-- Instruction Side Panel -->
+        <aside>
+            <div class="premium-card" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-light); padding: 1.5rem; border-radius: 20px;">
+                <h4 class="mb-4" style="color: var(--brand-gold); display: flex; align-items: center; gap: 0.5rem;">
+                    <i data-lucide="info" style="width: 20px;"></i> حول هذه الميزة
+                </h4>
+                <ul class="info-list" style="list-style: none; padding: 0; margin: 0; font-size: 0.9rem; color: var(--text-muted); line-height: 1.8;">
+                    <li class="mb-3">⚡ **مجانية بالكامل**: تعمل على خادمك الخاص دون اشتراكات شهرية لأطراف ثالثة.</li>
+                    <li class="mb-3">🔐 **آمنة داخلياً**: التواصل يتم محلياً (127.0.0.1) بين دجانجو والبوابة عبر مفتاح تشفير داخلي.</li>
+                    <li>🚀 **تلقائية بالكامل**: لا يتدخل أي موظف بالإرسال، النظام هو من يتولى الترحيب بطلابك فوراً.</li>
+                </ul>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<style>
+    .glass-panel { background: var(--bg-surface-elevated); border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 12px 40px rgba(0,0,0,0.25); padding: 2rem; border-radius: 24px; }
+    .inline-ico { vertical-align: middle; margin-left: 0.5rem; color: var(--brand-gold); }
+    .icon-ring { width: 100px; height: 100px; border-radius: 50%; display: grid; place-items: center; margin: 0 auto; }
+    .icon-ring.success { background: rgba(16, 185, 129, 0.1); border: 2px solid rgba(16, 185, 129, 0.2); }
+    .icon-ring.danger { background: rgba(239, 68, 68, 0.1); border: 2px solid rgba(239, 68, 68, 0.2); }
+    
+    .spinner-gold {
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(197, 160, 89, 0.1);
+        border-left-color: var(--brand-gold);
+        border-radius: 50%;
+        display: inline-block;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 992px) {
+        .dashboard-grid { grid-template-columns: 1fr !important; }
+    }
+</style>
+
+{% if status != 'connected' and status != 'offline' %}
+<!-- Auto-refresh the page every 8 seconds ONLY if waiting for QR/Scan, to detect scan instantly -->
+<script>
+    setTimeout(function(){
+        window.location.reload();
+    }, 8000);
+</script>
+{% endif %}
+
+{% endblock %}
