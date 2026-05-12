@@ -84,8 +84,14 @@ class Course(models.Model):
 
     @property
     def instructor_cover_static_path(self):
+        from django.contrib.staticfiles import finders
         instructor_name = (self.instructor.get_full_name() or self.instructor.username).strip()
-        return f"dashboard/course-covers/{instructor_name}.png"
+        target_path = f"dashboard/course-covers/{instructor_name}.png"
+        # Safely check if file actually exists in static collections BEFORE generating static URL
+        # to prevent CompressedManifestStaticFilesStorage from crashing with ValueError.
+        if finders.find(target_path):
+            return target_path
+        return "dashboard/course-covers/default_cover.png"
 
     @property
     def price_display(self):

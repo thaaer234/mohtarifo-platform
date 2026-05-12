@@ -3988,17 +3988,61 @@ def admin_student_detail(request, user_id):
     return render(request, "dashboard/admin_student_detail.html", context)
 
 
+def _get_sham_cash_center():
+    """Get or Create the permanent administration accounting center for Sham Cash tracking."""
+    from billing.models import SalesCenter
+    center, _ = SalesCenter.objects.get_or_create(
+        name="حساب شام كاش (الإدارة)",
+        defaults={"is_active": True, "phone": "إدارة"}
+    )
+    return center
+
 @admin_required
 def admin_sell_codes(request):
+    """شاشة البيع الموحدة - بيع الأكواد للطلاب مباشرة وتتبع رصيد الإدارة"""
     from learning.models import Course
-    from billing.models import CoursePackage, AccessCode
+    from billing.models import CoursePackage, AccessCode, AccessCodeBatch
     from accounts.models import StudentProfile
     from django.contrib.auth.models import User
     from django.db import transaction
     from django.utils import timezone
+    from django.db.models import Sum
     from dashboard.security import sanitize_plain_text
+    from billing.services import create_codes_for_batch
+    
+    sham_center = _get_sham_cash_center()
     
     if request.method == "POST":
+        action = request.POST.get("action", "sell_code")
+        
+        # NEW Feature: Create quick admin batch 
+        if action == "create_admin_batch":
+            course_id = request.POST.get("batch_course_id")
+            package_id = request.POST.get("batch_package_id")
+            prefix = request.POST.get("batch_prefix", "").upper().strip()
+            quantity = int(request.POST.get("batch_quantity") or 0)
+            
+            if not quantity or (not course_id and not package_id):
+                messages.error(request, "الرجاء إدخال الكمية واختيار مادة أو باقة.")
+            else:
+                course = Course.objects.filter(id=course_id).first() if course_id else None
+                package = CoursePackage.objects.filter(id=package_id).first() if package_id else None
+                target_name = course.title if course else (package.name if package else "كود")
+                
+                batch = AccessCodeBatch.objects.create(
+                    name=f"إدارة: {target_name} - {timezone.now().strftime('%Y/%m/%d')}",
+                    course=course,
+                    package=package,
+                    sales_center=sham_center,
+                    allocated_count=quantity,
+                    code_prefix=prefix,
+                    notes="إنشاء مباشر عبر شاشة الإدارة"
+                )
+                created_cnt = create_codes_for_batch(batch, quantity, free_codes=False)
+                messages.success(request, f"تم بنجاح إنشاء دفعة تحتوي على {created_cnt} كود للإدارة.")
+            return redirect("dashboard:admin_sell_codes")
+
+        # Default: Sell Code Action
         code_id = request.POST.get("code_id")
         student_phone = request.POST.get("student_phone")
         student_name = request.POST.get("student_name")
@@ -4044,6 +4088,10 @@ def admin_sell_codes(request):
                 access_code.sold_by = request.user
                 access_code.sold_at = timezone.now()
                 
+                # Map to Sham Cash account tracking if code belongs to no explicit external center
+                if not access_code.sales_center:
+                    access_code.sales_center = sham_center
+                
                 if price_amount:
                     access_code.sold_price_cents = int(float(price_amount) * 100)
                     access_code.price_reason = "تحديد يدوي من شاشة المبيعات"
@@ -4071,6 +4119,24 @@ def admin_sell_codes(request):
     courses = Course.objects.filter(status="published").select_related("instructor").order_by("title")
     packages = CoursePackage.objects.filter(is_active=True).order_by("name")
     
+    # --- Calc Sham Cash Admin Stats ---
+    sold_admin_codes = AccessCode.objects.filter(sales_center=sham_center, sale_status="sold").select_related("course", "package")
+    real_cents = sold_admin_codes.aggregate(s=Sum("sold_price_cents"))["s"] or 0
+    
+    std_cents = 0
+    for c in sold_admin_codes:
+        if c.course and c.course.price_cents:
+            std_cents += c.course.price_cents
+        elif c.package and c.package.price_cents:
+            std_cents += c.package.price_cents
+            
+    sham_stats = {
+        "total_sold": sold_admin_codes.count(),
+        "balance_syp": int(real_cents / 100),
+        "expected_syp": int(std_cents / 100),
+        "discount_syp": int((std_cents - real_cents) / 100),
+    }
+    
     sold_id = request.GET.get("sold_id")
     sold_code = None
     sold_price_syp = 0
@@ -4095,6 +4161,8 @@ def admin_sell_codes(request):
         "sold_price_syp": sold_price_syp,
         "sold_code_qr": sold_code_qr,
         "platform_qr": platform_qr,
+        "sham_stats": sham_stats,
+        "sham_center_id": sham_center.id,
     }
     return render(request, "dashboard/admin_sell_codes.html", context)
 

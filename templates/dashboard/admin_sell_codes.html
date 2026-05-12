@@ -158,6 +158,29 @@
         border-radius: 12px;
         backdrop-filter: blur(4px);
     }
+
+    /* Standard Modal styling for the generate batch action */
+    .generic-modal-overlay {
+        display: none; 
+        position: fixed; 
+        inset: 0; 
+        background: rgba(0,0,0,0.7); 
+        backdrop-filter: blur(10px); 
+        z-index: 9999; 
+        align-items: center; 
+        justify-content: center; 
+        padding: 1rem;
+    }
+    .generic-modal-content {
+        background: #1a1a1a; 
+        border: 1px solid rgba(255,255,255,0.08); 
+        border-radius: 24px; 
+        padding: 2rem; 
+        max-width: 500px; 
+        width: 100%; 
+        position: relative;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
 </style>
 <!-- Add html2canvas dependency -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -188,10 +211,19 @@
                     </div>
                 </div>
 
-                <!-- Tabs to Choose Code Type -->
-                <div style="display: flex; gap: 0.5rem; background: rgba(0,0,0,0.25); padding: 4px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
-                    <button id="tab-course" class="btn btn-sm" style="border-radius: 8px; font-weight: bold; padding: 8px 16px; background: var(--brand-gold); color: #000;" onclick="switchType('course')">كود مادة منفردة</button>
-                    <button id="tab-package" class="btn btn-sm" style="border-radius: 8px; font-weight: bold; padding: 8px 16px; background: transparent; color: var(--text-secondary);" onclick="switchType('package')">كود باقة كاملة</button>
+                <!-- Action & Tabs Group -->
+                <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center;">
+                    <!-- Generate Admin Batch Button -->
+                    <button type="button" onclick="openBatchModal()" class="btn btn-sm btn-secondary" style="border-radius: 8px; padding: 8px 16px; background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); font-weight: bold; display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="plus-circle" style="width: 16px;"></i>
+                        إنشاء بادئة (أكواد)
+                    </button>
+
+                    <!-- Tabs to Choose Code Type -->
+                    <div style="display: flex; gap: 0.3rem; background: rgba(0,0,0,0.25); padding: 4px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                        <button id="tab-course" class="btn btn-sm" style="border-radius: 8px; font-weight: bold; padding: 8px 14px; background: var(--brand-gold); color: #000;" onclick="switchType('course')">مادة</button>
+                        <button id="tab-package" class="btn btn-sm" style="border-radius: 8px; font-weight: bold; padding: 8px 14px; background: transparent; color: var(--text-secondary);" onclick="switchType('package')">باقة</button>
+                    </div>
                 </div>
             </div>
 
@@ -269,8 +301,46 @@
         </div>
     </div>
 
-    <!-- Sidebar Guidelines -->
-    <div class="sidebar-column" style="flex: 0.85;">
+    <!-- Sidebar: Accounting & Stats -->
+    <div class="sidebar-column" style="flex: 0.85; display: flex; flex-direction: column; gap: 1.5rem;">
+        
+        <!-- Admin Accounting (Sham Cash) Card -->
+        <div class="premium-card" style="padding: 2rem; border: 1px solid rgba(37, 211, 102, 0.2); background: linear-gradient(145deg, rgba(37, 211, 102, 0.05), rgba(0, 0, 0, 0.4)); backdrop-filter: blur(20px); border-radius: 24px; position: relative; overflow: hidden;">
+            <div style="position: absolute; right: -20px; top: -20px; opacity: 0.05; color: #4ade80;">
+                <i data-lucide="wallet" style="width: 120px; height: 120px;"></i>
+            </div>
+            
+            <h3 style="font-size: 1.15rem; color: #4ade80; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem; font-weight: 900;">
+                <i data-lucide="credit-card"></i> رصيد حساب شام كاش
+            </h3>
+
+            <div style="margin-bottom: 1.25rem;">
+                <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: bold;">صافي المبالغ المستحقة (المبيعات):</span>
+                <div style="font-size: 2.2rem; font-weight: 900; color: #fff; margin-top: 0.25rem; font-family: monospace; display: flex; align-items: baseline; gap: 0.5rem;">
+                    {{ sham_stats.balance_syp|default:"0" }}
+                    <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 400;">ل.س</span>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.03);">
+                <div>
+                    <span style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">إجمالي الحسومات:</span>
+                    <span style="font-size: 0.95rem; font-weight: bold; color: #f87171;">{{ sham_stats.discount_syp|default:"0" }} ل.س</span>
+                </div>
+                <div style="border-right: 1px solid rgba(255,255,255,0.05); padding-right: 0.75rem;">
+                    <span style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-bottom: 0.25rem;">عدد الأكواد المباعة:</span>
+                    <span style="font-size: 0.95rem; font-weight: bold; color: #60a5fa;">{{ sham_stats.total_sold|default:"0" }} كود</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 1.25rem; text-align: left;">
+                <a href="/admin-dashboard/billing/center/{{ sham_center_id }}/" class="btn btn-link btn-sm" style="font-size: 0.75rem; color: var(--text-muted); text-decoration: underline;">
+                    تصفح التفاصيل المالية الكاملة &larr;
+                </a>
+            </div>
+        </div>
+
+        <!-- Quick Guidelines -->
         <div class="premium-card" style="padding: 2rem; border: 1px solid rgba(255, 255, 255, 0.05); background: rgba(10, 10, 10, 0.4); backdrop-filter: blur(20px); border-radius: 24px;">
             <h3 style="font-size: 1.2rem; color: var(--brand-gold); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;">
                 <i data-lucide="info"></i> إرشادات سريعة للآدمن
@@ -470,8 +540,67 @@
                 </div>
             </div>
         </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- POPUP: Generate Admin Code Batch -->
+<div id="generate-batch-modal" class="generic-modal-overlay">
+    <div class="generic-modal-content animate-fade-up">
+        <button type="button" onclick="closeBatchModal()" style="position: absolute; top: 1.5rem; left: 1.5rem; background: none; border: none; color: #94a3b8; cursor: pointer;"><i data-lucide="x" style="width: 20px;"></i></button>
+        
+        <h3 style="color: #fff; font-size: 1.25rem; font-weight: 900; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            <i data-lucide="layers" style="color: #60a5fa;"></i> إنشاء بادئة أكواد للإدارة
+        </h3>
+        <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem;">سيتم توليد كمية الأكواد المحددة وربطها مباشرة بحساب الإدارة (شام كاش).</p>
+        
+        <form method="POST" style="display: flex; flex-direction: column; gap: 1rem;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create_admin_batch">
+            
+            <div class="form-group">
+                <label style="color: #e2e8f0; font-size: 0.85rem; font-weight: bold; margin-bottom: 0.5rem; display: block;">1. نوع المحتوى:</label>
+                <select id="modal-type-switcher" class="form-select" style="background: #000; border-color: #333; color: #fff; padding: 10px; border-radius: 10px; width: 100%;" onchange="toggleModalInputTypes()">
+                    <option value="course">مادة منفردة</option>
+                    <option value="package">باقة كاملة</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="modal-course-field">
+                <label style="color: #e2e8f0; font-size: 0.85rem; font-weight: bold; margin-bottom: 0.5rem; display: block;">اختر المادة:</label>
+                <select name="batch_course_id" class="form-select" style="background: #000; border-color: #333; color: #fff; padding: 10px; border-radius: 10px; width: 100%;">
+                    <option value="">-- اختر --</option>
+                    {% for c in courses %}<option value="{{ c.id }}">{{ c.title }}</option>{% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group" id="modal-package-field" style="display: none;">
+                <label style="color: #e2e8f0; font-size: 0.85rem; font-weight: bold; margin-bottom: 0.5rem; display: block;">اختر الباقة:</label>
+                <select name="batch_package_id" class="form-select" style="background: #000; border-color: #333; color: #fff; padding: 10px; border-radius: 10px; width: 100%;">
+                    <option value="">-- اختر --</option>
+                    {% for p in packages %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label style="color: #e2e8f0; font-size: 0.85rem; font-weight: bold; margin-bottom: 0.5rem; display: block;">الكمية (العدد):</label>
+                    <input type="number" name="batch_quantity" min="1" max="1000" placeholder="مثال: 50" style="background: #000; border-color: #333; color: #fff; padding: 10px; border-radius: 10px; width: 100%;" required>
+                </div>
+                <div class="form-group">
+                    <label style="color: #e2e8f0; font-size: 0.85rem; font-weight: bold; margin-bottom: 0.5rem; display: block;">بادئة الكود (Prefix):</label>
+                    <input type="text" name="batch_prefix" placeholder="اختياري: PRO" style="background: #000; border-color: #333; color: #fff; padding: 10px; border-radius: 10px; width: 100%;">
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-glow" style="width: 100%; padding: 12px; border-radius: 12px; font-weight: 900; margin-top: 0.5rem;">
+                توليد الأكواد الآن
+            </button>
+        </form>
+    </div>
+</div>
+
 {% endif %}
 
 <script>
@@ -727,6 +856,32 @@
 
     function closeModal() {
         window.location.href = "{% url 'dashboard:admin_sell_codes' %}";
+    }
+
+    // --- NEW FUNCTIONS FOR ADMIN BATCH MODAL ---
+    function openBatchModal() {
+        document.getElementById('generate-batch-modal').style.display = 'flex';
+    }
+
+    function closeBatchModal() {
+        document.getElementById('generate-batch-modal').style.display = 'none';
+    }
+
+    function toggleModalInputTypes() {
+        const type = document.getElementById('modal-type-switcher').value;
+        const courseField = document.getElementById('modal-course-field');
+        const packageField = document.getElementById('modal-package-field');
+        
+        if (type === 'course') {
+            courseField.style.display = 'block';
+            packageField.style.display = 'none';
+            // Clear implicit selects to avoid mixups
+            packageField.querySelector('select').value = '';
+        } else {
+            courseField.style.display = 'none';
+            packageField.style.display = 'block';
+            courseField.querySelector('select').value = '';
+        }
     }
 </script>
 {% endblock %}
