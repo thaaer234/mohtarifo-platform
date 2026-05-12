@@ -539,34 +539,42 @@ def register_view(request):
 
     form = StudentRegistrationForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        user = form.save()
-        student_gender = form.cleaned_data["gender"]
-        StudentProfile.objects.update_or_create(
-            user=user,
-            defaults={
-                "grade": "الثالث الثانوي",
-                "track": form.cleaned_data["track"],
-                "governorate": form.cleaned_data["governorate"],
-                "phone": form.cleaned_data["username"],
-                "gender": student_gender,
-            },
-        )
+        from django.db import transaction
         
-        # Send instant WhatsApp welcome on new account registration with personalized grammar!
-        student_phone = form.cleaned_data["username"]
-        student_name = user.get_full_name() or user.username
-        welcome_template = (
-            f"أهلاً بك يا {student_name} في عائلة محترفو التعليم! ✨🎓\n\n"
-            "تم إنشاء حسابك التعليمي بنجاح. نحن {سعداء جداً|فخورون جداً} بانضمامك إلينا {يا بطل|يا بطلة} ونتمنى لك رحلة تعليمية مليئة بالتفوق والتميز. 🚀📚"
-        )
-        # Parse correct grammar based on selected gender!
-        welcome_text = parse_gender_grammar(welcome_template, student_gender)
-        
-        threading.Thread(
-            target=send_whatsapp_message,
-            args=(student_phone, welcome_text),
-            daemon=True
-        ).start()
+        with transaction.atomic():
+            user = form.save()
+            student_gender = form.cleaned_data["gender"]
+            StudentProfile.objects.update_or_create(
+                user=user,
+                defaults={
+                    "grade": "الثالث الثانوي",
+                    "track": form.cleaned_data["track"],
+                    "governorate": form.cleaned_data["governorate"],
+                    "phone": form.cleaned_data["username"],
+                    "gender": student_gender,
+                },
+            )
+            
+            # Send instant WhatsApp welcome on new account registration with personalized grammar!
+            student_phone = form.cleaned_data["username"]
+            student_name = user.get_full_name() or user.username
+            
+            # Elegant, cheerful, highly professional welcome template
+            welcome_template = (
+                f"مرحباً بك {student_name} في منصة محترفو التعليم! ✨🎓\n\n"
+                "يسعدنا جداً {انضمامك|انضمامكِ} إلى عائلتنا التعليمية المتميزة. تم إنشاء حسابك الشخصي بنجاح وأصبح جاهزاً تماماً للاستخدام. 🚀🌟\n\n"
+                "نتمنى لك مسيرة مليئة بالتفوق والإنجاز، ونؤكد لك بأن كادر المنصة دائماً {بجانبك|بجانبكِ} ويسعى لتقديم أفضل تجربة تعليمية تليق بطموحاتك العالية. 💼💫"
+            )
+            
+            # Parse correct grammar based on selected gender!
+            welcome_text = parse_gender_grammar(welcome_template, student_gender)
+            
+            # Absolute Guarantee: The WhatsApp API triggers ONLY after DB transaction is successfully committed to database!
+            transaction.on_commit(lambda: threading.Thread(
+                target=send_whatsapp_message,
+                args=(student_phone, welcome_text),
+                daemon=True
+            ).start())
 
         login(request, user)
         messages.success(request, "تم إنشاء حسابك بنجاح. يمكنك الآن إضافة كود المادة.")
