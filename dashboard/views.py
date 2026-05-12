@@ -4206,3 +4206,44 @@ def get_available_codes_api(request):
             
     codes = AccessCode.objects.filter(**filters).values("id", "code")[:100]
     return JsonResponse({"codes": list(codes)})
+
+
+@admin_required
+@require_POST
+def admin_action_migrate_thair(request):
+    """Admin action to migrate legacy data into the new Sham Cash ledger."""
+    from django.views.decorators.http import require_POST
+    from billing.models import SalesCenter, AccessCode, AccessCodeBatch
+    from django.db import transaction
+    from django.contrib import messages
+    from django.shortcuts import redirect
+
+    target = _get_sham_cash_center()
+    sources = SalesCenter.objects.filter(name__icontains="ثائر")
+
+    if not sources.exists():
+        messages.warning(request, "لم يتم العثور على أي مراكز بيع قديمة تحت اسم (ثائر) لنقل بياناتها.")
+        return redirect("dashboard:admin_sell_codes")
+
+    try:
+        with transaction.atomic():
+            total_batches = 0
+            total_codes = 0
+            moved_names = []
+            for src in sources:
+                if src.id == target.id:
+                    continue
+                batch_count = AccessCodeBatch.objects.filter(sales_center=src).update(sales_center=target)
+                code_count = AccessCode.objects.filter(sales_center=src).update(sales_center=target)
+                total_batches += batch_count
+                total_codes += code_count
+                moved_names.append(src.name)
+
+            if total_batches == 0 and total_codes == 0:
+                messages.info(request, "لا توجد بيانات معلقة أو أكواد في هذه الحسابات القديمة ليتم دمجها.")
+            else:
+                messages.success(request, f"✅ تمت عملية الدمج بنجاح! تم نقل {total_batches} دفعة و {total_codes} كود من الحسابات ({', '.join(moved_names)}) إلى حساب شام كاش المركزي.")
+    except Exception as e:
+        messages.error(request, f"فشلت عملية النقل بسبب خطأ فني: {str(e)}")
+
+    return redirect("dashboard:admin_sell_codes")

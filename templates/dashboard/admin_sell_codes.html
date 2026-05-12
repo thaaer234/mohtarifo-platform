@@ -351,6 +351,26 @@
             </div>
         </div>
 
+        <!-- Advanced Data Consolidation Card (Migration Tool) -->
+        <div class="premium-card" style="padding: 1.25rem 2rem; border: 1px dashed rgba(249, 115, 22, 0.3); background: rgba(249, 115, 22, 0.02); border-radius: 20px;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                <div style="background: rgba(249, 115, 22, 0.15); color: #fb923c; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="shuffle" style="width: 16px;"></i>
+                </div>
+                <div>
+                    <h4 style="font-size: 0.9rem; font-weight: bold; color: #fb923c; margin: 0;">صيانة دمج البيانات</h4>
+                    <p style="font-size: 0.68rem; color: var(--text-muted); margin: 0;">نقل أصول الحسابات القديمة (بيد ثائر)</p>
+                </div>
+            </div>
+            <form action="{% url 'dashboard:admin_action_migrate_thair' %}" method="POST" onsubmit="return confirm('تنبيه أمني!\n\nهل أنت متأكد من رغبتك في دمج ونقل جميع الدفعات والأكواد من الحسابات القديمة (بيد ثائر) إلى حساب (شام كاش) المركزي الآن؟\n\nلا يمكن التراجع عن هذا الإجراء بسهولة.');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm" style="width: 100%; background: rgba(249, 115, 22, 0.1); border: 1px solid rgba(249, 115, 22, 0.3); color: #fdba74; font-size: 0.75rem; font-weight: bold; border-radius: 8px; padding: 8px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                    <i data-lucide="arrow-down-to-line" style="width: 14px;"></i>
+                    تشغيل أداة الدمج الآن
+                </button>
+            </form>
+        </div>
+
         <!-- Quick Guidelines -->
         <div class="premium-card" style="padding: 2rem; border: 1px solid rgba(255, 255, 255, 0.05); background: rgba(10, 10, 10, 0.4); backdrop-filter: blur(20px); border-radius: 24px;">
             <h3 style="font-size: 1.2rem; color: var(--brand-gold); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;">
