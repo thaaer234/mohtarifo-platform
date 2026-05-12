@@ -25,6 +25,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.core.paginator import Paginator
 from openpyxl import Workbook
+from django.views.decorators.http import require_POST
 
 from accounts.models import InstructorProfile, StudentProfile
 from analytics.models import TopicPerformance
@@ -4212,7 +4213,6 @@ def get_available_codes_api(request):
 @require_POST
 def admin_action_migrate_thair(request):
     """Admin action to migrate legacy data into the new Sham Cash ledger."""
-    from django.views.decorators.http import require_POST
     from billing.models import SalesCenter, AccessCode, AccessCodeBatch
     from django.db import transaction
     from django.contrib import messages
