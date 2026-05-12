@@ -6,6 +6,7 @@ import os
 from io import BytesIO
 import qrcode
 from xml.sax.saxutils import escape
+import threading
 
 from django.conf import settings
 from django.contrib import messages
@@ -548,6 +549,20 @@ def register_view(request):
                 "phone": form.cleaned_data["username"],
             },
         )
+        
+        # Send instant WhatsApp welcome on new account registration
+        student_phone = form.cleaned_data["username"]
+        student_name = user.get_full_name() or user.username
+        welcome_text = (
+            f"أهلاً بك يا {student_name} في عائلة محترفو التعليم! ✨🎓\n\n"
+            f"تم إنشاء حسابك التعليمي بنجاح. نحن سعداء بانضمامك إلينا ونتمنى لك رحلة تعليمية مليئة بالتفوق والتميز. 🚀📚"
+        )
+        threading.Thread(
+            target=send_whatsapp_message,
+            args=(student_phone, welcome_text),
+            daemon=True
+        ).start()
+
         login(request, user)
         messages.success(request, "تم إنشاء حسابك بنجاح. يمكنك الآن إضافة كود المادة.")
         response = redirect("dashboard:student_dashboard")
@@ -3992,6 +4007,20 @@ def admin_student_detail(request, user_id):
             profile.track = track
             profile.save()
             messages.success(request, "تم تحديث الفرع والمحافظة للطالب بنجاح.")
+            
+        elif action == "whatsapp_message":
+            message_text = request.POST.get("message", "").strip()
+            profile = getattr(student, "student_profile", None)
+            if not profile or not profile.phone:
+                messages.error(request, "الطالب لا يمتلك رقم هاتف مسجل للإرسال.")
+            elif not message_text:
+                messages.warning(request, "نص الرسالة فارغ.")
+            else:
+                sent = send_whatsapp_message(profile.phone, message_text)
+                if sent:
+                    messages.success(request, f"✅ تم إرسال رسالة الواتساب بنجاح إلى {student.get_full_name() or student.username}.")
+                else:
+                    messages.error(request, "❌ فشل الإرسال، تأكد أن البوابة الداخلية للواتساب متصلة حالياً.")
 
         return redirect("dashboard:admin_student_detail", user_id=student.id)
 

@@ -24,3 +24,8 @@ data_dump*.json
 .idea/
 .DS_Store
 Thumbs.db
+
+# WhatsApp Gateway Persistent Data
+whatsapp_service/auth_info/
+whatsapp_service/node_modules/
+whatsapp_service/qr.png

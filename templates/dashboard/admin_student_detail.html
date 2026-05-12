@@ -192,6 +192,56 @@
             </div>
         </div>
 
+        <!-- Direct WhatsApp CRM Widget -->
+        <div class="premium-card mb-6" style="border-color: rgba(37, 211, 102, 0.25); background: linear-gradient(180deg, rgba(37, 211, 102, 0.02) 0%, rgba(0,0,0,0) 100%);">
+            <h3 class="sidebar-label" style="display: flex; align-items: center; gap: 0.5rem; color: #25D366;">
+                <i data-lucide="message-square"></i> مراسلة واتساب فورية
+            </h3>
+            
+            {% if student.student_profile.phone %}
+                <form method="POST" class="flex flex-col gap-3" style="margin-top: 0.5rem;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="whatsapp_message">
+                    
+                    <!-- Preset Templates Buttons -->
+                    <div class="template-shortcuts" style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.7rem; color: var(--text-muted); width: 100%; margin-bottom: 2px;">قوالب سريعة:</span>
+                        <button type="button" class="badge" onclick="applyWAPreset('welcome')" style="cursor: pointer; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); color: var(--text-primary); font-size: 0.75rem;">👋 ترحيب</button>
+                        <button type="button" class="badge" onclick="applyWAPreset('device')" style="cursor: pointer; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); color: var(--text-primary); font-size: 0.75rem;">📱 جهاز</button>
+                        <button type="button" class="badge" onclick="applyWAPreset('absence')" style="cursor: pointer; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); color: var(--text-primary); font-size: 0.75rem;">🕒 متابعة</button>
+                        <button type="button" class="badge" onclick="applyWAPreset('gift')" style="cursor: pointer; border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); color: var(--text-primary); font-size: 0.75rem;">🎁 هدية</button>
+                    </div>
+
+                    <textarea id="wa-msg-box" name="message" rows="4" placeholder="اكتب الرسالة أو اختر قالباً أعلاه..." required style="background: rgba(0,0,0,0.25); border: 1px solid var(--border-strong); border-radius: 12px; padding: 0.75rem; font-size: 0.85rem; color: white; width: 100%; resize: none; font-family: inherit;"></textarea>
+                    
+                    <button type="submit" class="btn btn-success btn-sm w-full" style="background: #25D366; border-color: #25D366; color: #000; font-weight: bold; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                        <i data-lucide="send" style="width: 14px;"></i> إرسال الواتساب الآن
+                    </button>
+                </form>
+                
+                <script>
+                    function applyWAPreset(type) {
+                        const studentName = "{{ student.get_full_name|default:student.username }}";
+                        const box = document.getElementById('wa-msg-box');
+                        let text = "";
+                        
+                        if(type === 'welcome') {
+                            text = `أهلاً يا ${studentName}، نرحب بك في فريق محترفو التعليم! ✨🎓\nيسعدنا جداً انضمامك للمنصة ونتمنى لك رحلة دراسية ممتعة ومليئة بالنجاح والتفوق الباهر. 🚀📚`;
+                        } else if(type === 'device') {
+                            text = `مرحباً يا ${studentName}، تم معالجة وإعادة ضبط صلاحيات الأجهزة الخاصة بحسابك بنجاح. ✅📱\nيمكنك الآن تسجيل الدخول من جهازك الجديد واستكمال متابعة دروسك براحة تامة.`;
+                        } else if(type === 'absence') {
+                            text = `أهلاً ${studentName}، لاحظنا غيابك الجميل عن المنصة منذ فترة. نأمل أنك بخير 🌟\nنود تذكيرك بمتابعة محاضراتك وجدول دراستك للحفاظ على مستوى التفوق. نحن دائماً بجانبك لدعمك! 💪🎓`;
+                        } else if(type === 'gift') {
+                            text = `بشرى سارة يا ${studentName}! 🎁✨\nنظراً لتفاعلك الرائع، تقدم لك إدارة منصة محترفو التعليم كود خصم حصري أو ميزة إضافية في حسابك. تواصل معنا لتفعيل هديتك المستحقة! 💖💫`;
+                        }
+                        box.value = text;
+                    }
+                </script>
+            {% else %}
+                <p class="text-center p-2 color-muted" style="font-size: 0.8rem; background: rgba(239,68,68,0.05); border-radius: 10px; border: 1px dashed rgba(239,68,68,0.2);">لا يمكن المراسلة، الطالب لم يسجل رقم هاتف.</p>
+            {% endif %}
+        </div>
+
         <div class="premium-card">
             <h3 class="sidebar-label" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;">
                 <i data-lucide="smartphone" class="gold"></i> الأجهزة المرتبطة
