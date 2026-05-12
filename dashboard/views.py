@@ -178,7 +178,7 @@ def shop_page(request):
         )
         .order_by("academic_track", "kind", "subject__name", "title")
     )
-    sales_centers = SalesCenter.objects.filter(is_active=True).select_related("institute").order_by("name")
+    sales_centers = SalesCenter.objects.filter(is_active=True).exclude(name="حساب شام كاش (الإدارة)").select_related("institute").order_by("name")
     return render(
         request,
         "dashboard/shop.html",
@@ -214,6 +214,7 @@ def public_course_detail(request, course_id):
         has_access = _active_access_grants(request.user).filter(course=course).exists()
     sales_centers = (
         SalesCenter.objects.filter(access_codes__course=course, is_active=True)
+        .exclude(name="حساب شام كاش (الإدارة)")
         .select_related("institute")
         .distinct()
         .order_by("name")

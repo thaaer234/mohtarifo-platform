@@ -192,7 +192,7 @@
 
 {% block extra_js %}
 <!-- Add html2canvas dependency formally so it is collected in DOM before runtime execution -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
 {% endblock %}
 
 
@@ -694,36 +694,34 @@
         
         document.body.appendChild(clone);
 
-        // Small frame delay ensuring absolute positioning is fully baked into visual tree
-        await new Promise(r => requestAnimationFrame(() => setTimeout(r, 100)));
+        // Frame delay to allow layouts to lock
+        await new Promise(r => setTimeout(r, 150));
 
         try {
-            const canvas = await html2canvas(clone, {
-                scale: 2.5, // Even higher resolution since it is now stable
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: "#ffffff",
-                logging: false,
+            // USE htmlToImage ENGINE - Renders native DOM snapshot, perfectly supports RTL/SVG
+            const dataUrl = await htmlToImage.toPng(clone, {
                 width: 791,
                 height: 374,
-                windowWidth: 791,
-                windowHeight: 374,
-                scrollX: 0,
-                scrollY: 0,
-                x: 0,
-                y: 0
+                pixelRatio: 2, // 2x Sharpness
+                backgroundColor: '#ffffff',
+                style: {
+                    transform: 'none',
+                    margin: '0',
+                    padding: '0'
+                }
             });
             
-            // Cleanup instantly
+            // Instantly cleanup clone
             document.body.removeChild(clone);
 
+            // Trigger instant download
             const link = document.createElement('a');
             link.download = fileName + '.png';
-            link.href = canvas.toDataURL("image/png", 1.0);
+            link.href = dataUrl;
             link.click();
             return true;
         } catch (e) {
-            console.error("Error converting HTML to canvas:", e);
+            console.error("Error converting HTML to image via htmlToImage:", e);
             if (clone.parentNode) document.body.removeChild(clone);
             return false;
         }
