@@ -20,17 +20,19 @@ def normalize_phone(value):
     return re.sub(r"\D", "", value or "")
 
 
-def validate_syrian_mobile(value, *, user=None):
+def validate_syrian_mobile(value, *, user=None, require_unique=True):
     phone = normalize_phone(value)
     if not PHONE_RE.fullmatch(phone):
         raise ValidationError("رقم الهاتف يجب أن يكون 10 خانات ويبدأ بـ 09.")
     if phone in REPEATED_FAKE_PHONES or phone in SEQUENTIAL_PHONES:
         raise ValidationError("رقم الهاتف غير مقبول. يرجى إدخال رقم حقيقي.")
-    query = User.objects.filter(username=phone)
-    if user is not None and user.pk:
-        query = query.exclude(pk=user.pk)
-    if query.exists():
-        raise ValidationError("رقم الهاتف مستخدم مسبقاً.")
+    
+    if require_unique:
+        query = User.objects.filter(username=phone)
+        if user is not None and user.pk:
+            query = query.exclude(pk=user.pk)
+        if query.exists():
+            raise ValidationError("رقم الهاتف مستخدم مسبقاً.")
     return phone
 
 

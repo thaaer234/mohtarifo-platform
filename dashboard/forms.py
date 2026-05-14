@@ -684,7 +684,7 @@ class PasswordResetRequestForm(forms.Form):
     phone = forms.CharField(label="رقم الهاتف", max_length=40)
 
     def clean_phone(self):
-        return validate_syrian_mobile(self.cleaned_data["phone"])
+        return validate_syrian_mobile(self.cleaned_data["phone"], require_unique=False)
 
 
 class SetNewPasswordForm(forms.Form):
