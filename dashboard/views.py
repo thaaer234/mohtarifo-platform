@@ -63,6 +63,7 @@ from .models import CatalogSection, StudentNotification, WhatsAppTemplate
 from .seo import _site_url
 from .security import sanitize_plain_text, validate_syrian_mobile
 from .whatsapp_utils import get_whatsapp_status, logout_whatsapp, send_whatsapp_message, guess_gender_from_name, parse_gender_grammar
+from .otp_service import send_otp, verify_otp, OTP_EXPIRY_SECONDS, OTP_RESEND_COOLDOWN_SECONDS, OTP_LENGTH
 
 
 def _is_admin_user(user):
@@ -529,16 +530,88 @@ def login_view(request):
 
     if request.method == "POST" and form.is_valid():
         user = form.get_user()
-        login(request, user)
+        
+        # Staff/admin users bypass OTP
+        if user.is_staff:
+            login(request, user)
+            cache.delete(_login_attempt_key(request))
+            return redirect("dashboard:home")
+        
+        # For students: store user id in session and send OTP
+        phone = user.username
+        request.session["otp_login_user_id"] = user.id
+        request.session["otp_login_phone"] = phone
+        
+        # Send OTP
+        otp_result = send_otp(phone, purpose="login")
+        if not otp_result["success"]:
+            messages.error(request, otp_result["message"])
+            return render(request, "registration/login.html", {"form": form})
+        
         cache.delete(_login_attempt_key(request))
-        response = redirect("dashboard:home")
-        if not user.is_staff:
-            activate_user_device(request, user, response)
-        return response
+        return redirect("dashboard:verify_login_otp")
+    
     if request.method == "POST":
         _record_failed_login(request)
 
     return render(request, "registration/login.html", {"form": form})
+
+
+def verify_login_otp(request):
+    """OTP verification page for login."""
+    user_id = request.session.get("otp_login_user_id")
+    phone = request.session.get("otp_login_phone")
+    
+    if not user_id or not phone:
+        return redirect("dashboard:login")
+    
+    error_message = None
+    success_message = None
+    
+    if request.method == "POST":
+        action = request.POST.get("action")
+        
+        if action == "resend_otp":
+            otp_result = send_otp(phone, purpose="login")
+            if otp_result["success"]:
+                success_message = otp_result["message"]
+            else:
+                error_message = otp_result["message"]
+        
+        elif action == "verify_otp":
+            submitted_code = request.POST.get("otp_code", "").strip()
+            result = verify_otp(phone, submitted_code, purpose="login")
+            
+            if result["valid"]:
+                # OTP verified - log user in
+                user = User.objects.filter(id=user_id).first()
+                if user:
+                    login(request, user)
+                    # Clean up session
+                    request.session.pop("otp_login_user_id", None)
+                    request.session.pop("otp_login_phone", None)
+                    response = redirect("dashboard:home")
+                    if not user.is_staff:
+                        activate_user_device(request, user, response)
+                    return response
+                else:
+                    error_message = "حدث خطأ. حاول تسجيل الدخول مجدداً."
+                    return redirect("dashboard:login")
+            else:
+                error_message = result["message"]
+    
+    # Mask phone for display (show first 3 and last 2)
+    phone_display = phone[:3] + "•" * (len(phone) - 5) + phone[-2:] if len(phone) > 5 else phone
+    
+    return render(request, "registration/verify_otp.html", {
+        "phone_display": phone_display,
+        "error_message": error_message,
+        "success_message": success_message,
+        "otp_expiry_seconds": OTP_EXPIRY_SECONDS,
+        "resend_cooldown": OTP_RESEND_COOLDOWN_SECONDS,
+        "otp_length": OTP_LENGTH,
+        "back_url": "/login/",
+    })
 
 
 def register_view(request):
@@ -550,50 +623,119 @@ def register_view(request):
 
     form = StudentRegistrationForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        from django.db import transaction
+        # Store form data in session and send OTP
+        phone = form.cleaned_data["username"]
+        request.session["otp_register_data"] = {
+            "first_name": form.cleaned_data["first_name"],
+            "username": phone,
+            "track": form.cleaned_data["track"],
+            "governorate": form.cleaned_data["governorate"],
+            "gender": form.cleaned_data["gender"],
+            "email": form.cleaned_data.get("email", ""),
+            "password1": form.cleaned_data["password1"],
+        }
         
-        with transaction.atomic():
-            user = form.save()
-            student_gender = form.cleaned_data["gender"]
-            StudentProfile.objects.update_or_create(
-                user=user,
-                defaults={
-                    "grade": "الثالث الثانوي",
-                    "track": form.cleaned_data["track"],
-                    "governorate": form.cleaned_data["governorate"],
-                    "phone": form.cleaned_data["username"],
-                    "gender": student_gender,
-                },
-            )
-            
-            # Send instant WhatsApp welcome on new account registration with personalized grammar!
-            student_phone = form.cleaned_data["username"]
-            student_name = user.get_full_name() or user.username
-            
-            # Elegant, cheerful, highly professional welcome template
-            welcome_template = (
-                f"مرحباً بك {student_name} في منصة محترفو التعليم! ✨🎓\n\n"
-                "يسعدنا جداً {انضمامك|انضمامكِ} إلى عائلتنا التعليمية المتميزة. تم إنشاء حسابك الشخصي بنجاح وأصبح جاهزاً تماماً للاستخدام. 🚀🌟\n\n"
-                "نتمنى لك مسيرة مليئة بالتفوق والإنجاز، ونؤكد لك بأن كادر المنصة دائماً {بجانبك|بجانبكِ} ويسعى لتقديم أفضل تجربة تعليمية تليق بطموحاتك العالية. 💼💫"
-            )
-            
-            # Parse correct grammar based on selected gender!
-            welcome_text = parse_gender_grammar(welcome_template, student_gender)
-            
-            # Absolute Guarantee: The WhatsApp API triggers ONLY after DB transaction is successfully committed to database!
-            transaction.on_commit(lambda: threading.Thread(
-                target=send_whatsapp_message,
-                args=(student_phone, welcome_text),
-                daemon=True
-            ).start())
-
-        login(request, user)
-        messages.success(request, "تم إنشاء حسابك بنجاح. يمكنك الآن إضافة كود المادة.")
-        response = redirect("dashboard:student_dashboard")
-        activate_user_device(request, user, response)
-        return response
+        # Send OTP
+        otp_result = send_otp(phone, purpose="register")
+        if not otp_result["success"]:
+            messages.error(request, otp_result["message"])
+            return render(request, "registration/register.html", {"form": form})
+        
+        return redirect("dashboard:verify_register_otp")
 
     return render(request, "registration/register.html", {"form": form})
+
+
+def verify_register_otp(request):
+    """OTP verification page for registration."""
+    reg_data = request.session.get("otp_register_data")
+    
+    if not reg_data:
+        return redirect("dashboard:register")
+    
+    phone = reg_data["username"]
+    error_message = None
+    success_message = None
+    
+    if request.method == "POST":
+        action = request.POST.get("action")
+        
+        if action == "resend_otp":
+            otp_result = send_otp(phone, purpose="register")
+            if otp_result["success"]:
+                success_message = otp_result["message"]
+            else:
+                error_message = otp_result["message"]
+        
+        elif action == "verify_otp":
+            submitted_code = request.POST.get("otp_code", "").strip()
+            result = verify_otp(phone, submitted_code, purpose="register")
+            
+            if result["valid"]:
+                # OTP verified - create the account
+                from django.db import transaction
+                
+                with transaction.atomic():
+                    user = User.objects.create_user(
+                        username=reg_data["username"],
+                        password=reg_data["password1"],
+                        first_name=reg_data["first_name"],
+                        last_name="",
+                        email=reg_data.get("email", ""),
+                    )
+                    student_gender = reg_data["gender"]
+                    StudentProfile.objects.update_or_create(
+                        user=user,
+                        defaults={
+                            "grade": "الثالث الثانوي",
+                            "track": reg_data["track"],
+                            "governorate": reg_data["governorate"],
+                            "phone": reg_data["username"],
+                            "gender": student_gender,
+                        },
+                    )
+                    
+                    # Send WhatsApp welcome message
+                    student_phone = reg_data["username"]
+                    student_name = user.get_full_name() or user.username
+                    
+                    welcome_template = (
+                        f"مرحباً بك {student_name} في منصة محترفو التعليم! ✨🎓\n\n"
+                        "يسعدنا جداً {انضمامك|انضمامكِ} إلى عائلتنا التعليمية المتميزة. تم إنشاء حسابك الشخصي بنجاح وأصبح جاهزاً تماماً للاستخدام. 🚀🌟\n\n"
+                        "نتمنى لك مسيرة مليئة بالتفوق والإنجاز، ونؤكد لك بأن كادر المنصة دائماً {بجانبك|بجانبكِ} ويسعى لتقديم أفضل تجربة تعليمية تليق بطموحاتك العالية. 💼💫"
+                    )
+                    
+                    welcome_text = parse_gender_grammar(welcome_template, student_gender)
+                    
+                    transaction.on_commit(lambda: threading.Thread(
+                        target=send_whatsapp_message,
+                        args=(student_phone, welcome_text),
+                        daemon=True
+                    ).start())
+                
+                # Clean up session
+                request.session.pop("otp_register_data", None)
+                
+                login(request, user)
+                messages.success(request, "تم إنشاء حسابك بنجاح. يمكنك الآن إضافة كود المادة.")
+                response = redirect("dashboard:student_dashboard")
+                activate_user_device(request, user, response)
+                return response
+            else:
+                error_message = result["message"]
+    
+    # Mask phone for display
+    phone_display = phone[:3] + "•" * (len(phone) - 5) + phone[-2:] if len(phone) > 5 else phone
+    
+    return render(request, "registration/verify_otp.html", {
+        "phone_display": phone_display,
+        "error_message": error_message,
+        "success_message": success_message,
+        "otp_expiry_seconds": OTP_EXPIRY_SECONDS,
+        "resend_cooldown": OTP_RESEND_COOLDOWN_SECONDS,
+        "otp_length": OTP_LENGTH,
+        "back_url": "/register/",
+    })
 
 
 @admin_required
