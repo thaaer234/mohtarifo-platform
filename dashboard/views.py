@@ -531,8 +531,8 @@ def login_view(request):
     if request.method == "POST" and form.is_valid():
         user = form.get_user()
         
-        # Staff/admin users bypass OTP
-        if user.is_staff:
+        # Staff/admin users bypass OTP for convenience and emergency access
+        if user.is_staff or user.is_superuser:
             login(request, user)
             cache.delete(_login_attempt_key(request))
             return redirect("dashboard:home")
