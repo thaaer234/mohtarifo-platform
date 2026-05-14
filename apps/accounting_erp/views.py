@@ -397,6 +397,59 @@ class UniversalErpExcelExportView(BaseAccountingView, TemplateView):
 
         return response
 
+class CostCenterAnalysisView(BaseAccountingView, TemplateView):
+    template_name = 'accounting_erp/cost_center_analysis.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from apps.accounting_erp.models import CostCenter
+        from django.utils import timezone
+        import datetime
+
+        # Dates from query params
+        start_str = self.request.GET.get('start_date')
+        end_str = self.request.GET.get('end_date')
+        
+        if start_str: start_date = datetime.datetime.strptime(start_str, '%Y-%m-%d').date()
+        else: start_date = timezone.now().date().replace(day=1)
+        
+        if end_str: end_date = datetime.datetime.strptime(end_str, '%Y-%m-%d').date()
+        else: end_date = timezone.now().date()
+
+        centers = CostCenter.objects.filter(is_active=True).order_by('code')
+        analysis_data = []
+        
+        t_rev = Decimal('0')
+        t_exp = Decimal('0')
+
+        for cc in centers:
+            rev = cc.get_total_revenue(start_date, end_date)
+            exp = cc.get_total_expenses(start_date, end_date)
+            analysis_data.append({
+                'code': cc.code,
+                'name': cc.name,
+                'type': cc.cost_center_type or 'عام',
+                'revenue': rev,
+                'expenses': exp,
+                'net': rev - exp
+            })
+            t_rev += rev
+            t_exp += exp
+
+        context.update({
+            'analysis_data': analysis_data,
+            'start_date': start_date,
+            'end_date': end_date,
+            'totals': {
+                'total_revenue': t_rev,
+                'total_expenses': t_exp,
+                'total_instructor_share': 0, 
+                'total_net': t_rev - t_exp
+            }
+        })
+        return context
+
+
 class RebuildAccountingSystemView(BaseAccountingView, TemplateView):
     """أداة إدارية لإعادة بناء كامل البيانات المحاسبية من السجلات التاريخية."""
     def get(self, request, *args, **kwargs):

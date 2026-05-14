@@ -1,6 +1,6 @@
 from django.db.models import Sum
 from decimal import Decimal
-from apps.accounting_erp.models import Account, JournalLine
+from apps.accounting_erp.models import Account, JournalLine, AccountCategory
 
 class TrialBalanceEngine:
     """
@@ -17,16 +17,12 @@ class TrialBalanceEngine:
         if end_date:
             lines = lines.filter(journal__posting_date__lte=end_date)
             
-        # Direct database rollup at line level grouped by account
         summary = lines.values('account_id').annotate(
             total_dr=Sum('debit_amount'),
             total_cr=Sum('credit_amount')
         )
         
-        # Build lookup map
         ledger_map = {str(item['account_id']): item for item in summary}
-        
-        # Fetch all real leaf accounts
         accounts = Account.objects.filter(is_group=False).order_by('code')
         
         report = []
@@ -38,9 +34,7 @@ class TrialBalanceEngine:
             dr = metrics['total_dr'] or Decimal('0')
             cr = metrics['total_cr'] or Decimal('0')
             
-            # Calculate Net Balance based on Normal Side
-            # Assets & Expenses = Debit normal; others = Credit normal
-            if acc.category in ['asset', 'expense']:
+            if acc.category in [AccountCategory.ASSET, AccountCategory.EXPENSE]:
                 net = dr - cr
                 balance_dr = net if net > 0 else Decimal('0')
                 balance_cr = abs(net) if net < 0 else Decimal('0')
@@ -49,10 +43,10 @@ class TrialBalanceEngine:
                 balance_cr = net if net > 0 else Decimal('0')
                 balance_dr = abs(net) if net < 0 else Decimal('0')
                 
-            if dr > 0 or cr > 0: # Only show active accounts on trial balance
+            if dr > 0 or cr > 0:
                 report.append({
                     'code': acc.code,
-                    'name': acc.name,
+                    'name': acc.name_ar if acc.name_ar else acc.name,
                     'category': acc.get_category_display(),
                     'total_debit': dr,
                     'total_credit': cr,
@@ -67,6 +61,6 @@ class TrialBalanceEngine:
             'grand_totals': {
                 'debit': total_net_dr,
                 'credit': total_net_cr,
-                'is_balanced': total_net_dr == total_net_cr
+                'is_balanced': abs(total_net_dr - total_net_cr) < Decimal('0.01')
             }
         }

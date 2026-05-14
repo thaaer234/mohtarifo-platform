@@ -1,0 +1,79 @@
+{% extends 'accounting_erp/base_accounting.html' %}
+{% load static humanize %}
+
+{% block accounting_content %}
+<div class="container mx-auto px-4 py-8 max-w-7xl" dir="rtl">
+    
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+        <div>
+            <h1 class="text-3xl font-black text-neutral-900 dark:text-white">تحليل مراكز التكلفة</h1>
+            <p class="text-neutral-500 dark:text-neutral-400 mt-1">تقييم أداء الفروع، الدورات، والمدرسين مالياً.</p>
+        </div>
+        
+        <div class="flex gap-3">
+            <form method="get" class="flex gap-2">
+                <input type="date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" class="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-2 text-sm font-bold">
+                <input type="date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" class="bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl px-4 py-2 text-sm font-bold">
+                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg">تصفية</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+        <div class="bg-white dark:bg-neutral-900 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 shadow-sm">
+            <p class="text-sm font-bold text-neutral-500 mb-1">إجمالي الإيرادات</p>
+            <h3 class="text-2xl font-black text-emerald-600">{{ totals.total_revenue|floatformat:0|intcomma }}</h3>
+        </div>
+        <div class="bg-white dark:bg-neutral-900 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 shadow-sm">
+            <p class="text-sm font-bold text-neutral-500 mb-1">إجمالي المصاريف</p>
+            <h3 class="text-2xl font-black text-red-600">{{ totals.total_expenses|floatformat:0|intcomma }}</h3>
+        </div>
+        <div class="bg-white dark:bg-neutral-900 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 shadow-sm">
+            <p class="text-sm font-bold text-neutral-500 mb-1">رواتب وحصص المدرسين</p>
+            <h3 class="text-2xl font-black text-amber-600">{{ totals.total_instructor_share|floatformat:0|intcomma }}</h3>
+        </div>
+        <div class="bg-white dark:bg-neutral-900 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 shadow-sm">
+            <p class="text-sm font-bold text-neutral-500 mb-1">صافي الربح</p>
+            <h3 class="text-2xl font-black {% if totals.total_net >= 0 %}text-indigo-600{% else %}text-red-600{% endif %}">
+                {{ totals.total_net|floatformat:0|intcomma }}
+            </h3>
+        </div>
+    </div>
+
+    <!-- Main Table -->
+    <div class="bg-white dark:bg-neutral-900 rounded-3xl border border-neutral-200 dark:border-neutral-800 overflow-hidden shadow-xl">
+        <table class="w-full text-right">
+            <thead>
+                <tr class="bg-neutral-50 dark:bg-neutral-800/50 text-neutral-500 text-sm font-black border-b border-neutral-200 dark:border-neutral-800">
+                    <th class="px-6 py-4">الكود</th>
+                    <th class="px-6 py-4">مركز التكلفة</th>
+                    <th class="px-6 py-4">النوع</th>
+                    <th class="px-6 py-4">الإيرادات</th>
+                    <th class="px-6 py-4">المصاريف</th>
+                    <th class="px-6 py-4">الصافي</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800">
+                {% for item in analysis_data %}
+                <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition">
+                    <td class="px-6 py-4 font-mono text-sm">{{ item.code }}</td>
+                    <td class="px-6 py-4 font-black">{{ item.name }}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-1 bg-neutral-100 dark:bg-neutral-800 rounded-lg text-xs font-bold text-neutral-600 dark:text-neutral-400">
+                            {{ item.type }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-emerald-600 font-bold">{{ item.revenue|floatformat:0|intcomma }}</td>
+                    <td class="px-6 py-4 text-red-600 font-bold">{{ item.expenses|floatformat:0|intcomma }}</td>
+                    <td class="px-6 py-4 font-black {% if item.net >= 0 %}text-indigo-600{% else %}text-red-600{% endif %}">
+                        {{ item.net|floatformat:0|intcomma }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

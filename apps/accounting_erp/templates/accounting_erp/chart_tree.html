@@ -153,14 +153,15 @@
                         <!-- Name & Category Indicator -->
                         <div class="flex items-center gap-3">
                             <span class="{% if acc.is_group %}text-xl font-black text-neutral-900 dark:text-white{% else %}text-lg text-neutral-700 dark:text-neutral-300{% endif %}">
-                                {% if acc.is_group %}📁{% else %}📄{% endif %} {{ acc.name }}
+                                {% if acc.is_group %}📁{% else %}📄{% endif %} 
+                                {% if acc.name_ar %}{{ acc.name_ar }}{% else %}{{ acc.name }}{% endif %}
                             </span>
                             <span class="cat-dot 
-                                {% if acc.category == 'asset' %}dot-asset
-                                {% elif acc.category == 'liability' %}dot-liability
-                                {% elif acc.category == 'equity' %}dot-equity
-                                {% elif acc.category == 'revenue' %}dot-revenue
-                                {% elif acc.category == 'expense' %}dot-expense{% endif %}"></span>
+                                 {% if acc.category == 'ASSET' %}dot-asset
+                                 {% elif acc.category == 'LIABILITY' %}dot-liability
+                                 {% elif acc.category == 'EQUITY' %}dot-equity
+                                 {% elif acc.category == 'REVENUE' %}dot-revenue
+                                 {% elif acc.category == 'EXPENSE' %}dot-expense{% endif %}"></span>
                         </div>
                     </div>
                     

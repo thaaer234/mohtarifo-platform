@@ -14,6 +14,7 @@ urlpatterns = [
 
     path('income-statement/', views.IncomeStatementReportView.as_view(), name='income_statement'),
     path('balance-sheet/', views.BalanceSheetReportView.as_view(), name='balance_sheet'),
+    path('analysis/', views.CostCenterAnalysisView.as_view(), name='analysis_report'),
 
     path('export-excel/<str:report_type>/', views.UniversalErpExcelExportView.as_view(), name='export_excel'),
 

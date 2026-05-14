@@ -1,6 +1,6 @@
 from decimal import Decimal
 from django.db.models import Sum
-from apps.accounting_erp.models import Account, JournalLine
+from apps.accounting_erp.models import Account, JournalLine, AccountCategory
 
 class FinancialStatementEngine:
     """
@@ -11,7 +11,6 @@ class FinancialStatementEngine:
     def generate_income_statement(cls, cost_center_id=None, start_date=None, end_date=None):
         """
         Produces Revenues vs Expenses grid resulting in Net Profit / Loss.
-        Optionally constrained by a specific Cost Center and Date Period.
         """
         lines = JournalLine.objects.all()
         if cost_center_id:
@@ -22,9 +21,8 @@ class FinancialStatementEngine:
         if end_date:
             lines = lines.filter(journal__posting_date__lte=end_date)
 
-            
-        revenue_accs = Account.objects.filter(category='revenue', is_group=False)
-        expense_accs = Account.objects.filter(category='expense', is_group=False)
+        revenue_accs = Account.objects.filter(category=AccountCategory.REVENUE, is_group=False)
+        expense_accs = Account.objects.filter(category=AccountCategory.EXPENSE, is_group=False)
         
         total_rev = Decimal('0')
         rev_lines = []
@@ -32,7 +30,7 @@ class FinancialStatementEngine:
             agg = lines.filter(account=acc).aggregate(dr=Sum('debit_amount'), cr=Sum('credit_amount'))
             net = (agg['cr'] or Decimal('0')) - (agg['dr'] or Decimal('0'))
             if net != 0:
-                rev_lines.append({'name': acc.name, 'val': net})
+                rev_lines.append({'name': acc.display_name, 'val': net})
                 total_rev += net
                 
         total_exp = Decimal('0')
@@ -41,7 +39,7 @@ class FinancialStatementEngine:
             agg = lines.filter(account=acc).aggregate(dr=Sum('debit_amount'), cr=Sum('credit_amount'))
             net = (agg['dr'] or Decimal('0')) - (agg['cr'] or Decimal('0'))
             if net != 0:
-                exp_lines.append({'name': acc.name, 'val': net})
+                exp_lines.append({'name': acc.display_name, 'val': net})
                 total_exp += net
                 
         net_income = total_rev - total_exp
@@ -59,7 +57,6 @@ class FinancialStatementEngine:
     def generate_balance_sheet(cls, cost_center_id=None, end_date=None):
         """
         Analyzes cumulative static standing (Assets = Liabilities + Equity).
-        Constrained up to a specific End Date snapshot.
         """
         lines = JournalLine.objects.all()
         if cost_center_id:
@@ -67,7 +64,6 @@ class FinancialStatementEngine:
         if end_date:
             lines = lines.filter(journal__posting_date__lte=end_date)
 
-            
         def get_grouped_accounts(category, normal_dr=True):
             accs = Account.objects.filter(category=category, is_group=False)
             total = Decimal('0')
@@ -78,20 +74,16 @@ class FinancialStatementEngine:
                 cr = agg['cr'] or Decimal('0')
                 net = (dr - cr) if normal_dr else (cr - dr)
                 if net != 0:
-                    items.append({'name': acc.name, 'val': net})
+                    items.append({'name': acc.display_name, 'val': net})
                     total += net
             return items, total
             
-        assets_list, total_assets = get_grouped_accounts('asset', normal_dr=True)
-        liab_list, total_liab = get_grouped_accounts('liability', normal_dr=False)
-        equity_list, total_equity = get_grouped_accounts('equity', normal_dr=False)
+        assets_list, total_assets = get_grouped_accounts(AccountCategory.ASSET, normal_dr=True)
+        liab_list, total_liab = get_grouped_accounts(AccountCategory.LIABILITY, normal_dr=False)
+        equity_list, total_equity = get_grouped_accounts(AccountCategory.EQUITY, normal_dr=False)
         
-        # Calculate temporal period profit injection for balancing the sheet
         pnl = cls.generate_income_statement(cost_center_id=cost_center_id, end_date=end_date)
-
         curr_net = pnl['net_income']
-        
-        # Final Equity = Static Equity Entries + Net Income Current Period
         adjusted_total_equity = total_equity + curr_net
         
         return {
@@ -104,6 +96,5 @@ class FinancialStatementEngine:
             'current_profit': curr_net,
             'total_equity_final': adjusted_total_equity,
             'total_liab_equity': total_liab + adjusted_total_equity,
-            'is_balanced': total_assets == (total_liab + adjusted_total_equity)
+            'is_balanced': abs(total_assets - (total_liab + adjusted_total_equity)) < Decimal('0.01')
         }
-
