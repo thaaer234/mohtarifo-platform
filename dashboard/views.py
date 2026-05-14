@@ -2060,6 +2060,12 @@ def student_dashboard(request):
         
     continue_learning = LessonProgress.objects.filter(user=request.user).select_related("lesson", "lesson__unit", "lesson__unit__course").order_by("-updated_at").first()
 
+    # Wallet & Accounting
+    wallet = Wallet.objects.filter(student=student_profile).first()
+    recent_transactions = []
+    if wallet:
+        recent_transactions = WalletTransaction.objects.filter(wallet=wallet).order_by("-created_at")[:8]
+
     context = {
         "redeem_form": redeem_form,
         "grants": grants,
@@ -2071,6 +2077,8 @@ def student_dashboard(request):
         "student_profile": student_profile,
         "continue_learning": continue_learning,
         "package_selection": package_selection,
+        "wallet": wallet,
+        "recent_transactions": recent_transactions,
     }
     return render(request, "dashboard/student_dashboard.html", context)
 

@@ -78,6 +78,47 @@
         </div>
     </div>
 
+    <!-- Wallet Section -->
+    <section class="mb-12">
+        <h2 class="mb-6" style="font-size: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+            <i data-lucide="wallet" class="gold"></i> محفظتي المالية
+        </h2>
+        <div class="grid-2">
+            <div class="premium-card" style="padding: 2rem; border-right: 4px solid var(--brand-gold);">
+                <span class="text-muted block mb-2" style="font-size: 0.85rem; font-weight: 700;">الرصيد المتاح حالياً</span>
+                <h3 style="font-size: 2.5rem; margin-bottom: 0.5rem;" class="gold">{{ wallet.balance|default:0|floatformat:0 }} <small style="font-size: 1rem; opacity: 0.6;">ل.س</small></h3>
+                <div class="flex-center gap-4 mt-4" style="justify-content: flex-start;">
+                    <div class="badge" style="background: rgba(var(--brand-gold-rgb), 0.05); font-size: 0.75rem;">
+                        <i data-lucide="clock" style="width: 12px;"></i> معلق: {{ wallet.pending_balance|default:0|floatformat:0 }}
+                    </div>
+                    <div class="badge" style="background: rgba(239, 68, 68, 0.05); color: #ef4444; font-size: 0.75rem;">
+                        <i data-lucide="lock" style="width: 12px;"></i> مجمد: {{ wallet.frozen_balance|default:0|floatformat:0 }}
+                    </div>
+                </div>
+            </div>
+            <div class="premium-card" style="padding: 1.5rem;">
+                <h4 style="font-size: 0.95rem; margin-bottom: 1rem;">آخر العمليات</h4>
+                <div class="flex-column gap-3">
+                    {% for tx in recent_transactions %}
+                    <div class="flex-between" style="font-size: 0.85rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-light);">
+                        <div class="flex-center gap-3">
+                            <div class="flex-center" style="width: 28px; height: 28px; border-radius: 50%; background: {% if tx.transaction_type == 'credit' %}rgba(16, 185, 129, 0.1){% else %}rgba(239, 68, 68, 0.1){% endif %}; color: {% if tx.transaction_type == 'credit' %}#10b981{% else %}#ef4444{% endif %};">
+                                <i data-lucide="{% if tx.transaction_type == 'credit' %}trending-up{% else %}trending-down{% endif %}" style="width: 14px;"></i>
+                            </div>
+                            <span>{{ tx.description|truncatechars:20 }}</span>
+                        </div>
+                        <strong class="{% if tx.transaction_type == 'credit' %}text-success{% else %}text-danger{% endif %}">
+                            {% if tx.transaction_type == 'credit' %}+{% else %}-{% endif %}{{ tx.amount|floatformat:0 }}
+                        </strong>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center py-4" style="font-size: 0.8rem;">لا توجد عمليات سابقة</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Courses Section -->
     <section class="mb-12">
         <h2 class="mb-6" style="font-size: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">

@@ -65,6 +65,19 @@
                 <p class="text-muted mt-2 mb-0" style="font-size: 0.8rem;">لقد أنجزت عملاً رائعاً!</p>
             </div>
         </div>
+
+        <div class="premium-card stat-card reveal-up" style="animation-delay: 0.4s; border: 1px solid var(--brand-gold);">
+            <div class="stat-icon" style="color: var(--brand-gold); background: rgba(var(--brand-gold-rgb), 0.1);"><i data-lucide="wallet"></i></div>
+            <div class="stat-info">
+                <span class="label">رصيد المحفظة</span>
+                <h3 class="value mb-0 gold">{{ wallet.balance|default:0|floatformat:0 }} <small class="text-muted" style="font-size: 0.9rem;">ل.س</small></h3>
+                {% if wallet.pending_balance > 0 %}
+                <p class="text-muted mt-2 mb-0" style="font-size: 0.75rem;">+ {{ wallet.pending_balance|floatformat:0 }} معلق</p>
+                {% else %}
+                <p class="text-muted mt-2 mb-0" style="font-size: 0.8rem;">رصيدك جاهز للاستخدام</p>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
     <div class="student-dashboard-layout">

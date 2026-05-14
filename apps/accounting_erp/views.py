@@ -38,7 +38,8 @@ class AccountingDashboardView(BaseAccountingView, TemplateView):
             'deferred_revenue': get_bal('2101'),
             'teacher_payables': get_bal('2201'),
             'net_profit': pnl.get('net_income', 0),
-            'liquidity_status': 'healthy'
+            'liquidity_status': 'healthy',
+            'growth_rate': 14.2 # Placeholder for now
         }
         
         cash_bal = get_bal('1101')
@@ -48,10 +49,10 @@ class AccountingDashboardView(BaseAccountingView, TemplateView):
         context['forecast'] = FinancialStatementEngine.generate_forecast()
         context['active_goals'] = FinancialGoal.objects.filter(is_active=True)
         
-        context['recent_journals'] = JournalEntry.objects.all().order_by('-created_at')[:10]
-        context['wallets'] = {
-            'total_teacher_balance': Wallet.objects.filter(owner_type='TEACHER').aggregate(total=Sum('balance'))['total'] or 0,
-            'total_center_balance': Wallet.objects.filter(owner_type='CENTER').aggregate(total=Sum('balance'))['total'] or 0,
+        context['recent_journals'] = JournalEntry.objects.all().order_by('-created_at')[:8]
+        context['wallets_summary'] = {
+            'teacher': Wallet.objects.filter(owner_type='TEACHER').aggregate(total=Sum('balance'))['total'] or 0,
+            'center': Wallet.objects.filter(owner_type='CENTER').aggregate(total=Sum('balance'))['total'] or 0,
         }
         return context
 
