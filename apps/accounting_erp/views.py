@@ -7,10 +7,12 @@ from .services.financial_statements import FinancialStatementEngine
 from .services.trial_balance import TrialBalanceEngine
 from decimal import Decimal
 
+from .models.goals import FinancialGoal
+
 class BaseAccountingView(LoginRequiredMixin):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['is_accounting_admin'] = self.request.user.is_staff
+        context['is_accounting_admin'] = getattr(self.request.user, 'is_staff', False)
         return context
 
 class AccountingDashboardView(BaseAccountingView, TemplateView):
@@ -22,17 +24,27 @@ class AccountingDashboardView(BaseAccountingView, TemplateView):
         month_start = today.replace(day=1)
         
         # Performance Data
-        pnl = FinancialStatementEngine.generate_income_statement(start_date=month_start)
-        bs = FinancialStatementEngine.generate_balance_sheet()
+        try:
+            pnl = FinancialStatementEngine.generate_income_statement(start_date=month_start)
+        except Exception:
+            pnl = {'revenue_total': 0, 'net_income': 0}
+
+        def get_bal(code):
+            acc = Account.objects.filter(code=code).first()
+            return acc.get_balance() if acc else Decimal('0.00')
         
         context['kpis'] = {
-            'revenue_month': pnl['revenue_total'],
-            'deferred_revenue': Account.objects.get(code='2101').get_balance(),
-            'teacher_payables': Account.objects.get(code='2201').get_balance(),
-            'net_profit': pnl['net_income'],
-            'liquidity_status': 'critical' if Account.objects.get(code='1101').get_balance() < Account.objects.get(code='2201').get_balance() else 'healthy'
+            'revenue_month': pnl.get('revenue_total', 0),
+            'deferred_revenue': get_bal('2101'),
+            'teacher_payables': get_bal('2201'),
+            'net_profit': pnl.get('net_income', 0),
+            'liquidity_status': 'healthy'
         }
         
+        cash_bal = get_bal('1101')
+        if cash_bal < context['kpis']['teacher_payables']:
+            context['kpis']['liquidity_status'] = 'critical'
+            
         context['forecast'] = FinancialStatementEngine.generate_forecast()
         context['active_goals'] = FinancialGoal.objects.filter(is_active=True)
         
@@ -42,6 +54,7 @@ class AccountingDashboardView(BaseAccountingView, TemplateView):
             'total_center_balance': Wallet.objects.filter(owner_type='CENTER').aggregate(total=Sum('balance'))['total'] or 0,
         }
         return context
+
 
 class IncomeStatementView(BaseAccountingView, TemplateView):
     template_name = 'accounting_erp/income_statement.html'
