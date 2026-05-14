@@ -618,5 +618,91 @@
     {% endif %}
 
     {% block extra_js %}{% endblock %}
+
+    {% if request.resolver_match.url_name not in 'student_course_detail student_lesson_detail' %}
+        <!-- Customer Support Floating Button -->
+        <style>
+            .customer-support-float {
+                position: fixed;
+                bottom: 25px;
+                left: 25px;
+                z-index: 99999;
+                text-decoration: none;
+                transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+            .support-icon-wrapper {
+                width: 60px;
+                height: 60px;
+                background: #25D366;
+                color: white;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-shadow: 0 4px 20px rgba(37, 211, 102, 0.4);
+                position: relative;
+                animation: support-pulse 2s infinite;
+            }
+            .support-icon-wrapper i {
+                width: 32px;
+                height: 32px;
+            }
+            .customer-support-float:hover {
+                transform: scale(1.1) translateY(-5px);
+            }
+            .support-tooltip {
+                position: absolute;
+                left: 75px;
+                background: #25D366;
+                color: white;
+                padding: 8px 16px;
+                border-radius: 12px;
+                font-size: 0.9rem;
+                font-weight: 800;
+                white-space: nowrap;
+                opacity: 0;
+                transform: translateX(-15px);
+                transition: all 0.3s ease;
+                pointer-events: none;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+                font-family: 'Cairo', sans-serif;
+            }
+            .customer-support-float:hover .support-tooltip {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            @keyframes support-pulse {
+                0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+                70% { box-shadow: 0 0 0 15px rgba(37, 211, 102, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+            }
+            @media (max-width: 768px) {
+                .customer-support-float {
+                    bottom: 95px; /* Above mobile bottom nav */
+                    left: 20px;
+                }
+                .support-icon-wrapper {
+                    width: 54px;
+                    height: 54px;
+                }
+                .support-tooltip {
+                    display: none; /* Hide tooltip on mobile to save space */
+                }
+            }
+        </style>
+        <a href="{{ CONTACT_WHATSAPP_URL }}" target="_blank" rel="noopener" class="customer-support-float" title="خدمة العملاء">
+            <div class="support-icon-wrapper">
+                <i data-lucide="message-circle"></i>
+                <span class="support-tooltip">خدمة العملاء 👋</span>
+            </div>
+        </a>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            });
+        </script>
+    {% endif %}
 </body>
 </html>
