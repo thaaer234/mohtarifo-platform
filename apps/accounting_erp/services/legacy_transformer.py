@@ -1,165 +1,211 @@
+"""
+معالج البيانات القديمة — يحوّل كل العمليات التاريخية إلى قيود محاسبية
+يعمل كـ idempotent: آمن للتشغيل أكثر من مرة بدون تكرار القيود.
+"""
+import logging
 from django.db import transaction
-from decimal import Decimal
 from django.utils import timezone
-from apps.accounting_erp.models import Account, JournalEntry, JournalLine, CostCenter
-from billing.models import Payment, AccessCode
-from apps.financial_system.selectors.legacy_adapters import LegacyPaymentSelector
+from decimal import Decimal
+
+logger = logging.getLogger('accounting_erp')
+
 
 class LegacyAccountingTransformer:
-    """
-    Converts raw legacy instrument logs into fully balanced structured Accounting Vouchers.
-    """
-    
+
     @classmethod
-    @transaction.atomic
-    def auto_generate_ledger_from_sales(cls):
-        """ Main Orchestrator pulling historical sales and generating missing entries. """
-        
-        # Retrieve primary accounting hooks
-        try:
-            cash_acc = Account.objects.get(code='1101') 
-            revenue_acc = Account.objects.get(code='4101')
-            # Ensure Discount account exists on the fly
-            op_rev = Account.objects.get(code='41')
-            from apps.accounting_erp.models import AccountCategory
-            disc_acc, _ = Account.objects.get_or_create(
-                code='4104', 
-                defaults={'name': 'حسومات مبيعات مسموح بها', 'category': AccountCategory.REVENUE, 'parent': op_rev}
-            )
-        except Account.DoesNotExist:
-            return "ERROR: Standard Chart of Accounts required hooks not found. Run seed first."
-            
-        end_dt = timezone.now()
-        start_dt = end_dt - timezone.timedelta(days=90)
-        
-        codes = LegacyPaymentSelector.get_access_code_sales_range(start_dt, end_dt)
-        # Crtical Fix: Wipe previously generated auto-vouchers to force reconstruction with NEW logic (Student Mapping, etc.)
-        # This ensures the 'exists()' check doesn't cause them to be skipped.
-        JournalEntry.objects.filter(reference__startswith='CODE_').delete()
-        
-        created_count = 0
-        
-        for code in codes:
-            # Phase 1: RESOLVE BASIC ATTRIBUTES
-            item_name = "مادة"
-            item_price_cents = 0
-            course_ref = None
-            if code.course:
-                item_name = code.course.title
-                item_price_cents = code.course.price_cents or 0
-                course_ref = code.course
-            elif code.package:
-                item_name = code.package.name
-                item_price_cents = code.package.price_cents or 0
+    def run_full_migration(cls, force_rebuild=False):
+        """
+        يُشغّل كامل خط أنابيب المعالجة للبيانات القديمة.
+        force_rebuild=True → يحذف القيود التلقائية السابقة ويُعيد بناءها.
+        """
+        from apps.accounting_erp.models import JournalEntry
 
-            base_price_dec = Decimal(item_price_cents) / Decimal('100.0')
-            if base_price_dec <= 0: continue
-            
-            # ------------------------------------------------------------
-            # EVENT A: CODE ALLOCATION TO CENTER (INVENTORY/DEFERRED)
-            # ------------------------------------------------------------
-            if code.sales_center:
-                alloc_tag = f"CODE_ALLOC_{code.id}"
-                if not JournalEntry.objects.filter(reference=alloc_tag).exists():
-                    # Lookup/Create center-specific cost center
-                    center_cost, _ = CostCenter.objects.get_or_create(
-                        code=f"CEN-{code.sales_center.id}",
-                        defaults={'name': f"مركز: {code.sales_center.name}"}
-                    )
-                    
-                    # Define required accounts
-                    # 1201: Accounts Receivable / Center Consignment
-                    recv_acc, _ = Account.objects.get_or_create(code='1201', defaults={'name': 'ذمم مراكز بيع مدينة', 'category': AccountCategory.ASSET, 'parent': Account.objects.get(code='1')})
-                    # 2102: Deferred Revenue
-                    def_acc, _ = Account.objects.get_or_create(code='2102', defaults={'name': 'إيرادات مؤجلة (اشتراكات)', 'category': AccountCategory.LIABILITY, 'parent': Account.objects.get(code='2')})
-                    
-                    v_alloc = JournalEntry.objects.create(
-                        posting_date=code.created_at.date(),
-                        reference=alloc_tag,
-                        memo=f"تخصيص كود عهدة للمركز ({item_name})"
-                    )
-                    # Debit Center Receivable
-                    JournalLine.objects.create(journal=v_alloc, account=recv_acc, debit_amount=base_price_dec, cost_center=center_cost, line_memo="عهدة كود مطبوع للمركز")
-                    # Credit Deferred Rev
-                    JournalLine.objects.create(journal=v_alloc, account=def_acc, credit_amount=base_price_dec, cost_center=center_cost, line_memo="إيراد مؤجل معلق")
-                    created_count += 1
+        if force_rebuild:
+            deleted = JournalEntry.objects.filter(
+                reference__startswith='CODE_'
+            ).delete()[0]
+            deleted += JournalEntry.objects.filter(
+                reference__startswith='PAY_'
+            ).delete()[0]
+            deleted += JournalEntry.objects.filter(
+                reference__startswith='GRANT_'
+            ).delete()[0]
+            logger.info(f"[ERP] force_rebuild: deleted {deleted} auto-vouchers")
 
-            # ------------------------------------------------------------
-            # EVENT B: FINAL ACTIVATION/SALE (REALIZE REVENUE & SPLIT)
-            # ------------------------------------------------------------
-            if code.sale_status == 'sold' or code.redeemed_count > 0:
-                sell_tag = f"CODE_SALE_{code.id}"
-                if not JournalEntry.objects.filter(reference=sell_tag).exists():
-                    
-                    realized_cents = code.sold_price_cents or item_price_cents
-                    realized_dec = Decimal(realized_cents) / Decimal('100.0')
-                    
-                    # Prepare course-specific center
-                    crs_cost = None
-                    if course_ref:
-                        crs_cost, _ = CostCenter.objects.get_or_create(code=f"CRS-{course_ref.id}", defaults={'name': f"دورة: {item_name[:60]}"})
-                    
-                    v_sell = JournalEntry.objects.create(
-                        posting_date=code.sold_at.date() if code.sold_at else timezone.now().date(),
-                        reference=sell_tag,
-                        memo=f"تفعيل وبيع نهائي: {item_name}"
-                    )
-                    
-                    # If had a center before, resolve the allocation chain!
-                    if code.sales_center:
-                        recv_acc, _ = Account.objects.get_or_create(code='1201', defaults={'name': 'ذمم مراكز بيع مدينة', 'category': AccountCategory.ASSET})
-                        def_acc, _ = Account.objects.get_or_create(code='2102', defaults={'name': 'إيرادات مؤجلة (اشتراكات)', 'category': AccountCategory.LIABILITY})
-                        
-                        # Debit Deferred (Reverse the liability)
-                        JournalLine.objects.create(journal=v_sell, account=def_acc, debit_amount=base_price_dec, line_memo="تصفية الإيراد المؤجل عند البيع")
-                        # Credit Center Receivable (Settled)
-                        JournalLine.objects.create(journal=v_sell, account=recv_acc, credit_amount=base_price_dec, line_memo="تسوية عهدة المركز عند البيع")
+        stats = {
+            'students': 0,
+            'instructors': 0,
+            'courses': 0,
+            'sales_centers': 0,
+            'code_allocs': 0,
+            'code_sales': 0,
+            'payments': 0,
+        }
 
-                    # CORE SALES LEGS
-                    # Prepare student-specific cost center dimension
-                    std_cost = None
-                    # Search the direct AccessGrant associated with this specific code instance
-                    grant = code.grants.select_related('user').first()
-                    if grant and grant.user:
-                        std_cost, _ = CostCenter.objects.get_or_create(
-                            code=f"STD-{grant.user.id}",
-                            defaults={'name': f"طالب: {grant.user.get_full_name() or grant.user.username}"}
-                        )
-                    elif code.assigned_student_name:
-                        # Fallback: If user isn't linked yet, map via raw text handle to maintain tracing
-                        std_cost, _ = CostCenter.objects.get_or_create(
-                            code=f"RAWSTD-{code.id}", 
-                            defaults={'name': f"طالب (يدوي): {code.assigned_student_name}"}
-                        )
+        stats['students']      = cls._migrate_students()
+        stats['instructors']   = cls._migrate_instructors()
+        stats['courses']       = cls._migrate_courses()
+        stats['sales_centers'] = cls._migrate_sales_centers()
+        stats['code_allocs']   = cls._migrate_code_allocations()
+        stats['code_sales']    = cls._migrate_code_sales()
+        stats['payments']      = cls._migrate_direct_payments()
 
-                    # Debit CASH (Actual received)
-                    JournalLine.objects.create(journal=v_sell, account=cash_acc, debit_amount=realized_dec, line_memo="استلام نقدية البيع النهائي", cost_center=std_cost)
+        summary = (
+            f"[ERP Migration Done] "
+            f"Students={stats['students']} | "
+            f"Instructors={stats['instructors']} | "
+            f"Courses={stats['courses']} | "
+            f"Centers={stats['sales_centers']} | "
+            f"CodeAllocs={stats['code_allocs']} | "
+            f"CodeSales={stats['code_sales']} | "
+            f"Payments={stats['payments']}"
+        )
+        logger.info(summary)
+        return summary
 
-                    # Credit REVENUE (Earned!)
-                    JournalLine.objects.create(journal=v_sell, account=revenue_acc, credit_amount=realized_dec, cost_center=crs_cost, line_memo="تحقيق الإيراد الفعلي")
+    # ─────────────────────────────────────────────────────────────────────
+    # خطوة 1: الطلاب — إنشاء مراكز تكلفة
+    # ─────────────────────────────────────────────────────────────────────
+    @classmethod
+    def _migrate_students(cls):
+        from accounts.models import StudentProfile
+        from apps.accounting_erp.accounting_engine import post_student_registration
+        count = 0
+        for sp in StudentProfile.objects.select_related('user').iterator(chunk_size=500):
+            try:
+                post_student_registration(sp.user, sp)
+                count += 1
+            except Exception as e:
+                logger.warning(f"[ERP] student {sp.user_id}: {e}")
+        return count
+
+    # ─────────────────────────────────────────────────────────────────────
+    # خطوة 2: المدرسون — مراكز تكلفة
+    # ─────────────────────────────────────────────────────────────────────
+    @classmethod
+    def _migrate_instructors(cls):
+        from accounts.models import InstructorProfile
+        from apps.accounting_erp.accounting_engine import post_instructor_registration
+        count = 0
+        for ip in InstructorProfile.objects.select_related('user').iterator(chunk_size=200):
+            try:
+                post_instructor_registration(ip.user, ip)
+                count += 1
+            except Exception as e:
+                logger.warning(f"[ERP] instructor {ip.user_id}: {e}")
+        return count
+
+    # ─────────────────────────────────────────────────────────────────────
+    # خطوة 3: الدورات — مراكز تكلفة
+    # ─────────────────────────────────────────────────────────────────────
+    @classmethod
+    def _migrate_courses(cls):
+        from learning.models import Course
+        from apps.accounting_erp.accounting_engine import post_course_created
+        count = 0
+        for course in Course.objects.iterator(chunk_size=200):
+            try:
+                post_course_created(course)
+                count += 1
+            except Exception as e:
+                logger.warning(f"[ERP] course {course.id}: {e}")
+        return count
+
+    # ─────────────────────────────────────────────────────────────────────
+    # خطوة 4: مراكز البيع — مراكز تكلفة
+    # ─────────────────────────────────────────────────────────────────────
+    @classmethod
+    def _migrate_sales_centers(cls):
+        from billing.models import SalesCenter
+        from apps.accounting_erp.accounting_engine import _get_or_create_cost_center
+        count = 0
+        for center in SalesCenter.objects.all():
+            try:
+                _get_or_create_cost_center(f"CEN-{center.id}", f"مركز: {center.name}")
+                count += 1
+            except Exception as e:
+                logger.warning(f"[ERP] center {center.id}: {e}")
+        return count
+
+    # ─────────────────────────────────────────────────────────────────────
+    # خطوة 5: تخصيص الأكواد للمراكز
+    # ─────────────────────────────────────────────────────────────────────
+    @classmethod
+    def _migrate_code_allocations(cls):
+        from billing.models import AccessCode
+        from apps.accounting_erp.accounting_engine import post_access_code_allocated_to_center
+        qs = AccessCode.objects.filter(
+            sales_center__isnull=False
+        ).select_related('course', 'package', 'sales_center')
+        count = 0
+        for code in qs.iterator(chunk_size=500):
+            try:
+                post_access_code_allocated_to_center(code)
+                count += 1
+            except Exception as e:
+                logger.warning(f"[ERP] code alloc {code.id}: {e}")
+        return count
+
+    # ─────────────────────────────────────────────────────────────────────
+    # خطوة 6: الأكواد المباعة أو المفعّلة
+    # ─────────────────────────────────────────────────────────────────────
+    @classmethod
+    def _migrate_code_sales(cls):
+        from billing.models import AccessCode
+        from apps.accounting_erp.accounting_engine import post_access_code_sold
+        qs = AccessCode.objects.filter(
+            sale_status='sold'
+        ).select_related(
+            'course', 'course__instructor',
+            'package', 'sales_center'
+        ).prefetch_related('grants__user')
+        count = 0
+        for code in qs.iterator(chunk_size=500):
+            try:
+                post_access_code_sold(code)
+                count += 1
+            except Exception as e:
+                logger.warning(f"[ERP] code sale {code.id}: {e}")
+
+        # أيضاً: الأكواد التي استُرديت حتى لو لم تكن sold
+        redeemed_qs = AccessCode.objects.filter(
+            redeemed_count__gt=0, sale_status__in=['available', 'free']
+        ).select_related('course', 'course__instructor', 'package', 'sales_center').prefetch_related('grants__user')
+        for code in redeemed_qs.iterator(chunk_size=200):
+            try:
+                post_access_code_sold(code)
+                count += 1
+            except Exception as e:
+                logger.warning(f"[ERP] code redeemed {code.id}: {e}")
+
+        return count
+
+    # ─────────────────────────────────────────────────────────────────────
+    # خطوة 7: المدفوعات المباشرة
+    # ─────────────────────────────────────────────────────────────────────
+    @classmethod
+    def _migrate_direct_payments(cls):
+        from billing.models import Payment
+        from apps.accounting_erp.accounting_engine import post_payment_created
+        count = 0
+        for pay in Payment.objects.filter(status='paid').iterator(chunk_size=500):
+            try:
+                post_payment_created(pay)
+                count += 1
+            except Exception as e:
+                logger.warning(f"[ERP] payment {pay.id}: {e}")
+        return count
 
 
-                    # --- INSTRUCTOR SHARE SPLIT (Dynamic Accrual) ---
-                    if course_ref and course_ref.instructor:
-                        from django.apps import apps
-                        share_model = next((m for m in apps.get_models() if m.__name__ == 'RevenueShareAgreement'), None)
-                        bps = 5000
-                        if share_model:
-                            agree = share_model.objects.filter(course=course_ref, instructor=course_ref.instructor, is_active=True).first()
-                            if agree: bps = agree.commission_bps or 5000
-                        
-                        inst_amt = (realized_dec * Decimal(str(bps))) / Decimal('10000')
-                        if inst_amt > 0:
-                            inst_cost, _ = CostCenter.objects.get_or_create(code=f"INS-{course_ref.instructor.id}", defaults={'name': f"مدرس: {course_ref.instructor.username}"})
-                            exp_i, _ = Account.objects.get_or_create(code='5101', defaults={'name': 'حصة المدرسين', 'category': AccountCategory.EXPENSE, 'parent': Account.objects.get(code='51')})
-                            lia_i, _ = Account.objects.get_or_create(code='2101', defaults={'name': 'مستحقات مدرسين', 'category': AccountCategory.LIABILITY, 'parent': Account.objects.get(code='21')})
-                            
-                            JournalLine.objects.create(journal=v_sell, account=exp_i, debit_amount=inst_amt, cost_center=inst_cost, line_memo="عبء عمولة مدرس")
-                            JournalLine.objects.create(journal=v_sell, account=lia_i, credit_amount=inst_amt, cost_center=inst_cost, line_memo="استحقاق أمانة مدرس")
-
-                    created_count += 1
-
-
-
-            
-        return f"Success. Generated {created_count} Balanced Accounting Vouchers automatically."
+# ─────────────────────────────────────────────────────────────────────────────
+# Kept for backward compatibility
+# ─────────────────────────────────────────────────────────────────────────────
+class LegacyPaymentSelector:
+    @staticmethod
+    def get_access_code_sales_range(start_dt, end_dt):
+        from billing.models import AccessCode
+        return AccessCode.objects.filter(
+            sale_status='sold',
+            sold_at__gte=start_dt,
+            sold_at__lte=end_dt,
+        ).select_related('course', 'course__instructor', 'package', 'sales_center')

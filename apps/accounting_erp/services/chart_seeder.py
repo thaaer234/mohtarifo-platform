@@ -1,51 +1,80 @@
+"""
+بذرة دليل الحسابات الموحّد — لمنصة تعليمية
+تحتوي على جميع الحسابات اللازمة للعمليات التلقائية والقيود اليدوية.
+"""
 from apps.accounting_erp.models import Account, AccountCategory
 from django.db import transaction
 
+
 class ChartOfAccountsSeeder:
-    """
-    Generates standard structured educational enterprise Chart of Accounts.
-    Tailored for Arabic region LMS platforms.
-    """
+
+    CHART = [
+        # ── الأصول ────────────────────────────────────────────────────────
+        dict(code='1',    name='الأصول',                         cat='asset',     group=True,  parent=None),
+        dict(code='11',   name='الأصول المتداولة',               cat='asset',     group=True,  parent='1'),
+        dict(code='1101', name='الصندوق الرئيسي (كاش)',          cat='asset',     group=False, parent='11'),
+        dict(code='1102', name='البنك / المحفظة الإلكترونية',    cat='asset',     group=False, parent='11'),
+        dict(code='1103', name='ذمم الطلاب المدينة (مستحقات)',   cat='asset',     group=False, parent='11'),
+        dict(code='12',   name='أصول متداولة أخرى',              cat='asset',     group=True,  parent='1'),
+        dict(code='1201', name='ذمم مراكز بيع مدينة',            cat='asset',     group=False, parent='12'),
+        dict(code='1202', name='أكواد وصول معلّقة (جرد)',        cat='asset',     group=False, parent='12'),
+
+        # ── الالتزامات ────────────────────────────────────────────────────
+        dict(code='2',    name='الالتزامات',                     cat='liability', group=True,  parent=None),
+        dict(code='21',   name='الالتزامات المتداولة',           cat='liability', group=True,  parent='2'),
+        dict(code='2101', name='مستحقات المدرسين (أمانات)',      cat='liability', group=False, parent='21'),
+        dict(code='2102', name='إيرادات مؤجلة (أكواد غير مفعّلة)', cat='liability', group=False, parent='21'),
+        dict(code='2103', name='مستحقات مراكز البيع',           cat='liability', group=False, parent='21'),
+
+        # ── حقوق الملكية ──────────────────────────────────────────────────
+        dict(code='3',    name='حقوق الملكية',                   cat='equity',    group=True,  parent=None),
+        dict(code='31',   name='رأس المال',                      cat='equity',    group=True,  parent='3'),
+        dict(code='3101', name='رأس مال المالك',                 cat='equity',    group=False, parent='31'),
+        dict(code='3102', name='الأرباح المحتجزة',               cat='equity',    group=False, parent='31'),
+
+        # ── الإيرادات ─────────────────────────────────────────────────────
+        dict(code='4',    name='الإيرادات',                      cat='revenue',   group=True,  parent=None),
+        dict(code='41',   name='الإيرادات التشغيلية',            cat='revenue',   group=True,  parent='4'),
+        dict(code='4101', name='مبيعات الكورسات المباشرة',       cat='revenue',   group=False, parent='41'),
+        dict(code='4102', name='مبيعات الباقات السنوية',         cat='revenue',   group=False, parent='41'),
+        dict(code='4103', name='رسوم تسجيل وشهادات',            cat='revenue',   group=False, parent='41'),
+        dict(code='4104', name='حسومات مبيعات مسموح بها',       cat='revenue',   group=False, parent='41'),
+        dict(code='4105', name='إيرادات اشتراكات شهرية',        cat='revenue',   group=False, parent='41'),
+
+        # ── المصاريف ──────────────────────────────────────────────────────
+        dict(code='5',    name='المصاريف',                       cat='expense',   group=True,  parent=None),
+        dict(code='51',   name='تكاليف النشاط المباشرة (COGS)', cat='expense',   group=True,  parent='5'),
+        dict(code='5101', name='حصة المدرسين من المبيعات',      cat='expense',   group=False, parent='51'),
+        dict(code='5102', name='تكاليف بث الفيديو (Bunny)',      cat='expense',   group=False, parent='51'),
+        dict(code='5103', name='عمولات مراكز البيع',            cat='expense',   group=False, parent='51'),
+        dict(code='52',   name='مصاريف إدارية وعمومية (SGA)',  cat='expense',   group=True,  parent='5'),
+        dict(code='5201', name='رواتب الموظفين والدعم',         cat='expense',   group=False, parent='52'),
+        dict(code='5202', name='استضافة الخوادم (VPS/Cloud)',   cat='expense',   group=False, parent='52'),
+        dict(code='5203', name='مصاريف تسويق وإعلانات',        cat='expense',   group=False, parent='52'),
+        dict(code='5204', name='مصاريف نثرية متنوعة',          cat='expense',   group=False, parent='52'),
+    ]
+
     @classmethod
     @transaction.atomic
     def seed_standard_tree(cls):
-        if Account.objects.exists():
-            return "CoA already contains data. Skipping seed."
-            
-        # Level 1: Root Nodes
-        assets = Account.objects.create(code='1', name='الأصول', category=AccountCategory.ASSET, is_group=True)
-        liabilities = Account.objects.create(code='2', name='الالتزامات', category=AccountCategory.LIABILITY, is_group=True)
-        equity = Account.objects.create(code='3', name='حقوق الملكية', category=AccountCategory.EQUITY, is_group=True)
-        revenue = Account.objects.create(code='4', name='الإيرادات', category=AccountCategory.REVENUE, is_group=True)
-        expenses = Account.objects.create(code='5', name='المصاريف', category=AccountCategory.EXPENSE, is_group=True)
-        
-        # Level 2 - Assets
-        c_assets = Account.objects.create(code='11', name='الأصول المتداولة', category=AccountCategory.ASSET, parent=assets, is_group=True)
-        # Leaf Assets
-        Account.objects.create(code='1101', name='الصندوق الرئيسي (كاش)', category=AccountCategory.ASSET, parent=c_assets)
-        Account.objects.create(code='1102', name='البنك / المحفظة الإلكترونية', category=AccountCategory.ASSET, parent=c_assets)
-        Account.objects.create(code='1103', name='ذمم الطلاب المدينة (مستحقات)', category=AccountCategory.ASSET, parent=c_assets)
-        
-        # Level 2 - Liabilities
-        c_liab = Account.objects.create(code='21', name='الالتزامات المتداولة', category=AccountCategory.LIABILITY, parent=liabilities, is_group=True)
-        # Leaf Liabilities
-        Account.objects.create(code='2101', name='مستحقات المدرسين (أمانات)', category=AccountCategory.LIABILITY, parent=c_liab)
-        Account.objects.create(code='2102', name='إيرادات مؤجلة (اشتراكات غير مستهلكة)', category=AccountCategory.LIABILITY, parent=c_liab)
-        
-        # Level 2 - Revenue
-        op_rev = Account.objects.create(code='41', name='الإيرادات التشغيلية', category=AccountCategory.REVENUE, parent=revenue, is_group=True)
-        Account.objects.create(code='4101', name='مبيعات الكورسات المباشرة', category=AccountCategory.REVENUE, parent=op_rev)
-        Account.objects.create(code='4102', name='مبيعات الباقات السنوية', category=AccountCategory.REVENUE, parent=op_rev)
-        Account.objects.create(code='4103', name='رسوم تسجيل وشهادات', category=AccountCategory.REVENUE, parent=op_rev)
-        
-        # Level 2 - Expenses
-        dir_exp = Account.objects.create(code='51', name='تكاليف النشاط المباشرة', category=AccountCategory.EXPENSE, parent=expenses, is_group=True)
-        Account.objects.create(code='5101', name='حصة المدرسين من المبيعات', category=AccountCategory.EXPENSE, parent=dir_exp)
-        Account.objects.create(code='5102', name='تكاليف البث واستضافة الفيديوهات (Bunny)', category=AccountCategory.EXPENSE, parent=dir_exp)
-        
-        admin_exp = Account.objects.create(code='52', name='مصاريف إدارية وعمومية', category=AccountCategory.EXPENSE, parent=expenses, is_group=True)
-        Account.objects.create(code='5201', name='رواتب الموظفين والدعم', category=AccountCategory.EXPENSE, parent=admin_exp)
-        Account.objects.create(code='5202', name='مصاريف استضافة الخوادم (VPS)', category=AccountCategory.EXPENSE, parent=admin_exp)
-        Account.objects.create(code='5203', name='مصاريف تسويق وإعلانات', category=AccountCategory.EXPENSE, parent=admin_exp)
+        """يضيف الحسابات الناقصة فقط — لا يحذف ولا يعدّل الموجود."""
+        created_count = 0
+        code_to_obj = {a.code: a for a in Account.objects.all()}
 
-        return "Global Arabic LMS Chart of Accounts seeded successfully."
+        for entry in cls.CHART:
+            if entry['code'] in code_to_obj:
+                continue  # موجود مسبقاً
+
+            parent = code_to_obj.get(entry['parent']) if entry['parent'] else None
+            obj = Account.objects.create(
+                code=entry['code'],
+                name=entry['name'],
+                category=entry['cat'],
+                is_group=entry['group'],
+                parent=parent,
+            )
+            code_to_obj[entry['code']] = obj
+            created_count += 1
+
+        msg = f"Chart of Accounts: {created_count} new accounts added."
+        return msg
