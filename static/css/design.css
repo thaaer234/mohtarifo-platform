@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+/* Google Fonts imported via base templates for better reliability */
 
 :root {
     /* PREMIUM LUXURY PALETTE */
@@ -75,7 +75,7 @@
 }
 
 body {
-    font-family: 'Cairo', 'Inter', sans-serif;
+    font-family: 'Cairo', 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, Arial, sans-serif;
     background-color: var(--bg-base);
     color: var(--text-primary);
     line-height: 1.7;
