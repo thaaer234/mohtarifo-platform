@@ -381,18 +381,21 @@ def favicon_view(request):
     import os
     from django.conf import settings
     from django.http import FileResponse, Http404
-    # Check the new canonical location
-    path = os.path.join(settings.BASE_DIR, 'static', 'images', 'favicon.ico')
-    if os.path.exists(path):
-        return FileResponse(open(path, 'rb'), content_type='image/x-icon')
-    # Check legacy location
-    path = os.path.join(settings.BASE_DIR, 'static', 'favicon.ico')
-    if os.path.exists(path):
-        return FileResponse(open(path, 'rb'), content_type='image/x-icon')
-    # Fallback to existing location
-    path = os.path.join(settings.BASE_DIR, 'static', 'dashboard', 'icons', 'icon-192.ico')
-    if os.path.exists(path):
-        return FileResponse(open(path, 'rb'), content_type='image/x-icon')
+    
+    # Try multiple locations in order of priority
+    possible_paths = [
+        os.path.join(settings.BASE_DIR, 'static', 'images', 'favicon.ico'),
+        os.path.join(settings.BASE_DIR, 'static', 'favicon.ico'),
+        os.path.join(settings.BASE_DIR, 'static', 'dashboard', 'icons', 'icon-192.ico'),
+    ]
+    
+    for path in possible_paths:
+        if os.path.exists(path):
+            # Detect actual content type (some files might be PNGs renamed to .ico)
+            with open(path, 'rb') as f:
+                header = f.read(4)
+                content_type = 'image/png' if header == b'\x89PNG' else 'image/x-icon'
+            return FileResponse(open(path, 'rb'), content_type=content_type)
     raise Http404()
 
 
@@ -412,9 +415,14 @@ def favicon_png_view(request):
 
 
 def robots_txt(request):
-    site_url = _site_url(request)
+    site_url = _site_url(request).rstrip("/")
     lines = [
         "User-agent: *",
+        "Allow: /",
+        "Allow: /favicon.ico",
+        "Allow: /favicon.png",
+        "Allow: /static/",
+        "",
         "Disallow: /admin/",
         f"Disallow: /{settings.ADMIN_URL}",
         "Disallow: /admin-dashboard/",
@@ -423,9 +431,12 @@ def robots_txt(request):
         "Disallow: /login/",
         "Disallow: /register/",
         "Disallow: /device-logged-out/",
+        "",
         f"Sitemap: {site_url}/sitemap.xml",
     ]
-    return HttpResponse("\n".join(lines), content_type="text/plain; charset=utf-8")
+    # Standard robots.txt prefers a trailing newline and clear separators
+    content = "\n".join(lines) + "\n"
+    return HttpResponse(content, content_type="text/plain; charset=utf-8")
 
 
 def sitemap_xml(request):
