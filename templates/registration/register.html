@@ -1,79 +1,125 @@
 {% extends "dashboard/base.html" %}
 {% load static inline_static %}
 
-{% block title %}إنشاء حساب | محترفو التعليم{% endblock %}
+{% block title %}انضم إلينا | محترفو التعليم{% endblock %}
 
 {% block content %}
-<div class="auth-page-container flex-center">
-    <!-- Registration Card -->
-    <div class="auth-card-premium reveal-up" style="max-width: 800px;">
-        <div class="auth-card-glow"></div>
-        <div class="auth-header text-center mb-10">
-            <div class="auth-logo-box mb-6">
-                <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo" class="auth-logo">
+<div class="pro-container animate-up" dir="rtl" style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 4rem 1rem;">
+    <!-- Registration Container -->
+    <div class="row w-100 align-items-center">
+        <!-- Left Side: Benefits (Desktop Only) -->
+        <div class="col-lg-5 desktop-only">
+            <div class="p-5">
+                <h2 class="display-4 font-weight-bold mb-6">لماذا تختار <span class="text-success">محترفو التعليم؟</span></h2>
+                <div class="benefit-item mb-5 d-flex gap-4">
+                    <div class="icon-circle bg-success-soft text-success" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i data-lucide="shield-check"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-weight-bold mb-1">تعليم آمن وموثوق</h4>
+                        <p class="text-muted">منصة محمية تضمن لك تجربة تعليمية مستقرة وبدون انقطاع.</p>
+                    </div>
+                </div>
+                <div class="benefit-item mb-5 d-flex gap-4">
+                    <div class="icon-circle bg-info-soft text-info" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i data-lucide="zap"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-weight-bold mb-1">نخبة المدرسين</h4>
+                        <p class="text-muted">دروس مقدمة من أفضل الأساتذة في سوريا بخبرة سنوات طويلة.</p>
+                    </div>
+                </div>
+                <div class="benefit-item mb-5 d-flex gap-4">
+                    <div class="icon-circle bg-warning-soft text-warning" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <i data-lucide="award"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-weight-bold mb-1">دعم متواصل</h4>
+                        <p class="text-muted">فريق الدعم الفني والتعليمي معك دائماً للإجابة على استفساراتك.</p>
+                    </div>
+                </div>
             </div>
-            <h1 class="auth-main-title">انضم للمحترفين</h1>
-            <p class="auth-subtitle">أنشئ حسابك وابدأ رحلة التفوق والنجاح</p>
         </div>
 
-        <form method="post" class="auth-form-body">
-            {% csrf_token %}
-            
-            <div class="grid-2 gap-x-8 gap-y-2">
-                {% for field in form %}
-                    {% if not field.is_hidden %}
-                        <div class="premium-field mb-6 {% if forloop.last and forloop.counter|divisibleby:1 %}grid-full{% endif %}">
-                            <label>{{ field.label }}</label>
-                            <div class="input-glow-wrapper {% if 'password' in field.name %}password-field{% endif %}">
-                                <span class="field-icon">
-                                    {% if 'username' in field.name %}<i data-lucide="user"></i>
-                                    {% elif 'email' in field.name %}<i data-lucide="mail"></i>
-                                    {% elif 'phone' in field.name %}<i data-lucide="phone"></i>
-                                    {% elif 'password' in field.name %}<i data-lucide="lock"></i>
-                                    {% elif 'gender' in field.name %}<i data-lucide="venus-mars"></i>
-                                    {% else %}<i data-lucide="edit-3"></i>{% endif %}
-                                </span>
-                                {{ field }}
-                                {% if 'password' in field.name %}
-                                    <button type="button" class="eye-btn" onclick="togglePass('{{ field.id_for_label }}', this)">
-                                        <i data-lucide="eye"></i>
-                                    </button>
+        <!-- Right Side: Registration Form -->
+        <div class="col-lg-7">
+            <div class="pro-card p-6 p-md-10" style="border: 1px solid rgba(16, 185, 129, 0.2); background: rgba(255, 255, 255, 0.9);">
+                <div class="text-center mb-8">
+                    <div class="mb-4 mx-auto" style="width: 80px; height: 80px; background: rgba(16, 185, 129, 0.1); border-radius: 24px; display: flex; align-items: center; justify-content: center;">
+                        <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo" style="width: 45px;">
+                    </div>
+                    <h2 class="font-weight-bold">انضم لمجتمع المحترفين</h2>
+                    <p class="text-muted">أنشئ حسابك الآن وابدأ رحلة التميز الدراسي</p>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        {% for field in form %}
+                            {% if not field.is_hidden %}
+                            <div class="col-md-{% if field.name == 'address' or field.name == 'bio' %}12{% else %}6{% endif %} mb-4">
+                                <label class="small font-weight-bold mb-2 d-block">{{ field.label }}</label>
+                                <div class="position-relative">
+                                    <div class="input-icon-wrapper" style="position: absolute; right: 15px; top: 12px; color: #94a3b8; z-index: 5;">
+                                        {% if 'username' in field.name %}<i data-lucide="user" size="18"></i>
+                                        {% elif 'email' in field.name %}<i data-lucide="mail" size="18"></i>
+                                        {% elif 'phone' in field.name %}<i data-lucide="phone" size="18"></i>
+                                        {% elif 'password' in field.name %}<i data-lucide="lock" size="18"></i>
+                                        {% else %}<i data-lucide="edit-3" size="18"></i>{% endif %}
+                                    </div>
+                                    <div class="pro-input-field">
+                                        {{ field }}
+                                    </div>
+                                </div>
+                                {% if field.errors %}
+                                    <div class="text-danger small mt-1 font-weight-bold">{{ field.errors.0 }}</div>
                                 {% endif %}
                             </div>
-                            {% if field.errors %}
-                                <div class="field-error-msg mt-2"><i data-lucide="alert-circle"></i> {{ field.errors.0 }}</div>
+                            {% else %}
+                                {{ field }}
                             {% endif %}
-                        </div>
-                    {% else %}
-                        {{ field }}
-                    {% endif %}
-                {% endfor %}
+                        {% endfor %}
+                    </div>
+
+                    <div class="mb-6 p-3 bg-light rounded-lg border">
+                        <label class="d-flex gap-3 align-items-center mb-0 cursor-pointer">
+                            <input type="checkbox" required style="width: 18px; height: 18px;">
+                            <span class="small text-muted">أوافق على <a href="#" class="text-success font-weight-bold">شروط الاستخدام</a> و <a href="#" class="text-success font-weight-bold">سياسة الخصوصية</a>.</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-pro btn-pro-accent w-100 py-3 font-weight-bold" style="font-size: 1.2rem;">
+                        <span>تأكيد الحساب والانطلاق</span>
+                        <i data-lucide="rocket" class="mr-2"></i>
+                    </button>
+                </form>
+
+                <div class="mt-8 text-center border-top pt-6">
+                    <p class="text-muted">لديك حساب بالفعل؟ <a href="{% url 'dashboard:login' %}" class="text-success font-weight-bold">سجل دخولك الآن</a></p>
+                </div>
             </div>
-
-            <div class="terms-check mb-8">
-                <p>بإنشائك للحساب، أنت توافق على <a href="#" class="gold-link">شروط الاستخدام</a> و <a href="#" class="gold-link">سياسة الخصوصية</a>.</p>
-            </div>
-
-            <button type="submit" class="btn btn-primary btn-massive btn-glow w-full">
-                <span>تأكيد الحساب والانطلاق</span>
-                <i data-lucide="rocket"></i>
-            </button>
-        </form>
-
-        <div class="auth-footer mt-10 text-center">
-            <p>لديك حساب بالفعل؟ <a href="{% url 'dashboard:login' %}" class="gold-link">سجل دخولك الآن</a></p>
         </div>
     </div>
 </div>
 
-
-<script>
-    function togglePass(id, btn) {
-        const input = document.getElementById(id);
-        const isPass = input.type === 'password';
-        input.type = isPass ? 'text' : 'password';
-        btn.innerHTML = isPass ? '<i data-lucide="eye-off"></i>' : '<i data-lucide="eye"></i>';
-        lucide.createIcons();
+<style>
+    .pro-input-field input, .pro-input-field select, .pro-input-field textarea {
+        width: 100%;
+        padding: 12px 45px 12px 15px;
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 14px;
+        transition: all 0.3s ease;
+        font-weight: 500;
     }
-</script>
+    .pro-input-field input:focus {
+        border-color: var(--pro-accent);
+        background: white;
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+        outline: none;
+    }
+    .bg-success-soft { background: rgba(16, 185, 129, 0.1); }
+    .bg-info-soft { background: rgba(59, 130, 246, 0.1); }
+    .bg-warning-soft { background: rgba(245, 158, 11, 0.1); }
+</style>
 {% endblock %}

@@ -4,3 +4,4 @@ from .wallets import Wallet, WalletType, WalletTransaction
 from .rules import CommissionRule
 from .vouchers import Voucher, VoucherType, VoucherItem
 from .audit import AuditLog
+from .goals import FinancialGoal

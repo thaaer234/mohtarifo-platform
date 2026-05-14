@@ -4,583 +4,179 @@
 {% block title %}{{ course.title }} | محترفو التعليم{% endblock %}
 
 {% block content %}
-<div class="reveal-up">
+<div class="pro-container animate-up" dir="rtl">
     <!-- 1. Cinematic Course Hero -->
-    <section class="dashboard-banner" style="padding: 0; min-height: 400px; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; background: none;">
-        <div style="position: absolute; inset: 0; z-index: -1;">
+    <section class="pro-card p-0 mb-12 overflow-hidden" style="min-height: 420px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); position: relative; border: none;">
+        <div style="position: absolute; inset: 0; opacity: 0.4;">
             {% if course.cover %}
-                <img src="{{ course.cover.url }}" alt="{{ course.title }}" style="width: 100%; height: 100%; object-fit: cover; filter: blur(30px) brightness(0.3); transform: scale(1.1);">
+                <img src="{{ course.cover.url }}" alt="{{ course.title }}" style="width: 100%; height: 100%; object-fit: cover; filter: blur(15px); transform: scale(1.1);">
             {% endif %}
-            <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.8) 100%);"></div>
+            <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, transparent 0%, #000 100%);"></div>
         </div>
 
-        <div class="container flex-between w-full flex-wrap gap-8" style="z-index: 10; padding: 4rem;">
+        <div class="p-5 p-md-10 d-flex justify-content-between align-items-center flex-wrap gap-5" style="position: relative; z-index: 10; height: 100%;">
             <div style="flex: 1; min-width: 300px;">
-                <div class="flex-center gap-3 mb-6" style="justify-content: flex-start;">
-                    <span class="badge badge-success"><i data-lucide="check-circle" style="width: 14px;"></i> تم التفعيل</span>
-                    <span class="badge badge-gold"><i data-lucide="award" style="width: 14px;"></i> {{ course.get_kind_display }}</span>
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <span class="badge badge-success p-2 px-3 rounded-pill"><i data-lucide="check-circle" style="width: 14px;" class="ml-1"></i> تم التفعيل</span>
+                    <span class="badge bg-white text-dark p-2 px-3 rounded-pill" style="opacity: 0.9;">{{ course.get_kind_display }}</span>
                 </div>
-                <h1 style="font-size: 3.5rem; line-height: 1.1; margin-bottom: 2rem;">{{ course.title }}</h1>
+                <h1 class="display-3 font-weight-bold text-white mb-6" style="line-height: 1.1;">{{ course.title }}</h1>
                 
-                <div class="flex-center gap-8 flex-wrap" style="justify-content: flex-start;">
-                    <div class="flex-center gap-4">
-                        <div class="flex-center" style="width: 56px; height: 56px; border-radius: 18px; overflow: hidden; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1);">
+                <div class="d-flex align-items-center gap-5 flex-wrap">
+                    <div class="d-flex align-items-center gap-3">
+                        <div style="width: 60px; height: 60px; border-radius: 20px; overflow: hidden; border: 2px solid var(--pro-accent);">
                             {% if course.instructor.instructor_profile.avatar %}
-                                <img src="{{ course.instructor.instructor_profile.avatar.url }}" alt="Instructor" style="width: 100%; height: 100%; object-fit: cover;">
+                                <img src="{{ course.instructor.instructor_profile.avatar.url }}" alt="Instructor" class="w-100 h-100 object-fit-cover">
                             {% else %}
-                                <i data-lucide="user" class="text-muted"></i>
+                                <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center"><i data-lucide="user" class="text-muted"></i></div>
                             {% endif %}
                         </div>
                         <div>
-                            <span class="text-muted block" style="font-size: 0.75rem;">المحاضر</span>
-                            <strong style="font-size: 1.1rem;">{{ course.instructor.get_full_name|default:course.instructor.username }}</strong>
+                            <span class="text-white-50 small d-block">المحاضر</span>
+                            <strong class="text-white font-weight-bold">{{ course.instructor.get_full_name|default:course.instructor.username }}</strong>
                         </div>
                     </div>
-                    <div style="width: 1px; height: 40px; background: rgba(255,255,255,0.1);" class="desktop-only"></div>
-                    <div class="flex-center gap-6">
-                        <div class="flex-center gap-2 text-muted font-bold">
-                            <i data-lucide="layers" class="gold" style="width: 20px;"></i>
+                    <div class="vr bg-white opacity-25 desktop-only" style="height: 40px;"></div>
+                    <div class="d-flex align-items-center gap-4 text-white-50">
+                        <div class="d-flex align-items-center gap-2">
+                            <i data-lucide="layers" class="text-success" style="width: 18px;"></i>
                             <span>{{ course.units.count }} وحدات</span>
                         </div>
-                        <div class="flex-center gap-2 text-muted font-bold">
-                            <i data-lucide="play-circle" class="gold" style="width: 20px;"></i>
+                        <div class="d-flex align-items-center gap-2">
+                            <i data-lucide="play-circle" class="text-success" style="width: 18px;"></i>
                             <span>{{ total_lessons|default:0 }} درساً</span>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div class="glass-card" style="width: 260px; padding: 2.5rem; border-radius: 35px; text-align: center;">
-                <div style="position: relative; width: 140px; height: 140px; margin: 0 auto 1.5rem;">
-                    <svg viewBox="0 0 100 100" style="transform: rotate(-90deg);">
+            <div class="pro-card text-center" style="width: 280px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 35px;">
+                <div style="position: relative; width: 150px; height: 150px; margin: 0 auto 1.5rem;">
+                    <svg viewBox="0 0 100 100" style="transform: rotate(-90deg); width: 100%; height: 100%;">
                         <circle cx="50" cy="50" r="45" style="fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 8;"></circle>
-                        <circle cx="50" cy="50" r="45" style="fill: none; stroke: var(--brand-gold); stroke-width: 8; stroke-linecap: round; stroke-dasharray: {{ course.progress.first.completion_percent|default:0|floatformat:0 }} 283; transition: stroke-dasharray 1s ease;"></circle>
+                        <circle cx="50" cy="50" r="45" style="fill: none; stroke: var(--pro-accent); stroke-width: 8; stroke-linecap: round; stroke-dasharray: {{ course.progress.first.completion_percent|default:0|floatformat:0 }} 283; transition: stroke-dasharray 1s ease;"></circle>
                     </svg>
-                    <div class="flex-column flex-center" style="position: absolute; inset: 0;">
-                        <span class="gold" style="font-size: 1.8rem; font-weight: 900; line-height: 1;">{{ course.progress.first.completion_percent|default:0|floatformat:0 }}%</span>
-                        <span class="text-muted" style="font-size: 0.7rem; text-transform: uppercase; margin-top: 4px;">مكتمل</span>
+                    <div class="position-absolute inset-0 d-flex flex-column align-items-center justify-content-center" style="top: 0;">
+                        <h2 class="text-white mb-0 font-weight-bold">{{ course.progress.first.completion_percent|default:0|floatformat:0 }}%</h2>
+                        <span class="text-white-50 small">مكتمل</span>
                     </div>
                 </div>
                 {% if course.progress.first.completion_percent >= 100 %}
-                    <a href="{% url 'dashboard:view_certificate' course.id %}" class="btn btn-primary w-full mt-4">استلام الشهادة</a>
+                    <a href="{% url 'dashboard:view_certificate' course.id %}" class="btn btn-pro btn-pro-accent w-100">استلام الشهادة</a>
                 {% else %}
-                    <p class="text-muted" style="font-size: 0.8rem; line-height: 1.4; margin-bottom: 0;">أكمل دروسك للحصول على الشهادة</p>
+                    <p class="text-white-50 small mb-0">واصل التعلم للحصول على الشهادة</p>
                 {% endif %}
             </div>
         </div>
     </section>
 
-    <!-- 2. Main Curriculum & Sidebar -->
-    <div class="course-detail-layout mt-12">
-        <main>
-            <div class="mb-8">
-                <h2 style="font-size: 1.8rem; display: flex; align-items: center; gap: 0.75rem;">
-                    <i data-lucide="align-right" class="gold"></i> منهاج الدورة التدريبية
-                </h2>
-                <p class="text-muted">انقر على الوحدة لعرض الدروس المتاحة</p>
+    <!-- 2. Curriculum & Sidebar -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center gap-3 mb-6">
+                <div class="bg-success-soft p-2 rounded-lg">
+                    <i data-lucide="book-open" class="text-success"></i>
+                </div>
+                <h3 class="mb-0 font-weight-bold">منهاج الدورة التدريبية</h3>
             </div>
 
-            {% if course.pdf_file %}
-            <!-- Masterclass Immersive PDF Reader View -->
-            <div class="premium-card" id="course-pdf-viewer-section" style="display: none; padding: 0; background: radial-gradient(circle at center, #1e1e24 0%, #0c0c0e 100%); border-radius: 32px; box-shadow: 0 40px 100px rgba(0,0,0,0.6); position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.04); margin-bottom: 2.5rem; transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);">
-                
-                <!-- Top Sleek Status bar -->
-                <div style="padding: 1.25rem 2rem; background: rgba(0,0,0,0.3); border-bottom: 1px solid rgba(255,255,255,0.03); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                    <span style="font-size: 0.9rem; font-weight: bold; color: var(--brand-gold); display: flex; align-items: center; gap: 10px;">
-                        <span style="display: inline-block; width: 8px; height: 8px; background: var(--brand-gold); border-radius: 50%; box-shadow: 0 0 12px var(--brand-gold);"></span>
-                        مستند المادة التعليمي الشامل (PDF)
-                    </span>
-                    <button onclick="toggleCoursePdfViewer()" class="btn btn-sm" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: var(--text-secondary); padding: 0.5rem 1.2rem; border-radius: 12px; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: 0.3s; cursor: pointer;" onmouseover="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.color='#ef4444';" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.color='var(--text-secondary)';">
-                        <i data-lucide="x" style="width: 14px;"></i> إغلاق القارئ المؤمن
-                    </button>
-                </div>
-
-                <!-- Active Viewport Container -->
-                <div id="course-pdf-container-viewport" style="position: relative; width: 100%; min-height: 500px; max-height: 85vh; overflow: auto; display: flex; justify-content: center; align-items: flex-start; padding: 2.5rem 2rem 6.5rem; background: transparent; scrollbar-width: thin;" oncontextmenu="return false;">
-                    
-                    <!-- Canvas with beautiful paper page border -->
-                    <div style="position: relative; background: #ffffff; border-radius: 12px; box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05); overflow: hidden; transition: transform 0.3s ease; padding: 0; max-width: 100%;">
-                        <canvas id="course-pdf-canvas" style="display: block; max-width: 100%; height: auto; background: #fff;"></canvas>
-                        
-                        <!-- Dynamic subtle repeating watermarks inside page context -->
-                        <div id="course-pdf-watermark" style="position: absolute; inset: 0; pointer-events: none; z-index: 10; display: flex; align-items: center; justify-content: center; overflow: hidden; opacity: 0.04; user-select: none;">
-                            <div style="font-size: 1.6rem; font-weight: 900; color: #000; transform: rotate(-30deg); white-space: nowrap; text-align: center; letter-spacing: 2px;">
-                                {{ request.user.get_full_name|default:request.user.username }} • {{ request.user.username }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Floating Glassmorphic Control Pill -->
-                <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(15, 15, 20, 0.8); backdrop-filter: blur(25px); border: 1px solid rgba(255,255,255,0.08); border-radius: 100px; padding: 0.6rem 1.75rem; display: flex; align-items: center; gap: 1.5rem; box-shadow: 0 25px 60px rgba(0,0,0,0.6); z-index: 100; transition: all 0.3s ease; width: max-content; max-width: 90%;">
-                    <!-- Zoom controls -->
-                    <div class="flex-center gap-1" style="display: flex; align-items: center;">
-                        <button id="course-pdf-zoom-out" class="btn btn-sm" style="background: transparent; border: none; color: #a0aec0; width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#a0aec0';"><i data-lucide="minus" style="width: 16px;"></i></button>
-                        <span style="font-size: 0.85rem; font-weight: bold; color: #a0aec0; min-width: 45px; text-align: center;" id="course-pdf-zoom-level">110%</span>
-                        <button id="course-pdf-zoom-in" class="btn btn-sm" style="background: transparent; border: none; color: #a0aec0; width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#a0aec0';"><i data-lucide="plus" style="width: 16px;"></i></button>
-                    </div>
-
-                    <div style="width: 1px; height: 22px; background: rgba(255,255,255,0.12);"></div>
-
-                    <!-- Page turn controls -->
-                    <div class="flex-center gap-3" style="display: flex; align-items: center;">
-                        <button id="course-pdf-prev" class="btn btn-sm" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: #fff; width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='var(--brand-gold)'; this.style.borderColor='var(--brand-gold)';" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.05)';"><i data-lucide="chevron-right" style="width: 16px;"></i></button>
-                        <span style="font-size: 0.9rem; font-weight: bold; color: #fff; min-width: 90px; text-align: center;">صفحة <span id="course-pdf-page-num" class="gold" style="font-weight: 900;">1</span> من <span id="course-pdf-page-count">-</span></span>
-                        <button id="course-pdf-next" class="btn btn-sm" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: #fff; width: 34px; height: 34px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: 0.2s; cursor: pointer;" onmouseover="this.style.background='var(--brand-gold)'; this.style.borderColor='var(--brand-gold)';" onmouseout="this.style.background='rgba(255,255,255,0.03)'; this.style.borderColor='rgba(255,255,255,0.05)';"><i data-lucide="chevron-left" style="width: 16px;"></i></button>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-
-            <div class="flex-column gap-6">
+            <div class="accordion pro-accordion" id="curriculumAccordion">
                 {% for unit in course.units.all %}
-                <div class="premium-card" style="padding: 0; overflow: hidden;">
-                    <details class="unit-details" {% if forloop.first %}open{% endif %}>
-                        <summary style="list-style: none; padding: 1.5rem 2rem; background: var(--bg-surface-elevated); cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                            <div class="flex-center gap-4">
-                                <div class="flex-center" style="width: 36px; height: 36px; border-radius: 12px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold); font-weight: 900;">
+                <div class="pro-card p-0 mb-4 overflow-hidden border-0 shadow-sm">
+                    <div class="accordion-header" id="heading{{ unit.id }}">
+                        <button class="accordion-button {% if not forloop.first %}collapsed{% endif %} w-100 p-5 d-flex justify-content-between align-items-center bg-transparent border-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ unit.id }}" aria-expanded="{% if forloop.first %}true{% endif %}" aria-controls="collapse{{ unit.id }}">
+                            <div class="d-flex align-items-center gap-4">
+                                <div class="flex-center font-weight-bold text-success" style="width: 40px; height: 40px; border-radius: 12px; background: rgba(16, 185, 129, 0.1);">
                                     {{ forloop.counter }}
                                 </div>
-                                <h3 style="font-size: 1.2rem; margin-bottom: 0;">{{ unit.title }}</h3>
+                                <h4 class="h5 mb-0 font-weight-bold">{{ unit.title }}</h4>
                             </div>
-                            <div class="flex-center gap-6">
-                                <span class="badge" style="background: var(--bg-base);">{{ unit.lessons.count }} دروس</span>
-                                <i data-lucide="chevron-down" class="gold" style="transition: 0.3s;"></i>
+                            <span class="badge bg-light text-muted p-2 px-3">{{ unit.lessons.count }} دروس</span>
+                        </button>
+                    </div>
+
+                    <div id="collapse{{ unit.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ unit.id }}" data-bs-parent="#curriculumAccordion">
+                        <div class="accordion-body p-4 pt-0">
+                            <div class="d-flex flex-column gap-3">
+                                {% for lesson in unit.lessons.all %}
+                                <a href="{% url 'dashboard:student_lesson_detail' lesson.id %}" class="lesson-row d-flex justify-content-between align-items-center p-4 rounded-xl border text-decoration-none transition" style="background: #f8fafc;">
+                                    <div class="d-flex align-items-center gap-4">
+                                        <div class="flex-center" style="width: 44px; height: 44px; border-radius: 50%; background: {% if lesson.id in completed_lesson_ids %}rgba(16, 185, 129, 0.1){% else %}#fff{% endif %}; color: {% if lesson.id in completed_lesson_ids %}var(--pro-accent){% else %}#94a3b8{% endif %}; border: 1px solid #e2e8f0;">
+                                            {% if lesson.id in completed_lesson_ids %}
+                                                <i data-lucide="check" style="width: 20px;"></i>
+                                            {% else %}
+                                                <i data-lucide="play" style="width: 20px;"></i>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <h5 class="h6 mb-1 text-dark font-weight-bold">{{ lesson.title }}</h5>
+                                            <span class="text-muted small">{{ lesson.duration|default:"دورة فيديو" }}</span>
+                                        </div>
+                                    </div>
+                                    <i data-lucide="chevron-left" class="text-muted" style="width: 18px;"></i>
+                                </a>
+                                {% endfor %}
                             </div>
-                        </summary>
-                        <div class="lesson-list">
-                            {% for lesson in unit.lessons.all %}
-                            <a href="{% url 'dashboard:student_lesson_detail' lesson.id %}" class="flex-between" style="padding: 1.25rem; background: var(--bg-base); border-radius: 18px; text-decoration: none; transition: 0.3s; border: 1px solid var(--border-light);" onmouseover="this.style.borderColor='var(--brand-gold-glow)'; this.style.transform='translateX(-10px)'" onmouseout="this.style.borderColor='var(--border-light)'; this.style.transform='none'">
-                                <div class="flex-center gap-4">
-                                    <div class="flex-center" style="width: 44px; height: 44px; border-radius: 50%; background: {% if lesson.id in completed_lesson_ids %}var(--success-bg){% else %}rgba(var(--brand-gold-rgb), 0.05){% endif %}; color: {% if lesson.id in completed_lesson_ids %}var(--success){% else %}var(--brand-gold){% endif %}; border: 1px solid var(--border-light);">
-                                        {% if lesson.id in completed_lesson_ids %}
-                                            <i data-lucide="check" style="width: 20px;"></i>
-                                        {% else %}
-                                            <i data-lucide="play" style="width: 20px;"></i>
-                                        {% endif %}
-                                    </div>
-                                    <div>
-                                        <h4 style="font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.25rem;">{{ lesson.title }}</h4>
-                                        <span class="text-muted" style="font-size: 0.8rem;">{{ lesson.duration|default:"دورة فيديو" }}</span>
-                                    </div>
-                                </div>
-                                <div>
-                                    {% if lesson.id in completed_lesson_ids %}
-                                        <span class="badge badge-success">تم الإنجاز</span>
-                                    {% else %}
-                                        <span class="gold font-bold flex-center gap-2" style="font-size: 0.85rem;">ابدأ الآن <i data-lucide="arrow-left" style="width: 14px;"></i></span>
-                                    {% endif %}
-                                </div>
-                            </a>
-                            {% empty %}
-                            <div class="text-center text-muted py-4">لا توجد دروس حالياً في هذه الوحدة.</div>
-                            {% endfor %}
                         </div>
-                    </details>
+                    </div>
                 </div>
                 {% empty %}
-                <div class="premium-card text-center py-12">
-                    <i data-lucide="package" class="text-muted mb-4" style="width: 48px; height: 48px; opacity: 0.5;"></i>
-                    <p class="text-muted">سيتم إضافة المحتوى قريباً جداً.</p>
+                <div class="pro-card text-center py-12">
+                    <p class="text-muted mb-0">سيتم إضافة المحتوى قريباً جداً.</p>
                 </div>
                 {% endfor %}
             </div>
-        </main>
+        </div>
 
-        <aside>
-            <div class="premium-card mb-8">
-                <h3 style="font-size: 1.2rem; display: flex; align-items: center; gap: 0.75rem;">
-                    <i data-lucide="award" class="gold"></i> الإنجازات والنتائج
-                </h3>
-                <div class="mt-6">
-                    {% for attempt in attempts %}
-                    <div class="mb-6">
-                        <div class="flex-between mb-2">
-                            <span class="font-bold" style="font-size: 0.9rem;">{{ attempt.exam.title }}</span>
-                            <span class="gold font-bold">{{ attempt.score_percentage|floatformat:0 }}%</span>
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="pro-card mb-4">
+                <h4 class="font-weight-bold mb-4"><i data-lucide="award" class="text-success ml-2"></i> الإنجازات</h4>
+                {% for attempt in attempts %}
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span class="font-weight-bold">{{ attempt.exam.title }}</span>
+                        <span class="text-success font-weight-bold">{{ attempt.score_percentage|floatformat:0 }}%</span>
+                    </div>
+                    <div class="progress" style="height: 6px; border-radius: 10px;">
+                        <div class="progress-bar bg-success" style="width: {{ attempt.score_percentage }}%;"></div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted small text-center py-4">لا توجد نتائج امتحانات بعد.</p>
+                {% endfor %}
+                <button class="btn btn-outline-success w-100 mt-4 rounded-pill">بنك الأسئلة الموحد</button>
+            </div>
+
+            <div class="pro-card">
+                <h4 class="font-weight-bold mb-4"><i data-lucide="file-text" class="text-success ml-2"></i> المصادر والملفات</h4>
+                {% if course.pdf_file %}
+                    <div class="p-4 rounded-xl bg-light border d-flex align-items-center gap-3">
+                        <div class="bg-success rounded-lg p-2 text-white">
+                            <i data-lucide="file-text"></i>
                         </div>
-                        <div class="progress-bar-container">
-                            <div class="progress-bar-fill" style="width: {{ attempt.score_percentage }}%;"></div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0 font-weight-bold">ملف المادة الموحد</h6>
+                            <small class="text-muted">PDF - {{ course.pdf_file.size|filesizeformat }}</small>
                         </div>
                     </div>
-                    {% empty %}
-                    <div class="text-center text-muted py-4" style="font-size: 0.85rem;">لا توجد نتائج امتحانات بعد.</div>
-                    {% endfor %}
-                </div>
-                <button class="btn btn-secondary w-full mt-6">بنك الأسئلة الموحد</button>
+                    <div class="d-flex flex-column gap-2 mt-4">
+                         <a href="{{ course.pdf_file.url }}" target="_blank" class="btn btn-pro btn-pro-accent w-100">عرض الملف</a>
+                         {% if course.allow_pdf_download %}
+                            <a href="{{ course.pdf_file.url }}" download class="btn btn-outline-secondary w-100 rounded-pill">تنزيل مباشر</a>
+                         {% endif %}
+                    </div>
+                {% else %}
+                    <p class="text-muted small text-center py-4">لا توجد ملفات مرفقة.</p>
+                {% endif %}
             </div>
-
-            <div class="premium-card">
-                <h3 style="font-size: 1.2rem; display: flex; align-items: center; gap: 0.75rem;">
-                    <i data-lucide="file-text" class="gold"></i> المصادر والملفات
-                </h3>
-                <div class="mt-6 flex-column gap-4">
-                    {% if course.pdf_file %}
-                        <div class="p-4" style="background: var(--bg-surface-elevated); border-radius: 20px; border: 1px solid rgba(var(--brand-gold-rgb), 0.15); display: flex; flex-direction: column; gap: 1rem;">
-                            <div class="flex-align gap-4" style="justify-content: flex-start; display: flex; align-items: center;">
-                                <div class="flex-center" style="width: 44px; height: 44px; border-radius: 12px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold); display: flex; align-items: center; justify-content: center; min-width: 44px;">
-                                    <i data-lucide="file-text" style="width: 22px; height: 22px;"></i>
-                                </div>
-                                <div style="flex: 1;">
-                                    <strong class="block" style="font-size: 0.95rem; color: var(--text-primary); line-height: 1.3;">ملف المادة الموحد</strong>
-                                    <span class="text-muted block" style="font-size: 0.75rem;">ملف PDF للدورة كاملة</span>
-                                </div>
-                            </div>
-                            
-                            <div class="flex-column gap-2 mt-2" style="display: flex; flex-direction: column; gap: 8px;">
-                                <button onclick="toggleCoursePdfViewer()" class="btn btn-primary btn-glow w-full flex-center gap-2" style="font-size: 0.85rem; padding: 0.60rem 1rem; border-radius: 10px; font-weight: bold; width: 100%;">
-                                    <i data-lucide="eye" style="width: 16px;"></i> عرض الملف بقلب المنصة
-                                </button>
-                                {% if course.allow_pdf_download %}
-                                    <a href="{{ course.pdf_file.url }}" download class="btn btn-secondary w-full flex-center gap-2" style="font-size: 0.85rem; padding: 0.60rem 1rem; border-radius: 10px; color: var(--text-primary); text-decoration: none; text-align: center; font-weight: bold; width: 100%; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
-                                        <i data-lucide="download" style="width: 16px;"></i> تنزيل الملف المباشر
-                                    </a>
-                                {% else %}
-                                    <span style="font-size: 0.72rem; text-align: center; color: var(--text-secondary); display: block; margin-top: 4px; padding: 4px; background: rgba(255,255,255,0.02); border-radius: 6px;">🛡️ التحميل المباشر معطل من قبل الإدارة</span>
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% else %}
-                        <div class="text-center text-muted py-6" style="font-size: 0.85rem;">لا توجد ملفات مرفقة لهذه الدورة حالياً.</div>
-                    {% endif %}
-                </div>
-            </div>
-        </aside>
+        </div>
     </div>
 </div>
 
 <style>
-    /* Premium Grid Layout */
-    .course-detail-layout {
-        display: grid;
-        grid-template-columns: 1.9fr 1.1fr;
-        gap: 3rem;
-        align-items: start;
-    }
-
-    aside {
-        position: sticky;
-        top: 110px;
-        z-index: 50;
-        transition: var(--transition-smooth);
-    }
-
-    /* Cinematic Banner Adjustments */
-    .dashboard-banner {
-        border-radius: 40px !important;
-        border: 1px solid var(--border-light) !important;
-        box-shadow: var(--shadow-glow);
-        background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(var(--brand-gold-rgb), 0.08)) !important;
-    }
-
-    .dashboard-banner h1 {
-        background: linear-gradient(135deg, #ffffff 40%, var(--brand-gold) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 900;
-        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    }
-
-    /* Symmetrical Glowing SVG Progress Circle */
-    svg circle {
-        transition: stroke-dasharray 1.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    
-    .glass-card svg {
-        filter: drop-shadow(0 0 12px rgba(var(--brand-gold-rgb), 0.3));
-    }
-
-    /* Accordion Unit Headers */
-    .unit-details {
-        background: var(--bg-surface);
-        transition: var(--transition-smooth);
-    }
-
-    .unit-details summary {
-        list-style: none;
-        padding: 1.75rem 2rem;
-        background: var(--bg-surface-elevated) !important;
-        cursor: pointer;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        transition: var(--transition-smooth);
-    }
-
-    .unit-details summary:hover {
-        background: rgba(var(--brand-gold-rgb), 0.02) !important;
-    }
-
-    .unit-details summary h3 {
-        color: var(--text-primary);
-        font-size: 1.2rem;
-        font-weight: 700;
-        transition: var(--transition-smooth);
-    }
-
-    .unit-details summary:hover h3 {
-        color: var(--brand-gold);
-    }
-
-    .unit-details[open] summary {
-        border-bottom: 1px solid var(--border-light);
-        background: rgba(var(--brand-gold-rgb), 0.05) !important;
-    }
-
-    .unit-details[open] summary h3 {
-        color: var(--brand-gold);
-    }
-
-    .unit-details summary i {
-        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s;
-    }
-
-    .unit-details[open] summary i {
-        transform: rotate(180deg);
-        color: var(--brand-gold);
-    }
-
-    /* Lesson List inside Units */
-    .lesson-list {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-        padding: 1.5rem;
-    }
-
-    /* Premium Progress Bar (Exam Achievements) */
-    .progress-bar-container {
-        width: 100%;
-        height: 8px;
-        background: var(--border-light);
-        border-radius: 100px;
-        overflow: hidden;
-    }
-
-    .progress-bar-fill {
-        height: 100%;
-        background: linear-gradient(90deg, var(--brand-gold), var(--brand-gold-light));
-        border-radius: 100px;
-        transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    /* RESPONSIVE BREAKPOINTS */
-    @media (max-width: 1024px) {
-        .dashboard-banner {
-            min-height: auto !important;
-            border-radius: 24px !important;
-        }
-
-        .dashboard-banner .container {
-            padding: 3rem 1.5rem !important;
-            flex-direction: column;
-            text-align: center;
-        }
-
-        .dashboard-banner .flex-center {
-            justify-content: center !important;
-        }
-
-        .dashboard-banner h1 {
-            font-size: 2.5rem !important;
-        }
-
-        .course-detail-layout {
-            grid-template-columns: 1fr !important;
-            gap: 3rem !important;
-        }
-
-        aside {
-            position: static !important;
-            width: 100%;
-        }
-    }
-
-    summary::-webkit-details-marker {
-        display: none;
-    }
+    .accordion-button::after { display: none; }
+    .lesson-row:hover { transform: translateX(-8px); border-color: var(--pro-accent) !important; background: white !important; }
+    .vr { width: 1px; }
 </style>
-{% endblock %}
-
-{% block extra_js %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-<script>
-    let coursePdfLoaded = false;
-
-    function toggleCoursePdfViewer() {
-        const viewerSection = document.getElementById('course-pdf-viewer-section');
-        if (!viewerSection) return;
-
-        if (viewerSection.style.display === 'none') {
-            viewerSection.style.display = 'block';
-            viewerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            
-            if (!coursePdfLoaded) {
-                {% if course.pdf_file %}
-                    CoursePDFViewer.init('{{ course.pdf_file.url }}');
-                {% endif %}
-                coursePdfLoaded = true;
-            }
-        } else {
-            viewerSection.style.display = 'none';
-        }
-    }
-
-    const CoursePDFViewer = {
-        pdfDoc: null,
-        pageNum: 1,
-        pageIsRendering: false,
-        pageNumPending: null,
-        scale: 1.1,
-        canvas: document.getElementById('course-pdf-canvas'),
-        ctx: document.getElementById('course-pdf-canvas') ? document.getElementById('course-pdf-canvas').getContext('2d') : null,
-        watermark: document.getElementById('course-pdf-watermark'),
-
-        init(pdfUrl) {
-            if (!this.canvas) return;
-            
-            // Set up worker source
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-
-            // Fetch document
-            pdfjsLib.getDocument(pdfUrl).promise.then(pdfDoc_ => {
-                this.pdfDoc = pdfDoc_;
-                document.getElementById('course-pdf-page-count').textContent = this.pdfDoc.numPages;
-                this.renderPage(this.pageNum);
-                this.startWatermarkVoyage();
-            }).catch(err => {
-                console.error("Error loading PDF:", err);
-                const container = document.getElementById('course-pdf-container-viewport');
-                if (container) {
-                    container.innerHTML = '<div class="text-center p-8 text-danger"><i data-lucide="alert-triangle"></i> حدث خطأ أثناء تحميل المستند المؤمن. يرجى مراجعة الإدارة.</div>';
-                    if (window.lucide) window.lucide.createIcons();
-                }
-            });
-
-            // Pagination Controls
-            document.getElementById('course-pdf-prev').addEventListener('click', () => this.queueRenderPage(this.pageNum - 1));
-            document.getElementById('course-pdf-next').addEventListener('click', () => this.queueRenderPage(this.pageNum + 1));
-            
-            // Zoom Controls
-            document.getElementById('course-pdf-zoom-in').addEventListener('click', () => {
-                this.scale = Math.min(this.scale + 0.2, 3.0);
-                this.renderPage(this.pageNum);
-                const el = document.getElementById('course-pdf-zoom-level');
-                if (el) el.textContent = `${Math.round(this.scale * 100)}%`;
-            });
-            document.getElementById('course-pdf-zoom-out').addEventListener('click', () => {
-                this.scale = Math.max(this.scale - 0.2, 0.6);
-                this.renderPage(this.pageNum);
-                const el = document.getElementById('course-pdf-zoom-level');
-                if (el) el.textContent = `${Math.round(this.scale * 100)}%`;
-            });
-
-            // Adobe Acrobat Style Interaction Suite (Grab and Drag Pan + Ctrl & Scroll Zoom)
-            const viewport = document.getElementById('course-pdf-container-viewport');
-            if (viewport) {
-                viewport.style.cursor = 'grab';
-                let isDown = false;
-                let startX, startY, scrollLeft, scrollTop;
-
-                viewport.addEventListener('mousedown', (e) => {
-                    isDown = true;
-                    viewport.style.cursor = 'grabbing';
-                    startX = e.pageX - viewport.offsetLeft;
-                    startY = e.pageY - viewport.offsetTop;
-                    scrollLeft = viewport.scrollLeft;
-                    scrollTop = viewport.scrollTop;
-                });
-
-                viewport.addEventListener('mouseleave', () => {
-                    isDown = false;
-                    viewport.style.cursor = 'grab';
-                });
-
-                viewport.addEventListener('mouseup', () => {
-                    isDown = false;
-                    viewport.style.cursor = 'grab';
-                });
-
-                viewport.addEventListener('mousemove', (e) => {
-                    if (!isDown) return;
-                    e.preventDefault();
-                    const x = e.pageX - viewport.offsetLeft;
-                    const y = e.pageY - viewport.offsetTop;
-                    const walkX = (x - startX) * 1.5;
-                    const walkY = (y - startY) * 1.5;
-                    viewport.scrollLeft = scrollLeft - walkX;
-                    viewport.scrollTop = scrollTop - walkY;
-                });
-
-                viewport.addEventListener('wheel', (e) => {
-                    if (e.ctrlKey) {
-                        e.preventDefault();
-                        if (e.deltaY < 0) {
-                            this.scale = Math.min(this.scale + 0.1, 3.0);
-                        } else {
-                            this.scale = Math.max(this.scale - 0.1, 0.6);
-                        }
-                        this.renderPage(this.pageNum);
-                        const el = document.getElementById('course-pdf-zoom-level');
-                        if (el) el.textContent = `${Math.round(this.scale * 100)}%`;
-                    }
-                }, { passive: false });
-            }
-        },
-
-        renderPage(num) {
-            this.pageIsRendering = true;
-
-            this.pdfDoc.getPage(num).then(page => {
-                const container = this.canvas.parentElement;
-                const containerWidth = container.clientWidth - 32;
-                const unscaledViewport = page.getViewport({ scale: 1.0 });
-                
-                let optimalScale = (containerWidth / unscaledViewport.width) * this.scale;
-                if (optimalScale > 1.8) optimalScale = 1.8;
-
-                const viewport = page.getViewport({ scale: optimalScale });
-                this.canvas.height = viewport.height;
-                this.canvas.width = viewport.width;
-
-                const renderCtx = {
-                    canvasContext: this.ctx,
-                    viewport: viewport
-                };
-
-                page.render(renderCtx).promise.then(() => {
-                    this.pageIsRendering = false;
-                    if (this.pageNumPending !== null) {
-                        this.renderPage(this.pageNumPending);
-                        this.pageNumPending = null;
-                    }
-                });
-
-                document.getElementById('course-pdf-page-num').textContent = num;
-            });
-        },
-
-        queueRenderPage(num) {
-            if (num < 1 || num > this.pdfDoc.numPages) return;
-            this.pageNum = num;
-            if (this.pageIsRendering) {
-                this.pageNumPending = num;
-            } else {
-                this.renderPage(num);
-            }
-        },
-
-        startWatermarkVoyage() {
-            if (!this.watermark) return;
-            const move = () => {
-                const x = 5 + Math.random() * 60;
-                const y = 5 + Math.random() * 80;
-                this.watermark.style.left = `${x}%`;
-                this.watermark.style.top = `${y}%`;
-            };
-            setInterval(move, 4000);
-            move();
-        }
-    };
-</script>
 {% endblock %}

@@ -2,53 +2,89 @@
 {% block title %}لوحة المدرس | محترفو التعليم{% endblock %}
 
 {% block content %}
-<div class="reveal-up">
-    <header class="section-header mb-8">
+<div class="pro-container animate-up" dir="rtl">
+    <header class="d-flex justify-content-between align-items-center mb-12">
         <div>
-            <span class="badge badge-gold mb-2">حساب أستاذ</span>
-            <h1 class="page-title">لوحة الأستاذ: {{ request.user.get_full_name|default:request.user.username }}</h1>
-            <p class="text-muted mb-0">نظرة سريعة على الدورات والطلاب المفعّلين.</p>
+            <span class="badge badge-success mb-2">حساب أستاذ</span>
+            <h1 class="font-weight-bold" style="font-size: 2.8rem;">لوحة الأستاذ: <span class="text-success">{{ request.user.get_full_name|default:request.user.username }}</span></h1>
+            <p class="text-muted" style="font-size: 1.1rem;">مرحباً بك مجدداً، إليك ملخص نشاطك التعليمي اليوم.</p>
+        </div>
+        <div class="avatar-side desktop-only">
+             <div class="flex-center" style="width: 80px; height: 80px; border-radius: 20px; background: rgba(16, 185, 129, 0.1); color: var(--pro-accent); border: 2px solid var(--pro-accent);">
+                <i data-lucide="award" style="width: 40px; height: 40px;"></i>
+            </div>
         </div>
     </header>
 
-    <div class="stats-grid mb-8">
-        <div class="premium-card stat-card">
-            <div class="stat-icon" style="color: var(--success); background: var(--success-bg);"><i data-lucide="users"></i></div>
-            <div class="stat-info">
-                <span class="label">طلابي المفعّلين</span>
-                <span class="value">{{ students_count }}</span>
+    <div class="row mb-8">
+        <div class="col-md-6 mb-4">
+            <div class="pro-card d-flex align-items-center gap-4 p-5">
+                <div class="stat-icon" style="width: 70px; height: 70px; border-radius: 20px; background: rgba(16, 185, 129, 0.1); color: var(--pro-accent); display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="users" style="width: 35px; height: 35px;"></i>
+                </div>
+                <div>
+                    <span class="text-muted small font-weight-bold d-block">إجمالي الطلاب المفعّلين</span>
+                    <h2 class="mb-0 font-weight-bold" style="font-size: 2.5rem;">{{ students_count }}</h2>
+                </div>
             </div>
         </div>
-        <div class="premium-card stat-card">
-            <div class="stat-icon"><i data-lucide="book-open"></i></div>
-            <div class="stat-info">
-                <span class="label">دوراتي</span>
-                <span class="value">{{ courses_count }}</span>
+        <div class="col-md-6 mb-4">
+            <div class="pro-card d-flex align-items-center gap-4 p-5">
+                <div class="stat-icon" style="width: 70px; height: 70px; border-radius: 20px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="book-open" style="width: 35px; height: 35px;"></i>
+                </div>
+                <div>
+                    <span class="text-muted small font-weight-bold d-block">عدد الدورات النشطة</span>
+                    <h2 class="mb-0 font-weight-bold" style="font-size: 2.5rem;">{{ courses_count }}</h2>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="premium-card">
-        <h2 class="section-title mb-6"><i data-lucide="graduation-cap" class="gold"></i> دوراتي التدريبية</h2>
-        <div class="admin-table-wrapper">
-            <table class="admin-table">
+    <div class="pro-card p-5">
+        <div class="d-flex align-items-center gap-3 mb-6">
+            <div class="bg-success-soft p-2 rounded-lg">
+                <i data-lucide="graduation-cap" class="text-success"></i>
+            </div>
+            <h3 class="mb-0 font-weight-bold">دوراتي التدريبية</h3>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table custom-table">
                 <thead>
-                    <tr>
-                        <th>الدورة</th>
-                        <th>المادة</th>
-                        <th>الطلاب</th>
+                    <tr class="text-muted small font-weight-bold">
+                        <th>اسم الدورة</th>
+                        <th>المادة العلمية</th>
+                        <th class="text-center">عدد الطلاب</th>
+                        <th class="text-left">الإجراءات</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for course in courses %}
-                    <tr>
-                        <td><strong>{{ course.title }}</strong></td>
-                        <td>{{ course.subject.name }}</td>
-                        <td><span class="badge badge-gold">{{ course.grants_total }}</span></td>
+                    <tr class="align-middle">
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="course-mini-thumb" style="width: 45px; height: 45px; border-radius: 10px; background: #f1f5f9; overflow: hidden;">
+                                    {% if course.cover %}
+                                        <img src="{{ course.cover.url }}" class="w-100 h-100 object-fit-cover">
+                                    {% else %}
+                                        <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted"><i data-lucide="image" style="width: 16px;"></i></div>
+                                    {% endif %}
+                                </div>
+                                <strong class="text-primary">{{ course.title }}</strong>
+                            </div>
+                        </td>
+                        <td><span class="badge badge-light p-2">{{ course.subject.name }}</span></td>
+                        <td class="text-center">
+                            <span class="badge badge-success-soft text-success px-3 py-2" style="font-size: 0.9rem; font-weight: 800;">{{ course.grants_total }}</span>
+                        </td>
+                        <td class="text-left">
+                            <button class="btn btn-sm btn-outline-primary rounded-pill">عرض الإحصائيات</button>
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="3" class="text-center p-8 text-muted">لا توجد دورات مسجلة باسمك بعد.</td>
+                        <td colspan="4" class="text-center py-12 text-muted">لا توجد دورات مسجلة باسمك بعد.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -58,23 +94,9 @@
 </div>
 
 <style>
-    @media (max-width: 768px) {
-        .admin-table th, .admin-table td {
-            padding: 0.75rem 0.5rem !important;
-            font-size: 0.8rem !important;
-        }
-        .admin-table-wrapper {
-            margin: 0 -1rem;
-            border-radius: 0;
-            border-left: none;
-            border-right: none;
-        }
-        .page-title {
-            font-size: 1.6rem !important;
-        }
-        .btn-sm {
-            padding: 0.4rem 0.6rem !important;
-        }
-    }
+    .custom-table thead th { border: none; padding: 1.5rem 1rem; border-bottom: 2px solid #f1f5f9; }
+    .custom-table tbody td { border: none; padding: 1.5rem 1rem; border-bottom: 1px solid #f8fafc; }
+    .bg-success-soft { background: rgba(16, 185, 129, 0.1); }
+    .badge-success-soft { background: rgba(16, 185, 129, 0.08); color: #059669; }
 </style>
 {% endblock %}

@@ -1,11 +1,20 @@
 from django.contrib import admin
-from .models import Account, CostCenter, JournalEntry, JournalLine
+from .models import Account, CostCenter, JournalEntry, JournalLine, Wallet, FinancialGoal
 
 @admin.register(Account)
 class AccountAdmin(admin.ModelAdmin):
     list_display = ('code', 'display_name', 'account_type', 'is_group', 'is_active')
     list_filter = ('account_type', 'is_group', 'is_active')
     search_fields = ('code', 'name', 'name_ar')
+
+@admin.register(FinancialGoal)
+class FinancialGoalAdmin(admin.ModelAdmin):
+    list_display = ('title', 'target_amount', 'start_date', 'end_date', 'get_progress_percent')
+
+@admin.register(Wallet)
+class WalletAdmin(admin.ModelAdmin):
+    list_display = ('owner_type', 'balance', 'pending_balance', 'updated_at')
+    list_filter = ('owner_type',)
 
 @admin.register(CostCenter)
 class CostCenterAdmin(admin.ModelAdmin):

@@ -53,7 +53,11 @@
                 <div class="kpi-info">
                     <span class="kpi-label">مستحقات المدرسين (غير مسددة)</span>
                     <h2 class="kpi-value text-danger">{{ kpis.teacher_payables|intcomma }} <small>ل.س</small></h2>
-                    <span class="kpi-trend text-danger"><i class="fas fa-exclamation-circle"></i> تنبيه سيولة</span>
+                    {% if kpis.liquidity_status == 'critical' %}
+                        <span class="kpi-trend text-danger"><i class="fas fa-exclamation-triangle"></i> تنبيه سيولة: العجز مغطى ببيانات تاريخية</span>
+                    {% else %}
+                        <span class="kpi-trend text-success"><i class="fas fa-check-circle"></i> السيولة متوفرة</span>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -88,38 +92,58 @@
             </div>
         </div>
 
-        <!-- Wallets -->
+        <!-- Side Panel: Wallets, Forecast, Goals -->
         <div class="col-md-4 mb-4">
             <div class="wallets-summary glassmorphism p-4 h-100">
-                <h4 class="mb-4">محرك المحافظ الداخلية</h4>
+                <h4 class="mb-4">محرك المحافظ والذكاء المالي</h4>
+                
                 <div class="wallet-item mb-3">
                     <div class="d-flex justify-content-between align-items-center">
                         <div class="d-flex align-items-center">
                             <div class="wallet-icon bg-info-soft ml-3"><i class="fas fa-chalkboard-teacher"></i></div>
                             <div>
-                                <h6>إجمالي أرصدة المدرسين</h6>
+                                <h6>أرصدة المدرسين</h6>
                                 <small class="text-muted">بالليرة السورية</small>
                             </div>
                         </div>
                         <h5 class="text-info">{{ wallets.total_teacher_balance|intcomma }}</h5>
                     </div>
                 </div>
-                <div class="wallet-item mb-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center">
-                            <div class="wallet-icon bg-purple-soft ml-3"><i class="fas fa-store"></i></div>
-                            <div>
-                                <h6>إجمالي أرصدة المراكز</h6>
-                                <small class="text-muted">عمولات مستحقة</small>
-                            </div>
-                        </div>
-                        <h5 class="text-purple">{{ wallets.total_center_balance|intcomma }}</h5>
+                
+                <hr>
+
+                <!-- Financial Forecast Box -->
+                <div class="forecast-box mt-4 p-3 rounded-lg bg-dark text-white border-left-success" style="border-right: 4px solid #10b981;">
+                    <h6 class="text-success small mb-1"><i class="fas fa-magic"></i> التوقعات المالية (30 يوم)</h6>
+                    <h4 class="mb-2">{{ forecast.estimated_revenue_30d|intcomma }} <small>ل.س</small></h4>
+                    <div class="d-flex justify-content-between small opacity-75">
+                        <span>جلسات مجدولة: {{ forecast.upcoming_sessions_count }}</span>
+                        <span>دقة التوقع: {{ forecast.confidence_score }}%</span>
                     </div>
                 </div>
+
+                <!-- Strategic Goals Section -->
+                {% if active_goals %}
+                <div class="goals-section mt-4">
+                    <h6 class="small font-weight-bold mb-3">الأهداف الاستراتيجية</h6>
+                    {% for goal in active_goals %}
+                    <div class="goal-item mb-3 p-2 rounded bg-light border">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span class="font-weight-bold">{{ goal.title }}</span>
+                            <span class="text-success">{{ goal.get_progress_percent }}%</span>
+                        </div>
+                        <div class="progress" style="height: 6px; border-radius: 10px;">
+                            <div class="progress-bar bg-success" style="width: {{ goal.get_progress_percent }}%"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
                 <hr>
                 <div class="mt-4">
                     <h6 class="mb-3">توزيع العمولات الفعلي</h6>
-                    <canvas id="commissionPie" style="height: 200px;"></canvas>
+                    <canvas id="commissionPie" style="height: 180px;"></canvas>
                 </div>
             </div>
         </div>
@@ -188,16 +212,17 @@
     }
 
     .glassmorphism {
-        background: rgba(255, 255, 255, 0.7);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 20px;
-        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
-        transition: transform 0.3s ease;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 24px;
+        box-shadow: 0 10px 40px 0 rgba(31, 38, 135, 0.05);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
     .glassmorphism:hover {
         transform: translateY(-5px);
+        box-shadow: 0 20px 60px 0 rgba(31, 38, 135, 0.08);
     }
 
     .kpi-card {
@@ -210,7 +235,7 @@
     .kpi-icon {
         width: 60px;
         height: 60px;
-        border-radius: 15px;
+        border-radius: 18px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -223,99 +248,52 @@
     .bg-danger-soft { background: #fee2e2; color: #dc2626; }
     .bg-primary-soft { background: #dbeafe; color: #2563eb; }
     .bg-info-soft { background: #e0f2fe; color: #0891b2; }
-    .bg-purple-soft { background: #f3e8ff; color: #9333ea; }
 
     .kpi-label {
         font-size: 0.85rem;
         color: #64748b;
-        font-weight: 600;
+        font-weight: 700;
         display: block;
         margin-bottom: 5px;
     }
 
     .kpi-value {
-        font-size: 1.5rem;
-        font-weight: 700;
+        font-size: 1.6rem;
+        font-weight: 800;
         margin: 0;
-        color: #1e293b;
+        color: #0f172a;
     }
-
-    .kpi-trend { font-size: 0.75rem; font-weight: 600; }
-    .kpi-sub { font-size: 0.7rem; color: #94a3b8; margin: 0; }
 
     .btn-premium-gradient {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         color: white;
         border: none;
-        padding: 10px 25px;
-        border-radius: 12px;
-        font-weight: 600;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        padding: 12px 28px;
+        border-radius: 14px;
+        font-weight: 700;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
     }
 
-    .btn-premium-gradient:hover {
-        background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
-        color: white;
+    .erp-table tr { border-radius: 16px; margin-bottom: 10px; transition: 0.2s; }
+    .erp-table tr:hover { background: #f1f5f9; }
+    
+    .forecast-box {
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
     }
 
-    .erp-table {
-        border-collapse: separate;
-        border-spacing: 0 10px;
-    }
-
-    .erp-table thead th {
-        border: none;
-        color: #64748b;
-        font-weight: 600;
-        font-size: 0.85rem;
-        padding: 15px;
-    }
-
-    .erp-table tbody tr {
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-    }
-
-    .erp-table td {
-        padding: 18px 15px;
-        vertical-align: middle;
-        border-top: 1px solid #f1f5f9;
-        border-bottom: 1px solid #f1f5f9;
-    }
-
-    .erp-table td:first-child { border-right: 1px solid #f1f5f9; border-radius: 0 12px 12px 0; }
-    .erp-table td:last-child { border-left: 1px solid #f1f5f9; border-radius: 12px 0 0 12px; }
-
-    .badge-soft-info {
-        background: #e0f2fe;
-        color: #0369a1;
-        padding: 5px 12px;
-        border-radius: 6px;
-    }
-
-    .dot {
-        height: 8px;
-        width: 8px;
-        border-radius: 50%;
-        display: inline-block;
-        margin-left: 5px;
-    }
-
-    .text-purple { color: #9333ea; }
-
+    .dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; }
+    
     /* Animation */
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
+        from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
-    .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+    .animate-fade-in { animation: fadeIn 0.6s ease-out forwards; }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Revenue Chart
         const ctx = document.getElementById('revenueChart').getContext('2d');
         new Chart(ctx, {
             type: 'line',
@@ -324,11 +302,11 @@
                 datasets: [{
                     label: 'إيرادات محققة',
                     data: [120000, 190000, 150000, 250000, 220000, 300000, 280000],
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
                     fill: true,
                     tension: 0.4,
-                    borderWidth: 3
+                    borderWidth: 4
                 }, {
                     label: 'إيرادات مؤجلة',
                     data: [400000, 380000, 450000, 500000, 480000, 520000, 550000],
@@ -342,7 +320,7 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { position: 'top', rtl: true, labels: { font: { family: 'Outfit' } } }
+                    legend: { position: 'top', rtl: true, labels: { font: { family: 'Outfit', weight: 'bold' } } }
                 },
                 scales: {
                     y: { beginAtZero: true, position: 'right' }
@@ -350,7 +328,6 @@
             }
         });
 
-        // Commission Pie
         const pieCtx = document.getElementById('commissionPie').getContext('2d');
         new Chart(pieCtx, {
             type: 'doughnut',
@@ -358,8 +335,9 @@
                 labels: ['المنصة', 'المدرسين', 'المراكز'],
                 datasets: [{
                     data: [45, 40, 15],
-                    backgroundColor: ['#1e293b', '#2563eb', '#9333ea'],
-                    borderWidth: 0
+                    backgroundColor: ['#0f172a', '#10b981', '#3b82f6'],
+                    borderWidth: 0,
+                    hoverOffset: 10
                 }]
             },
             options: {
@@ -367,7 +345,8 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { position: 'bottom', rtl: true }
-                }
+                },
+                cutout: '70%'
             }
         });
     });

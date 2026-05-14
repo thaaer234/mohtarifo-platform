@@ -30,7 +30,11 @@ class AccountingDashboardView(BaseAccountingView, TemplateView):
             'deferred_revenue': Account.objects.get(code='2101').get_balance(),
             'teacher_payables': Account.objects.get(code='2201').get_balance(),
             'net_profit': pnl['net_income'],
+            'liquidity_status': 'critical' if Account.objects.get(code='1101').get_balance() < Account.objects.get(code='2201').get_balance() else 'healthy'
         }
+        
+        context['forecast'] = FinancialStatementEngine.generate_forecast()
+        context['active_goals'] = FinancialGoal.objects.filter(is_active=True)
         
         context['recent_journals'] = JournalEntry.objects.all().order_by('-created_at')[:10]
         context['wallets'] = {
