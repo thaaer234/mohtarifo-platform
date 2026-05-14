@@ -122,69 +122,39 @@
         {% endif %}
     </section>
 
-    <!-- Account Info & Wallet -->
-    <div class="grid-2 gap-8 mb-12" style="display: grid; grid-template-columns: 1fr 1fr; align-items: start;">
-        <section>
-            <h2 class="mb-6" style="font-size: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
-                <i data-lucide="settings" class="gold"></i> معلومات الحساب
-            </h2>
-            <div class="premium-card" style="padding: 0;">
-                <div class="flex-column">
-                    <div class="flex-between" style="padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-light);">
-                        <span class="text-muted font-bold flex-center gap-3"><i data-lucide="user" class="gold" style="width: 16px;"></i> الاسم</span>
-                        <span class="font-bold">{{ request.user.get_full_name|default:request.user.username }}</span>
-                    </div>
-                    <div class="flex-between" style="padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-light);">
-                        <span class="text-muted font-bold flex-center gap-3"><i data-lucide="phone" class="gold" style="width: 16px;"></i> رقم الهاتف</span>
-                        <span class="font-bold">{{ student_profile.phone|default:request.user.username }}</span>
-                    </div>
-                    {% if student_profile.track %}
-                    <div class="flex-between" style="padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-light);">
-                        <span class="text-muted font-bold flex-center gap-3"><i data-lucide="git-branch" class="gold" style="width: 16px;"></i> الفرع</span>
-                        <span class="font-bold">{{ student_profile.track }}</span>
-                    </div>
-                    {% endif %}
-                    <div class="flex-between" style="padding: 1.5rem 2rem;">
-                        <span class="text-muted font-bold flex-center gap-3"><i data-lucide="calendar" class="gold" style="width: 16px;"></i> تاريخ التسجيل</span>
-                        <span class="font-bold">{{ request.user.date_joined|date:"Y/m/d" }}</span>
-                    </div>
+    <!-- Account Info -->
+    <section>
+        <h2 class="mb-6" style="font-size: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
+            <i data-lucide="settings" class="gold"></i> معلومات الحساب
+        </h2>
+        <div class="premium-card" style="padding: 0;">
+            <div class="flex-column">
+                <div class="flex-between" style="padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-light);">
+                    <span class="text-muted font-bold flex-center gap-3"><i data-lucide="user" class="gold" style="width: 16px;"></i> الاسم</span>
+                    <span class="font-bold">{{ request.user.get_full_name|default:request.user.username }}</span>
+                </div>
+                <div class="flex-between" style="padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-light);">
+                    <span class="text-muted font-bold flex-center gap-3"><i data-lucide="phone" class="gold" style="width: 16px;"></i> رقم الهاتف</span>
+                    <span class="font-bold">{{ student_profile.phone|default:request.user.username }}</span>
+                </div>
+                {% if student_profile.track %}
+                <div class="flex-between" style="padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-light);">
+                    <span class="text-muted font-bold flex-center gap-3"><i data-lucide="git-branch" class="gold" style="width: 16px;"></i> الفرع</span>
+                    <span class="font-bold">{{ student_profile.track }}</span>
+                </div>
+                {% endif %}
+                {% if student_profile.governorate %}
+                <div class="flex-between" style="padding: 1.5rem 2rem; border-bottom: 1px solid var(--border-light);">
+                    <span class="text-muted font-bold flex-center gap-3"><i data-lucide="map-pin" class="gold" style="width: 16px;"></i> المحافظة</span>
+                    <span class="font-bold">{{ student_profile.governorate }}</span>
+                </div>
+                {% endif %}
+                <div class="flex-between" style="padding: 1.5rem 2rem;">
+                    <span class="text-muted font-bold flex-center gap-3"><i data-lucide="calendar" class="gold" style="width: 16px;"></i> تاريخ التسجيل</span>
+                    <span class="font-bold">{{ request.user.date_joined|date:"Y/m/d" }}</span>
                 </div>
             </div>
-        </section>
-
-        <section>
-            <h2 class="mb-6" style="font-size: 1.5rem; display: flex; align-items: center; gap: 0.75rem;">
-                <i data-lucide="wallet" class="gold"></i> المحفظة المالية
-            </h2>
-            <div class="premium-card mb-6" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.02)); border: 1px solid rgba(16, 185, 129, 0.2);">
-                <div class="flex-between align-center mb-4">
-                    <span class="text-muted font-bold">الرصيد الحالي</span>
-                    <i data-lucide="shield-check" class="text-success" style="width: 16px;"></i>
-                </div>
-                <div style="font-size: 2.2rem; font-weight: 900; color: var(--success);">
-                    {{ wallet.balance|default:"0.00"|floatformat:2 }} <span style="font-size: 1rem;">ل.س</span>
-                </div>
-            </div>
-
-            <div class="premium-card" style="padding: 1.5rem 2rem;">
-                <h3 style="font-size: 0.9rem; margin-bottom: 1rem; color: var(--text-secondary);">آخر العمليات</h3>
-                <div class="flex-column gap-4">
-                    {% for tx in recent_transactions %}
-                        <div class="flex-between align-center" style="padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-light);">
-                            <div class="flex-center gap-3">
-                                <i data-lucide="{% if tx.amount > 0 %}plus-circle{% else %}minus-circle{% endif %}" style="width: 14px; color: {% if tx.amount > 0 %}var(--success){% else %}var(--error){% endif %};"></i>
-                                <span style="font-size: 0.85rem;">{{ tx.description|default:tx.source_event|truncatechars:25 }}</span>
-                            </div>
-                            <span style="font-weight: 700; font-size: 0.85rem; color: {% if tx.amount > 0 %}var(--success){% else %}var(--error){% endif %};">
-                                {% if tx.amount > 0 %}+{% endif %}{{ tx.amount|floatformat:0 }}
-                            </span>
-                        </div>
-                    {% empty %}
-                        <p class="text-muted text-center py-4" style="font-size: 0.85rem;">لا توجد حركات مالية</p>
-                    {% endfor %}
-                </div>
-            </div>
-        </section>
-    </div>
+        </div>
+    </section>
 </div>
 {% endblock %}
