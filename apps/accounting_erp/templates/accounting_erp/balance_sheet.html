@@ -1,197 +1,116 @@
 {% extends 'accounting_erp/base_accounting.html' %}
-{% load static humanize %}
+{% load humanize %}
 
-{% block accounting_content %}
-<style>
-    .bs-card {
-        background: #ffffff;
-        border-radius: 32px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.04), 0 0 0 1px rgba(0,0,0,0.03);
-    }
-    [data-theme='dark'] .bs-card {
-        background: #151515;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.04);
-    }
-    .bs-pillar {
-        transition: background 0.3s ease;
-    }
-</style>
-
-<div class="container mx-auto px-4 py-12 max-w-7xl" dir="rtl">
-    <!-- Multi-Utility Header with Filter Component -->
-    <div class="flex flex-col lg:flex-row justify-between items-end mb-12 gap-6 print:hidden">
+{% block content %}
+<div class="erp-container animate-fade-in" dir="rtl">
+    <div class="erp-header d-flex justify-content-between align-items-end mb-4">
         <div>
-            <div class="flex items-center gap-2 text-neutral-500 text-sm font-bold mb-3">
-                <a href="{% url 'accounting_erp:chart_tree' %}" class="hover:text-neutral-900 transition">النظام المالي</a>
-                <span>/</span>
-                <span class="text-neutral-800 font-black dark:text-white">الميزانية العمومية</span>
-            </div>
-            <h1 class="text-5xl font-black tracking-tight text-neutral-900 dark:text-white flex items-center gap-4">
-                الميزانية العمومية
-                <span class="text-lg font-medium text-neutral-400">(المركز المالي)</span>
-            </h1>
+            <h1 class="erp-title">الميزانية العمومية (Balance Sheet)</h1>
+            <p class="text-muted">الوضع المالي للمنصة: الأصول مقابل الالتزامات وحقوق الملكية</p>
         </div>
-
-        <!-- Refined Snapshot Filter -->
-        <form method="get" class="flex flex-wrap gap-3 items-center bg-neutral-50 dark:bg-neutral-900 p-2 rounded-2xl border border-neutral-200 dark:border-neutral-700 print:hidden">
-            <div class="flex items-center gap-2 text-xs text-neutral-500 font-bold px-2">
-                📅 لغاية تاريخ:
-                <input type="date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" class="bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white px-2 py-1.5 rounded border border-neutral-200 dark:border-neutral-700">
+        <div class="erp-actions">
+            <div class="{% if report.is_balanced %}text-success{% else %}text-danger{% endif %} font-weight-bold">
+                {% if report.is_balanced %}
+                <i class="fas fa-check-circle ml-1"></i> الميزانية متوازنة
+                {% else %}
+                <i class="fas fa-exclamation-triangle ml-1"></i> الميزانية غير متوازنة!
+                {% endif %}
             </div>
-            
-            <select name="cost_center" class="bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white px-3 py-1.5 rounded-lg font-bold border border-neutral-200 dark:border-neutral-700 text-xs">
-                <option value="">🔍 كافة المراكز</option>
-                {% for cc in cost_centers %}
-                <option value="{{ cc.id }}" {% if selected_cc == cc.id|stringformat:"s" %}selected{% endif %}>
-                    {{ cc.name }}
-                </option>
-                {% endfor %}
-            </select>
-            
-            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black px-3 py-1.5 rounded-lg transition">
-                تحديث 🔍
-            </button>
-            
-            <button type="button" onclick="const urlParams = new URLSearchParams(window.location.search); urlParams.set('format', 'print'); window.open(window.location.pathname + '?' + urlParams.toString(), '_blank')" class="bg-white hover:bg-neutral-50 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 px-3 py-1.5 rounded-lg font-bold border border-neutral-200 dark:border-neutral-700 shadow-sm transition text-xs">
-                🖨️ طباعة
-            </button>
-        </form>
+        </div>
     </div>
 
-    <!-- Dynamic Mathematical Equalizer (Balance Status Alert) -->
-    {% if not bs.is_balanced %}
-    <div class="bg-red-50 border border-red-200 text-red-700 p-4 rounded-2xl mb-8 flex items-center gap-3 font-black shadow-sm dark:bg-red-900/20 dark:border-red-900/50 dark:text-red-400 print:hidden">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-        تحذير نظام: الميزانية حالياً غير متزنة! (قد توجد قيود معلقة أو مفقودة).
-    </div>
-    {% endif %}
-
-    <!-- The Ultimate Balanced Dual-Pillar Card -->
-    <div class="bs-card overflow-hidden relative">
-        
-        <!-- Background Aesthetic Strip -->
-        <div class="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600"></div>
-
-        <!-- Grid System Container (Split UI) -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x lg:divide-x-reverse divide-neutral-100 dark:divide-neutral-800">
-            
-            <!-- PILLAR A: THE ASSETS (الأصول) -->
-            <div class="p-8 md:p-12 bs-pillar">
-                <div class="flex justify-between items-center border-b-4 border-neutral-900 dark:border-neutral-200 pb-4 mb-8">
-                    <h2 class="text-3xl font-black text-neutral-900 dark:text-white">الجانب المدين (الأصول)</h2>
-                    <span class="text-xs font-black bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-400 px-3 py-1 rounded-full tracking-widest">ASSETS</span>
-                </div>
-
-                <div class="space-y-6 min-h-[300px]">
-                    {% for item in bs.assets %}
-                    <div class="flex justify-between items-baseline group">
-                        <span class="text-lg font-bold text-neutral-700 dark:text-neutral-300 group-hover:text-indigo-600 transition">{{ item.name }}</span>
-                        <div class="flex-grow mx-4 border-b border-dashed border-neutral-200 dark:border-neutral-800 opacity-50"></div>
-                        <span class="font-mono font-black text-xl text-neutral-900 dark:text-white">{{ item.val|floatformat:2|intcomma }}</span>
-                    </div>
-                    {% empty %}
-                    <div class="text-center text-neutral-400 py-10 italic">لا توجد أصول مسجلة حالياً</div>
-                    {% endfor %}
-                </div>
-
-                <!-- Subtotal Asset Indicator -->
-                <div class="mt-12 bg-neutral-50 dark:bg-neutral-800/40 p-8 rounded-3xl border border-neutral-100 dark:border-neutral-800">
-                    <div class="text-neutral-500 font-bold text-sm tracking-wider uppercase mb-1">إجمالي قيمة الأصول</div>
-                    <div class="text-4xl md:text-5xl font-black font-mono text-indigo-600 dark:text-indigo-400">
-                        {{ bs.total_assets|floatformat:2|intcomma }}
-                    </div>
-                </div>
-            </div>
-
-            <!-- PILLAR B: THE LIABILITIES & EQUITY (الخصوم وحقوق الملكية) -->
-            <div class="p-8 md:p-12 bs-pillar bg-neutral-50/30 dark:bg-transparent">
-                <div class="flex justify-between items-center border-b-4 border-neutral-900 dark:border-neutral-200 pb-4 mb-8">
-                    <h2 class="text-3xl font-black text-neutral-900 dark:text-white">الجانب الدائن</h2>
-                    <span class="text-xs font-black bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400 px-3 py-1 rounded-full tracking-widest">L & E</span>
-                </div>
-
-                <!-- Section 1: Liabilities -->
-                <div class="mb-10">
-                    <h3 class="text-sm font-black text-neutral-400 uppercase tracking-widest mb-5 border-b dark:border-neutral-800 pb-2">1. الخصوم (الالتزامات المتداولة)</h3>
-                    <div class="space-y-5 pl-4">
-                        {% for item in bs.liabilities %}
-                        <div class="flex justify-between items-baseline group">
-                            <span class="text-lg font-bold text-neutral-700 dark:text-neutral-300">{{ item.name }}</span>
-                            <div class="flex-grow mx-4 border-b border-dashed border-neutral-200 dark:border-neutral-800 opacity-50"></div>
-                            <span class="font-mono font-black text-lg text-neutral-900 dark:text-white">{{ item.val|floatformat:2|intcomma }}</span>
-                        </div>
-                        {% empty %}
-                        <div class="text-xs text-neutral-400">لا توجد التزامات حالية</div>
-                        {% endfor %}
-                    </div>
-                    <div class="mt-4 text-right text-sm font-bold text-neutral-500">إجمالي الخصوم: {{ bs.total_liabilities|floatformat:2|intcomma }}</div>
-                </div>
-
-                <!-- Section 2: Equity + Retained Earnings Dynamic Injection -->
-                <div>
-                    <h3 class="text-sm font-black text-neutral-400 uppercase tracking-widest mb-5 border-b dark:border-neutral-800 pb-2">2. حقوق الملكية</h3>
-                    <div class="space-y-5 pl-4">
-                        {% for item in bs.equity %}
-                        <div class="flex justify-between items-baseline group">
-                            <span class="text-lg font-bold text-neutral-700 dark:text-neutral-300">{{ item.name }}</span>
-                            <div class="flex-grow mx-4 border-b border-dashed border-neutral-200 dark:border-neutral-800 opacity-50"></div>
-                            <span class="font-mono font-black text-lg text-neutral-900 dark:text-white">{{ item.val|floatformat:2|intcomma }}</span>
-                        </div>
-                        {% endfor %}
-                        
-                        <!-- Dynamic Period Profit Retained Injection -->
-                        <div class="flex justify-between items-baseline bg-emerald-50/50 dark:bg-emerald-900/20 p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
-                            <div>
-                                <span class="text-lg font-black text-emerald-800 dark:text-emerald-300">أرباح / خسائر الفترة الحالية</span>
-                                <span class="block text-xs text-emerald-600 dark:text-emerald-500 font-bold">محسوبة لحظياً من قائمة الدخل</span>
-                            </div>
-                            <span class="font-mono font-black text-2xl text-emerald-600 dark:text-emerald-400 underline decoration-double decoration-emerald-500 underline-offset-8">
-                                {{ bs.current_profit|floatformat:2|intcomma }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Subtotal Liability + Equity Indicator -->
-                <div class="mt-12 bg-neutral-900 text-white p-8 rounded-3xl shadow-xl">
-                    <div class="text-neutral-400 font-bold text-sm tracking-wider uppercase mb-1">إجمالي (الخصوم + حقوق الملكية)</div>
-                    <div class="text-4xl md:text-5xl font-black font-mono">
-                        {{ bs.total_liab_equity|floatformat:2|intcomma }}
-                    </div>
+    <div class="row">
+        <!-- Assets -->
+        <div class="col-md-6 mb-4">
+            <div class="glassmorphism p-4 h-100 border-success">
+                <h4 class="mb-4 text-success border-bottom pb-2">الأصول (Assets)</h4>
+                <div class="table-responsive">
+                    <table class="table erp-table">
+                        <tbody>
+                            {% for item in report.assets_items %}
+                            <tr>
+                                <td>{{ item.name }}</td>
+                                <td class="text-left font-weight-bold">{{ item.val|intcomma }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="bg-success text-white">
+                            <tr>
+                                <th>إجمالي الأصول</th>
+                                <th class="text-left">{{ report.assets_total|intcomma }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <!-- Ultimate Balancing Check (Legal Verification Bar) -->
-        <div class="py-6 px-8 bg-neutral-100 dark:bg-neutral-900 text-center border-t border-neutral-200 dark:border-neutral-800">
-            <div class="flex flex-col sm:flex-row justify-center items-center gap-6">
-                <div class="flex items-center gap-2 text-lg font-black text-neutral-600 dark:text-neutral-400">
-                    <span>الأصول</span>
-                    <span class="text-neutral-900 dark:text-white font-mono font-bold">{{ bs.total_assets|floatformat:2|intcomma }}</span>
-                </div>
-                
-                <div class="text-4xl font-black 
-                    {% if bs.is_balanced %}text-emerald-600 dark:text-emerald-500{% else %}text-red-600{% endif %} scale-125">
-                    =
+        <!-- Liabilities & Equity -->
+        <div class="col-md-6 mb-4">
+            <div class="glassmorphism p-4 h-100 border-primary">
+                <!-- Liabilities -->
+                <h4 class="mb-4 text-warning border-bottom pb-2">الالتزامات (Liabilities)</h4>
+                <div class="table-responsive mb-4">
+                    <table class="table erp-table">
+                        <tbody>
+                            {% for item in report.liabilities_items %}
+                            <tr>
+                                <td>{{ item.name }}</td>
+                                <td class="text-left font-weight-bold text-danger">{{ item.val|intcomma }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="bg-warning text-dark">
+                            <tr>
+                                <th>إجمالي الالتزامات</th>
+                                <th class="text-left">{{ report.liabilities_total|intcomma }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
 
-                <div class="flex items-center gap-2 text-lg font-black text-neutral-600 dark:text-neutral-400">
-                    <span>الخصوم + حقوق الملكية</span>
-                    <span class="text-neutral-900 dark:text-white font-mono font-bold">{{ bs.total_liab_equity|floatformat:2|intcomma }}</span>
+                <!-- Equity -->
+                <h4 class="mb-4 text-info border-bottom pb-2">حقوق الملكية (Equity)</h4>
+                <div class="table-responsive">
+                    <table class="table erp-table">
+                        <tbody>
+                            {% for item in report.equity_items %}
+                            <tr>
+                                <td>{{ item.name }}</td>
+                                <td class="text-left font-weight-bold">{{ item.val|intcomma }}</td>
+                            </tr>
+                            {% endfor %}
+                            <tr class="table-info">
+                                <td>أرباح/خسائر العام الحالي</td>
+                                <td class="text-left font-weight-bold">{{ report.current_earnings|intcomma }}</td>
+                            </tr>
+                        </tbody>
+                        <tfoot class="bg-info text-white">
+                            <tr>
+                                <th>إجمالي حقوق الملكية</th>
+                                <th class="text-left">{{ report.equity_total_final|intcomma }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Final Check Card -->
+    <div class="row">
+        <div class="col-12">
+            <div class="glassmorphism p-4 d-flex justify-content-between align-items-center bg-light">
+                <div class="text-success h4 mb-0">إجمالي الأصول: {{ report.assets_total|intcomma }}</div>
+                <div class="text-muted h3 mb-0">=</div>
+                <div class="text-primary h4 mb-0">إجمالي الالتزامات وحقوق الملكية: {{ report.liabilities_and_equity|intcomma }}</div>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-@media print {
-    body { background: white !important; color: #000 !important; }
-    .bs-card { border-radius: 0 !important; border: 3px solid #000 !important; box-shadow: none !important; background: white !important; }
-    .bg-neutral-900 { background-color: #000 !important; color: white !important; }
-    .divide-neutral-100, .divide-neutral-800 { border-color: #000 !important; }
-    .border-b-4 { border-color: #000 !important; }
-    .text-indigo-600, .text-emerald-600 { color: #000 !important; }
-}
+    .border-success { border-right: 5px solid #10b981 !important; }
+    .border-primary { border-right: 5px solid #2563eb !important; }
 </style>
 {% endblock %}

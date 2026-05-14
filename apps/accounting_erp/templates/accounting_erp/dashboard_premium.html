@@ -1,0 +1,375 @@
+{% extends "accounting_erp/base_accounting.html" %}
+{% load static i18n humanize %}
+
+{% block content %}
+<div class="erp-container animate-fade-in" dir="rtl">
+    <!-- Header -->
+    <div class="erp-header d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="erp-title">لوحة القيادة المالية التنفيذية</h1>
+            <p class="text-muted">Enterprise Accounting & Financial Intelligence</p>
+        </div>
+        <div class="erp-actions">
+            <button class="btn btn-premium-gradient">
+                <i class="fas fa-plus mr-2"></i> قيد جديد
+            </button>
+            <button class="btn btn-outline-secondary">
+                <i class="fas fa-file-excel mr-2"></i> تصدير إكسل
+            </button>
+        </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="kpi-card glassmorphism">
+                <div class="kpi-icon bg-success-soft">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="kpi-info">
+                    <span class="kpi-label">إيرادات الشهر (المستحقة)</span>
+                    <h2 class="kpi-value">{{ kpis.revenue_month|intcomma }} <small>ل.س</small></h2>
+                    <span class="kpi-trend text-success"><i class="fas fa-arrow-up"></i> 12% +</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="kpi-card glassmorphism">
+                <div class="kpi-icon bg-warning-soft">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="kpi-info">
+                    <span class="kpi-label">الإيرادات المؤجلة (التزامات)</span>
+                    <h2 class="kpi-value text-warning">{{ kpis.deferred_revenue|intcomma }} <small>ل.س</small></h2>
+                    <p class="kpi-sub">تتحول لإيراد عند انتهاء الخدمة</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="kpi-card glassmorphism">
+                <div class="kpi-icon bg-danger-soft">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div class="kpi-info">
+                    <span class="kpi-label">مستحقات المدرسين (غير مسددة)</span>
+                    <h2 class="kpi-value text-danger">{{ kpis.teacher_payables|intcomma }} <small>ل.س</small></h2>
+                    <span class="kpi-trend text-danger"><i class="fas fa-exclamation-circle"></i> تنبيه سيولة</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="kpi-card glassmorphism">
+                <div class="kpi-icon bg-primary-soft">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <div class="kpi-info">
+                    <span class="kpi-label">صافي الربح التشغيلي</span>
+                    <h2 class="kpi-value text-primary">{{ kpis.net_profit|intcomma }} <small>ل.س</small></h2>
+                    <div class="progress progress-sm mt-2">
+                        <div class="progress-bar bg-primary" style="width: 75%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Charts -->
+        <div class="col-md-8 mb-4">
+            <div class="chart-container glassmorphism p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="chart-title">تحليل الإيرادات والنمو</h4>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-light active">أسبوعي</button>
+                        <button class="btn btn-light">شهري</button>
+                    </div>
+                </div>
+                <canvas id="revenueChart" style="height: 300px;"></canvas>
+            </div>
+        </div>
+
+        <!-- Wallets -->
+        <div class="col-md-4 mb-4">
+            <div class="wallets-summary glassmorphism p-4 h-100">
+                <h4 class="mb-4">محرك المحافظ الداخلية</h4>
+                <div class="wallet-item mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="wallet-icon bg-info-soft ml-3"><i class="fas fa-chalkboard-teacher"></i></div>
+                            <div>
+                                <h6>إجمالي أرصدة المدرسين</h6>
+                                <small class="text-muted">بالليرة السورية</small>
+                            </div>
+                        </div>
+                        <h5 class="text-info">{{ wallets.total_teacher_balance|intcomma }}</h5>
+                    </div>
+                </div>
+                <div class="wallet-item mb-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="wallet-icon bg-purple-soft ml-3"><i class="fas fa-store"></i></div>
+                            <div>
+                                <h6>إجمالي أرصدة المراكز</h6>
+                                <small class="text-muted">عمولات مستحقة</small>
+                            </div>
+                        </div>
+                        <h5 class="text-purple">{{ wallets.total_center_balance|intcomma }}</h5>
+                    </div>
+                </div>
+                <hr>
+                <div class="mt-4">
+                    <h6 class="mb-3">توزيع العمولات الفعلي</h6>
+                    <canvas id="commissionPie" style="height: 200px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Journals Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="journals-table-container glassmorphism p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0">آخر قيود اليومية المؤثرة</h4>
+                    <a href="{% url 'accounting_erp:journal_list' %}" class="btn btn-link btn-sm">عرض الكل <i class="fas fa-chevron-left mr-1"></i></a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover erp-table">
+                        <thead>
+                            <tr>
+                                <th>تاريخ القيد</th>
+                                <th>المرجع</th>
+                                <th>البيان</th>
+                                <th>النوع</th>
+                                <th>المدين</th>
+                                <th>الدائن</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for j in recent_journals %}
+                            <tr>
+                                <td>{{ j.posting_date }}</td>
+                                <td class="font-weight-bold">{{ j.reference }}</td>
+                                <td>{{ j.memo }}</td>
+                                <td><span class="badge badge-soft-info">{{ j.get_entry_type_display }}</span></td>
+                                <td class="text-success">{{ j.get_total_debit|intcomma }}</td>
+                                <td class="text-danger">{{ j.get_total_credit|intcomma }}</td>
+                                <td>
+                                    {% if j.is_posted %}
+                                    <span class="dot bg-success"></span> مرحل
+                                    {% else %}
+                                    <span class="dot bg-warning"></span> مسودة
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">لا توجد قيود حالية</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* CSS for the Premium ERP Dashboard */
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+    
+    .erp-container {
+        padding: 30px;
+        background: #f8fafc;
+        min-height: 100vh;
+        font-family: 'Outfit', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .glassmorphism {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 20px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        transition: transform 0.3s ease;
+    }
+
+    .glassmorphism:hover {
+        transform: translateY(-5px);
+    }
+
+    .kpi-card {
+        padding: 25px;
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .kpi-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-left: 20px;
+    }
+
+    .bg-success-soft { background: #dcfce7; color: #16a34a; }
+    .bg-warning-soft { background: #fef9c3; color: #ca8a04; }
+    .bg-danger-soft { background: #fee2e2; color: #dc2626; }
+    .bg-primary-soft { background: #dbeafe; color: #2563eb; }
+    .bg-info-soft { background: #e0f2fe; color: #0891b2; }
+    .bg-purple-soft { background: #f3e8ff; color: #9333ea; }
+
+    .kpi-label {
+        font-size: 0.85rem;
+        color: #64748b;
+        font-weight: 600;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .kpi-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+        color: #1e293b;
+    }
+
+    .kpi-trend { font-size: 0.75rem; font-weight: 600; }
+    .kpi-sub { font-size: 0.7rem; color: #94a3b8; margin: 0; }
+
+    .btn-premium-gradient {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        color: white;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 12px;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn-premium-gradient:hover {
+        background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+        color: white;
+    }
+
+    .erp-table {
+        border-collapse: separate;
+        border-spacing: 0 10px;
+    }
+
+    .erp-table thead th {
+        border: none;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 15px;
+    }
+
+    .erp-table tbody tr {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+    }
+
+    .erp-table td {
+        padding: 18px 15px;
+        vertical-align: middle;
+        border-top: 1px solid #f1f5f9;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .erp-table td:first-child { border-right: 1px solid #f1f5f9; border-radius: 0 12px 12px 0; }
+    .erp-table td:last-child { border-left: 1px solid #f1f5f9; border-radius: 12px 0 0 12px; }
+
+    .badge-soft-info {
+        background: #e0f2fe;
+        color: #0369a1;
+        padding: 5px 12px;
+        border-radius: 6px;
+    }
+
+    .dot {
+        height: 8px;
+        width: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-left: 5px;
+    }
+
+    .text-purple { color: #9333ea; }
+
+    /* Animation */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Revenue Chart
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['السبت', 'الأحد', 'الأثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'],
+                datasets: [{
+                    label: 'إيرادات محققة',
+                    data: [120000, 190000, 150000, 250000, 220000, 300000, 280000],
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 3
+                }, {
+                    label: 'إيرادات مؤجلة',
+                    data: [400000, 380000, 450000, 500000, 480000, 520000, 550000],
+                    borderColor: '#f59e0b',
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top', rtl: true, labels: { font: { family: 'Outfit' } } }
+                },
+                scales: {
+                    y: { beginAtZero: true, position: 'right' }
+                }
+            }
+        });
+
+        // Commission Pie
+        const pieCtx = document.getElementById('commissionPie').getContext('2d');
+        new Chart(pieCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['المنصة', 'المدرسين', 'المراكز'],
+                datasets: [{
+                    data: [45, 40, 15],
+                    backgroundColor: ['#1e293b', '#2563eb', '#9333ea'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', rtl: true }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

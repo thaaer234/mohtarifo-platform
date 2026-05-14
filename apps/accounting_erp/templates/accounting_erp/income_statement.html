@@ -1,189 +1,112 @@
 {% extends 'accounting_erp/base_accounting.html' %}
-{% load static humanize %}
+{% load humanize %}
 
-{% block accounting_content %}
-<style>
-    .pnl-card {
-        background: #ffffff;
-        border-radius: 32px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
-    }
-    [data-theme='dark'] .pnl-card {
-        background: #171717;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.05);
-    }
-    .statement-line {
-        border-bottom: 1px dashed rgba(0,0,0,0.1);
-    }
-    [data-theme='dark'] .statement-line {
-        border-bottom: 1px dashed rgba(255,255,255,0.1);
-    }
-</style>
-
-<div class="container mx-auto px-4 py-12 max-w-5xl" dir="rtl">
-    <!-- Global Context Nav Header -->
-    <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6 print:hidden">
+{% block content %}
+<div class="erp-container animate-fade-in" dir="rtl">
+    <div class="erp-header d-flex justify-content-between align-items-end mb-4">
         <div>
-            <div class="flex items-center gap-2 text-neutral-500 text-sm font-bold mb-3">
-                <a href="{% url 'accounting_erp:chart_tree' %}" class="hover:text-neutral-900 transition">المركز المالي</a>
-                <span>/</span>
-                <span class="text-emerald-600">الأرباح والخسائر</span>
+            <h1 class="erp-title">قائمة الدخل (Profit & Loss)</h1>
+            <p class="text-muted">تحليل الإيرادات والمصروفات لفترة محددة</p>
+        </div>
+        <div class="erp-actions text-left">
+            <div class="p-3 bg-white rounded-lg shadow-sm">
+                <span class="text-muted small d-block">صافي الربح/الخسارة</span>
+                <h3 class="mb-0 {% if report.is_profit %}text-success{% else %}text-danger{% endif %}">
+                    {{ report.net_income|intcomma }} <small>ل.س</small>
+                </h3>
             </div>
-            <h1 class="text-5xl font-black tracking-tight text-neutral-900 dark:text-white">
-                قائمة الدخل التشغيلية
-            </h1>
-            <p class="text-neutral-500 text-lg mt-3">تقرير رسمي يقيس الأداء المالي الصافي بناءً على تدفقات الإيرادات والمصروفات التراكمية.</p>
         </div>
-        
-        <div class="w-full lg:w-auto flex gap-3 items-center flex-wrap print:hidden">
-            <!-- Enhanced Period & Center Filter -->
-            <form method="get" class="flex flex-wrap gap-3 items-center bg-neutral-50 dark:bg-neutral-900 p-2 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-inner">
-                
-                <div class="flex items-center gap-1 text-xs text-neutral-500 font-bold px-2">
-                   📅 الفترة:
-                   <input type="date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" class="bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white px-2 py-1.5 rounded border border-neutral-200 dark:border-neutral-700">
-                   <span>إلى</span>
-                   <input type="date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" class="bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white px-2 py-1.5 rounded border border-neutral-200 dark:border-neutral-700">
-                </div>
-
-                <select name="cost_center" class="bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white px-3 py-1.5 rounded-lg font-bold border border-neutral-200 dark:border-neutral-700 text-xs">
-                    <option value="">📍 كافة المراكز</option>
-                    {% for cc in cost_centers %}
-                    <option value="{{ cc.id }}" {% if selected_cc == cc.id|stringformat:"s" %}selected{% endif %}>
-                        {{ cc.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-
-                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black px-3 py-1.5 rounded-lg shadow-sm transition">
-                    تحديث 🔍
-                </button>
-            </form>
-
-
-             <button onclick="const urlParams = new URLSearchParams(window.location.search); urlParams.set('format', 'print'); window.open(window.location.pathname + '?' + urlParams.toString(), '_blank')" class="bg-white dark:bg-neutral-900 text-neutral-700 dark:text-neutral-300 px-6 py-3 rounded-2xl font-bold border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 shadow-sm transition flex items-center gap-2">
-                 🖨️ طباعة
-             </button>
-             <a href="{% url 'accounting_erp:export_excel' 'income_statement' %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl font-bold shadow-md transition flex items-center gap-2">
-                 📥 إكسل
-             </a>
-        </div>
-
     </div>
 
-    <!-- The Formal Instrument Card -->
-    <div class="pnl-card overflow-hidden print:shadow-none print:border-0">
-        
-        <!-- Corporate Header Box -->
-        <div class="px-10 py-12 bg-neutral-50 dark:bg-neutral-900/50 text-center border-b border-neutral-100 dark:border-neutral-800 relative">
-            <div class="absolute inset-0 opacity-[0.02] dark:opacity-[0.05] bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]"></div>
-            
-            <div class="relative z-10">
-                <h2 class="text-3xl font-black tracking-wide text-neutral-900 dark:text-white">أكاديمية محترفو التعليم</h2>
-                <p class="text-neutral-500 font-bold mt-1 tracking-widest text-sm uppercase">بيان الدخل الموحد - Income Statement</p>
-                <div class="inline-block mt-4 px-4 py-1.5 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded-full text-xs font-black tracking-wider">
-                    مبدأ الاستحقاق المالي ACCRUAL
+    <div class="row">
+        <!-- Revenues -->
+        <div class="col-md-6 mb-4">
+            <div class="glassmorphism p-4 h-100">
+                <h4 class="mb-4 text-primary"><i class="fas fa-plus-circle ml-2"></i> الإيرادات المحققة</h4>
+                <div class="table-responsive">
+                    <table class="table erp-table">
+                        <thead>
+                            <tr>
+                                <th>الحساب</th>
+                                <th class="text-left">القيمة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in report.revenue_items %}
+                            <tr>
+                                <td>{{ item.name }}</td>
+                                <td class="text-left font-weight-bold text-success">{{ item.val|intcomma }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="2" class="text-center text-muted">لا توجد إيرادات مسجلة</td></tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-light">
+                                <th class="text-primary">إجمالي الإيرادات</th>
+                                <th class="text-left text-primary">{{ report.revenue_total|intcomma }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <!-- The Breakdown Section -->
-        <div class="px-8 md:px-16 py-12 space-y-12">
-            
-            <!-- REVENUE BLOCK -->
-            <div>
-                <div class="flex items-center justify-between border-b-2 border-neutral-900 dark:border-neutral-200 pb-3 mb-6">
-                    <h3 class="text-2xl font-black text-neutral-900 dark:text-white flex items-center gap-3">
-                        <span class="w-3 h-3 bg-emerald-500 rounded-full"></span>
-                        أولاً: الإيرادات التشغيلية
-                    </h3>
-                </div>
-                
-                <div class="space-y-5 pl-6 pr-4">
-                    {% for item in pnl.revenue %}
-                    <div class="flex justify-between items-end group">
-                        <span class="text-lg font-bold text-neutral-700 dark:text-neutral-300 group-hover:text-emerald-600 transition">{{ item.name }}</span>
-                        <div class="flex-grow mx-4 statement-line opacity-50"></div>
-                        <span class="font-mono text-xl font-bold text-neutral-900 dark:text-white">{{ item.val|floatformat:2|intcomma }}</span>
-                    </div>
-                    {% empty %}
-                    <p class="text-neutral-400 italic py-4 text-center border rounded-xl border-dashed">لا يوجد نشاط إيرادي مسجل للفترة</p>
-                    {% endfor %}
-                </div>
-                
-                <!-- Subtotal Line -->
-                <div class="mt-8 flex justify-between items-center bg-emerald-50/50 dark:bg-emerald-900/20 p-6 rounded-2xl border border-emerald-100/50 dark:border-emerald-800/50">
-                    <span class="font-black text-xl text-emerald-800 dark:text-emerald-300">إجمالي الإيرادات المحققة</span>
-                    <span class="font-mono text-3xl font-black text-emerald-600 dark:text-emerald-400 underline decoration-double decoration-emerald-500 underline-offset-8">{{ pnl.total_revenue|floatformat:2|intcomma }}</span>
-                </div>
-            </div>
-
-            <!-- EXPENSE BLOCK -->
-            <div>
-                <div class="flex items-center justify-between border-b-2 border-neutral-900 dark:border-neutral-200 pb-3 mb-6">
-                    <h3 class="text-2xl font-black text-neutral-900 dark:text-white flex items-center gap-3">
-                        <span class="w-3 h-3 bg-red-500 rounded-full"></span>
-                        ثانياً: المصروفات والتكاليف
-                    </h3>
-                </div>
-                
-                <div class="space-y-5 pl-6 pr-4">
-                    {% for item in pnl.expense %}
-                    <div class="flex justify-between items-end group">
-                        <span class="text-lg font-bold text-neutral-700 dark:text-neutral-300 group-hover:text-red-600 transition">{{ item.name }}</span>
-                        <div class="flex-grow mx-4 statement-line opacity-50"></div>
-                        <span class="font-mono text-xl font-bold text-red-600 dark:text-red-400">({{ item.val|floatformat:2|intcomma }})</span>
-                    </div>
-                    {% empty %}
-                    <p class="text-neutral-400 italic py-4 text-center border rounded-xl border-dashed">لم يتم تسجيل أي مصروفات للفترة</p>
-                    {% endfor %}
-                </div>
-                
-                <!-- Subtotal Line -->
-                <div class="mt-8 flex justify-between items-center bg-red-50/50 dark:bg-red-900/20 p-6 rounded-2xl border border-red-100/50 dark:border-red-800/50">
-                    <span class="font-black text-xl text-red-800 dark:text-red-300">إجمالي أعباء المصروفات</span>
-                    <span class="font-mono text-3xl font-black text-red-600 dark:text-red-400">({{ pnl.total_expense|floatformat:2|intcomma }})</span>
+        <!-- Expenses -->
+        <div class="col-md-6 mb-4">
+            <div class="glassmorphism p-4 h-100">
+                <h4 class="mb-4 text-danger"><i class="fas fa-minus-circle ml-2"></i> المصروفات والتكاليف</h4>
+                <div class="table-responsive">
+                    <table class="table erp-table">
+                        <thead>
+                            <tr>
+                                <th>الحساب</th>
+                                <th class="text-left">القيمة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in report.expense_items %}
+                            <tr>
+                                <td>{{ item.name }}</td>
+                                <td class="text-left font-weight-bold text-danger">{{ item.val|intcomma }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="2" class="text-center text-muted">لا توجد مصروفات مسجلة</td></tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-light">
+                                <th class="text-danger">إجمالي المصروفات</th>
+                                <th class="text-left text-danger">{{ report.expense_total|intcomma }}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- ABSOLUTE BOTTOM LINE -->
-            <div class="pt-8 border-t-4 border-double border-neutral-900 dark:border-neutral-200">
-                <div class="flex flex-col md:flex-row justify-between items-center p-8 rounded-3xl shadow-2xl border
-                    {% if pnl.is_profit %}
-                        bg-emerald-600 text-white border-emerald-500
+    <!-- P&L Summary Card -->
+    <div class="row">
+        <div class="col-12">
+            <div class="glassmorphism p-5 text-center bg-primary-gradient text-white">
+                <h2 class="mb-3">النتيجة المالية النهائية</h2>
+                <h1 class="display-3 font-weight-bold mb-3">{{ report.net_income|intcomma }} <small>ل.س</small></h1>
+                <p class="lead">
+                    {% if report.is_profit %}
+                    🎉 لقد حققت المنصة أرباحاً جيدة خلال هذه الفترة.
                     {% else %}
-                        bg-red-600 text-white border-red-500
-                    {% endif %}">
-                    
-                    <div class="mb-4 md:mb-0 text-center md:text-right">
-                        <h4 class="text-lg font-bold opacity-80 tracking-widest">النتيجة النهائية للنشاط</h4>
-                        <h2 class="text-4xl font-black">صافي {% if pnl.is_profit %}الربح{% else %}الخسارة{% endif %} التشغيلي</h2>
-                    </div>
-                    
-                    <div class="text-center md:text-left">
-                        <span class="font-mono text-5xl font-black drop-shadow-md tracking-tighter">
-                            {{ pnl.net_income|floatformat:2|intcomma }}
-                        </span>
-                        <p class="text-xs mt-2 opacity-70 font-bold">عملة التقرير الرسمية (عملة النظام الافتراضية)</p>
-                    </div>
-                </div>
+                    ⚠️ هناك خسائر تشغيلية تتطلب مراجعة التكاليف.
+                    {% endif %}
+                </p>
             </div>
-        </div>
-        
-        <!-- Legal Footer box -->
-        <div class="bg-neutral-900 text-neutral-500 text-center text-xs py-4 font-bold tracking-widest">
-            حقوق الطبع والملكية محفوظة لمنصة محترفو التعليم © {% now "Y" %}
         </div>
     </div>
 </div>
 
 <style>
-@media print {
-    body { background-color: white !important; color: black !important; }
-    .pnl-card { border-radius: 0 !important; border: 2px solid #000 !important; box-shadow: none !important; background: white !important; color: black !important;}
-    .bg-neutral-50, .bg-emerald-50\/50, .bg-red-50\/50 { background-color: #f9f9f9 !important; color: black !important; border: 1px solid #000 !important;}
-    .bg-emerald-600, .bg-red-600 { background-color: #000 !important; color: white !important; }
-    .text-emerald-600, .text-red-600, .text-emerald-800, .text-red-800 { color: #000 !important; }
-}
+    .bg-primary-gradient {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    }
 </style>
 {% endblock %}

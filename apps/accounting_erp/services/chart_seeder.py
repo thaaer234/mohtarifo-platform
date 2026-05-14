@@ -1,61 +1,64 @@
-from apps.accounting_erp.models import Account, AccountType
-from django.db import transaction
+from ..models import Account, AccountType
 
-class ChartOfAccountsSeeder:
-
-    CHART = [
-        # 1. الأصول (Assets)
-        dict(code='1',    name='Assets',           name_ar='الأصول',             type=AccountType.ASSET, group=True,  parent=None),
-        dict(code='11',   name='Current Assets',   name_ar='الأصول المتداولة',   type=AccountType.ASSET, group=True,  parent='1'),
-        dict(code='111',  name='Cash on Hand',     name_ar='الصندوق (كاش)',      type=AccountType.ASSET, group=False, parent='11'),
-        dict(code='112',  name='Bank Accounts',    name_ar='البنوك',             type=AccountType.ASSET, group=False, parent='11'),
-        dict(code='113',  name='Receivables',      name_ar='الذمم المدينة',      type=AccountType.ASSET, group=True,  parent='11'),
-        dict(code='113-1', name='Sales Centers AR', name_ar='ذمم مراكز البيع',   type=AccountType.ASSET, group=False, parent='113'),
+def seed_enterprise_coa():
+    """
+    Seed the Enterprise Chart of Accounts (COA) with professional hierarchical structure.
+    """
+    coa_data = [
+        # ASSETS (1000)
+        {'code': '1', 'name': 'Assets', 'name_ar': 'الأصول', 'type': AccountType.ASSET, 'is_group': True},
+        {'code': '11', 'name': 'Current Assets', 'name_ar': 'الأصول المتداولة', 'type': AccountType.ASSET, 'parent': '1', 'is_group': True},
+        {'code': '1101', 'name': 'Cash on Hand', 'name_ar': 'الصندوق الرئيسي', 'type': AccountType.ASSET, 'parent': '11'},
+        {'code': '1102', 'name': 'Bank Accounts', 'name_ar': 'الحسابات البنكية', 'type': AccountType.ASSET, 'parent': '11'},
+        {'code': '1103', 'name': 'Student Receivables', 'name_ar': 'ذمم الطلاب', 'type': AccountType.ASSET, 'parent': '11'},
+        {'code': '1104', 'name': 'Center Receivables', 'name_ar': 'ذمم مراكز البيع', 'type': AccountType.ASSET, 'parent': '11'},
         
-        # 2. الخصوم (Liabilities)
-        dict(code='2',    name='Liabilities',      name_ar='الالتزامات',         type=AccountType.LIABILITY, group=True,  parent=None),
-        dict(code='21',   name='Current Liabs',    name_ar='الالتزامات المتداولة', type=AccountType.LIABILITY, group=True,  parent='2'),
-        dict(code='211',  name='Payables',         name_ar='الذمم الدائنة',      type=AccountType.LIABILITY, group=True,  parent='21'),
-        dict(code='211-1', name='Instructors AP',   name_ar='مستحقات المدرسين',   type=AccountType.LIABILITY, group=False, parent='211'),
-        dict(code='212',  name='Deferred Revenue', name_ar='إيرادات مؤجلة',      type=AccountType.LIABILITY, group=False, parent='21'),
+        # LIABILITIES (2000)
+        {'code': '2', 'name': 'Liabilities', 'name_ar': 'الخصوم / الالتزامات', 'type': AccountType.LIABILITY, 'is_group': True},
+        {'code': '21', 'name': 'Current Liabilities', 'name_ar': 'الالتزامات المتداولة', 'type': AccountType.LIABILITY, 'parent': '2', 'is_group': True},
+        {'code': '2101', 'name': 'Deferred Revenue', 'name_ar': 'الإيرادات المؤجلة', 'type': AccountType.LIABILITY, 'parent': '21'},
+        {'code': '22', 'name': 'Payables', 'name_ar': 'الذمم الدائنة', 'type': AccountType.LIABILITY, 'parent': '2', 'is_group': True},
+        {'code': '2201', 'name': 'Teacher Payables', 'name_ar': 'مستحقات المدرسين', 'type': AccountType.LIABILITY, 'parent': '22'},
+        {'code': '2202', 'name': 'Center Payables', 'name_ar': 'مستحقات المراكز', 'type': AccountType.LIABILITY, 'parent': '22'},
         
-        # 3. حقوق الملكية (Equity)
-        dict(code='3',    name='Equity',           name_ar='حقوق الملكية',       type=AccountType.EQUITY, group=True,  parent=None),
-        dict(code='31',   name='Capital',          name_ar='رأس المال',          type=AccountType.EQUITY, group=False, parent='31'),
-
-        # 4. الإيرادات (Revenue)
-        dict(code='4',    name='Revenue',          name_ar='الإيرادات',          type=AccountType.REVENUE, group=True,  parent=None),
-        dict(code='41',   name='Operating Rev',    name_ar='إيرادات النشاط',     type=AccountType.REVENUE, group=False, parent='41'),
+        # EQUITY (3000)
+        {'code': '3', 'name': 'Equity', 'name_ar': 'حقوق الملكية', 'type': AccountType.EQUITY, 'is_group': True},
+        {'code': '3101', 'name': 'Owner Capital', 'name_ar': 'رأس المال', 'type': AccountType.EQUITY, 'parent': '3'},
+        {'code': '3102', 'name': 'Retained Earnings', 'name_ar': 'الأرباح المحتجزة', 'type': AccountType.EQUITY, 'parent': '3'},
         
-        # 5. المصروفات (Expenses)
-        dict(code='5',    name='Expenses',         name_ar='المصاريف',           type=AccountType.EXPENSE, group=True,  parent=None),
-        dict(code='51',   name='Direct Costs',     name_ar='تكاليف النشاط',      type=AccountType.EXPENSE, group=False, parent='51'),
-        dict(code='52',   name='General Admin',    name_ar='مصاريف إدارية',      type=AccountType.EXPENSE, group=False, parent='52'),
+        # REVENUE (4000)
+        {'code': '4', 'name': 'Revenue', 'name_ar': 'الإيرادات', 'type': AccountType.REVENUE, 'is_group': True},
+        {'code': '4101', 'name': 'Course Sales Revenue', 'name_ar': 'إيرادات مبيعات الدورات', 'type': AccountType.REVENUE, 'parent': '4'},
+        {'code': '4102', 'name': 'Subscription Revenue', 'name_ar': 'إيرادات الاشتراكات', 'type': AccountType.REVENUE, 'parent': '4'},
+        {'code': '4103', 'name': 'Exam Session Revenue', 'name_ar': 'إيرادات الجلسات الامتحانية', 'type': AccountType.REVENUE, 'parent': '4'},
+        
+        # EXPENSES (5000)
+        {'code': '5', 'name': 'Expenses', 'name_ar': 'المصاريف', 'type': AccountType.EXPENSE, 'is_group': True},
+        {'code': '51', 'name': 'Direct Costs (COGS)', 'name_ar': 'التكاليف المباشرة', 'type': AccountType.EXPENSE, 'parent': '5', 'is_group': True},
+        {'code': '5101', 'name': 'Teacher Commission Expense', 'name_ar': 'مصاريف عمولات المدرسين', 'type': AccountType.EXPENSE, 'parent': '51'},
+        {'code': '5102', 'name': 'Center Commission Expense', 'name_ar': 'مصاريف عمولات المراكز', 'type': AccountType.EXPENSE, 'parent': '51'},
+        {'code': '52', 'name': 'Operating Expenses', 'name_ar': 'المصاريف التشغيلية', 'type': AccountType.EXPENSE, 'parent': '5', 'is_group': True},
+        {'code': '5201', 'name': 'Hosting & Infrastructure', 'name_ar': 'مصاريف الاستضافة والبنية التحتية', 'type': AccountType.EXPENSE, 'parent': '52'},
+        {'code': '5202', 'name': 'Marketing & Ads', 'name_ar': 'مصاريف التسويق والإعلانات', 'type': AccountType.EXPENSE, 'parent': '52'},
     ]
-
-    @classmethod
-    @transaction.atomic
-    def seed_standard_tree(cls):
-        created = 0
-        code_to_obj = {a.code: a for a in Account.objects.all()}
-
-        for entry in cls.CHART:
-            if entry['code'] in code_to_obj:
-                acc = code_to_obj[entry['code']]
-                acc.name_ar = entry['name_ar'] # Update names
-                acc.save()
-                continue 
-
-            parent = code_to_obj.get(entry['parent']) if entry['parent'] else None
-            obj = Account.objects.create(
-                code=entry['code'],
-                name=entry['name'],
-                name_ar=entry['name_ar'],
-                account_type=entry['type'],
-                is_group=entry['group'],
-                parent=parent,
-            )
-            code_to_obj[entry['code']] = obj
-            created += 1
-
-        return f"Tree updated: {created} new accounts."
+    
+    created_count = 0
+    for data in coa_data:
+        parent_obj = None
+        if 'parent' in data:
+            parent_obj = Account.objects.get(code=data['parent'])
+            
+        obj, created = Account.objects.get_or_create(
+            code=data['code'],
+            defaults={
+                'name': data['name'],
+                'name_ar': data['name_ar'],
+                'account_type': data['type'],
+                'is_group': data.get('is_group', False),
+                'parent': parent_obj
+            }
+        )
+        if created:
+            created_count += 1
+            
+    return created_count

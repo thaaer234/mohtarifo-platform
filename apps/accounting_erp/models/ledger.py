@@ -12,6 +12,7 @@ class JournalEntryType(models.TextChoices):
     SALES = 'SALES', 'فاتورة مبيعات (Sales)'
     ACCRUAL = 'ACCRUAL', 'قيد استحقاق (Accrual)'
     ADJUSTMENT = 'ADJUSTMENT', 'قيد تسوية (Adjustment)'
+    CLOSING = 'CLOSING', 'قيد إغلاق (Closing)'
 
 class JournalEntry(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -20,9 +21,16 @@ class JournalEntry(models.Model):
     memo = models.TextField(blank=True, verbose_name="البيان / الوصف")
     entry_type = models.CharField(max_length=20, choices=JournalEntryType.choices, default=JournalEntryType.MANUAL)
     
+    source_event = models.CharField(max_length=100, blank=True, null=True, help_text="Event that triggered this entry")
+    source_id = models.CharField(max_length=100, blank=True, null=True)
+    
     is_posted = models.BooleanField(default=True)
+    is_voided = models.BooleanField(default=False)
+    void_reason = models.TextField(blank=True, null=True)
+    
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "قيد يومية"
@@ -41,6 +49,10 @@ class JournalEntry(models.Model):
     def is_balanced(self):
         return abs(self.get_total_debit() - self.get_total_credit()) < Decimal('0.01')
 
+    def clean(self):
+        if not self.is_balanced() and self.is_posted:
+            raise ValidationError("القيد غير متوازن (المدين لا يساوي الدائن).")
+
 class JournalLine(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     journal = models.ForeignKey(JournalEntry, on_delete=models.CASCADE, related_name='lines')
@@ -52,9 +64,12 @@ class JournalLine(models.Model):
     
     line_memo = models.CharField(max_length=500, blank=True)
     
+    # Audit tracking
+    created_at = models.DateTimeField(auto_now_add=True)
+
     def clean(self):
         if self.account.is_group:
-            raise ValidationError("لا يمكن إضافة قيد لحساب رئيسي.")
+            raise ValidationError(f"لا يمكن إضافة قيد لحساب رئيسي: {self.account.display_name}")
         if self.debit_amount > 0 and self.credit_amount > 0:
             raise ValidationError("لا يمكن وضع مبلغ في المدين والدائن معاً في نفس السطر.")
 

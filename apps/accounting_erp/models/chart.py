@@ -22,14 +22,13 @@ class Account(models.Model):
     is_group = models.BooleanField(default=False, verbose_name="حساب رئيسي (مجلد)")
     is_active = models.BooleanField(default=True, verbose_name="نشط")
 
-    # Metadata for automatic linking
-    is_student_account = models.BooleanField(default=False)
-    student_id = models.IntegerField(null=True, blank=True)
-    
-    is_course_account = models.BooleanField(default=False)
-    course_id = models.IntegerField(null=True, blank=True)
+    # Link to entities
+    student = models.OneToOneField('accounts.StudentProfile', on_delete=models.SET_NULL, null=True, blank=True, related_name='accounting_account')
+    instructor = models.OneToOneField('accounts.InstructorProfile', on_delete=models.SET_NULL, null=True, blank=True, related_name='accounting_account')
+    sales_center = models.OneToOneField('billing.SalesCenter', on_delete=models.SET_NULL, null=True, blank=True, related_name='accounting_account')
 
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['code']
@@ -63,30 +62,13 @@ class Account(models.Model):
             total += child.get_rollup_balance(start_date, end_date)
         return total
 
-    @classmethod
-    def get_or_create_student_ar_account(cls, user_id, user_name):
-        parent_ar = cls.objects.filter(code='113').first() # Receivables
-        code = f"113-{user_id}"
-        obj, created = cls.objects.get_or_create(
-            code=code,
-            defaults={
-                'name': f"AR Student: {user_id}",
-                'name_ar': f"ذمة الطالب: {user_name}",
-                'account_type': AccountType.ASSET,
-                'parent': parent_ar,
-                'is_student_account': True,
-                'student_id': user_id
-            }
-        )
-        return obj
-
 class CostCenter(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     code = models.CharField(max_length=20, unique=True, verbose_name="الكود")
     name = models.CharField(max_length=100, verbose_name="الاسم")
     name_ar = models.CharField(max_length=100, blank=True, verbose_name="الاسم (AR)")
     
-    cost_center_type = models.CharField(max_length=50, blank=True)
+    cost_center_type = models.CharField(max_length=50, blank=True) # e.g. 'subject', 'branch', 'city'
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
