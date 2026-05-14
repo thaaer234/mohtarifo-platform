@@ -184,22 +184,28 @@
         </div>
         
         <div class="health-status-bar mb-4">
-            <div class="status-item {% if health_checks.database.status == 'healthy' %}status-ok{% else %}status-err{% endif %}" title="{{ health_checks.database.message }}">
+            <div class="status-item {% if health_checks.database.status == 'healthy' %}status-ok{% else %}status-err{% endif %}" 
+                 onclick="alert('{{ health_checks.database.message|escapejs }}')" style="cursor: pointer;">
                 <i data-lucide="database"></i> <span>قاعدة البيانات</span>
             </div>
-            <div class="status-item {% if health_checks.cache.status == 'healthy' %}status-ok{% else %}status-err{% endif %}" title="{{ health_checks.cache.message }}">
+            <div class="status-item {% if health_checks.cache.status == 'healthy' %}status-ok{% else %}status-err{% endif %}" 
+                 onclick="alert('{{ health_checks.cache.message|escapejs }}')" style="cursor: pointer;">
                 <i data-lucide="zap"></i> <span>الكاش</span>
             </div>
-            <div class="status-item {% if health_checks.storage.status == 'healthy' %}status-ok{% else %}status-err{% endif %}" title="{{ health_checks.storage.message }}">
+            <div class="status-item {% if health_checks.storage.status == 'healthy' %}status-ok{% else %}status-err{% endif %}" 
+                 onclick="alert('{{ health_checks.storage.message|escapejs }}')" style="cursor: pointer;">
                 <i data-lucide="hard-drive"></i> <span>التخزين</span>
             </div>
-            <div class="status-item {% if health_checks.environment.status == 'healthy' %}status-ok{% else %}status-warn{% endif %}" title="{{ health_checks.environment.message }}">
+            <div class="status-item {% if health_checks.environment.status == 'healthy' %}status-ok{% else %}status-warn{% endif %}" 
+                 onclick="alert('{{ health_checks.environment.message|escapejs }}')" style="cursor: pointer;">
                 <i data-lucide="settings"></i> <span>الإعدادات</span>
             </div>
-            <div class="status-item {% if health_checks.traffic.status == 'healthy' %}status-ok{% elif health_checks.traffic.status == 'warning' %}status-warn{% else %}status-err{% endif %}" title="{{ health_checks.traffic.message }}">
+            <div class="status-item {% if health_checks.traffic.status == 'healthy' %}status-ok{% elif health_checks.traffic.status == 'warning' %}status-warn{% else %}status-err{% endif %}" 
+                 onclick="alert('{{ health_checks.traffic.message|escapejs }}')" style="cursor: pointer;">
                 <i data-lucide="activity"></i> <span>التتبع</span>
             </div>
         </div>
+
 
 
         <div class="analytics-composite-grid">
