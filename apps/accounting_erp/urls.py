@@ -5,19 +5,9 @@ app_name = 'accounting_erp'
 
 urlpatterns = [
     path('', views.AccountingDashboardView.as_view(), name='dashboard_root'),
-    path('quick-operation/', views.QuickTransactionView.as_view(), name='quick_tx'),
     path('chart/', views.ChartOfAccountsView.as_view(), name='chart_tree'),
-
-    path('vouchers/', views.JournalVoucherListView.as_view(), name='journal_list'),
-    path('vouchers/<uuid:pk>/', views.JournalVoucherDetailView.as_view(), name='voucher_detail'),
-    path('trial-balance/', views.TrialBalanceReportView.as_view(), name='trial_balance'),
-
-    path('income-statement/', views.IncomeStatementReportView.as_view(), name='income_statement'),
-    path('balance-sheet/', views.BalanceSheetReportView.as_view(), name='balance_sheet'),
-    path('analysis/', views.CostCenterAnalysisView.as_view(), name='analysis_report'),
-
-    path('export-excel/<str:report_type>/', views.UniversalErpExcelExportView.as_view(), name='export_excel'),
-
-    # إعادة بناء البيانات المحاسبية — ?force=1 يحذف القيود القديمة ويعيد بناءها
-    path('system-rebuild-action/', views.RebuildAccountingSystemView.as_view(), name='system_rebuild'),
+    path('journals/', views.JournalListView.as_view(), name='journal_list'),
+    path('trial-balance/', views.TrialBalanceView.as_view(), name='trial_balance'),
+    path('trial-balance/export/', views.ExportTrialBalanceExcelView.as_view(), name='export_trial_balance'),
+    path('voucher/<uuid:pk>/print/', views.VoucherPrintView.as_view(), name='voucher_print'),
 ]

@@ -1,168 +1,46 @@
 {% extends 'accounting_erp/base_accounting.html' %}
-{% load static humanize %}
+{% load humanize %}
 
 {% block accounting_content %}
-<style>
-    .glass-card {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(16px);
-        border: 1px solid rgba(0,0,0,0.05);
-        box-shadow: 0 10px 40px -10px rgba(0,0,0,0.04);
-    }
-    [data-theme='dark'] .glass-card {
-        background: rgba(20, 20, 20, 0.8);
-        border: 1px solid rgba(255,255,255,0.05);
-        box-shadow: 0 10px 40px -10px rgba(0,0,0,0.4);
-    }
-    .col-dr { color: #4F46E5; font-weight: 600; }
-    [data-theme='dark'] .col-dr { color: #818CF8; }
-    .col-cr { color: #059669; font-weight: 600; }
-    [data-theme='dark'] .col-cr { color: #34D399; }
-</style>
-
-<div class="container mx-auto px-4 py-10 max-w-7xl" dir="rtl">
-    <!-- Header Section -->
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 mb-10 pb-6 border-b border-neutral-200/60 dark:border-neutral-800">
+<div class="max-w-7xl mx-auto" dir="rtl">
+    <div class="flex justify-between items-center mb-10">
         <div>
-            <div class="inline-flex items-center gap-2 mb-3">
-                 <a href="{% url 'accounting_erp:chart_tree' %}" class="text-sm font-bold text-neutral-500 hover:text-neutral-900 dark:hover:text-white flex items-center gap-1 transition">
-                     🏛️ النظام المحاسبي
-                 </a>
-                 <span class="text-neutral-300">/</span>
-                 <span class="text-sm text-neutral-400">ميزان المراجعة</span>
-            </div>
-            <h1 class="text-4xl font-black text-neutral-900 dark:text-white flex items-center gap-4">
-                <div class="bg-indigo-500/10 text-indigo-600 p-2.5 rounded-xl">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                </div>
-                ميزان المراجعة التحليلي
-            </h1>
-            <p class="text-neutral-500 mt-2 text-lg">بيان ختامي لمجموع أرصدة الحسابات لضمان صحة وسلامة التسجيل المحاسبي.</p>
+            <h2 class="text-3xl font-black text-neutral-900">ميزان المراجعة (Trial Balance)</h2>
+            <p class="text-neutral-500 mt-2 font-bold">ملخص الأرصدة المدينة والدائنة لكافة الحسابات</p>
         </div>
-
-        <div class="flex items-center gap-3 flex-wrap w-full lg:w-auto justify-end print:hidden">
-            <!-- Enhanced Period Filter -->
-            <form method="get" class="flex flex-wrap gap-3 items-center bg-neutral-50 dark:bg-neutral-900 p-2 rounded-2xl border border-neutral-200 dark:border-neutral-700 shadow-inner">
-                <div class="flex items-center gap-1 text-xs text-neutral-500 font-bold px-2">
-                   📅 الفترة:
-                   <input type="date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" class="bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white px-2 py-1.5 rounded border border-neutral-200 dark:border-neutral-700">
-                   <span>إلى</span>
-                   <input type="date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" class="bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white px-2 py-1.5 rounded border border-neutral-200 dark:border-neutral-700">
-                </div>
-                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black px-3 py-1.5 rounded-lg shadow-sm transition">
-                    تحديث 🔍
-                </button>
-            </form>
-
-             <!-- Balanced Status Badge -->
-             <div class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-black border shadow-sm {% if report.grand_totals.is_balanced %}bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/30 dark:border-emerald-800 dark:text-emerald-400{% else %}bg-red-50 border-red-200 text-red-700{% endif %}">
-                {% if report.grand_totals.is_balanced %}
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
-                ميزان متطابق
-                {% else %}
-                🚨 غير متزن
-                {% endif %}
-             </div>
-             <!-- Global Tools -->
-             <button onclick="const urlParams = new URLSearchParams(window.location.search); urlParams.set('format', 'print'); window.open(window.location.pathname + '?' + urlParams.toString(), '_blank')" class="bg-white hover:bg-neutral-50 dark:bg-neutral-900 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 px-5 py-2.5 rounded-xl font-bold shadow-sm transition flex items-center gap-2">
-                 🖨️ طباعة
-             </button>
-             <a href="{% url 'accounting_erp:export_excel' 'trial_balance' %}" class="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 px-5 py-2.5 rounded-xl font-bold shadow-sm border border-emerald-200 transition flex items-center gap-2">
-                 📥 إكسل
-             </a>
+        <div class="flex gap-4">
+            <a href="{% url 'accounting_erp:export_trial_balance' %}" class="bg-edu-green text-white px-6 py-3 rounded-2xl font-black shadow-lg hover:scale-105 transition flex items-center gap-2">
+                <span>تصدير إلى Excel</span>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </a>
         </div>
-
     </div>
 
-    <!-- Primary Data View -->
-    <div class="glass-card rounded-3xl overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-right border-collapse">
-                <thead>
-                    <!-- Double Header Level 1 -->
-                    <tr class="bg-neutral-50 dark:bg-neutral-800/50 border-b border-neutral-200 dark:border-neutral-700 text-sm font-black text-neutral-600 dark:text-neutral-300">
-                        <th rowspan="2" class="px-8 py-6 border-l border-neutral-200/50 dark:border-neutral-700/50">الحساب المالي</th>
-                        <th colspan="2" class="px-6 py-4 text-center bg-neutral-100/50 dark:bg-neutral-700/20 border-b border-neutral-200 dark:border-neutral-700 border-l border-neutral-200/50 dark:border-neutral-700/50 tracking-wide uppercase">مجموع الحركات</th>
-                        <th colspan="2" class="px-6 py-4 text-center bg-neutral-200/20 dark:bg-neutral-700/40 border-b border-neutral-200 dark:border-neutral-700 tracking-wide uppercase">الأرصدة الختامية</th>
-                    </tr>
-                    <!-- Double Header Level 2 -->
-                    <tr class="bg-neutral-50 dark:bg-neutral-800/50 text-xs font-black text-neutral-500 uppercase tracking-widest">
-                        <th class="px-6 py-3 text-center border-l border-neutral-200/50 dark:border-neutral-700/50">مدين (Dr)</th>
-                        <th class="px-6 py-3 text-center border-l border-neutral-200/50 dark:border-neutral-700/50">دائن (Cr)</th>
-                        <th class="px-6 py-3 text-center border-l border-neutral-200/50 dark:border-neutral-700/50 bg-neutral-50/30 dark:bg-neutral-900/30">مدين (Dr)</th>
-                        <th class="px-6 py-3 text-center bg-neutral-50/30 dark:bg-neutral-900/30">دائن (Cr)</th>
-                    </tr>
-                </thead>
-                
-                <tbody class="divide-y divide-neutral-100 dark:divide-neutral-800 text-base">
-                    {% for row in report.accounts %}
-                    <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-800/30 transition-colors duration-75 group">
-                        <!-- Account ID and Name -->
-                        <td class="px-8 py-5 border-l border-neutral-100 dark:border-neutral-800 flex items-center gap-3">
-                            <span class="font-mono text-xs bg-neutral-100 dark:bg-neutral-700 text-neutral-500 dark:text-neutral-400 px-2 py-1 rounded shadow-inner">
-                                {{ row.code }}
-                            </span>
-                            <span class="font-black text-neutral-900 dark:text-white text-lg group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
-                                {{ row.name }}
-                            </span>
-                        </td>
-                        
-                        <!-- Dynamic Activity Figures -->
-                        <td class="px-6 py-5 text-center font-mono font-bold col-dr border-l border-neutral-100/50 dark:border-neutral-800/50">
-                            {% if row.total_debit > 0 %}{{ row.total_debit|floatformat:2|intcomma }}{% else %}-{% endif %}
-                        </td>
-                        <td class="px-6 py-5 text-center font-mono font-bold col-cr border-l border-neutral-100/50 dark:border-neutral-800/50">
-                            {% if row.total_credit > 0 %}{{ row.total_credit|floatformat:2|intcomma }}{% else %}-{% endif %}
-                        </td>
-                        
-                        <!-- Highlighted Final Net Balance Figures -->
-                        <td class="px-6 py-5 text-center border-l border-neutral-100/50 dark:border-neutral-800/50 bg-neutral-50/30 dark:bg-neutral-900/20">
-                            {% if row.net_debit > 0 %}
-                            <span class="inline-block font-black font-mono text-xl text-neutral-900 dark:text-white underline decoration-indigo-500 decoration-2 underline-offset-4">
-                                {{ row.net_debit|floatformat:2|intcomma }}
-                            </span>
-                            {% else %}-{% endif %}
-                        </td>
-                        <td class="px-6 py-5 text-center bg-neutral-50/30 dark:bg-neutral-900/20">
-                            {% if row.net_credit > 0 %}
-                            <span class="inline-block font-black font-mono text-xl text-neutral-900 dark:text-white underline decoration-emerald-500 decoration-2 underline-offset-4">
-                                {{ row.net_credit|floatformat:2|intcomma }}
-                            </span>
-                            {% else %}-{% endif %}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="px-8 py-24 text-center text-neutral-400">
-                            <div class="flex flex-col items-center gap-4">
-                                <div class="bg-neutral-100 dark:bg-neutral-800 p-6 rounded-full">
-                                    <svg class="w-12 h-12 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                </div>
-                                <p class="text-lg font-bold">لا توجد حركات مالية مُرحلة في الأستاذ العام بعد.</p>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-
-                <!-- Super-Premium Total Footer Row -->
-                <tfoot class="bg-neutral-900 dark:bg-black text-white shadow-2xl border-t border-neutral-800 relative z-10">
-                    <tr class="font-black text-xl">
-                        <td class="px-8 py-6 border-l border-neutral-800 text-neutral-400 text-sm font-bold tracking-widest">الإجمالي العام</td>
-                        <td class="px-6 py-6 text-center font-mono">{{ report.grand_totals.debit|floatformat:2|intcomma }}</td>
-                        <td class="px-6 py-6 text-center font-mono border-l border-neutral-800">{{ report.grand_totals.credit|floatformat:2|intcomma }}</td>
-                        <td colspan="2" class="px-6 py-6 text-center bg-indigo-900/20 text-indigo-300 border-l border-neutral-800">
-                            <div class="flex flex-col items-center justify-center gap-1">
-                                <span class="text-xs text-neutral-500 font-bold tracking-widest">الحالة النهائية</span>
-                                <span class="{% if report.grand_totals.is_balanced %}text-emerald-400{% else %}text-red-400{% endif %}">
-                                    {% if report.grand_totals.is_balanced %}متزن تماماً ✓{% else %}⚠️ فجوة توازن{% endif %}
-                                </span>
-                            </div>
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
+    <div class="bg-white rounded-3xl border border-neutral-200 overflow-hidden shadow-2xl">
+        <table class="w-full text-right border-collapse">
+            <thead>
+                <tr class="bg-edu-green text-white font-black text-sm">
+                    <th class="px-6 py-4 border-l border-white/20">كود الحساب</th>
+                    <th class="px-6 py-4 border-l border-white/20">اسم الحساب</th>
+                    <th class="px-6 py-4 border-l border-white/20">مدين (DR)</th>
+                    <th class="px-6 py-4 border-l border-white/20">دائن (CR)</th>
+                    <th class="px-6 py-4">الصافي (Net)</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-neutral-100">
+                {% for item in data %}
+                <tr class="hover:bg-neutral-50 transition {% if item.is_group %}bg-neutral-50/50 font-black text-edu-green{% endif %}">
+                    <td class="px-6 py-4 font-mono text-sm">{{ item.code }}</td>
+                    <td class="px-6 py-4">{{ item.name }}</td>
+                    <td class="px-6 py-4 text-left font-mono">{% if item.debit > 0 %}{{ item.debit|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                    <td class="px-6 py-4 text-left font-mono">{% if item.credit > 0 %}{{ item.credit|floatformat:2|intcomma }}{% else %}-{% endif %}</td>
+                    <td class="px-6 py-4 text-left font-black {% if item.net > 0 %}text-edu-green{% elif item.net < 0 %}text-red-600{% endif %}">
+                        {{ item.net|floatformat:2|intcomma }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}

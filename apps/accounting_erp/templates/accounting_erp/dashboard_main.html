@@ -102,52 +102,32 @@
         
         <!-- Tile 1: Chart -->
         <a href="{% url 'accounting_erp:chart_tree' %}" class="nav-tile bg-white dark:bg-neutral-900 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 flex flex-col group">
-            <div class="bg-amber-500/10 text-amber-600 w-14 h-14 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-white transition-all duration-300">
+            <div class="bg-edu-green/10 text-edu-green w-14 h-14 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-edu-green group-hover:text-white transition-all duration-300">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
             </div>
-            <h4 class="text-xl font-black text-neutral-900 dark:text-white mb-2">شجرة الحسابات</h4>
-            <p class="text-neutral-500 text-sm mb-6 flex-grow">الهيكل التنظيمي المالي والأدلة المحاسبية الكاملة.</p>
-            <span class="inline-flex items-center text-amber-600 font-bold text-sm">دخول الآن &larr;</span>
+            <h4 class="text-xl font-black text-neutral-900 dark:text-white mb-2">دليل الحسابات</h4>
+            <p class="text-neutral-500 text-sm mb-6 flex-grow">الهيكل التنظيمي المالي والأدلة المحاسبية الكاملة (عربي/إنجليزي).</p>
+            <span class="inline-flex items-center text-edu-green font-bold text-sm">دخول الآن &larr;</span>
         </a>
 
-        <!-- Tile 2: Income -->
-        <a href="{% url 'accounting_erp:income_statement' %}" class="nav-tile bg-white dark:bg-neutral-900 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 flex flex-col group">
-            <div class="bg-emerald-500/10 text-emerald-600 w-14 h-14 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-            </div>
-            <h4 class="text-xl font-black text-neutral-900 dark:text-white mb-2">قائمة الدخل</h4>
-            <p class="text-neutral-500 text-sm mb-6 flex-grow">كشف الأرباح والخسائر وتحليل الإيرادات والمصروفات.</p>
-            <span class="inline-flex items-center text-emerald-600 font-bold text-sm">دخول الآن &larr;</span>
-        </a>
-
-        <!-- Tile 3: Balance -->
-        <a href="{% url 'accounting_erp:balance_sheet' %}" class="nav-tile bg-white dark:bg-neutral-900 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 flex flex-col group">
-            <div class="bg-purple-500/10 text-purple-600 w-14 h-14 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-purple-600 group-hover:text-white transition-all duration-300">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"></path></svg>
-            </div>
-            <h4 class="text-xl font-black text-neutral-900 dark:text-white mb-2">الميزانية العمومية</h4>
-            <p class="text-neutral-500 text-sm mb-6 flex-grow">المركز المالي الشامل والتوازن الإجمالي للشركة.</p>
-            <span class="inline-flex items-center text-purple-600 font-bold text-sm">دخول الآن &larr;</span>
-        </a>
-
-        <!-- Tile 4: Ledger -->
-        <a href="{% url 'accounting_erp:journal_list' %}" class="nav-tile bg-white dark:bg-neutral-900 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 flex flex-col group">
-            <div class="bg-blue-500/10 text-blue-600 w-14 h-14 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-blue-500 group-hover:text-white transition-all duration-300">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-            </div>
-            <h4 class="text-xl font-black text-neutral-900 dark:text-white mb-2">دفتر القيود</h4>
-            <p class="text-neutral-500 text-sm mb-6 flex-grow">الأرشيف التاريخي الزمني لكل حركة مالية مسجلة.</p>
-            <span class="inline-flex items-center text-blue-600 font-bold text-sm">دخول الآن &larr;</span>
-        </a>
-
-        <!-- Tile 5: Trial Balance -->
+        <!-- Tile 2: Trial Balance -->
         <a href="{% url 'accounting_erp:trial_balance' %}" class="nav-tile bg-white dark:bg-neutral-900 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 flex flex-col group">
-            <div class="bg-indigo-500/10 text-indigo-600 w-14 h-14 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-indigo-500 group-hover:text-white transition-all duration-300">
+            <div class="bg-edu-amber/10 text-edu-amber w-14 h-14 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-edu-amber group-hover:text-white transition-all duration-300">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
             </div>
             <h4 class="text-xl font-black text-neutral-900 dark:text-white mb-2">ميزان المراجعة</h4>
-            <p class="text-neutral-500 text-sm mb-6 flex-grow">تقرير فني لمراجعة مطابقة الحركات قبل التقفيل.</p>
-            <span class="inline-flex items-center text-indigo-600 font-bold text-sm">دخول الآن &larr;</span>
+            <p class="text-neutral-500 text-sm mb-6 flex-grow">التقرير المالي الشامل مع خيار التصدير إلى Excel عالي الجودة.</p>
+            <span class="inline-flex items-center text-edu-amber font-bold text-sm">عرض التقرير &larr;</span>
+        </a>
+
+        <!-- Tile 3: Ledger -->
+        <a href="{% url 'accounting_erp:journal_list' %}" class="nav-tile bg-white dark:bg-neutral-900 p-6 rounded-3xl border border-neutral-200 dark:border-neutral-800 flex flex-col group">
+            <div class="bg-edu-green/10 text-edu-green w-14 h-14 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 group-hover:bg-edu-green group-hover:text-white transition-all duration-300">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <h4 class="text-xl font-black text-neutral-900 dark:text-white mb-2">سجل القيود (الدفاتر)</h4>
+            <p class="text-neutral-500 text-sm mb-6 flex-grow">الأرشيف الزمني لكافة العمليات المالية مع إمكانية طباعة السندات.</p>
+            <span class="inline-flex items-center text-edu-green font-bold text-sm">تصفح القيود &larr;</span>
         </a>
 
         <!-- NEW Tile 6: QUICK CASH OPERATIONS -->

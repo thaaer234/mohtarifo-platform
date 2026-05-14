@@ -157,8 +157,8 @@
                         <td class="px-6 py-5 font-mono text-xs">{{ item.reference|default:"INTERNAL" }}</td>
                         <td class="px-6 py-5 font-bold">{{ item.memo }}</td>
                         <td class="px-8 py-5 text-center print:hidden">
-                            <a href="{% url 'accounting_erp:voucher_detail' item.pk %}" class="inline-flex items-center gap-2 px-4 py-2 bg-neutral-900 hover:bg-blue-600 dark:bg-neutral-800 dark:hover:bg-blue-600 text-white text-sm font-black rounded-xl transition shadow-sm">
-                                🖨️ عرض السند
+                            <a href="{% url 'accounting_erp:voucher_print' item.pk %}" class="inline-flex items-center gap-2 px-4 py-2 bg-edu-green hover:bg-edu-amber text-white text-sm font-black rounded-xl transition shadow-sm">
+                                🖨️ طباعة السند
                             </a>
                         </td>
                     </tr>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>سند محاسبي - {{ voucher.reference }}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap');
+        
+        body { font-family: 'Amiri', serif; margin: 0; padding: 20px; color: #111827; }
+        .voucher-box { border: 2px solid #047857; padding: 30px; border-radius: 10px; max-width: 900px; margin: auto; }
+        
+        header { display: flex; justify-content: space-between; border-bottom: 2px solid #F59E0B; padding-bottom: 15px; margin-bottom: 20px; }
+        .logo-section h1 { color: #047857; margin: 0; font-size: 28px; }
+        .info-section { text-align: left; font-weight: bold; }
+        
+        .title-box { text-align: center; margin: 20px 0; }
+        .title-box h2 { display: inline-block; padding: 10px 40px; background: #047857; color: white; border-radius: 50px; margin: 0; }
+        
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th { background: #f3f4f6; border: 1px solid #d1d5db; padding: 12px; text-align: center; color: #047857; }
+        td { border: 1px solid #d1d5db; padding: 12px; text-align: center; }
+        
+        .totals { margin-top: 20px; display: flex; justify-content: flex-end; }
+        .total-box { border: 2px solid #047857; padding: 10px 30px; border-radius: 10px; font-weight: bold; font-size: 20px; }
+        
+        .signatures { margin-top: 60px; display: flex; justify-content: space-between; }
+        .sig { border-top: 1px solid #111827; width: 200px; text-align: center; padding-top: 10px; font-weight: bold; }
+        
+        @media print {
+            .no-print { display: none; }
+            body { padding: 0; }
+            .voucher-box { border: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+        <button onclick="window.print()" style="padding: 10px 30px; background: #047857; color: white; border: none; border-radius: 5px; cursor: pointer;">طاعة السند (Print)</button>
+    </div>
+
+    <div class="voucher-box">
+        <header>
+            <div class="logo-section">
+                <h1>محترفو التعليم</h1>
+                <p>إدارة الشؤون المالية</p>
+            </div>
+            <div class="info-section">
+                <p>رقم السند: {{ voucher.reference }}</p>
+                <p>التاريخ: {{ voucher.posting_date }}</p>
+            </div>
+        </header>
+
+        <div class="title-box">
+            <h2>{{ voucher.get_entry_type_display }}</h2>
+        </div>
+
+        <p style="font-weight: bold; font-size: 18px;">بيان السند: {{ voucher.memo }}</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>اسم الحساب</th>
+                    <th>مدين (Dr)</th>
+                    <th>دائن (Cr)</th>
+                    <th>مركز التكلفة</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for line in voucher.lines.all %}
+                <tr>
+                    <td style="text-align: right;">{{ line.account.display_name }}</td>
+                    <td>{% if line.debit_amount > 0 %}{{ line.debit_amount }}{% else %}-{% endif %}</td>
+                    <td>{% if line.credit_amount > 0 %}{{ line.credit_amount }}{% else %}-{% endif %}</td>
+                    <td>{{ line.cost_center.name_ar|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="totals">
+            <div class="total-box">
+                الإجمالي: {{ voucher.get_total_debit }}
+            </div>
+        </div>
+
+        <div class="signatures">
+            <div class="sig">المحاسب</div>
+            <div class="sig">المدير المالي</div>
+            <div class="sig">المستلم</div>
+        </div>
+    </div>
+</body>
+</html>
