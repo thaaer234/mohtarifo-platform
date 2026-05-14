@@ -531,13 +531,7 @@ def login_view(request):
     if request.method == "POST" and form.is_valid():
         user = form.get_user()
         
-        # Staff/admin users bypass OTP for convenience and emergency access
-        if user.is_staff or user.is_superuser:
-            login(request, user)
-            cache.delete(_login_attempt_key(request))
-            return redirect("dashboard:home")
-        
-        # For students: store user id in session and send OTP
+        # Send OTP to everyone (including Admin) for maximum security
         phone = user.username
         request.session["otp_login_user_id"] = user.id
         request.session["otp_login_phone"] = phone
