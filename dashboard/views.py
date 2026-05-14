@@ -823,6 +823,37 @@ def password_reset_complete_view(request):
             user.set_password(form.cleaned_data["password1"])
             user.save()
             
+            # Send Security Notification via WhatsApp
+            ua = request.META.get('HTTP_USER_AGENT', '')
+            device = "جهاز غير معروف"
+            if "Windows" in ua: device = "Windows PC"
+            elif "Android" in ua: device = "Android Phone"
+            elif "iPhone" in ua: device = "iPhone"
+            elif "iPad" in ua: device = "iPad"
+            elif "Macintosh" in ua: device = "MacBook/iMac"
+            
+            browser = ""
+            if "Edg/" in ua: browser = "Edge"
+            elif "Chrome/" in ua: browser = "Chrome"
+            elif "Firefox/" in ua: browser = "Firefox"
+            elif "Safari/" in ua: browser = "Safari"
+            
+            device_full = f"{device} ({browser})" if browser else device
+            timestamp = timezone.now().strftime("%Y-%m-%d %H:%M")
+            
+            security_msg = (
+                f"🛡️ إشعار أمان: تم تغيير كلمة مرور حسابك بنجاح.\n\n"
+                f"📱 الجهاز: *{device_full}*\n"
+                f"⏰ الوقت: *{timestamp}*\n\n"
+                f"⚠️ إذا لم تقم بهذا الإجراء، يرجى التواصل مع الدعم الفني فوراً لحماية حسابك."
+            )
+            
+            threading.Thread(
+                target=send_whatsapp_message,
+                args=(phone, security_msg),
+                daemon=True
+            ).start()
+            
             # Clean up session
             request.session.pop("otp_reset_phone", None)
             request.session.pop("otp_reset_verified", None)

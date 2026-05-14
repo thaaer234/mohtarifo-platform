@@ -69,6 +69,10 @@
 
         <!-- Timer & Resend -->
         <div class="otp-timer-section mt-8 text-center">
+            <div class="otp-progress-container mb-4">
+                <div class="otp-progress-bar" id="otp-progress"></div>
+            </div>
+            
             <div class="otp-timer-display" id="otp-timer">
                 <i data-lucide="clock" style="width:16px;height:16px;"></i>
                 <span id="timer-text">صالح لمدة <span id="countdown">05:00</span></span>
@@ -190,6 +194,21 @@
 
 .otp-timer-display.expired {
     color: rgba(255, 70, 70, 0.7);
+}
+
+.otp-progress-container {
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.otp-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-gold, #d4a853), #f3d492);
+    width: 100%;
+    transition: width 1s linear;
 }
 
 .otp-resend-btn {
@@ -328,12 +347,19 @@
     });
     
     // === Countdown Timer (OTP Expiry) ===
-    let otpSeconds = {{ otp_expiry_seconds|default:300 }};
+    const totalOtpSeconds = {{ otp_expiry_seconds|default:300 }};
+    let otpSeconds = totalOtpSeconds;
     const countdownEl = document.getElementById('countdown');
     const timerDisplay = document.getElementById('otp-timer');
+    const progressBar = document.getElementById('otp-progress');
     
     const otpTimer = setInterval(() => {
         otpSeconds--;
+        
+        // Update progress bar
+        const progressPercent = (otpSeconds / totalOtpSeconds) * 100;
+        if (progressBar) progressBar.style.width = `${progressPercent}%`;
+
         if (otpSeconds <= 0) {
             clearInterval(otpTimer);
             countdownEl.textContent = '00:00';
