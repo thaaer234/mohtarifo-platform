@@ -35,6 +35,8 @@ from billing.models import AccessCode, AccessCodeBatch, AccessCodePrintLog, Acce
 from billing.services import create_codes_for_batch, create_codes_from_upload, unique_code
 from exams.models import Attempt, Exam, Question
 from learning.models import Course, CourseProgress, Lesson, LessonAttendance, LessonProgress, OnlineLessonSession
+from apps.accounting_erp.models import Wallet, WalletTransaction, JournalEntry
+
 
 from .forms import (
     CatalogSectionForm,
@@ -1276,11 +1278,25 @@ def admin_sales_center_profile(request, center_id):
         .annotate(codes_total=Count("codes", distinct=True), sold_total=Count("codes", filter=models.Q(codes__sale_status="sold"), distinct=True), activated_total=Count("codes__grants", distinct=True))
         .order_by("-created_at")
     )
+    # Fetch Accounting Data
+    wallet = Wallet.objects.filter(sales_center=center).first()
+    recent_transactions = []
+    if wallet:
+        recent_transactions = WalletTransaction.objects.filter(wallet=wallet).order_by('-created_at')[:20]
+
     return render(
         request,
         "dashboard/admin_sales_center_profile.html",
-        {"center": center, "batch_form": batch_form, "edit_form": edit_form, "batches": batches},
+        {
+            "center": center, 
+            "batch_form": batch_form, 
+            "edit_form": edit_form, 
+            "batches": batches,
+            "wallet": wallet,
+            "recent_transactions": recent_transactions
+        },
     )
+
 
 
 @admin_required
@@ -1760,6 +1776,11 @@ def instructor_dashboard(request):
     attendance_rows = LessonAttendance.objects.filter(session__lesson__unit__course__in=courses).select_related(
         "user", "session", "session__lesson", "session__lesson__unit", "session__lesson__unit__course"
     ).order_by("-created_at")
+
+    # Wallet & Accounting
+    instructor_profile = getattr(request.user, 'instructor_profile', None)
+    wallet = Wallet.objects.filter(instructor=instructor_profile).first()
+
     context = {
         "courses": courses,
         "courses_count": courses.count(),
@@ -1770,8 +1791,10 @@ def instructor_dashboard(request):
         "codes_count": AccessCode.objects.filter(course__in=courses).count(),
         "sessions": sessions[:8],
         "attendance_rows": attendance_rows[:10],
+        "wallet": wallet,
      }
     return render(request, "dashboard/instructor_dashboard.html", context)
+
 
 
 def _package_subject_groups(access_code, user, current_device):
@@ -2122,6 +2145,12 @@ def profile_page(request):
         course_ids = grants.filter(course__isnull=False).values_list("course_id", flat=True)
         total_lessons = Lesson.objects.filter(unit__course_id__in=course_ids).distinct().count()
         
+        # Wallet & Accounting
+        wallet = Wallet.objects.filter(student=student_profile).first()
+        recent_transactions = []
+        if wallet:
+            recent_transactions = WalletTransaction.objects.filter(wallet=wallet).order_by("-created_at")[:10]
+
         context = {
             "student_profile": student_profile,
             "grants": grants,
@@ -2130,7 +2159,10 @@ def profile_page(request):
             "streak": streak,
             "completed_lessons": completed_lessons,
             "total_lessons": total_lessons,
+            "wallet": wallet,
+            "recent_transactions": recent_transactions,
         }
+
         return render(request, "dashboard/profile.html", context)
     except Exception as e:
         import traceback

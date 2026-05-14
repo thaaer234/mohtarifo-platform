@@ -17,7 +17,7 @@
     </header>
 
     <div class="row mb-8">
-        <div class="col-md-6 mb-4">
+        <div class="col-md-4 mb-4">
             <div class="pro-card d-flex align-items-center gap-4 p-5">
                 <div class="stat-icon" style="width: 70px; height: 70px; border-radius: 20px; background: rgba(16, 185, 129, 0.1); color: var(--pro-accent); display: flex; align-items: center; justify-content: center;">
                     <i data-lucide="users" style="width: 35px; height: 35px;"></i>
@@ -28,7 +28,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6 mb-4">
+        <div class="col-md-4 mb-4">
             <div class="pro-card d-flex align-items-center gap-4 p-5">
                 <div class="stat-icon" style="width: 70px; height: 70px; border-radius: 20px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; display: flex; align-items: center; justify-content: center;">
                     <i data-lucide="book-open" style="width: 35px; height: 35px;"></i>
@@ -36,6 +36,17 @@
                 <div>
                     <span class="text-muted small font-weight-bold d-block">عدد الدورات النشطة</span>
                     <h2 class="mb-0 font-weight-bold" style="font-size: 2.5rem;">{{ courses_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="pro-card d-flex align-items-center gap-4 p-5" style="border-right: 4px solid var(--pro-accent);">
+                <div class="stat-icon" style="width: 70px; height: 70px; border-radius: 20px; background: rgba(245, 158, 11, 0.1); color: #f59e0b; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="wallet" style="width: 35px; height: 35px;"></i>
+                </div>
+                <div>
+                    <span class="text-muted small font-weight-bold d-block">رصيد أرباحي (ل.س)</span>
+                    <h2 class="mb-0 font-weight-bold text-success" style="font-size: 2.5rem;">{{ wallet.balance|default:"0.00"|floatformat:0 }}</h2>
                 </div>
             </div>
         </div>

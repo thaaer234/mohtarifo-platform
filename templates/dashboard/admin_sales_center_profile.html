@@ -34,9 +34,49 @@
     </div>
 </div>
 
-<!-- Main Stats & Batches -->
-<div class="grid-1 animate-fade-up" style="animation-delay: 0.1s;">
+<!-- Accounting & Stats Grid -->
+<div class="grid-3 mb-8 animate-fade-up" style="animation-delay: 0.05s;">
+    <!-- Wallet Card -->
+    <div class="premium-card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05)); border: 1px solid rgba(16, 185, 129, 0.2);">
+        <div class="flex-between align-center mb-4">
+            <div class="icon-box" style="background: var(--success); color: white;">
+                <i data-lucide="wallet"></i>
+            </div>
+            <span class="badge success">رصيد المحفظة</span>
+        </div>
+        <div class="stat-value" style="font-size: 2rem; color: var(--success);">{{ wallet.balance|default:"0.00"|floatformat:2 }} <span style="font-size: 1rem;">ل.س</span></div>
+        <p class="text-muted mt-2">آخر تحديث: {{ wallet.updated_at|date:"Y-m-d H:i" }}</p>
+    </div>
+
+    <!-- Potential Card -->
+    <div class="premium-card">
+        <div class="flex-between align-center mb-4">
+            <div class="icon-box" style="background: var(--brand-gold); color: white;">
+                <i data-lucide="trending-up"></i>
+            </div>
+            <span class="badge gold">الأرباح المتوقعة</span>
+        </div>
+        <div class="stat-value" style="font-size: 2rem; color: var(--text-primary);">{{ center.expected_balance|default:"0.00"|floatformat:0 }} <span style="font-size: 1rem;">ل.س</span></div>
+        <p class="text-muted mt-2">إجمالي مبيعات المركز المتوقعة</p>
+    </div>
+
+    <!-- Sold Codes Card -->
+    <div class="premium-card">
+        <div class="flex-between align-center mb-4">
+            <div class="icon-box" style="background: var(--brand-primary); color: white;">
+                <i data-lucide="shopping-bag"></i>
+            </div>
+            <span class="badge primary">الأكواد المباعة</span>
+        </div>
+        <div class="stat-value" style="font-size: 2rem; color: var(--text-primary);">{{ center.sold_codes_count|default:"0" }} <span style="font-size: 1rem;">كود</span></div>
+        <p class="text-muted mt-2">من أصل {{ center.total_codes|default:"0" }} كود مخصص</p>
+    </div>
+</div>
+
+<div class="grid-1 animate-fade-up" style="animation-delay: 0.1s; display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+    <!-- Batches List -->
     <article class="premium-card">
+
         <div class="flex-between mb-8 align-center">
             <h2 style="font-size: 1.5rem;"><i data-lucide="barcode" style="color:var(--brand-gold);"></i> دفعات أكواد المركز</h2>
             <div class="flex-center gap-4">
@@ -85,6 +125,36 @@
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+    </article>
+
+    <!-- Recent Accounting Transactions -->
+    <article class="premium-card">
+        <div class="flex-between mb-8 align-center">
+            <h2 style="font-size: 1.5rem;"><i data-lucide="history" style="color:var(--brand-primary);"></i> السجل المالي</h2>
+            <span class="badge" style="background:var(--bg-base);">آخر 20 عملية</span>
+        </div>
+        
+        <div class="activity-timeline">
+            {% for tx in recent_transactions %}
+                <div class="activity-item" style="padding: 1rem 0; border-bottom: 1px solid var(--border-light); display: flex; gap: 1rem;">
+                    <div class="tx-icon" style="width: 32px; height: 32px; border-radius: 8px; background: {% if tx.amount > 0 %}rgba(16, 185, 129, 0.1){% else %}rgba(239, 68, 68, 0.1){% endif %}; display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="{% if tx.amount > 0 %}arrow-down-left{% else %}arrow-up-right{% endif %}" style="width: 16px; color: {% if tx.amount > 0 %}var(--success){% else %}var(--error){% endif %};"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <div class="flex-between align-center">
+                            <strong style="color: var(--text-primary);">{{ tx.amount|floatformat:2 }} <small>ل.س</small></strong>
+                            <small style="color: var(--text-muted);">{{ tx.created_at|date:"m/d H:i" }}</small>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px;">{{ tx.description|default:tx.source_event }}</p>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="text-center p-8 text-muted">
+                    <i data-lucide="info" style="width: 32px; height: 32px; margin-bottom: 0.5rem; opacity: 0.5;"></i>
+                    <p>لا توجد معاملات مالية مسجلة حالياً.</p>
+                </div>
+            {% endfor %}
         </div>
     </article>
 </div>
