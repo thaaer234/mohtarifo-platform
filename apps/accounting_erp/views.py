@@ -44,7 +44,7 @@ class ChartOfAccountsView(BaseAccountingView, ListView):
     context_object_name = 'accounts'
     
     def get_queryset(self):
-        return Account.objects.filter(parent=None)
+        return Account.objects.all().order_by('code')
 
 class JournalListView(BaseAccountingView, ListView):
     model = JournalEntry
