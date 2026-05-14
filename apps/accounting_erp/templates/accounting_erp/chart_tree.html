@@ -70,7 +70,7 @@
             <div class="tree-grid">
                 {% for acc in accounts %}
                 <div class="tree-row d-flex align-items-center justify-content-between p-3 rounded-20 mb-2 {% if acc.is_group %}is-group{% endif %}" 
-                     style="margin-right: {{ acc.code|length|add:"-1"|mul:20 }}px;">
+                     style="margin-right: calc({{ acc.code|length|add:"-1" }} * 10px);">
                     
                     <div class="d-flex align-items-center gap-3">
                         {% if acc.parent %}
@@ -109,6 +109,7 @@
                 <div class="py-5 text-center opacity-50">لا توجد حسابات مسجلة في النظام</div>
                 {% endfor %}
             </div>
+
         </div>
     </div>
 </div>
