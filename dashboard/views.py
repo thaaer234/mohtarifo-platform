@@ -2060,12 +2060,6 @@ def student_dashboard(request):
         
     continue_learning = LessonProgress.objects.filter(user=request.user).select_related("lesson", "lesson__unit", "lesson__unit__course").order_by("-updated_at").first()
 
-    # Wallet & Accounting
-    wallet = Wallet.objects.filter(student=student_profile).first()
-    recent_transactions = []
-    if wallet:
-        recent_transactions = WalletTransaction.objects.filter(wallet=wallet).order_by("-created_at")[:8]
-
     context = {
         "redeem_form": redeem_form,
         "grants": grants,
@@ -2077,8 +2071,6 @@ def student_dashboard(request):
         "student_profile": student_profile,
         "continue_learning": continue_learning,
         "package_selection": package_selection,
-        "wallet": wallet,
-        "recent_transactions": recent_transactions,
     }
     return render(request, "dashboard/student_dashboard.html", context)
 
@@ -2153,12 +2145,6 @@ def profile_page(request):
         course_ids = grants.filter(course__isnull=False).values_list("course_id", flat=True)
         total_lessons = Lesson.objects.filter(unit__course_id__in=course_ids).distinct().count()
         
-        # Wallet & Accounting
-        wallet = Wallet.objects.filter(student=student_profile).first()
-        recent_transactions = []
-        if wallet:
-            recent_transactions = WalletTransaction.objects.filter(wallet=wallet).order_by("-created_at")[:10]
-
         context = {
             "student_profile": student_profile,
             "grants": grants,
@@ -2167,8 +2153,6 @@ def profile_page(request):
             "streak": streak,
             "completed_lessons": completed_lessons,
             "total_lessons": total_lessons,
-            "wallet": wallet,
-            "recent_transactions": recent_transactions,
         }
 
         return render(request, "dashboard/profile.html", context)

@@ -30,18 +30,18 @@ class AccountingEventService:
 
                 # Debit Cash
                 JournalLine.objects.create(
-                    entry=entry,
+                    journal=entry,
                     account=cash_account,
-                    debit=amount,
-                    credit=0
+                    debit_amount=amount,
+                    credit_amount=0
                 )
 
                 # Credit Deferred Revenue
                 JournalLine.objects.create(
-                    entry=entry,
+                    journal=entry,
                     account=deferred_revenue,
-                    debit=0,
-                    credit=amount
+                    debit_amount=0,
+                    credit_amount=amount
                 )
         except Exception as e:
             print(f"Accounting Error [process_payment]: {e}")
@@ -77,18 +77,18 @@ class AccountingEventService:
 
                 # Debit Deferred Revenue
                 JournalLine.objects.create(
-                    entry=entry,
+                    journal=entry,
                     account=deferred_revenue,
-                    debit=amount,
-                    credit=0
+                    debit_amount=amount,
+                    credit_amount=0
                 )
 
                 # Credit Revenue
                 JournalLine.objects.create(
-                    entry=entry,
+                    journal=entry,
                     account=revenue_account,
-                    debit=0,
-                    credit=amount
+                    debit_amount=0,
+                    credit_amount=amount
                 )
         except Exception as e:
             print(f"Accounting Error [process_purchase]: {e}")
@@ -121,18 +121,18 @@ class AccountingEventService:
 
                 # Debit Receivable
                 JournalLine.objects.create(
-                    entry=entry,
+                    journal=entry,
                     account=receivable_account,
-                    debit=amount,
-                    credit=0
+                    debit_amount=amount,
+                    credit_amount=0
                 )
 
                 # Credit Deferred Revenue
                 JournalLine.objects.create(
-                    entry=entry,
+                    journal=entry,
                     account=deferred_revenue,
-                    debit=0,
-                    credit=amount
+                    debit_amount=0,
+                    credit_amount=amount
                 )
         except Exception as e:
             print(f"Accounting Error [process_code_sale]: {e}")
@@ -177,18 +177,18 @@ class AccountingEventService:
                 revenue_acc = Account.objects.get(code='4101') # Live Sessions Revenue
                 
                 # Dr Deferred
-                JournalLine.objects.create(entry=entry, account=deferred_acc, debit=total_session_value, credit=0)
+                JournalLine.objects.create(journal=entry, account=deferred_acc, debit_amount=total_session_value, credit_amount=0)
                 # Cr Revenue
-                JournalLine.objects.create(entry=entry, account=revenue_acc, debit=0, credit=total_session_value)
+                JournalLine.objects.create(journal=entry, account=revenue_acc, debit_amount=0, credit_amount=total_session_value)
 
                 # 2. Teacher Payable
                 teacher_expense_acc = Account.objects.get(code='5101') # Teacher Costs
                 teacher_payable_acc = Account.objects.get(code='2201') # Teacher Payables
                 
                 # Dr Expense
-                JournalLine.objects.create(entry=entry, account=teacher_expense_acc, debit=splits['instructor_amount'], credit=0)
+                JournalLine.objects.create(journal=entry, account=teacher_expense_acc, debit_amount=splits['instructor_amount'], credit_amount=0)
                 # Cr Payable
-                JournalLine.objects.create(entry=entry, account=teacher_payable_acc, debit=0, credit=splits['instructor_amount'])
+                JournalLine.objects.create(journal=entry, account=teacher_payable_acc, debit_amount=0, credit_amount=splits['instructor_amount'])
 
                 # --- NEW: Wallet Integration ---
                 from .wallet_manager import WalletManager
