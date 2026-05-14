@@ -678,3 +678,28 @@ class AcademicBranchForm(forms.ModelForm):
             "sort_order": "الترتيب",
             "is_active": "نشط",
         }
+
+
+class PasswordResetRequestForm(forms.Form):
+    phone = forms.CharField(label="رقم الهاتف", max_length=40)
+
+    def clean_phone(self):
+        return validate_syrian_mobile(self.cleaned_data["phone"])
+
+
+class SetNewPasswordForm(forms.Form):
+    password1 = forms.CharField(label="كلمة المرور الجديدة", widget=forms.PasswordInput(), min_length=8)
+    password2 = forms.CharField(label="تأكيد كلمة المرور", widget=forms.PasswordInput(), min_length=8)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["password1"].widget.attrs["placeholder"] = "••••••••"
+        self.fields["password2"].widget.attrs["placeholder"] = "••••••••"
+
+    def clean(self):
+        cleaned = super().clean()
+        p1 = cleaned.get("password1")
+        p2 = cleaned.get("password2")
+        if p1 and p2 and p1 != p2:
+            raise ValidationError("كلمات المرور غير متطابقة.")
+        return cleaned

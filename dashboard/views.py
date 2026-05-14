@@ -58,6 +58,8 @@ from .forms import (
     RedeemCodeForm,
     SalesCenterForm,
     StudentRegistrationForm,
+    PasswordResetRequestForm,
+    SetNewPasswordForm,
 )
 from .models import CatalogSection, StudentNotification, WhatsAppTemplate
 from .seo import _site_url
@@ -537,7 +539,7 @@ def login_view(request):
         request.session["otp_login_phone"] = phone
         
         # Send OTP
-        otp_result = send_otp(phone, purpose="login")
+        otp_result = send_otp(phone, purpose="login", request=request)
         if not otp_result["success"]:
             messages.error(request, otp_result["message"])
             return render(request, "registration/login.html", {"form": form})
@@ -566,7 +568,7 @@ def verify_login_otp(request):
         action = request.POST.get("action")
         
         if action == "resend_otp":
-            otp_result = send_otp(phone, purpose="login")
+            otp_result = send_otp(phone, purpose="login", request=request)
             if otp_result["success"]:
                 success_message = otp_result["message"]
             else:
@@ -630,7 +632,7 @@ def register_view(request):
         }
         
         # Send OTP
-        otp_result = send_otp(phone, purpose="register")
+        otp_result = send_otp(phone, purpose="register", request=request)
         if not otp_result["success"]:
             messages.error(request, otp_result["message"])
             return render(request, "registration/register.html", {"form": form})
@@ -655,7 +657,7 @@ def verify_register_otp(request):
         action = request.POST.get("action")
         
         if action == "resend_otp":
-            otp_result = send_otp(phone, purpose="register")
+            otp_result = send_otp(phone, purpose="register", request=request)
             if otp_result["success"]:
                 success_message = otp_result["message"]
             else:
@@ -730,6 +732,108 @@ def verify_register_otp(request):
         "otp_length": OTP_LENGTH,
         "back_url": "/register/",
     })
+
+
+def password_reset_request_view(request):
+    """View to start the password reset process by providing a phone number."""
+    if request.user.is_authenticated:
+        return redirect("dashboard:home")
+        
+    form = PasswordResetRequestForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        phone = form.cleaned_data["phone"]
+        
+        # Verify user exists
+        user = User.objects.filter(username=phone).first()
+        if not user:
+            # For security, we don't always want to confirm if a user exists, 
+            # but in this student platform, we can show a helpful error.
+            messages.error(request, "هذا الرقم غير مسجل لدينا.")
+            return render(request, "registration/password_reset_request.html", {"form": form})
+        
+        # Store in session and send OTP
+        request.session["otp_reset_phone"] = phone
+        otp_result = send_otp(phone, purpose="reset_password", request=request)
+        
+        if otp_result["success"]:
+            return redirect("dashboard:password_reset_verify")
+        else:
+            messages.error(request, otp_result["message"])
+            
+    return render(request, "registration/password_reset_request.html", {"form": form})
+
+
+def password_reset_verify_view(request):
+    """OTP verification page for password reset."""
+    phone = request.session.get("otp_reset_phone")
+    if not phone:
+        return redirect("dashboard:password_reset_request")
+    
+    error_message = None
+    success_message = None
+    
+    if request.method == "POST":
+        action = request.POST.get("action")
+        
+        if action == "resend_otp":
+            otp_result = send_otp(phone, purpose="reset_password", request=request)
+            if otp_result["success"]:
+                success_message = otp_result["message"]
+            else:
+                error_message = otp_result["message"]
+        
+        elif action == "verify_otp":
+            submitted_code = request.POST.get("otp_code", "").strip()
+            result = verify_otp(phone, submitted_code, purpose="reset_password")
+            
+            if result["valid"]:
+                # OTP verified - allow password change
+                request.session["otp_reset_verified"] = True
+                return redirect("dashboard:password_reset_complete")
+            else:
+                error_message = result["message"]
+    
+    # Mask phone for display
+    phone_display = phone[:3] + "•" * (len(phone) - 5) + phone[-2:] if len(phone) > 5 else phone
+    
+    return render(request, "registration/verify_otp.html", {
+        "phone_display": phone_display,
+        "error_message": error_message,
+        "success_message": success_message,
+        "otp_expiry_seconds": OTP_EXPIRY_SECONDS,
+        "resend_cooldown": OTP_RESEND_COOLDOWN_SECONDS,
+        "otp_length": OTP_LENGTH,
+        "back_url": "/login/", # Back to login or reset request
+    })
+
+
+def password_reset_complete_view(request):
+    """Final stage of password reset: enter new password."""
+    phone = request.session.get("otp_reset_phone")
+    verified = request.session.get("otp_reset_verified")
+    
+    if not phone or not verified:
+        messages.error(request, "الرجاء التحقق من الرمز أولاً.")
+        return redirect("dashboard:password_reset_request")
+        
+    form = SetNewPasswordForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        user = User.objects.filter(username=phone).first()
+        if user:
+            user.set_password(form.cleaned_data["password1"])
+            user.save()
+            
+            # Clean up session
+            request.session.pop("otp_reset_phone", None)
+            request.session.pop("otp_reset_verified", None)
+            
+            messages.success(request, "تم تغيير كلمة المرور بنجاح. يمكنك الآن تسجيل الدخول.")
+            return redirect("dashboard:login")
+        else:
+            messages.error(request, "حدث خطأ غير متوقع.")
+            return redirect("dashboard:password_reset_request")
+            
+    return render(request, "registration/password_reset_complete.html", {"form": form})
 
 
 @admin_required

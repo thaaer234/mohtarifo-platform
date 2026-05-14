@@ -9,8 +9,10 @@ from datetime import timedelta
 from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
+from django.contrib.auth.models import User
 
 from .whatsapp_utils import send_whatsapp_message, format_phone_to_intl
+from .models import OTPVerificationLog
 
 logger = logging.getLogger(__name__)
 
@@ -48,13 +50,14 @@ def generate_otp():
     return ''.join([str(random.randint(0, 9)) for _ in range(OTP_LENGTH)])
 
 
-def send_otp(phone, purpose="register"):
+def send_otp(phone, purpose="register", request=None):
     """
     Generate and send an OTP to the given phone number via WhatsApp.
     
     Args:
         phone: The phone number (raw format, e.g. 0912345678)
-        purpose: Either 'register' or 'login'
+        purpose: Either 'register', 'login', or 'reset_password'
+        request: The Django request object (optional, for IP tracking)
     
     Returns:
         dict with keys: success (bool), message (str), cooldown_remaining (int, optional)
@@ -85,6 +88,24 @@ def send_otp(phone, purpose="register"):
     cache_key = _otp_cache_key(phone, purpose)
     cache.set(cache_key, otp_code, OTP_EXPIRY_SECONDS)
     
+    # Track in Database Log
+    ip = None
+    if request:
+        forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "")
+        ip = forwarded_for.split(",")[0].strip() if forwarded_for else request.META.get("REMOTE_ADDR")
+    
+    user = None
+    if purpose != "register":
+        user = User.objects.filter(username=phone).first()
+
+    OTPVerificationLog.objects.create(
+        phone=phone,
+        user=user,
+        code=otp_code,
+        purpose=purpose,
+        ip_address=ip
+    )
+    
     # Reset verification attempts
     attempts_key = _otp_attempts_key(phone, purpose)
     cache.delete(attempts_key)
@@ -105,6 +126,13 @@ def send_otp(phone, purpose="register"):
             f"✨ الرمز: *{otp_code}*\n\n"
             f"⏰ صالح لمدة {OTP_EXPIRY_SECONDS // 60} دقائق فقط.\n"
             f"⚠️ لا تشارك هذا الرمز مع أي شخص."
+        )
+    elif purpose == "reset_password":
+        message = (
+            f"🛠️ رمز استعادة كلمة المرور في محترفو التعليم:\n\n"
+            f"✨ الرمز: *{otp_code}*\n\n"
+            f"⏰ صالح لمدة {OTP_EXPIRY_SECONDS // 60} دقائق فقط.\n"
+            f"⚠️ إذا لم تطلب هذا الرمز، يرجى تجاهل الرسالة."
         )
     else:
         message = (
@@ -176,6 +204,15 @@ def verify_otp(phone, submitted_code, purpose="register"):
         # OTP is valid - clean up
         cache.delete(cache_key)
         cache.delete(attempts_key)
+        
+        # Mark as verified in Database
+        OTPVerificationLog.objects.filter(
+            phone=phone,
+            code=submitted_code,
+            purpose=purpose,
+            is_verified=False
+        ).update(is_verified=True, verified_at=timezone.now())
+        
         logger.info(f"OTP verified for {phone} ({purpose})")
         return {"valid": True, "message": "تم التحقق بنجاح."}
     else:

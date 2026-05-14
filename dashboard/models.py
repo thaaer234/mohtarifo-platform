@@ -60,3 +60,28 @@ class WhatsAppTemplate(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class OTPVerificationLog(models.Model):
+    PURPOSE_CHOICES = [
+        ("register", "إنشاء حساب"),
+        ("login", "تسجيل دخول"),
+        ("reset_password", "استعادة كلمة المرور"),
+    ]
+    
+    phone = models.CharField(max_length=40, verbose_name="رقم الهاتف")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="المستخدم")
+    code = models.CharField(max_length=10, verbose_name="الرمز")
+    purpose = models.CharField(max_length=20, choices=PURPOSE_CHOICES, verbose_name="الغرض")
+    is_verified = models.BooleanField(default=False, verbose_name="تم التحقق؟")
+    ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name="عنوان IP")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="وقت الإرسال")
+    verified_at = models.DateTimeField(null=True, blank=True, verbose_name="وقت التحقق")
+
+    class Meta:
+        verbose_name = "سجل رمز التحقق"
+        verbose_name_plural = "سجلات رموز التحقق"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.phone} - {self.get_purpose_display()}"
