@@ -320,59 +320,74 @@
     .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const primaryCtx = document.getElementById('revenueChartPremium').getContext('2d');
-        const grad = primaryCtx.createLinearGradient(0, 0, 0, 400);
-        grad.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
-        grad.addColorStop(1, 'rgba(16, 185, 129, 0)');
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const primaryCtx = document.getElementById('revenueChartPremium').getContext('2d');
+            const grad = primaryCtx.createLinearGradient(0, 0, 0, 400);
+            grad.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+            grad.addColorStop(1, 'rgba(16, 185, 129, 0)');
 
-        new Chart(primaryCtx, {
-            type: 'line',
-            data: {
-                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
-                datasets: [{
-                    label: 'إيرادات محققة',
-                    data: [450000, 520000, 480000, 610000, 590000, 720000],
-                    borderColor: '#10b981',
-                    borderWidth: 4,
-                    pointRadius: 4,
-                    pointBackgroundColor: '#10b981',
-                    fill: true,
-                    backgroundColor: grad,
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { grid: { display: false }, ticks: { color: '#64748b', font: { family: 'Cairo' } } },
-                    y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { family: 'Cairo' } }, position: 'right' }
+            const dailyData = {{ daily_revenue|safe }};
+            const labels = dailyData.map(d => d.day);
+            const values = dailyData.map(d => d.val);
+
+            new Chart(primaryCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'إيرادات يومية',
+                        data: values,
+                        borderColor: '#10b981',
+                        borderWidth: 4,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#10b981',
+                        pointBorderColor: '#fff',
+                        fill: true,
+                        backgroundColor: grad,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: '#0f172a',
+                            titleFont: { family: 'Cairo' },
+                            bodyFont: { family: 'Cairo' }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#64748b', font: { family: 'Cairo', weight: 'bold' } } },
+                        y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { family: 'Cairo' } }, position: 'right' }
+                    }
                 }
-            }
-        });
+            });
 
-        const donutCtx = document.getElementById('distributionDonut').getContext('2d');
-        new Chart(donutCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['المنصة', 'المدرسين', 'المراكز'],
-                datasets: [{
-                    data: [45, 35, 20],
-                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Cairo', weight: 'bold' } } } },
-                cutout: '80%'
-            }
+            const donutCtx = document.getElementById('distributionDonut').getContext('2d');
+            new Chart(donutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['المنصة', 'المدرسين', 'المراكز'],
+                    datasets: [{
+                        data: [45, 35, 20],
+                        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
+                        borderWidth: 0,
+                        hoverOffset: 15
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Cairo', weight: 'bold' }, padding: 20 } } },
+                    cutout: '80%'
+                }
+            });
         });
-    });
-</script>
+    </script>
 {% endblock %}

@@ -114,16 +114,19 @@
         .nav-link i { font-size: 1.1rem; opacity: 0.6; width: 24px; text-align: center; }
 
         .nav-link:hover {
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(16, 185, 129, 0.08);
             color: #fff;
-            transform: translateX(-4px);
+            transform: translateX(-8px);
+            box-shadow: -4px 0 15px rgba(16, 185, 129, 0.1);
         }
 
         .nav-link.active {
-            background: rgba(16, 185, 129, 0.12);
+            background: linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.02) 100%);
             color: var(--accent-green);
+            border-right: 3px solid var(--accent-green);
+            box-shadow: -10px 0 20px rgba(16, 185, 129, 0.05);
         }
-        .nav-link.active i { opacity: 1; }
+        .nav-link.active i { color: var(--accent-green); opacity: 1; filter: drop-shadow(0 0 5px var(--accent-green)); }
 
         .erp-main {
             margin-right: var(--sidebar-width);

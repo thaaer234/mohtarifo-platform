@@ -46,10 +46,24 @@ class AccountingDashboardView(BaseAccountingView, TemplateView):
         if cash_bal < context['kpis']['teacher_payables']:
             context['kpis']['liquidity_status'] = 'critical'
             
+        # Daily Revenue (Last 7 Days)
+        daily_revenue = []
+        for i in range(6, -1, -1):
+            date = today - timezone.timedelta(days=i)
+            rev = JournalLine.objects.filter(
+                journal__posting_date=date,
+                account__code__startswith='4' # Revenue accounts
+            ).aggregate(total=Sum('credit_amount'))['total'] or 0
+            daily_revenue.append({
+                'day': date.strftime('%a'),
+                'val': float(rev)
+            })
+
+        context['daily_revenue'] = daily_revenue
         context['forecast'] = FinancialStatementEngine.generate_forecast()
         context['active_goals'] = FinancialGoal.objects.filter(is_active=True)
         
-        context['recent_journals'] = JournalEntry.objects.all().order_by('-created_at')[:8]
+        context['recent_journals'] = JournalEntry.objects.all().order_by('-created_at')[:12]
         context['wallets_summary'] = {
             'teacher': Wallet.objects.filter(owner_type='TEACHER').aggregate(total=Sum('balance'))['total'] or 0,
             'center': Wallet.objects.filter(owner_type='CENTER').aggregate(total=Sum('balance'))['total'] or 0,
