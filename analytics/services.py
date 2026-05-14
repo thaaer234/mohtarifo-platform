@@ -113,22 +113,38 @@ class TrackingService:
             
             ua_string = request.META.get('HTTP_USER_AGENT', '')
             
+            # Default values
+            is_mobile = False
+            is_tablet = False
+            is_bot = False
+            os_family = "Unknown"
+            browser_family = "Unknown"
+
             try:
                 import user_agents
-                user_agent = user_agents.parse(ua_string)
-                is_mobile = user_agent.is_mobile
-                is_tablet = user_agent.is_tablet
-                is_bot = user_agent.is_bot
-                os_family = user_agent.os.family
-                browser_family = user_agent.browser.family
-            except ImportError:
-                # Manual fallback if library is missing on production server
+                ua = user_agents.parse(ua_string)
+                is_mobile = ua.is_mobile
+                is_tablet = ua.is_tablet
+                is_bot = ua.is_bot
+                os_family = str(ua.os.family)
+                browser_family = str(ua.browser.family)
+            except (ImportError, Exception):
+                # Manual fallback if library is missing or parsing fails
                 ua_lower = ua_string.lower()
                 is_bot = 'bot' in ua_lower or 'spider' in ua_lower or 'crawl' in ua_lower
                 is_tablet = 'tablet' in ua_lower or 'ipad' in ua_lower
                 is_mobile = 'mobile' in ua_lower or 'android' in ua_lower or 'iphone' in ua_lower
-                os_family = 'Windows' if 'windows' in ua_lower else 'Android' if 'android' in ua_lower else 'iOS' if 'iphone' in ua_lower else 'Mac' if 'mac' in ua_lower else 'Unknown'
-                browser_family = 'Chrome' if 'chrome' in ua_lower and 'edg' not in ua_lower else 'Edge' if 'edg' in ua_lower else 'Safari' if 'safari' in ua_lower else 'Firefox' if 'firefox' in ua_lower else 'Unknown'
+                
+                if 'windows' in ua_lower: os_family = 'Windows'
+                elif 'android' in ua_lower: os_family = 'Android'
+                elif 'iphone' in ua_lower or 'ipad' in ua_lower: os_family = 'iOS'
+                elif 'mac' in ua_lower: os_family = 'Mac OS'
+                elif 'linux' in ua_lower: os_family = 'Linux'
+
+                if 'chrome' in ua_lower and 'edg' not in ua_lower: browser_family = 'Chrome'
+                elif 'edg' in ua_lower: browser_family = 'Edge'
+                elif 'safari' in ua_lower and 'chrome' not in ua_lower: browser_family = 'Safari'
+                elif 'firefox' in ua_lower: browser_family = 'Firefox'
 
             # Categorize device
             device_type = "pc"
@@ -158,10 +174,16 @@ class TrackingService:
             else:
                 session_key = f"ip_{ip}"
                 
-            # Prevent spamming: Check if we logged this session in the last 5 seconds
+            # Prevent spamming: Check if we logged this session/IP in the last 10 seconds
             from django.utils import timezone
-            recent = LandingVisit.objects.filter(session_key=session_key).order_by('-visited_at').first()
-            if recent and (timezone.now() - recent.visited_at).total_seconds() < 5:
+            filter_kwargs = {}
+            if session_key:
+                filter_kwargs['session_key'] = session_key
+            else:
+                filter_kwargs['ip_address'] = ip
+                
+            recent = LandingVisit.objects.filter(**filter_kwargs).order_by('-visited_at').first()
+            if recent and (timezone.now() - recent.visited_at).total_seconds() < 10:
                 if user and not recent.user:
                     recent.user = user
                     recent.save(update_fields=['user'])
@@ -173,8 +195,8 @@ class TrackingService:
                 ip_address=ip,
                 user_agent=ua_string[:400] if ua_string else None,
                 device_type=device_type,
-                os_family=user_agent.os.family,
-                browser_family=user_agent.browser.family
+                os_family=os_family[:50] if os_family else "Unknown",
+                browser_family=browser_family[:50] if browser_family else "Unknown"
             )
         except Exception as e:
             import traceback

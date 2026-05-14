@@ -897,6 +897,23 @@ def admin_dashboard(request):
     )
     recent_batches = AccessCodeBatch.objects.select_related("course", "institute", "sales_center").order_by("-created_at")[:8]
     sales_centers = SalesCenter.objects.select_related("institute").filter(is_active=True).order_by("name")[:8]
+    # Fetch system logs for debugging
+    system_logs = []
+    try:
+        import os
+        log_files = [
+            ("Tracking Errors", "landing_error_log.txt"),
+            ("Profile Errors", "profile_error_log.txt"),
+        ]
+        for label, filename in log_files:
+            if os.path.exists(filename):
+                with open(filename, "r", encoding="utf-8") as f:
+                    content = f.read().strip()
+                    if content:
+                        system_logs.append({"label": label, "content": content[-2000:]}) # Last 2000 chars
+    except Exception:
+        pass
+
     context = {
         "instructor_profile": getattr(request.user, 'instructor_profile', None),
         "students_count": User.objects.filter(is_staff=False).count(),
@@ -923,8 +940,10 @@ def admin_dashboard(request):
             "anon": anon_visits,
             "devices": device_counts,
             "recent": recent_traffic
-        }
+        },
+        "system_logs": system_logs
     }
+
     return render(request, "dashboard/admin_dashboard.html", context)
 
 
@@ -2069,28 +2088,41 @@ def notifications_page(request):
 
 @login_required
 def profile_page(request):
-    student_profile = None
-    if hasattr(request.user, "student_profile"):
-        student_profile = request.user.student_profile
-    current_device = _current_device_fingerprint(request)
-    grants = _device_grants(request.user, current_device).select_related("course", "lesson").order_by("-created_at")
-    total_xp = student_profile.xp if student_profile else 0
-    level = student_profile.level if student_profile else 1
-    streak = student_profile.streak_days if student_profile else 0
-    completed_lessons = LessonProgress.objects.filter(user=request.user, completed_at__isnull=False).count()
-    total_lessons = Lesson.objects.filter(
-        unit__course__access_grants__user=request.user
-    ).distinct().count()
-    context = {
-        "student_profile": student_profile,
-        "grants": grants,
-        "total_xp": total_xp,
-        "level": level,
-        "streak": streak,
-        "completed_lessons": completed_lessons,
-        "total_lessons": total_lessons,
-    }
-    return render(request, "dashboard/profile.html", context)
+    try:
+        student_profile = None
+        if hasattr(request.user, "student_profile"):
+            student_profile = request.user.student_profile
+        
+        current_device = _current_device_fingerprint(request)
+        grants = _device_grants(request.user, current_device).select_related("course", "lesson").order_by("-created_at")
+        
+        total_xp = student_profile.xp if student_profile else 0
+        level = student_profile.level if student_profile else 1
+        streak = student_profile.streak_days if student_profile else 0
+        
+        completed_lessons = LessonProgress.objects.filter(user=request.user, completed_at__isnull=False).count()
+        
+        # Optimize query for total lessons
+        course_ids = grants.filter(course__isnull=False).values_list("course_id", flat=True)
+        total_lessons = Lesson.objects.filter(unit__course_id__in=course_ids).distinct().count()
+        
+        context = {
+            "student_profile": student_profile,
+            "grants": grants,
+            "total_xp": total_xp,
+            "level": level,
+            "streak": streak,
+            "completed_lessons": completed_lessons,
+            "total_lessons": total_lessons,
+        }
+        return render(request, "dashboard/profile.html", context)
+    except Exception as e:
+        import traceback
+        with open("profile_error_log.txt", "a", encoding="utf-8") as f:
+            f.write(f"Error at {timezone.now()}: {str(e)}\n")
+            f.write(traceback.format_exc() + "\n")
+        return render(request, "500.html", status=500)
+
     
 @login_required
 def profile_edit(request):

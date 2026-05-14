@@ -11,11 +11,26 @@ DEVICE_CACHE_TTL = 300
 
 
 def device_seed(request):
-    seed = request.COOKIES.get(DEVICE_COOKIE_NAME) or request.session.get("device_seed")
-    if not seed:
-        seed = uuid.uuid4().hex
-        request.session["device_seed"] = seed
-    return seed
+    # Safely try to get seed from cookies first
+    seed = request.COOKIES.get(DEVICE_COOKIE_NAME)
+    if seed:
+        return seed
+
+    # If not in cookies, try session with safety check
+    session = getattr(request, "session", None)
+    if session:
+        seed = session.get("device_seed")
+        if not seed:
+            seed = uuid.uuid4().hex
+            try:
+                session["device_seed"] = seed
+            except Exception:
+                pass
+        return seed
+    
+    # Fallback if both are missing
+    return "anonymous_seed"
+
 
 
 def device_fingerprint(request):

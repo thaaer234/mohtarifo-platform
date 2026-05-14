@@ -50,9 +50,6 @@ class ActiveDeviceMiddleware:
         return response
 
     def _fingerprint(self, request):
-        seed = request.COOKIES.get("mohtarifo_device_id") or request.session.get("device_seed")
-        if not seed:
-            return ""
         from .devices import device_fingerprint
-
         return device_fingerprint(request)
+
