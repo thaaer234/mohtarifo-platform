@@ -183,7 +183,27 @@
             </div>
         </div>
         
+        <div class="health-status-bar mb-4">
+            <div class="status-item {% if health_checks.database.status == 'healthy' %}status-ok{% else %}status-err{% endif %}" title="{{ health_checks.database.message }}">
+                <i data-lucide="database"></i> <span>قاعدة البيانات</span>
+            </div>
+            <div class="status-item {% if health_checks.cache.status == 'healthy' %}status-ok{% else %}status-err{% endif %}" title="{{ health_checks.cache.message }}">
+                <i data-lucide="zap"></i> <span>الكاش</span>
+            </div>
+            <div class="status-item {% if health_checks.storage.status == 'healthy' %}status-ok{% else %}status-err{% endif %}" title="{{ health_checks.storage.message }}">
+                <i data-lucide="hard-drive"></i> <span>التخزين</span>
+            </div>
+            <div class="status-item {% if health_checks.environment.status == 'healthy' %}status-ok{% else %}status-warn{% endif %}" title="{{ health_checks.environment.message }}">
+                <i data-lucide="settings"></i> <span>الإعدادات</span>
+            </div>
+            <div class="status-item {% if health_checks.traffic.status == 'healthy' %}status-ok{% elif health_checks.traffic.status == 'warning' %}status-warn{% else %}status-err{% endif %}" title="{{ health_checks.traffic.message }}">
+                <i data-lucide="activity"></i> <span>التتبع</span>
+            </div>
+        </div>
+
+
         <div class="analytics-composite-grid">
+
             <!-- Split View: Logged vs Anon -->
             <div class="analytics-subcard">
                 <span class="subcard-label">تفاعل الزوار (سجلوا دخول أم لا)</span>
@@ -271,8 +291,18 @@
 
         {% if system_logs %}
         <div class="traffic-log-container mt-4" style="border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.02);">
-            <span class="subcard-label text-danger">تنبيهات النظام (System Health)</span>
+            <div class="flex-between mb-2">
+                <span class="subcard-label text-danger" style="margin-bottom: 0;">تنبيهات النظام (System Health)</span>
+                <form method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="clear_system_logs">
+                    <button type="submit" class="btn btn-sm btn-secondary" style="font-size: 0.7rem; padding: 0.25rem 0.5rem; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2);">
+                        <i data-lucide="trash-2" style="width: 12px; height: 12px;"></i> مسح السجل
+                    </button>
+                </form>
+            </div>
             <div class="traffic-ticker">
+
                 {% for log in system_logs %}
                     <div class="ticker-row" style="border-bottom: 1px solid rgba(239, 68, 68, 0.1); flex-direction: column; align-items: flex-start; gap: 0.5rem;">
                         <strong class="text-danger" style="font-size: 0.8rem;">{{ log.label }}</strong>
@@ -639,6 +669,29 @@
         border-radius: 4px;
         font-family: monospace;
     }
+    .health-status-bar {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+    .status-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.6rem 1rem;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        border: 1px solid var(--border-light);
+        background: var(--bg-surface-elevated);
+        cursor: help;
+    }
+    .status-item i { width: 16px; height: 16px; }
+    .status-ok { color: #10b981; border-color: rgba(16, 185, 129, 0.2); background: rgba(16, 185, 129, 0.05); }
+    .status-warn { color: #f59e0b; border-color: rgba(245, 158, 11, 0.2); background: rgba(245, 158, 11, 0.05); }
+    .status-err { color: #ef4444; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.05); }
+
     .mb-4 { margin-bottom: 1.5rem; }
 </style>
+
 {% endblock %}

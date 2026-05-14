@@ -871,6 +871,15 @@ def password_reset_complete_view(request):
 def admin_dashboard(request):
     from analytics.services import TrackingService
     TrackingService.log_landing_visit(request)
+
+    if request.method == "POST" and request.POST.get("action") == "clear_system_logs":
+        import os
+        for f in ["landing_error_log.txt", "profile_error_log.txt"]:
+            if os.path.exists(f):
+                os.remove(f)
+        messages.success(request, "تم مسح سجلات الأخطاء بنجاح.")
+        return redirect("dashboard:admin_dashboard")
+
     
     from analytics.models import LandingVisit
     from django.db.models import Count
@@ -897,7 +906,12 @@ def admin_dashboard(request):
     )
     recent_batches = AccessCodeBatch.objects.select_related("course", "institute", "sales_center").order_by("-created_at")[:8]
     sales_centers = SalesCenter.objects.select_related("institute").filter(is_active=True).order_by("name")[:8]
+    # Run system diagnostics
+    from .diagnostics import SystemDiagnostics
+    health_checks = SystemDiagnostics.run_all_checks()
+
     # Fetch system logs for debugging
+
     system_logs = []
     try:
         import os
@@ -941,8 +955,10 @@ def admin_dashboard(request):
             "devices": device_counts,
             "recent": recent_traffic
         },
-        "system_logs": system_logs
+        "system_logs": system_logs,
+        "health_checks": health_checks
     }
+
 
     return render(request, "dashboard/admin_dashboard.html", context)
 
