@@ -8,7 +8,7 @@
     <!-- Premium UI dependencies -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -16,16 +16,19 @@
             --sidebar-bg: #0f1218;
             --accent-green: #10b981;
             --accent-blue: #3b82f6;
-            --sidebar-width: 300px;
+            --sidebar-width: 280px;
             --glass-border: rgba(255, 255, 255, 0.05);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
         }
 
         body {
-            font-family: 'Cairo', 'Outfit', sans-serif;
+            font-family: 'Cairo', sans-serif;
             background-color: var(--erp-bg);
-            color: #f8fafc;
+            color: var(--text-main);
             margin: 0;
             overflow-x: hidden;
+            transition: all 0.3s ease;
         }
 
         /* Premium Sidebar */
@@ -37,93 +40,103 @@
             right: 0;
             top: 0;
             border-left: 1px solid var(--glass-border);
-            padding: 40px 20px;
-            z-index: 1000;
+            padding: 30px 15px;
+            z-index: 1050;
             display: flex;
             flex-direction: column;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @media (max-width: 991.98px) {
+            .erp-sidebar {
+                transform: translateX(100%);
+            }
+            .erp-sidebar.show {
+                transform: translateX(0);
+            }
+            .erp-main {
+                margin-right: 0 !important;
+            }
         }
 
         .sidebar-brand {
             display: flex;
             align-items: center;
-            gap: 15px;
-            margin-bottom: 50px;
-            padding: 0 15px;
+            gap: 12px;
+            margin-bottom: 40px;
+            padding: 0 10px;
         }
 
         .brand-logo {
-            width: 45px;
-            height: 45px;
+            width: 40px;
+            height: 40px;
             background: linear-gradient(135deg, var(--accent-green), #059669);
-            border-radius: 14px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+            font-size: 1.2rem;
+            box-shadow: 0 8px 16px rgba(16, 185, 129, 0.2);
         }
 
         .brand-text {
             font-family: 'Outfit', sans-serif;
             font-weight: 800;
-            font-size: 1.6rem;
+            font-size: 1.4rem;
             letter-spacing: -0.5px;
         }
-
         .brand-text span { color: var(--accent-green); }
 
         /* Navigation */
         .nav-section-label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 1.2px;
             color: #475569;
-            margin: 25px 15px 15px;
+            margin: 20px 10px 10px;
             font-weight: 800;
         }
 
         .nav-link {
-            color: #94a3b8;
-            padding: 14px 18px;
-            border-radius: 16px;
-            margin-bottom: 6px;
+            color: var(--text-dim);
+            padding: 12px 16px;
+            border-radius: 14px;
+            margin-bottom: 4px;
             font-weight: 600;
             display: flex;
             align-items: center;
             gap: 12px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
         }
 
-        .nav-link i { font-size: 1.2rem; opacity: 0.7; transition: all 0.3s; }
+        .nav-link i { font-size: 1.1rem; opacity: 0.6; width: 24px; text-align: center; }
 
         .nav-link:hover {
-            background: rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.04);
             color: #fff;
-            transform: translateX(-5px);
+            transform: translateX(-4px);
         }
-
-        .nav-link:hover i { opacity: 1; color: var(--accent-green); }
 
         .nav-link.active {
-            background: rgba(16, 185, 129, 0.1);
+            background: rgba(16, 185, 129, 0.12);
             color: var(--accent-green);
-            border-right: 4px solid var(--accent-green);
         }
-
-        .nav-link.active i { opacity: 1; color: var(--accent-green); }
+        .nav-link.active i { opacity: 1; }
 
         .erp-main {
             margin-right: var(--sidebar-width);
             min-height: 100vh;
-            padding: 0;
-            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
         }
 
         .top-nav {
-            background: rgba(11, 14, 20, 0.8);
-            backdrop-filter: blur(20px);
+            background: rgba(11, 14, 20, 0.85);
+            backdrop-filter: blur(15px);
             border-bottom: 1px solid var(--glass-border);
-            padding: 15px 40px;
+            padding: 12px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -132,44 +145,73 @@
             z-index: 900;
         }
 
+        .toggle-btn {
+            display: none;
+            background: none;
+            border: 1px solid var(--glass-border);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 991.98px) {
+            .toggle-btn { display: block; }
+        }
+
         .user-profile-mini {
             display: flex;
             align-items: center;
-            gap: 15px;
-            padding: 8px 16px;
+            gap: 12px;
+            padding: 6px 12px;
             background: rgba(255, 255, 255, 0.03);
             border-radius: 100px;
             border: 1px solid var(--glass-border);
         }
 
-        .user-info { text-align: left; }
-        .user-info .name { display: block; font-weight: 700; font-size: 0.9rem; }
-        .user-info .role { font-size: 0.7rem; color: var(--text-sec); text-transform: uppercase; }
+        .user-info { text-align: right; }
+        .user-info .name { display: block; font-weight: 700; font-size: 0.85rem; line-height: 1.2; }
+        .user-info .role { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; }
 
         .avatar-orb {
-            width: 35px;
-            height: 35px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
-            border: 2px solid var(--accent-green);
-            object-fit: cover;
+            border: 1.5px solid var(--accent-green);
         }
 
         .erp-content-container {
-            padding: 40px;
+            padding: 30px;
+            flex: 1;
         }
 
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--erp-bg); }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        @media (max-width: 767.98px) {
+            .erp-content-container { padding: 15px; }
+            .top-nav { padding: 10px 15px; }
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1040;
+        }
+        .sidebar-overlay.show { display: block; }
 
     </style>
     {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="antialiased">
+    
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <!-- Premium Sidebar -->
-    <aside class="erp-sidebar">
+    <aside class="erp-sidebar" id="erpSidebar">
         <div class="sidebar-brand">
             <div class="brand-logo">
                 <i class="fas fa-cube text-white"></i>
@@ -178,40 +220,38 @@
         </div>
         
         <nav class="nav flex-column">
-            <div class="nav-section-label">General Intelligence</div>
+            <div class="nav-section-label">الاستخبارات المالية</div>
             <a class="nav-link active" href="{% url 'accounting_erp:dashboard_root' %}">
-                <i class="fas fa-layer-group"></i> الرئيسية
+                <i class="fas fa-chart-pie"></i> لوحة القيادة
             </a>
             <a class="nav-link" href="{% url 'accounting_erp:chart_tree' %}">
-                <i class="fas fa-project-diagram"></i> شجرة الحسابات
+                <i class="fas fa-sitemap"></i> شجرة الحسابات
             </a>
             <a class="nav-link" href="{% url 'accounting_erp:journal_list' %}">
-                <i class="fas fa-list-ol"></i> قيود اليومية
+                <i class="fas fa-exchange-alt"></i> القيود والعمليات
             </a>
 
-            <div class="nav-section-label">Financial Statements</div>
+            <div class="nav-section-label">التقارير الختامية</div>
             <a class="nav-link" href="{% url 'accounting_erp:trial_balance' %}">
                 <i class="fas fa-file-invoice"></i> ميزان المراجعة
             </a>
             <a class="nav-link" href="{% url 'accounting_erp:balance_sheet' %}">
-                <i class="fas fa-balance-scale-right"></i> الميزانية العمومية
+                <i class="fas fa-balance-scale"></i> الميزانية العمومية
             </a>
             <a class="nav-link" href="{% url 'accounting_erp:income_statement' %}">
-                <i class="fas fa-chart-pie"></i> قائمة الأرباح والخسائر
+                <i class="fas fa-hand-holding-usd"></i> الأرباح والخسائر
             </a>
 
-            <div class="nav-section-label">Strategic Tracking</div>
-            <a class="nav-link" href="#">
-                <i class="fas fa-bullseye"></i> الأهداف والسيولة
-            </a>
+            <div class="nav-section-label">النظام</div>
             <a class="nav-link" href="{% url 'dashboard:admin_dashboard' %}">
-                <i class="fas fa-arrow-right"></i> عودة للمنصة الرئيسية
+                <i class="fas fa-home"></i> العودة للمنصة
             </a>
         </nav>
         
-        <div class="mt-auto p-4">
-            <div class="version-tag text-center" style="font-size: 0.7rem; opacity: 0.4;">
-                Enterprise v2.05 · Secure Terminal
+        <div class="mt-auto p-3">
+            <div class="p-3 rounded-lg bg-dark text-center" style="border: 1px solid rgba(255,255,255,0.05);">
+                <small class="text-muted d-block mb-2">النظام المحاسبي v2.0</small>
+                <button class="btn btn-sm btn-block btn-outline-success">تحديث البيانات</button>
             </div>
         </div>
     </aside>
@@ -219,14 +259,19 @@
     <!-- Main Content -->
     <main class="erp-main">
         <header class="top-nav">
-            <div class="page-context-info">
-                <span style="font-weight: 800; font-size: 1.2rem; color: #fff;">Financial Core Engine</span>
-                <span style="color: var(--accent-green); margin-right: 10px; font-size: 0.8rem;"><i class="fas fa-check-circle"></i> Live Sync</span>
+            <div class="d-flex align-items-center">
+                <button class="toggle-btn" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="page-context-info mr-3 d-none d-md-block">
+                    <span style="font-weight: 800; font-size: 1.1rem; color: #fff;">مركز العمليات المالية</span>
+                </div>
             </div>
+            
             <div class="user-profile-mini">
                 <div class="user-info">
                     <span class="name">{{ request.user.get_full_name|default:request.user.username }}</span>
-                    <span class="role">Executive Admin</span>
+                    <span class="role">مدير النظام</span>
                 </div>
                 <img src="https://ui-avatars.com/api/?name={{ request.user.username }}&background=10b981&color=fff" class="avatar-orb">
             </div>
@@ -239,7 +284,30 @@
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('erpSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const toggle = document.getElementById('sidebarToggle');
+
+            function toggleSidebar() {
+                sidebar.classList.toggle('show');
+                overlay.classList.toggle('show');
+            }
+
+            if(toggle) toggle.addEventListener('click', toggleSidebar);
+            if(overlay) overlay.addEventListener('click', toggleSidebar);
+
+            // Active link handling
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-link').forEach(link => {
+                if(link.getAttribute('href') === currentPath) {
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
-

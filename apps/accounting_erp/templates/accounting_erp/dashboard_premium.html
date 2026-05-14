@@ -12,20 +12,16 @@
             <h1 class="erp-main-title">الذكاء المالي الاستراتيجي</h1>
             <p class="erp-subtitle">تحليل الأداء المؤسسي القائم على مبدأ الاستحقاق (Accrual Intelligence)</p>
         </div>
-        <div class="header-actions">
+        <div class="header-actions d-none d-lg-flex">
             <div class="action-group">
                 <button class="btn-erp-action primary" onclick="location.href='{% url 'accounting_erp:quick_transaction' %}'">
                     <span class="icon-orb"><i class="fas fa-plus"></i></span>
                     قيد محاسبي جديد
                 </button>
-                <button class="btn-erp-action secondary">
-                    <span class="icon-orb"><i class="fas fa-file-invoice-dollar"></i></span>
-                    التقارير الختامية
-                </button>
             </div>
             <div class="status-ticker">
                 <span class="status-indicator online"></span>
-                النظام المحاسبي متصل بجميع مراكز البيع
+                النظام المحاسبي متصل ومؤمن
             </div>
         </div>
     </div>
@@ -39,10 +35,9 @@
                 <div class="orb-value">{{ kpis.revenue_month|intcomma }}<small>ل.س</small></div>
                 <div class="orb-meta">
                     <span class="trend up"><i class="fas fa-caret-up"></i> 14.2%</span>
-                    بالمقارنة مع الشهر الماضي
+                    للشهر الحالي
                 </div>
             </div>
-            <div class="orb-chart"><canvas id="miniChart1"></canvas></div>
         </div>
 
         <div class="kpi-orb warning">
@@ -52,10 +47,9 @@
                 <div class="orb-value">{{ kpis.deferred_revenue|intcomma }}<small>ل.س</small></div>
                 <div class="orb-meta">
                     <span class="trend neutral">قيد التحقق</span>
-                    توقعات التدفق خلال 15 يوم
+                    التدفق خلال 15 يوم
                 </div>
             </div>
-            <div class="orb-chart"><canvas id="miniChart2"></canvas></div>
         </div>
 
         <div class="kpi-orb danger">
@@ -71,7 +65,6 @@
                     {% endif %}
                 </div>
             </div>
-            <div class="orb-chart"><canvas id="miniChart3"></canvas></div>
         </div>
 
         <div class="kpi-orb info">
@@ -80,33 +73,28 @@
                 <span class="orb-label">الأصول المتداولة (أرصدة)</span>
                 <div class="orb-value">{{ wallets.total_teacher_balance|intcomma }}<small>ل.س</small></div>
                 <div class="orb-meta">
-                    تحليل الأرصدة المجمعة للمراكز
+                    أرصدة المراكز المجمعة
                 </div>
             </div>
-            <div class="orb-chart"><canvas id="miniChart4"></canvas></div>
         </div>
     </div>
 
     <div class="dashboard-body-grid">
         <!-- Main Analytical Engine -->
         <div class="main-panel">
-            <div class="panel-card glass">
+            <div class="panel-card glass mb-6">
                 <div class="panel-header">
                     <h3><i class="fas fa-chart-area"></i> محرك تحليل النمو والإيرادات</h3>
-                    <div class="chart-controls">
-                        <button class="control-btn active">Real-time</button>
-                        <button class="control-btn">Historical</button>
-                    </div>
                 </div>
                 <div class="chart-wrapper">
                     <canvas id="revenueChartPremium"></canvas>
                 </div>
             </div>
 
-            <div class="panel-card glass mt-6">
+            <div class="panel-card glass">
                 <div class="panel-header">
                     <h3><i class="fas fa-stream"></i> آخر التسويات والقيود المالية</h3>
-                    <button class="btn-text" onclick="location.href='{% url 'accounting_erp:journal_list' %}'">سجل القيود الكامل <i class="fas fa-arrow-left"></i></button>
+                    <a href="{% url 'accounting_erp:journal_list' %}" class="btn-text">السجل الكامل <i class="fas fa-arrow-left"></i></a>
                 </div>
                 <div class="table-terminal-wrapper">
                     <table class="terminal-table">
@@ -123,7 +111,7 @@
                             {% for j in recent_journals %}
                             <tr class="terminal-row">
                                 <td class="ref-cell">#{{ j.reference }}</td>
-                                <td class="memo-cell">{{ j.memo|truncatechars:40 }}</td>
+                                <td class="memo-cell">{{ j.memo|truncatechars:30 }}</td>
                                 <td><span class="type-tag">{{ j.get_entry_type_display }}</span></td>
                                 <td class="value-cell text-left">
                                     <div class="debit">{{ j.get_total_debit|intcomma }}</div>
@@ -149,8 +137,8 @@
         <!-- Sidebar Intelligence -->
         <div class="side-panel">
             <!-- Strategic Goals Card -->
-            <div class="intelligence-card goal-card">
-                <h4 class="card-title">الأهداف الاستراتيجية 2026</h4>
+            <div class="intelligence-card goal-card mb-6">
+                <h4 class="card-title">الأهداف الاستراتيجية</h4>
                 <div class="goals-stack">
                     {% for goal in active_goals %}
                     <div class="goal-node">
@@ -169,17 +157,17 @@
             </div>
 
             <!-- Liquidity Forecast Card -->
-            <div class="intelligence-card forecast-card">
+            <div class="intelligence-card forecast-card mb-6">
                 <div class="forecast-header">
-                    <i class="fas fa-brain"></i> الذكاء الاصطناعي (التوقعات)
+                    <i class="fas fa-brain"></i> التوقعات الذكية
                 </div>
                 <div class="forecast-main">
-                    <span class="label">صافي التدفق المتوقع (30 يوم)</span>
+                    <span class="label">التدفق المتوقع (30 يوم)</span>
                     <div class="value">{{ forecast.estimated_revenue_30d|intcomma }} <small>ل.س</small></div>
                 </div>
                 <div class="forecast-footer">
                     <div class="stat">
-                        <span class="s-label">الثقة</span>
+                        <span class="s-label">الدقة</span>
                         <span class="s-value">{{ forecast.confidence_score }}%</span>
                     </div>
                     <div class="stat">
@@ -190,9 +178,9 @@
             </div>
 
             <!-- Distribution Chart -->
-            <div class="panel-card glass mt-4 p-4">
-                <h4 class="small-title mb-4">توزيع الإيرادات التشغيلية</h4>
-                <div style="height: 200px;">
+            <div class="panel-card glass p-4">
+                <h4 class="small-title mb-4">توزيع الإيرادات</h4>
+                <div style="height: 180px;">
                     <canvas id="distributionDonut"></canvas>
                 </div>
             </div>
@@ -201,143 +189,63 @@
 </div>
 
 <style>
-    /* Premium ERP UI Framework 2.0 */
-    :root {
-        --erp-bg: #0b0e14;
-        --panel-bg: rgba(23, 28, 38, 0.7);
-        --text-prime: #f8fafc;
-        --text-sec: #94a3b8;
-        --accent-success: #10b981;
-        --accent-warning: #f59e0b;
-        --accent-danger: #ef4444;
-        --accent-info: #3b82f6;
-        --border-glass: rgba(255, 255, 255, 0.08);
-        --font-main: 'Outfit', 'Cairo', sans-serif;
-    }
-
+    /* Premium ERP UI Framework 2.1 - UX Fixes */
     .erp-premium-shell {
-        background: var(--erp-bg);
-        color: var(--text-prime);
-        min-height: 100vh;
-        padding: 40px;
-        font-family: var(--font-main);
+        color: var(--text-main);
+        font-family: 'Cairo', sans-serif;
     }
 
     .erp-main-title {
-        font-size: 3rem;
-        font-weight: 800;
-        background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+        font-size: 2.5rem;
+        font-weight: 900;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(to left, #fff, #94a3b8);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        margin-bottom: 0.5rem;
     }
 
-    .erp-subtitle {
-        color: var(--text-sec);
-        font-size: 1.2rem;
-    }
-
-    .brand-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(16, 185, 129, 0.15);
-        color: var(--accent-success);
-        padding: 6px 16px;
-        border-radius: 100px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 1rem;
-    }
-
-    .erp-header-premium {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-    }
-
-    .header-actions {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 15px;
-    }
-
-    .action-group {
-        display: flex;
-        gap: 12px;
-    }
+    .erp-subtitle { color: var(--text-dim); font-size: 1rem; }
 
     .btn-erp-action {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 14px 24px;
-        border-radius: 16px;
+        gap: 10px;
+        padding: 12px 20px;
+        border-radius: 14px;
         font-weight: 700;
-        border: 1px solid var(--border-glass);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid var(--glass-border);
+        transition: all 0.2s;
         cursor: pointer;
+        font-size: 0.9rem;
     }
 
-    .btn-erp-action.primary {
-        background: var(--text-prime);
-        color: #000;
-    }
+    .btn-erp-action.primary { background: #fff; color: #000; }
+    .btn-erp-action:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
 
-    .btn-erp-action.secondary {
-        background: rgba(255,255,255,0.05);
-        color: #fff;
-    }
-
-    .btn-erp-action:hover {
-        transform: translateY(-3px) scale(1.02);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-    }
-
-    .icon-orb {
-        width: 30px;
-        height: 30px;
-        background: rgba(0,0,0,0.1);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    /* KPI Orb Styles */
+    /* KPI Grid - Responsive Fix */
     .terminal-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
         gap: 20px;
     }
 
     .kpi-orb {
         position: relative;
-        background: var(--panel-bg);
-        border: 1px solid var(--border-glass);
-        border-radius: 32px;
-        padding: 30px;
+        background: var(--sidebar-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        padding: 25px;
         overflow: hidden;
-        transition: all 0.4s ease;
-    }
-
-    .kpi-orb:hover {
-        border-color: rgba(255,255,255,0.2);
-        background: rgba(255,255,255,0.05);
     }
 
     .orb-glow {
         position: absolute;
-        top: -50px;
-        left: -50px;
-        width: 150px;
-        height: 150px;
-        filter: blur(80px);
-        opacity: 0.2;
-        pointer-events: none;
+        top: -30px;
+        left: -30px;
+        width: 100px;
+        height: 100px;
+        filter: blur(50px);
+        opacity: 0.15;
     }
 
     .success .orb-glow { background: var(--accent-success); }
@@ -345,152 +253,71 @@
     .danger .orb-glow { background: var(--accent-danger); }
     .info .orb-glow { background: var(--accent-info); }
 
-    .orb-label {
-        font-size: 0.9rem;
-        color: var(--text-sec);
-        font-weight: 600;
-        display: block;
-        margin-bottom: 10px;
-    }
+    .orb-label { font-size: 0.8rem; color: var(--text-dim); font-weight: 700; margin-bottom: 8px; display: block; }
+    .orb-value { font-size: 1.8rem; font-weight: 900; margin-bottom: 5px; }
+    .orb-value small { font-size: 0.8rem; opacity: 0.5; margin-right: 4px; }
+    .orb-meta { font-size: 0.75rem; color: var(--text-dim); }
 
-    .orb-value {
-        font-size: 2.2rem;
-        font-weight: 800;
-        margin-bottom: 10px;
-    }
-
-    .orb-value small { font-size: 0.9rem; margin-right: 5px; opacity: 0.6; }
-
-    .orb-meta {
-        font-size: 0.8rem;
-        color: var(--text-sec);
-    }
-
-    .trend.up { color: var(--accent-success); font-weight: 700; }
-    .alert-pulse { color: var(--accent-danger); font-weight: 800; animation: pulse 1.5s infinite; }
-
-    @keyframes pulse {
-        0% { opacity: 1; }
-        50% { opacity: 0.5; }
-        100% { opacity: 1; }
-    }
-
-    /* Dashboard Layout */
+    /* Main Grid - Responsive Fix */
     .dashboard-body-grid {
         display: grid;
-        grid-template-columns: 2.5fr 1fr;
+        grid-template-columns: 1fr;
         gap: 24px;
     }
 
+    @media (min-width: 1200px) {
+        .dashboard-body-grid { grid-template-columns: 2.5fr 1fr; }
+    }
+
     .panel-card.glass {
-        background: var(--panel-bg);
-        backdrop-filter: blur(20px);
-        border: 1px solid var(--border-glass);
-        border-radius: 32px;
-        padding: 30px;
+        background: rgba(15, 18, 24, 0.6);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        padding: 25px;
     }
 
-    .panel-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-    }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .panel-header h3 { font-size: 1.2rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 10px; }
 
-    .panel-header h3 {
-        font-size: 1.4rem;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
+    .chart-wrapper { height: 350px; }
 
-    .chart-wrapper {
-        height: 400px;
-    }
+    /* Table Fixes */
+    .table-terminal-wrapper { overflow-x: auto; margin: 0 -10px; padding: 0 10px; }
+    .terminal-table { width: 100%; min-width: 600px; border-collapse: separate; border-spacing: 0 8px; }
+    .terminal-row { background: rgba(255,255,255,0.02); transition: 0.2s; }
+    .terminal-row:hover { background: rgba(255,255,255,0.05); }
+    .terminal-table th { padding: 10px 15px; color: var(--text-dim); font-size: 0.75rem; text-transform: uppercase; font-weight: 800; }
+    .terminal-table td { padding: 15px; border-top: 1px solid var(--border-glass); border-bottom: 1px solid var(--border-glass); vertical-align: middle; }
+    .terminal-table td:first-child { border-right: 1px solid var(--border-glass); border-radius: 0 12px 12px 0; }
+    .terminal-table td:last-child { border-left: 1px solid var(--border-glass); border-radius: 12px 0 0 12px; }
 
-    /* Terminal Table */
-    .table-terminal-wrapper {
-        overflow-x: auto;
-    }
+    .ref-cell { font-family: monospace; color: var(--accent-blue); font-weight: 700; }
+    .type-tag { background: rgba(59, 130, 246, 0.1); color: var(--accent-blue); padding: 3px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; }
+    .debit { color: var(--accent-success); font-weight: 800; font-size: 1rem; }
+    .credit { color: var(--accent-danger); font-weight: 800; font-size: 1rem; }
+    .status-badge { font-size: 0.7rem; font-weight: 800; display: inline-flex; align-items: center; gap: 5px; }
+    .status-badge.success::before { content: ''; width: 6px; height: 6px; background: var(--accent-success); border-radius: 50%; box-shadow: 0 0 8px var(--accent-success); }
 
-    .terminal-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0 10px;
-    }
+    /* Intelligence Cards */
+    .intelligence-card { padding: 25px; border-radius: 24px; border: 1px solid var(--glass-border); }
+    .goal-card { background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); }
+    .forecast-card { background: linear-gradient(135deg, #064e3b 0%, #0b0e14 100%); }
+    .card-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 20px; }
+    .goal-node { margin-bottom: 15px; }
+    .node-header { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.85rem; font-weight: 600; }
+    .node-progress { height: 6px; background: rgba(255,255,255,0.05); border-radius: 10px; overflow: hidden; }
+    .node-bar { height: 100%; background: var(--accent-success); box-shadow: 0 0 10px var(--accent-success); }
 
-    .terminal-row {
-        background: rgba(255,255,255,0.02);
-        transition: all 0.2s ease;
-    }
+    .forecast-header { display: flex; align-items: center; gap: 10px; color: var(--accent-success); font-weight: 900; margin-bottom: 15px; }
+    .forecast-main .label { color: var(--text-dim); font-size: 0.8rem; font-weight: 600; }
+    .forecast-main .value { font-size: 1.8rem; font-weight: 900; margin-top: 5px; }
+    .forecast-footer { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); }
+    .stat .s-label { font-size: 0.7rem; opacity: 0.6; }
+    .stat .s-value { font-size: 0.9rem; font-weight: 800; color: var(--accent-success); display: block; }
 
-    .terminal-row:hover {
-        background: rgba(255,255,255,0.05);
-        transform: scale(1.01);
-    }
-
-    .terminal-table th {
-        padding: 10px 20px;
-        color: var(--text-sec);
-        font-weight: 600;
-        font-size: 0.85rem;
-        text-transform: uppercase;
-    }
-
-    .terminal-table td {
-        padding: 20px;
-        border-top: 1px solid var(--border-glass);
-        border-bottom: 1px solid var(--border-glass);
-    }
-
-    .terminal-table td:first-child { border-right: 1px solid var(--border-glass); border-radius: 0 16px 16px 0; }
-    .terminal-table td:last-child { border-left: 1px solid var(--border-glass); border-radius: 16px 0 0 16px; }
-
-    .ref-cell { font-family: monospace; color: var(--accent-info); font-weight: 700; }
-    .type-tag { background: rgba(59, 130, 246, 0.1); color: var(--accent-info); padding: 4px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 700; }
-    .debit { color: var(--accent-success); font-weight: 700; font-size: 1.1rem; }
-    .credit { color: var(--accent-danger); font-weight: 700; font-size: 1.1rem; }
-    .status-badge { font-size: 0.75rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
-    .status-badge.success::before { content: ''; width: 8px; height: 8px; background: var(--accent-success); border-radius: 50%; box-shadow: 0 0 10px var(--accent-success); }
-
-    /* Intelligence Sidebar */
-    .intelligence-card {
-        padding: 30px;
-        border-radius: 32px;
-        margin-bottom: 24px;
-        border: 1px solid var(--border-glass);
-    }
-
-    .goal-card { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); }
-    .forecast-card { background: linear-gradient(135deg, #064e3b 0%, #065f46 100%); }
-
-    .card-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; }
-
-    .goal-node { margin-bottom: 20px; }
-    .node-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.9rem; }
-    .node-progress { height: 8px; background: rgba(255,255,255,0.1); border-radius: 100px; overflow: hidden; }
-    .node-bar { height: 100%; background: var(--accent-success); border-radius: 100px; box-shadow: 0 0 15px var(--accent-success); }
-
-    .forecast-header { display: flex; align-items: center; gap: 10px; color: var(--accent-success); font-weight: 800; margin-bottom: 15px; }
-    .forecast-main .label { color: rgba(255,255,255,0.7); font-size: 0.85rem; }
-    .forecast-main .value { font-size: 2rem; font-weight: 900; margin-top: 5px; }
-
-    .forecast-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); }
-    .stat .s-label { display: block; font-size: 0.75rem; opacity: 0.7; }
-    .stat .s-value { font-size: 1rem; font-weight: 800; color: var(--accent-success); }
-
-    /* Animation Utilities */
-    @keyframes float {
-        0% { transform: translateY(0); }
-        50% { transform: translateY(-10px); }
-        100% { transform: translateY(0); }
-    }
-    .animate-float { animation: float 4s ease-in-out infinite; }
-
-    /* Chart Overrides */
-    canvas { filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); }
-
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.5s ease-out forwards; }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -498,7 +325,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const primaryCtx = document.getElementById('revenueChartPremium').getContext('2d');
         const grad = primaryCtx.createLinearGradient(0, 0, 0, 400);
-        grad.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+        grad.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
         grad.addColorStop(1, 'rgba(16, 185, 129, 0)');
 
         new Chart(primaryCtx, {
@@ -509,8 +336,8 @@
                     label: 'إيرادات محققة',
                     data: [450000, 520000, 480000, 610000, 590000, 720000],
                     borderColor: '#10b981',
-                    borderWidth: 5,
-                    pointRadius: 6,
+                    borderWidth: 4,
+                    pointRadius: 4,
                     pointBackgroundColor: '#10b981',
                     fill: true,
                     backgroundColor: grad,
@@ -522,8 +349,8 @@
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
-                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' }, position: 'right' }
+                    x: { grid: { display: false }, ticks: { color: '#64748b', font: { family: 'Cairo' } } },
+                    y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { family: 'Cairo' } }, position: 'right' }
                 }
             }
         });
@@ -536,14 +363,13 @@
                 datasets: [{
                     data: [45, 35, 20],
                     backgroundColor: ['#3b82f6', '#10b981', '#f59e0b'],
-                    borderWidth: 0,
-                    hoverOffset: 10
+                    borderWidth: 0
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom', labels: { color: '#fff' } } },
+                plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Cairo', weight: 'bold' } } } },
                 cutout: '80%'
             }
         });
