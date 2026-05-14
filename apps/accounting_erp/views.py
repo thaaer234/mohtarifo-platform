@@ -90,8 +90,14 @@ class ChartOfAccountsView(BaseAccountingView, ListView):
 class JournalListView(BaseAccountingView, ListView):
     model = JournalEntry
     template_name = 'accounting_erp/journal_list.html'
-    context_object_name = 'journals'
+    context_object_name = 'vouchers'
     paginate_by = 50
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from billing.models import SalesCenter
+        context['cost_centers'] = SalesCenter.objects.filter(is_active=True)
+        return context
 
 class VoucherDetailView(BaseAccountingView, DetailView):
     model = Voucher

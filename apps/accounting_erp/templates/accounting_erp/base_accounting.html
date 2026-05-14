@@ -293,13 +293,15 @@
             const overlay = document.getElementById('sidebarOverlay');
             const toggle = document.getElementById('sidebarToggle');
 
-            function toggleSidebar() {
-                sidebar.classList.toggle('show');
-                overlay.classList.toggle('show');
+            if (toggle && sidebar && overlay) {
+                const toggleSidebar = (e) => {
+                    e.preventDefault();
+                    sidebar.classList.toggle('show');
+                    overlay.classList.toggle('show');
+                };
+                toggle.addEventListener('click', toggleSidebar);
+                overlay.addEventListener('click', toggleSidebar);
             }
-
-            if(toggle) toggle.addEventListener('click', toggleSidebar);
-            if(overlay) overlay.addEventListener('click', toggleSidebar);
 
             // Active link handling
             const currentPath = window.location.pathname;
@@ -311,6 +313,7 @@
             });
         });
     </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>
