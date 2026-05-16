@@ -1,312 +1,328 @@
-{% extends "accounting_erp/base_print_accounting.html" %}
+﻿{% extends "accounting_erp/base_print_accounting.html" %}
 {% load humanize inline_static %}
 
 {% block title %}تقرير المدرس: {{ instructor.get_full_name|default:instructor.username }}{% endblock %}
 
-{% block report_name %}التقرير المالي والتحليلي الشامل للمدرس{% endblock %}
+{% block report_name %}التقرير التحليلي الشامل للمدرس{% endblock %}
 
 {% block extra_css %}
 {{ block.super }}
 <style>
-    /* ========== Premium Arabic Typography & Design System ========== */
-    @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+    /* ========== Executive Dashboard Design System (Mohtarifo Pro) ========== */
+    @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@200;300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500;800&display=swap');
 
     :root {
-        --p-primary: #0f172a;
-        --p-secondary: #334155;
-        --p-accent: #2563eb;
-        --p-success: #059669;
-        --p-warning: #d97706;
-        --p-danger: #dc2626;
-        --p-bg: #f8fafc;
-        --p-card-bg: #ffffff;
-        --p-border: #e2e8f0;
-        --p-text-main: #1e293b;
-        --p-text-muted: #64748b;
+        --brand-gold: #c5a059;
+        --brand-gold-dark: #a68541;
+        --brand-gold-glow: rgba(197, 160, 89, 0.2);
+        --brand-navy: #0a0a0a;
+        --brand-slate: #1e293b;
+        --bg-white: #ffffff;
+        --bg-soft: #fcfcfd;
+        --text-main: #0a0a0a;
+        --text-muted: #64748b;
+        --border-gold: rgba(197, 160, 89, 0.3);
         
-        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-        
-        --radius-sm: 8px;
-        --radius-md: 12px;
         --radius-lg: 16px;
-        --radius-xl: 24px;
+        --radius-xl: 32px;
+        --shadow-premium: 0 20px 40px -10px rgba(0,0,0,0.1);
     }
 
     body {
-        background-color: var(--p-bg);
+        background-color: #fafafa;
         font-family: 'Alexandria', sans-serif;
-        color: var(--p-text-main);
-        line-height: 1.6;
+        color: var(--text-main);
         -webkit-print-color-adjust: exact;
     }
 
-    /* Container Refinement */
-    .report-container {
-        max-width: 1100px;
-        margin: 40px auto;
-        background: var(--p-card-bg);
-        border-radius: var(--radius-xl);
-        padding: 3rem;
-        box-shadow: var(--shadow-lg);
+    /* Override Base Wrapper */
+    .page-wrapper {
+        max-width: 210mm;
+        margin: 0 auto;
+        padding: 0 !important;
+        background: white;
+        border: none !important;
+        box-shadow: none !important;
         position: relative;
         overflow: hidden;
     }
 
-    /* Header Accent */
-    .report-container::before {
+    /* Executive Branded Header */
+    .exec-header {
+        background: var(--brand-navy);
+        padding: 40px 60px;
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+    }
+
+    .exec-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(90deg, var(--brand-gold), #e5c17d, var(--brand-gold));
+    }
+
+    .brand-id {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .brand-logo {
+        height: 50px;
+        filter: brightness(0) invert(1);
+    }
+
+    .report-type-badge {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        padding: 6px 16px;
+        border-radius: 40px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+        color: var(--brand-gold);
+    }
+
+    /* Hero Identity Section */
+    .hero-section {
+        padding: 60px;
+        background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+
+    .instructor-identity h1 {
+        font-size: 3rem;
+        font-weight: 900;
+        margin-bottom: 5px;
+        color: var(--brand-navy);
+        letter-spacing: -1px;
+    }
+
+    .instructor-identity .role-label {
+        font-size: 1.1rem;
+        color: var(--brand-gold);
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .report-timestamp {
+        text-align: left;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    /* Executive Stats Dashboard */
+    .exec-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        padding: 0 60px;
+        margin-top: -40px;
+        gap: 20px;
+    }
+
+    .stat-card-premium {
+        background: white;
+        border: 1px solid var(--border-gold);
+        border-radius: var(--radius-lg);
+        padding: 25px;
+        box-shadow: var(--shadow-premium);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card-premium::before {
         content: '';
         position: absolute;
         top: 0;
-        left: 0;
         right: 0;
-        height: 8px;
-        background: linear-gradient(90deg, var(--p-accent), #6366f1, #a855f7);
+        width: 100px;
+        height: 100px;
+        background: radial-gradient(circle at top right, var(--brand-gold-glow), transparent 70%);
+        opacity: 0.5;
     }
 
-    /* KPI Section - Premium Cards */
-    .kpi-ribbon {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 24px;
-        margin-bottom: 3rem;
-    }
-
-    .kpi-box {
-        background: var(--p-card-bg);
-        border: 1px solid var(--p-border);
-        border-radius: var(--radius-lg);
-        padding: 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-    }
-
-    .kpi-box:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-md);
-        border-color: var(--p-accent);
-    }
-
-    .kpi-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: 8px;
-    }
-
-    .kpi-icon-wrapper {
-        width: 40px;
-        height: 40px;
-        border-radius: var(--radius-sm);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: #eff6ff;
-        color: var(--p-accent);
-    }
-
-    .kpi-lbl {
-        font-size: 0.85rem;
-        font-weight: 600;
-        color: var(--p-text-muted);
-    }
-
-    .kpi-val {
-        font-size: 1.75rem;
-        font-weight: 800;
-        color: var(--p-primary);
-        font-family: 'JetBrains Mono', monospace;
-        letter-spacing: -0.5px;
-    }
-
-    /* Section Titles */
-    .section-title {
-        font-size: 1.25rem;
+    .stat-label {
+        font-size: 0.75rem;
         font-weight: 700;
-        color: var(--p-primary);
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-
-    .section-title::before {
-        content: '';
-        width: 4px;
-        height: 24px;
-        background: var(--p-accent);
-        border-radius: 4px;
-    }
-
-    /* Tables - Clean & Modern */
-    .data-table-wrapper {
-        border: 1px solid var(--p-border);
-        border-radius: var(--radius-md);
-        overflow: hidden;
-        background: white;
-        margin-bottom: 1.5rem;
-    }
-
-    .data-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 0.9rem;
-    }
-
-    .data-table thead th {
-        background: #f8fafc;
-        color: var(--p-text-muted);
-        font-weight: 600;
-        text-align: right;
-        padding: 16px;
-        border-bottom: 1px solid var(--p-border);
-        font-size: 0.8rem;
+        color: var(--text-muted);
         text-transform: uppercase;
-    }
-
-    .data-table tbody td {
-        padding: 16px;
-        border-bottom: 1px solid var(--p-bg);
-        color: var(--p-text-main);
-    }
-
-    .data-table tbody tr:last-child td {
-        border-bottom: none;
-    }
-
-    .data-table tbody tr:hover {
-        background: #f1f5f9;
-    }
-
-    .data-table tfoot td {
-        background: #f8fafc;
-        font-weight: 700;
-        padding: 16px;
-        border-top: 2px solid var(--p-border);
-    }
-
-    /* Status Badges */
-    .badge {
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .badge-success { background: #dcfce7; color: #166534; }
-    .badge-danger { background: #fee2e2; color: #991b1b; }
-    .badge-warning { background: #fef3c7; color: #92400e; }
-    .badge-info { background: #e0f2fe; color: #075985; }
-
-    /* Course Detail Blocks */
-    .course-card {
-        background: white;
-        border: 1px solid var(--p-border);
-        border-radius: var(--radius-lg);
-        margin-bottom: 2.5rem;
-        overflow: hidden;
-        page-break-inside: avoid;
-    }
-
-    .course-card-header {
-        background: #f8fafc;
-        padding: 24px;
-        border-bottom: 1px solid var(--p-border);
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-    }
-
-    .course-info h3 {
-        margin: 0 0 8px 0;
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: var(--p-primary);
-    }
-
-    .course-meta {
-        display: flex;
-        gap: 12px;
-        font-size: 0.8rem;
-        color: var(--p-text-muted);
-    }
-
-    .course-revenue {
-        text-align: left;
-    }
-
-    .revenue-label {
-        font-size: 0.75rem;
-        color: var(--p-text-muted);
+        margin-bottom: 15px;
         display: block;
-        margin-bottom: 4px;
     }
 
-    .revenue-value {
+    .stat-value-big {
+        font-size: 2.2rem;
+        font-weight: 900;
+        color: var(--brand-navy);
+        font-family: 'JetBrains Mono', monospace;
+        line-height: 1;
+    }
+
+    .stat-visual {
+        margin-top: 15px;
+        height: 4px;
+        background: #f1f5f9;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .stat-progress {
+        height: 100%;
+        background: var(--brand-gold);
+    }
+
+    /* Section Branding */
+    .sect-header {
+        padding: 40px 60px 20px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .sect-header h2 {
         font-size: 1.5rem;
         font-weight: 800;
-        color: var(--p-accent);
-        font-family: 'JetBrains Mono', monospace;
+        color: var(--brand-navy);
     }
 
-    .course-card-body {
-        padding: 24px;
+    .sect-divider {
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(90deg, #eee, transparent);
     }
 
-    .mini-stats-grid {
+    /* Course Performance Grid */
+    .performance-container {
+        padding: 0 60px;
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 16px;
-        margin-bottom: 24px;
+        grid-template-columns: 1fr;
+        gap: 30px;
     }
 
-    .mini-stat-item {
-        background: #f1f5f9;
-        padding: 12px 16px;
-        border-radius: var(--radius-sm);
+    .course-analytics-card {
+        border: 1px solid #eee;
+        border-radius: var(--radius-lg);
+        background: white;
+        overflow: hidden;
+    }
+
+    .ca-header {
+        background: #fafafa;
+        padding: 20px 30px;
+        border-bottom: 1px solid #eee;
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
 
-    .mini-stat-label {
-        font-size: 0.85rem;
-        color: var(--p-text-muted);
+    .ca-title {
+        font-weight: 800;
+        font-size: 1.1rem;
     }
 
-    .mini-stat-value {
+    .ca-body {
+        padding: 30px;
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 40px;
+    }
+
+    /* Visual Data Representation */
+    .visual-summary {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 20px;
+    }
+
+    .metric-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .metric-lbl { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; }
+    .metric-val { font-weight: 800; font-family: 'JetBrains Mono'; color: var(--brand-navy); }
+
+    /* Tables Refined */
+    .premium-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .premium-table th {
+        text-align: right;
+        font-size: 0.75rem;
         font-weight: 700;
-        font-family: 'JetBrains Mono', monospace;
+        color: var(--text-muted);
+        padding: 12px 15px;
+        border-bottom: 2px solid var(--brand-gold);
+        background: white;
     }
 
-    /* Utilities */
-    .text-center { text-align: center !important; }
-    .text-right { text-align: right !important; }
-    .text-left { text-align: left !important; }
-    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .premium-table td {
+        padding: 15px;
+        border-bottom: 1px solid #f8fafc;
+        font-size: 0.85rem;
+    }
 
-    /* Print Optimization */
+    .premium-table tr:hover { background: #fcfcfd; }
+
+    /* Badges */
+    .exec-badge {
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 800;
+    }
+
+    .badge-gold-exec { background: #fef9c3; color: #854d0e; }
+    .badge-success-exec { background: #dcfce7; color: #166534; }
+
+    /* Footer / Signatures Branding */
+    .branded-signatures {
+        margin-top: 60px;
+        padding: 40px 60px;
+        background: #fafafa;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 40px;
+    }
+
+    .sig-field {
+        text-align: center;
+    }
+
+    .sig-line-branded {
+        border-top: 1.5px solid var(--brand-gold);
+        margin-top: 50px;
+        padding-top: 10px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        color: var(--brand-navy);
+    }
+
+    /* Print Tweaks */
     @media print {
-        body { background: white; }
-        .report-container {
-            margin: 0;
-            padding: 0;
-            box-shadow: none;
-            max-width: 100%;
-        }
-        .report-container::before { display: none; }
-        .kpi-box { border: 1px solid #eee; break-inside: avoid; }
-        .course-card { border: 1px solid #eee; break-inside: avoid; }
-        .data-table thead th { background: #eee !important; color: black !important; }
+        .page-wrapper { margin: 0; }
+        .stat-card-premium { border: 1px solid var(--brand-gold) !important; }
+        .ca-header { background: #f0f0f0 !important; }
+        .exec-header { background: #000 !important; }
     }
-
 </style>
 {% endblock %}
 
@@ -315,236 +331,225 @@
 {% endblock %}
 
 {% block report_body %}
-<!-- KPI Section -->
-<div class="kpi-ribbon">
-    <div class="kpi-box">
-        <div class="kpi-header">
-            <span class="kpi-lbl">إجمالي الأكواد المُخصصة</span>
-            <div class="kpi-icon-wrapper" style="background: #eef2ff; color: #4f46e5;">
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 11h.01M7 15h.01M13 7h.01M13 11h.01M13 15h.01M17 7h.01M17 11h.01M17 15h.01M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-            </div>
-        </div>
-        <div class="kpi-val">{{ total_codes }}</div>
+<!-- Executive Header -->
+<div class="exec-header no-print">
+    <div class="brand-id">
+        <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Mohtarifo Logo" class="brand-logo">
+        <div class="report-type-badge">Instructor Analysis Report v2.0</div>
     </div>
-    
-    <div class="kpi-box">
-        <div class="kpi-header">
-            <span class="kpi-lbl">إجمالي الأكواد المباعة</span>
-            <div class="kpi-icon-wrapper" style="background: #fffbeb; color: #d97706;">
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-            </div>
-        </div>
-        <div class="kpi-val">{{ total_sold }}</div>
-    </div>
-
-    <div class="kpi-box">
-        <div class="kpi-header">
-            <span class="kpi-lbl">الأكواد النشطة حالياً</span>
-            <div class="kpi-icon-wrapper" style="background: #ecfdf5; color: #059669;">
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </div>
-        </div>
-        <div class="kpi-val">{{ total_activated }}</div>
-    </div>
-
-    <div class="kpi-box">
-        <div class="kpi-header">
-            <span class="kpi-lbl">صافي المبيعات الإجمالي</span>
-            <div class="kpi-icon-wrapper" style="background: #eff6ff; color: #2563eb;">
-                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </div>
-        </div>
-        <div class="kpi-val">{{ total_gross|currency_format }} <small style="font-size: 0.6em; font-weight: 400;">ل.س</small></div>
+    <div style="text-align: left;">
+        <span style="font-weight: 800; font-size: 1.2rem; color: var(--brand-gold);">ERP MOHTARIFO</span>
     </div>
 </div>
 
-<!-- Main Summary Grid -->
-<div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem; margin-bottom: 3rem;">
-    <!-- Course Performance Table -->
+<!-- Identity Hero Section -->
+<div class="hero-section">
+    <div class="instructor-identity">
+        <div class="role-label">
+            <svg width="20" height="20" fill="var(--brand-gold)" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            الملف المالي والتحليلي للمدرس
+        </div>
+        <h1>{{ instructor.get_full_name|default:instructor.username }}</h1>
+        <div style="display: flex; gap: 20px; margin-top: 10px;">
+            <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted);">
+                <i data-lucide="hash" style="width: 14px; display: inline; vertical-align: middle;"></i> 
+                ID: INST-{{ instructor.id|stringformat:"04d" }}
+            </span>
+        </div>
+    </div>
+    <div class="report-timestamp">
+        <strong>تاريخ الاستخراج</strong><br>
+        {% now "Y/m/d - H:i" %}
+    </div>
+</div>
+
+<!-- Executive Stats Dashboard -->
+<div class="exec-stats-grid">
+    <div class="stat-card-premium">
+        <span class="stat-label">المخزون الكلي</span>
+        <div class="stat-value-big">{{ total_codes }}</div>
+        <div class="stat-visual"><div class="stat-progress" style="width: 100%;"></div></div>
+    </div>
+    <div class="stat-card-premium">
+        <span class="stat-label">إجمالي المبيعات</span>
+        <div class="stat-value-big" style="color: var(--brand-gold);">{{ total_sold }}</div>
+        <div class="stat-visual">
+            <div class="stat-progress" style="width: {% widthratio total_sold total_codes 100 %}%; background: var(--brand-gold);"></div>
+        </div>
+    </div>
+    <div class="stat-card-premium">
+        <span class="stat-label">الأكواد المفعلة</span>
+        <div class="stat-value-big" style="color: #10b981;">{{ total_activated }}</div>
+        <div class="stat-visual">
+            <div class="stat-progress" style="width: {% widthratio total_activated total_sold 100 %}%; background: #10b981;"></div>
+        </div>
+    </div>
+    <div class="stat-card-premium">
+        <span class="stat-label">صافي الإيرادات</span>
+        <div class="stat-value-big" style="font-size: 1.8rem;">{{ total_gross|currency_format }}</div>
+        <div class="stat-visual"><div class="stat-progress" style="width: 100%; background: var(--brand-navy);"></div></div>
+    </div>
+</div>
+
+<!-- Course Performance Analysis -->
+<div class="sect-header">
+    <svg width="24" height="24" fill="none" stroke="var(--brand-gold)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"></path></svg>
+    <h2>تحليل أداء الدورات التدريبية</h2>
+    <div class="sect-divider"></div>
+</div>
+
+<div class="performance-container">
+    <div class="data-table-wrapper" style="border: 1px solid var(--border-gold); box-shadow: var(--shadow-premium);">
+        <table class="premium-table">
+            <thead>
+                <tr>
+                    <th>اسم الدورة التدريبية</th>
+                    <th class="text-center">الأكواد</th>
+                    <th class="text-center">المباعة</th>
+                    <th class="text-center">المفعلة</th>
+                    <th class="text-left">صافي الإيراد</th>
+                    <th class="text-center">نسبة التحويل</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in course_data %}
+                <tr>
+                    <td style="font-weight: 700; color: var(--brand-navy);">{{ data.course.title }}</td>
+                    <td class="text-center font-mono">{{ data.cnt_all }}</td>
+                    <td class="text-center font-mono" style="color: var(--brand-gold);">{{ data.cnt_sold }}</td>
+                    <td class="text-center font-mono" style="color: #10b981;">{{ data.cnt_active }}</td>
+                    <td class="text-left font-mono" style="font-weight: 800;">{{ data.sum_gross|currency_format }}</td>
+                    <td class="text-center">
+                        <span class="exec-badge badge-gold-exec">
+                            {% widthratio data.cnt_active data.cnt_sold 100 %}%
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Distribution Analysis -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; padding: 40px 60px;">
     <div>
-        <h3 class="section-title">ملخص أداء الدورات التدريبية</h3>
+        <div class="sect-header" style="padding: 0 0 20px 0;">
+            <h2>📍 التوزيع الجغرافي</h2>
+            <div class="sect-divider"></div>
+        </div>
         <div class="data-table-wrapper">
-            <table class="data-table">
+            <table class="premium-table">
                 <thead>
-                    <tr>
-                        <th>الدورة</th>
-                        <th class="text-center">الأكواد</th>
-                        <th class="text-center">المباعة</th>
-                        <th class="text-center">المفعلة</th>
-                        <th class="text-left">الإيراد</th>
-                    </tr>
+                    <tr><th>المحافظة</th><th class="text-center">الطلاب</th></tr>
                 </thead>
                 <tbody>
-                    {% for data in course_data %}
+                    {% for row in governorate_sales|slice:":5" %}
                     <tr>
-                        <td style="font-weight: 600;">{{ data.course.title }}</td>
-                        <td class="text-center font-mono">{{ data.cnt_all }}</td>
-                        <td class="text-center font-mono" style="color: var(--p-warning);">{{ data.cnt_sold }}</td>
-                        <td class="text-center font-mono" style="color: var(--p-success);">{{ data.cnt_active }}</td>
-                        <td class="text-left font-mono" style="font-weight: 700;">{{ data.sum_gross|currency_format }}</td>
+                        <td style="font-weight: 600;">{{ row.user__student_profile__governorate|default:"غير محدد" }}</td>
+                        <td class="text-center font-mono" style="color: var(--brand-gold);">{{ row.activated_count }}</td>
                     </tr>
-                    {% empty %}
-                    <tr><td colspan="5" class="text-center">لا توجد بيانات متاحة حالياً</td></tr>
                     {% endfor %}
                 </tbody>
-                <tfoot>
-                    <tr>
-                        <td>الإجمالي الكلي</td>
-                        <td class="text-center font-mono">{{ total_codes }}</td>
-                        <td class="text-center font-mono">{{ total_sold }}</td>
-                        <td class="text-center font-mono">{{ total_activated }}</td>
-                        <td class="text-left font-mono" style="color: var(--p-accent);">{{ total_gross|currency_format }}</td>
-                    </tr>
-                </tfoot>
             </table>
         </div>
     </div>
-
-    <!-- Distribution & Centers -->
-    <div style="display: flex; flex-direction: column; gap: 2rem;">
-        <div>
-            <h3 class="section-title">أعلى مراكز التوزيع</h3>
-            <div class="data-table-wrapper">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>مركز البيع</th>
-                            <th class="text-center">المبيعات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for center in centers_sales|slice:":5" %}
-                        <tr>
-                            <td>{{ center.sales_center__name|default:"مبيعات مباشرة" }}</td>
-                            <td class="text-center font-mono" style="font-weight: 600;">{{ center.sold_count }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="2" class="text-center">--</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+    <div>
+        <div class="sect-header" style="padding: 0 0 20px 0;">
+            <h2>🏪 مراكز المبيعات</h2>
+            <div class="sect-divider"></div>
         </div>
-
-        <div>
-            <h3 class="section-title">التوزيع الجغرافي للطلاب</h3>
-            <div class="data-table-wrapper">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>المحافظة</th>
-                            <th class="text-center">عدد الطلاب</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in governorate_sales|slice:":5" %}
-                        <tr>
-                            <td>{{ row.user__student_profile__governorate|default:"غير محدد" }}</td>
-                            <td class="text-center font-mono" style="font-weight: 600;">{{ row.activated_count }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="2" class="text-center">--</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+        <div class="data-table-wrapper">
+            <table class="premium-table">
+                <thead>
+                    <tr><th>المركز</th><th class="text-center">المباع</th></tr>
+                </thead>
+                <tbody>
+                    {% for center in centers_sales|slice:":5" %}
+                    <tr>
+                        <td style="font-weight: 600;">{{ center.sales_center__name|default:"مباشر" }}</td>
+                        <td class="text-center font-mono" style="color: var(--brand-gold);">{{ center.sold_count }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
 
 <div class="page-break" style="page-break-after: always;"></div>
 
-<h2 class="section-title" style="margin-bottom: 2rem; font-size: 1.5rem;">التفاصيل التحليلية لكل دورة</h2>
+<!-- Detailed Audit Log -->
+<div class="sect-header">
+    <svg width="24" height="24" fill="none" stroke="var(--brand-gold)" stroke-width="2.5" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+    <h2>سجل العمليات التفصيلي</h2>
+    <div class="sect-divider"></div>
+</div>
 
 {% for data in course_data %}
-<div class="course-card">
-    <div class="course-card-header">
-        <div class="course-info">
-            <h3>{{ data.course.title }}</h3>
-            <div class="course-meta">
-                <span class="badge badge-info">{{ data.course.get_kind_display }}</span>
-                <span class="badge badge-warning">{{ data.course.get_academic_track_display }}</span>
-            </div>
-        </div>
-        <div class="course-revenue">
-            <span class="revenue-label">إجمالي إيراد الدورة</span>
-            <div class="revenue-value">{{ data.sum_gross|currency_format }} <small style="font-size: 0.5em; color: var(--p-text-muted);">ل.س</small></div>
-        </div>
+<div style="padding: 0 60px 40px;">
+    <div class="ca-header" style="border: 1px solid #eee; border-bottom: none; border-radius: 12px 12px 0 0;">
+        <div class="ca-title">{{ data.course.title }}</div>
+        <div class="exec-badge badge-gold-exec">{{ data.sum_gross|currency_format }} ل.س</div>
     </div>
-    
-    <div class="course-card-body">
-        <div class="mini-stats-grid">
-            <div class="mini-stat-item">
-                <span class="mini-stat-label">المخزون الكلي</span>
-                <span class="mini-stat-value">{{ data.cnt_all }}</span>
-            </div>
-            <div class="mini-stat-item">
-                <span class="mini-stat-label">تم بيعها</span>
-                <span class="mini-stat-value" style="color: var(--p-warning);">{{ data.cnt_sold }}</span>
-            </div>
-            <div class="mini-stat-item">
-                <span class="mini-stat-label">مفعلة من طلاب</span>
-                <span class="mini-stat-value" style="color: var(--p-success);">{{ data.cnt_active }}</span>
-            </div>
-        </div>
-
-        <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 1rem; color: var(--p-secondary);">سجل الأكواد والطلاب المسجلين</h4>
-        <div class="data-table-wrapper">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>الكود</th>
-                        <th>اسم الطالب</th>
-                        <th class="text-center">رقم الهاتف</th>
-                        <th class="text-center">تاريخ البيع</th>
-                        <th class="text-center">الحالة</th>
-                        <th>المصدر</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for code in data.codes %}
-                    <tr>
-                        <td class="font-mono" style="font-weight: 700; color: var(--p-primary);">{{ code.code }}</td>
-                        <td>
-                            <div style="font-weight: 600;">
-                                {% if code.assigned_student_name %}
-                                    {{ code.assigned_student_name }}
-                                {% elif code.grants.all.first %}
-                                    {{ code.grants.all.first.user.get_full_name|default:code.grants.all.first.user.username }}
-                                {% else %}
-                                    <span style="color: var(--p-text-muted); font-weight: 400;">--</span>
-                                {% endif %}
-                            </div>
-                        </td>
-                        <td class="text-center font-mono">
-                            {% if code.assigned_student_phone %}
-                                {{ code.assigned_student_phone }}
-                            {% elif code.grants.all.first %}
-                                {{ code.grants.all.first.user.student_profile.phone|default:"--" }}
-                            {% else %}--{% endif %}
-                        </td>
-                        <td class="text-center font-mono" style="font-size: 0.8rem;">
-                            {% if code.sold_at %}{{ code.sold_at|date:"Y/m/d" }}{% else %}--{% endif %}
-                        </td>
-                        <td class="text-center">
-                            {% if code.redeemed_count > 0 %}
-                                <span class="badge badge-success">مفعل</span>
-                            {% else %}
-                                <span class="badge badge-danger">غير مفعل</span>
-                            {% endif %}
-                        </td>
-                        <td style="font-size: 0.8rem; color: var(--p-text-muted);">
-                            {{ code.sales_center.name|default:"مباشر" }}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="6" class="text-center" style="padding: 2rem;">لا توجد أكواد مسجلة لهذه الدورة</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <div class="data-table-wrapper" style="border-radius: 0 0 12px 12px;">
+        <table class="premium-table">
+            <thead>
+                <tr>
+                    <th>رمز الكود</th>
+                    <th>اسم الطالب</th>
+                    <th class="text-center">رقم التواصل</th>
+                    <th class="text-center">التاريخ</th>
+                    <th class="text-center">الحالة</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for code in data.codes %}
+                <tr>
+                    <td class="font-mono" style="font-weight: 800; color: var(--brand-navy);">{{ code.code }}</td>
+                    <td style="font-weight: 600;">
+                        {% if code.assigned_student_name %}
+                            {{ code.assigned_student_name }}
+                        {% elif code.grants.all.first %}
+                            {{ code.grants.all.first.user.get_full_name|default:code.grants.all.first.user.username }}
+                        {% else %}--{% endif %}
+                    </td>
+                    <td class="text-center font-mono" style="font-size: 0.8rem;">
+                        {% if code.assigned_student_phone %}
+                            {{ code.assigned_student_phone }}
+                        {% elif code.grants.all.first %}
+                            {{ code.grants.all.first.user.student_profile.phone|default:"--" }}
+                        {% else %}--{% endif %}
+                    </td>
+                    <td class="text-center font-mono" style="font-size: 0.75rem;">{{ code.sold_at|date:"Y/m/d"|default:"--" }}</td>
+                    <td class="text-center">
+                        {% if code.redeemed_count > 0 %}
+                            <span class="exec-badge badge-success-exec">ACTV</span>
+                        {% else %}
+                            <span class="exec-badge" style="background:#fee2e2; color:#991b1b;">PEND</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 {% endfor %}
 
+<!-- Branded Signatures Area -->
+<div class="branded-signatures">
+    <div class="sig-field">
+        <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 5px;">قسم التدقيق المالي</div>
+        <div class="sig-line-branded">مصادقة المحاسب القانوني</div>
+    </div>
+    <div class="sig-field">
+        <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 5px;">إدارة الأكاديمية</div>
+        <div class="sig-line-branded">ختم وتوقيع الإدارة العامة</div>
+    </div>
+    <div class="sig-field" style="text-align: left;">
+        <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo" style="height: 30px; opacity: 0.3; filter: grayscale(1);">
+        <div style="font-size: 0.6rem; color: var(--text-muted); margin-top: 10px;">نظام Mohtarifo ERP - التقرير الموحد</div>
+    </div>
+</div>
 {% endblock %}
