@@ -6,6 +6,27 @@
 {% block extra_css %}
 {{ block.super }}
 <style>
+    /* =========================================
+       OVERRIDE BASE TEMPLATE COMPONENTS
+       ========================================= */
+    .page-wrapper > header.report-header,
+    .page-wrapper > .report-title-box,
+    .page-wrapper > .signatures-grid {
+        display: none !important;
+    }
+
+    .page-wrapper {
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        margin: 0 auto !important;
+        max-width: 210mm !important;
+    }
+
+    /* =========================================
+       PREMIUM DESIGN SYSTEM
+       ========================================= */
     @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;600;700;800;900&family=Space+Grotesk:wght@500;700&display=swap');
 
     :root {
@@ -32,15 +53,14 @@
         print-color-adjust: exact !important;
     }
 
-    .page-wrapper {
-        max-width: 210mm;
-        margin: 40px auto;
-        padding: 0;
+    .premium-wrapper {
         background: var(--white);
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
         border-radius: 24px;
         overflow: hidden;
         position: relative;
+        margin: 20px auto;
+        min-height: 290mm;
     }
 
     /* Watermark */
@@ -56,20 +76,20 @@
     }
 
     /* Modern Header */
-    .report-header {
+    .premium-header {
         position: relative;
         background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-        padding: 50px 60px;
+        padding: 40px 50px;
         color: var(--white);
         overflow: hidden;
         z-index: 1;
     }
 
-    .report-header::before {
+    .premium-header::before {
         content: '';
         position: absolute;
         top: -50%;
-        right: -10%;
+        left: -10%; /* Flipped for RTL */
         width: 300px;
         height: 300px;
         background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
@@ -81,7 +101,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 40px;
+        margin-bottom: 30px;
     }
 
     .logo-container {
@@ -91,12 +111,12 @@
     }
 
     .logo-img {
-        height: 65px;
+        height: 50px;
         filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
     }
 
     .platform-name {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
         font-weight: 900;
         color: var(--accent);
         letter-spacing: 1px;
@@ -105,24 +125,24 @@
     }
 
     .report-meta {
-        text-align: left;
+        text-align: right;
     }
 
     .report-badge {
         background: rgba(212, 175, 55, 0.1);
         border: 1px solid var(--accent);
         color: var(--accent);
-        padding: 8px 20px;
+        padding: 6px 18px;
         border-radius: 30px;
         font-weight: 700;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         display: inline-block;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
         box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
     }
 
     .meta-text {
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         color: #a1a5b7;
         font-family: 'Space Grotesk', sans-serif;
     }
@@ -130,38 +150,40 @@
     /* Instructor Info Profile */
     .instructor-profile {
         display: flex;
-        align-items: flex-end;
-        gap: 25px;
+        align-items: center;
+        gap: 20px;
         position: relative;
     }
 
     .profile-icon {
-        width: 80px;
-        height: 80px;
+        width: 65px;
+        height: 65px;
         background: linear-gradient(45deg, var(--accent), var(--accent-dark));
-        border-radius: 20px;
+        border-radius: 16px;
         display: flex;
         align-items: center;
         justify-content: center;
         box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        flex-shrink: 0;
     }
 
     .profile-icon svg {
-        width: 40px;
-        height: 40px;
+        width: 32px;
+        height: 32px;
         fill: var(--white);
     }
 
     .instructor-details h1 {
-        font-size: 2.8rem;
+        font-size: 2.2rem;
         font-weight: 900;
         margin: 0 0 5px 0;
         color: var(--white);
         text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        white-space: nowrap;
     }
 
     .instructor-id {
-        font-size: 1.1rem;
+        font-size: 1rem;
         color: var(--accent);
         font-weight: 600;
         font-family: 'Space Grotesk', sans-serif;
@@ -172,49 +194,37 @@
 
     /* Stats Grid */
     .stats-container {
-        padding: 0 60px;
-        margin-top: -30px;
+        padding: 0 40px;
+        margin-top: -25px;
         position: relative;
         z-index: 10;
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
+        gap: 15px;
     }
 
     .stat-card {
         background: var(--white);
-        border-radius: var(--radius);
-        padding: 25px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
         border: 1px solid rgba(255,255,255,0.8);
         border-bottom: 4px solid var(--accent);
         position: relative;
         overflow: hidden;
     }
 
-    .stat-card::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, transparent 60%, var(--accent-glow) 100%);
-        z-index: 0;
-        pointer-events: none;
-    }
-
     .stat-title {
-        font-size: 0.9rem;
+        font-size: 0.8rem;
         color: var(--text-light);
         font-weight: 700;
-        margin-bottom: 15px;
+        margin-bottom: 8px;
         position: relative;
         z-index: 1;
     }
 
     .stat-value {
-        font-size: 2.2rem;
+        font-size: 1.8rem;
         font-weight: 900;
         color: var(--primary);
         font-family: 'Space Grotesk', sans-serif;
@@ -228,26 +238,26 @@
 
     /* Main Content Area */
     .content-area {
-        padding: 40px 60px;
+        padding: 30px 40px;
         position: relative;
         z-index: 1;
     }
 
     .section-title {
-        font-size: 1.6rem;
+        font-size: 1.4rem;
         font-weight: 900;
         color: var(--primary);
-        margin-bottom: 25px;
+        margin-bottom: 20px;
         display: flex;
         align-items: center;
-        gap: 15px;
+        gap: 12px;
     }
 
     .section-title::before {
         content: '';
         display: block;
-        width: 8px;
-        height: 30px;
+        width: 6px;
+        height: 24px;
         background: var(--accent);
         border-radius: 4px;
     }
@@ -255,55 +265,55 @@
     /* Premium Tables */
     .premium-table-wrapper {
         background: var(--white);
-        border-radius: var(--radius);
-        box-shadow: 0 5px 20px rgba(0,0,0,0.04);
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
         border: 1px solid var(--border-color);
         overflow: hidden;
-        margin-bottom: 40px;
+        margin-bottom: 30px;
     }
 
-    table {
+    table.premium-table {
         width: 100%;
         border-collapse: collapse;
+        table-layout: auto;
     }
 
-    thead {
+    table.premium-table thead {
         background: var(--bg-main);
     }
 
-    th {
-        padding: 18px 20px;
+    table.premium-table th {
+        padding: 14px 16px;
         text-align: right;
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         font-weight: 800;
         color: var(--text-light);
-        text-transform: uppercase;
         border-bottom: 2px solid var(--border-color);
     }
 
-    td {
-        padding: 16px 20px;
-        font-size: 0.95rem;
+    table.premium-table td {
+        padding: 14px 16px;
+        font-size: 0.9rem;
         font-weight: 600;
         border-bottom: 1px solid var(--border-color);
         color: var(--text-main);
+        vertical-align: middle;
     }
 
-    tr:last-child td {
-        border-bottom: none;
-    }
+    table.premium-table tr:last-child td { border-bottom: none; }
+    table.premium-table tr:nth-child(even) { background-color: #fafbfc; }
 
-    tr:nth-child(even) {
-        background-color: #fafbfc;
-    }
+    table.premium-table th.text-center, 
+    table.premium-table td.text-center { text-align: center !important; }
 
     /* Badges & Indicators */
-    .badge {
+    .premium-badge {
         padding: 6px 12px;
-        border-radius: 8px;
+        border-radius: 6px;
         font-size: 0.8rem;
         font-weight: 800;
         font-family: 'Space Grotesk', sans-serif;
+        display: inline-block;
     }
     
     .badge-gold { background: #fff8dd; color: #b78918; }
@@ -314,47 +324,47 @@
     .dist-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 30px;
-        margin-bottom: 40px;
+        gap: 25px;
+        margin-bottom: 30px;
     }
 
     /* Footer / Signatures */
-    .signatures-box {
-        margin-top: 50px;
+    .premium-signatures {
+        margin-top: 40px;
         background: var(--primary);
-        border-radius: var(--radius);
-        padding: 40px;
+        border-radius: 16px;
+        padding: 30px;
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 30px;
+        gap: 20px;
         color: var(--white);
     }
 
-    .sig-item {
-        text-align: center;
-    }
+    .sig-item { text-align: center; }
 
     .sig-title {
         font-size: 0.85rem;
         color: #a1a5b7;
-        margin-bottom: 50px;
+        margin-bottom: 40px;
     }
 
     .sig-line {
         border-top: 2px dashed rgba(255,255,255,0.2);
-        padding-top: 15px;
+        padding-top: 10px;
         font-weight: 700;
         color: var(--accent);
+        font-size: 0.9rem;
     }
 
     /* Utilities */
-    .font-mono { font-family: 'Space Grotesk', sans-serif; }
-    .text-center { text-align: center; }
-    .text-left { text-align: left; }
+    .num-val { 
+        font-family: 'Space Grotesk', sans-serif; 
+        font-weight: 700;
+    }
     
     .course-card-header {
-        background: linear-gradient(to right, #f8f9fa, #ffffff);
-        padding: 20px;
+        background: linear-gradient(to left, #f8f9fa, #ffffff);
+        padding: 15px 20px;
         border-bottom: 2px solid var(--accent);
         display: flex;
         justify-content: space-between;
@@ -362,28 +372,28 @@
     }
 
     .course-card-title {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: 800;
         color: var(--primary);
     }
 
     @media print {
         body { background: white; }
-        .page-wrapper { margin: 0; box-shadow: none; border-radius: 0; }
+        .premium-wrapper { margin: 0; box-shadow: none; border-radius: 0; border: none; }
         .stat-card { border: 1px solid var(--border-color); box-shadow: none; }
         .premium-table-wrapper { border: 1px solid var(--border-color); box-shadow: none; }
         .page-break { page-break-after: always; }
-        .report-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .premium-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
 </style>
 {% endblock %}
 
 {% block report_body %}
-<div class="page-wrapper">
+<div class="premium-wrapper">
     <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" class="watermark" alt="Watermark">
 
     <!-- Premium Header -->
-    <div class="report-header">
+    <div class="premium-header">
         <div class="header-top">
             <div class="logo-container">
                 <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Mohtarifo Logo" class="logo-img">
@@ -413,19 +423,19 @@
     <div class="stats-container">
         <div class="stat-card">
             <div class="stat-title">المخزون الكلي للأكواد</div>
-            <div class="stat-value">{{ total_codes }}</div>
+            <div class="stat-value num-val">{{ total_codes }}</div>
         </div>
         <div class="stat-card">
             <div class="stat-title">المبيعات الإجمالية</div>
-            <div class="stat-value gold">{{ total_sold }}</div>
+            <div class="stat-value num-val gold">{{ total_sold }}</div>
         </div>
         <div class="stat-card">
             <div class="stat-title">الأكواد المفعلة</div>
-            <div class="stat-value green">{{ total_activated }}</div>
+            <div class="stat-value num-val green">{{ total_activated }}</div>
         </div>
         <div class="stat-card" style="border-bottom-color: var(--primary);">
             <div class="stat-title">إجمالي صافي الأرباح</div>
-            <div class="stat-value" style="font-size: 1.8rem; color: var(--primary);">{{ total_gross|currency_format }}</div>
+            <div class="stat-value num-val" style="font-size: 1.6rem; color: var(--primary);">{{ total_gross|currency_format }}</div>
         </div>
     </div>
 
@@ -433,14 +443,14 @@
         <!-- Courses Overview -->
         <h2 class="section-title">الأداء المالي للدورات التدريبية</h2>
         <div class="premium-table-wrapper">
-            <table>
+            <table class="premium-table">
                 <thead>
                     <tr>
                         <th>اسم الدورة التدريبية</th>
                         <th class="text-center">إجمالي الأكواد</th>
                         <th class="text-center">الكمية المباعة</th>
                         <th class="text-center">النشطة</th>
-                        <th class="text-left">صافي الإيراد (ل.س)</th>
+                        <th class="text-center">صافي الإيراد (ل.س)</th>
                         <th class="text-center">معدل التفعيل</th>
                     </tr>
                 </thead>
@@ -448,12 +458,12 @@
                     {% for data in course_data %}
                     <tr>
                         <td style="font-weight: 800; color: var(--primary);">{{ data.course.title }}</td>
-                        <td class="text-center font-mono">{{ data.cnt_all }}</td>
-                        <td class="text-center font-mono" style="color: var(--accent-dark); font-weight: 800;">{{ data.cnt_sold }}</td>
-                        <td class="text-center font-mono" style="color: var(--success); font-weight: 800;">{{ data.cnt_active }}</td>
-                        <td class="text-left font-mono" style="font-weight: 900; font-size: 1.1rem;">{{ data.sum_gross|currency_format }}</td>
+                        <td class="text-center num-val">{{ data.cnt_all }}</td>
+                        <td class="text-center num-val" style="color: var(--accent-dark); font-weight: 800;">{{ data.cnt_sold }}</td>
+                        <td class="text-center num-val" style="color: var(--success); font-weight: 800;">{{ data.cnt_active }}</td>
+                        <td class="text-center num-val" style="font-weight: 900; font-size: 1.05rem;">{{ data.sum_gross|currency_format }}</td>
                         <td class="text-center">
-                            <span class="badge badge-gold">
+                            <span class="premium-badge badge-gold num-val">
                                 {% widthratio data.cnt_active data.cnt_sold 100 %}%
                             </span>
                         </td>
@@ -466,9 +476,9 @@
         <!-- Distributions -->
         <div class="dist-grid">
             <div>
-                <h2 class="section-title" style="font-size: 1.3rem;">التوزيع الجغرافي للطلاب</h2>
+                <h2 class="section-title" style="font-size: 1.2rem;">التوزيع الجغرافي للطلاب</h2>
                 <div class="premium-table-wrapper">
-                    <table>
+                    <table class="premium-table">
                         <thead>
                             <tr><th>المنطقة / المحافظة</th><th class="text-center">عدد الطلاب</th></tr>
                         </thead>
@@ -476,7 +486,7 @@
                             {% for row in governorate_sales|slice:":5" %}
                             <tr>
                                 <td>{{ row.user__student_profile__governorate|default:"غير محدد" }}</td>
-                                <td class="text-center font-mono" style="color: var(--accent-dark); font-weight: 800;">{{ row.activated_count }}</td>
+                                <td class="text-center num-val" style="color: var(--accent-dark); font-weight: 800;">{{ row.activated_count }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -484,9 +494,9 @@
                 </div>
             </div>
             <div>
-                <h2 class="section-title" style="font-size: 1.3rem;">أداء نقاط البيع (المراكز)</h2>
+                <h2 class="section-title" style="font-size: 1.2rem;">أداء نقاط البيع (المراكز)</h2>
                 <div class="premium-table-wrapper">
-                    <table>
+                    <table class="premium-table">
                         <thead>
                             <tr><th>اسم المركز</th><th class="text-center">حجم المبيعات</th></tr>
                         </thead>
@@ -494,7 +504,7 @@
                             {% for center in centers_sales|slice:":5" %}
                             <tr>
                                 <td>{{ center.sales_center__name|default:"مبيعات المنصة المباشرة" }}</td>
-                                <td class="text-center font-mono" style="color: var(--accent-dark); font-weight: 800;">{{ center.sold_count }}</td>
+                                <td class="text-center num-val" style="color: var(--accent-dark); font-weight: 800;">{{ center.sold_count }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -504,7 +514,7 @@
         </div>
         
         <div class="page-break"></div>
-        <div style="height: 40px;"></div>
+        <div style="height: 30px;"></div>
 
         <!-- Detailed Audit -->
         <h2 class="section-title">السجل المالي التفصيلي (Audit Log)</h2>
@@ -512,9 +522,9 @@
         <div class="premium-table-wrapper">
             <div class="course-card-header">
                 <div class="course-card-title">{{ data.course.title }}</div>
-                <div class="badge badge-gold" style="font-size: 1rem;">إيراد الدورة: {{ data.sum_gross|currency_format }} ل.س</div>
+                <div class="premium-badge badge-gold" style="font-size: 0.95rem;">إيراد الدورة: <span class="num-val">{{ data.sum_gross|currency_format }}</span> ل.س</div>
             </div>
-            <table>
+            <table class="premium-table">
                 <thead>
                     <tr>
                         <th>الرمز التسلسلي (Code)</th>
@@ -527,7 +537,7 @@
                 <tbody>
                     {% for code in data.codes %}
                     <tr>
-                        <td class="font-mono" style="font-weight: 900; color: var(--primary);">{{ code.code }}</td>
+                        <td class="num-val" style="font-weight: 900; color: var(--primary);">{{ code.code }}</td>
                         <td>
                             {% if code.assigned_student_name %}
                                 {{ code.assigned_student_name }}
@@ -535,19 +545,19 @@
                                 {{ code.grants.all.first.user.get_full_name|default:code.grants.all.first.user.username }}
                             {% else %}<span style="color: #ccc;">غير محدد</span>{% endif %}
                         </td>
-                        <td class="text-center font-mono">
+                        <td class="text-center num-val">
                             {% if code.assigned_student_phone %}
                                 {{ code.assigned_student_phone }}
                             {% elif code.grants.all.first %}
                                 {{ code.grants.all.first.user.student_profile.phone|default:"--" }}
                             {% else %}--{% endif %}
                         </td>
-                        <td class="text-center font-mono">{{ code.sold_at|date:"Y/m/d"|default:"--" }}</td>
+                        <td class="text-center num-val" style="font-size: 0.85rem;">{{ code.sold_at|date:"Y/m/d"|default:"--" }}</td>
                         <td class="text-center">
                             {% if code.redeemed_count > 0 %}
-                                <span class="badge badge-success">مفعل</span>
+                                <span class="premium-badge badge-success">مفعل</span>
                             {% else %}
-                                <span class="badge badge-pending">قيد الانتظار</span>
+                                <span class="premium-badge badge-pending">قيد الانتظار</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -558,7 +568,7 @@
         {% endfor %}
 
         <!-- Official Signatures -->
-        <div class="signatures-box">
+        <div class="premium-signatures">
             <div class="sig-item">
                 <div class="sig-title">لجنة التدقيق المالي</div>
                 <div class="sig-line">توقيع المحاسب المعتمد</div>
@@ -569,8 +579,8 @@
             </div>
             <div class="sig-item">
                 <div style="text-align: left; margin-top: -10px;">
-                    <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo" style="height: 45px; opacity: 0.8; margin-bottom: 15px; filter: brightness(0) invert(1);">
-                    <div style="font-size: 0.7rem; color: #a1a5b7; font-family: 'Space Grotesk', sans-serif;">
+                    <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo" style="height: 40px; opacity: 0.8; margin-bottom: 12px; filter: brightness(0) invert(1);">
+                    <div style="font-size: 0.7rem; color: #a1a5b7; font-family: 'Space Grotesk', sans-serif;" class="num-val">
                         Mohtarifo ERP System<br>
                         Generated Automatically<br>
                         ID: {{ instructor.id }} / {% now "Ymd" %}
