@@ -417,7 +417,8 @@
             <div class="profile-icon">
                 {% with full_name=instructor.get_full_name|default:instructor.username %}
                 {% with img_path="dashboard/course-covers/"|add:full_name|add:".png" %}
-                    <img src="{% static img_path %}" alt="{{ full_name }}" onerror="this.onerror=null; this.src='{% static \'dashboard/course-covers/default_cover.png\' %}';">
+                {% static "dashboard/course-covers/default_cover.png" as default_img %}
+                    <img src="{% static img_path %}" alt="{{ full_name }}" onerror="this.onerror=null; this.src='{{ default_img }}';">
                 {% endwith %}
                 {% endwith %}
             </div>
