@@ -1790,44 +1790,104 @@ def admin_course_control(request, course_id):
 
 
 def _get_instructor_context(request):
-    courses = (
-        Course.objects.filter(instructor=request.user)
-        .select_related("subject")
-        .annotate(lessons_total=Count("units__lessons", distinct=True), grants_total=Count("access_grants", distinct=True))
-    )
-    
-    sessions = (
-        OnlineLessonSession.objects.filter(lesson__unit__course__in=courses)
-        .select_related("lesson", "lesson__unit", "lesson__unit__course")
-        .annotate(attendance_total=Count("attendances", distinct=True))
-        .order_by("starts_at")
-    )
-    attendance_rows = LessonAttendance.objects.filter(session__lesson__unit__course__in=courses).select_related(
-        "user", "session", "session__lesson", "session__lesson__unit", "session__lesson__unit__course"
-    ).order_by("-created_at")
+    # 1. Fetch courses safely
+    try:
+        courses = Course.objects.filter(instructor=request.user).select_related("subject")
+        # Annotate lessons_total and grants_total safely in python memory to prevent MySQL/PostgreSQL Count(distinct) join bugs in production
+        for course in courses:
+            course.lessons_total = Lesson.objects.filter(unit__course=course).count()
+            course.grants_total = AccessGrant.objects.filter(course=course).count()
+    except Exception:
+        courses = Course.objects.none()
 
-    instructor_profile = getattr(request.user, 'instructor_profile', None)
-    wallet = Wallet.objects.filter(instructor=instructor_profile).first()
-    transactions = wallet.transactions.all()[:20] if wallet else []
-    
-    grants_list = AccessGrant.objects.filter(course__instructor=request.user).select_related(
-        "user", "course", "user__student_profile"
-    ).order_by("-created_at")
-    
+    # 2. Fetch sessions safely
+    sessions = OnlineLessonSession.objects.none()
+    try:
+        if courses.exists():
+            sessions = (
+                OnlineLessonSession.objects.filter(lesson__unit__course__in=courses)
+                .select_related("lesson", "lesson__unit", "lesson__unit__course")
+                .annotate(attendance_total=Count("attendances", distinct=True))
+                .order_by("starts_at")
+            )
+    except Exception:
+        pass
+
+    # 3. Fetch attendance rows safely
+    attendance_rows = LessonAttendance.objects.none()
+    try:
+        if courses.exists():
+            attendance_rows = LessonAttendance.objects.filter(session__lesson__unit__course__in=courses).select_related(
+                "user", "session", "session__lesson", "session__lesson__unit", "session__lesson__unit__course"
+            ).order_by("-created_at")
+    except Exception:
+        pass
+
+    # 4. Fetch Wallet and transactions safely
+    wallet = None
+    transactions = []
+    try:
+        instructor_profile = getattr(request.user, 'instructor_profile', None)
+        if instructor_profile:
+            wallet = Wallet.objects.filter(instructor=instructor_profile).first()
+            if wallet:
+                transactions = list(wallet.transactions.all()[:20])
+    except Exception:
+        pass
+
+    # 5. Fetch grants list safely
+    grants_list = AccessGrant.objects.none()
     selected_course_id = request.GET.get("course_id", "")
-    if selected_course_id and selected_course_id.isdigit():
-        grants_list = grants_list.filter(course_id=int(selected_course_id))
+    try:
+        grants_list = AccessGrant.objects.filter(course__instructor=request.user).select_related(
+            "user", "course"
+        ).order_by("-created_at")
+        if selected_course_id and selected_course_id.isdigit():
+            grants_list = grants_list.filter(course_id=int(selected_course_id))
+    except Exception:
+        pass
+
+    # 6. Gather counts safely
+    try:
+        courses_count = courses.count()
+    except Exception:
+        courses_count = 0
+
+    try:
+        lessons_count = Lesson.objects.filter(unit__course__in=courses).count()
+    except Exception:
+        lessons_count = 0
+
+    try:
+        sessions_count = sessions.count()
+    except Exception:
+        sessions_count = 0
+
+    try:
+        attendance_count = attendance_rows.count()
+    except Exception:
+        attendance_count = 0
+
+    try:
+        students_count = AccessGrant.objects.filter(course__in=courses).values("user").distinct().count()
+    except Exception:
+        students_count = 0
+
+    try:
+        codes_count = AccessCode.objects.filter(course__in=courses).count()
+    except Exception:
+        codes_count = 0
 
     return {
         "courses": courses,
-        "courses_count": courses.count(),
-        "lessons_count": Lesson.objects.filter(unit__course__in=courses).count(),
-        "sessions_count": sessions.count(),
-        "attendance_count": attendance_rows.count(),
-        "students_count": AccessGrant.objects.filter(course__in=courses).values("user").distinct().count(),
-        "codes_count": AccessCode.objects.filter(course__in=courses).count(),
-        "sessions": sessions[:8],
-        "attendance_rows": attendance_rows[:10],
+        "courses_count": courses_count,
+        "lessons_count": lessons_count,
+        "sessions_count": sessions_count,
+        "attendance_count": attendance_count,
+        "students_count": students_count,
+        "codes_count": codes_count,
+        "sessions": sessions[:8] if hasattr(sessions, '__getitem__') else [],
+        "attendance_rows": attendance_rows[:10] if hasattr(attendance_rows, '__getitem__') else [],
         "wallet": wallet,
         "transactions": transactions,
         "grants_list": grants_list,

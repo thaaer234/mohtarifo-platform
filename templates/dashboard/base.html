@@ -223,7 +223,11 @@
                         <a href="{% url 'dashboard:admin_partners' %}" class="nav-link {% if 'partners' in request.path %}active{% endif %}">الشركاء</a>
                         <a href="{% url 'dashboard:admin_packages' %}" class="nav-link {% if 'packages' in request.path %}active{% endif %}">الباقات</a>
                     {% elif user.instructor_profile %}
-                        <a href="{% url 'dashboard:instructor_dashboard' %}" class="nav-link active" style="color: var(--brand-gold); font-weight: 800; display: flex; align-items: center; gap: 4px;"><i data-lucide="award" style="width: 15px;"></i> لوحة المدرس الرئيسية</a>
+                        <a href="{% url 'dashboard:instructor_courses' %}" class="nav-link {% if '/instructor/courses/' in request.path or request.path == '/instructor/' %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="graduation-cap" style="width: 15px;"></i> دوراتي التدريبية</a>
+                        <a href="{% url 'dashboard:instructor_students' %}" class="nav-link {% if '/instructor/students/' in request.path %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="users" style="width: 15px;"></i> سجل الطلاب</a>
+                        <a href="{% url 'dashboard:instructor_finance' %}" class="nav-link {% if '/instructor/finance/' in request.path %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="wallet" style="width: 15px;"></i> المالية والأرباح</a>
+                        <a href="{% url 'dashboard:instructor_announcements' %}" class="nav-link {% if '/instructor/announcements/' in request.path %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="send" style="width: 15px;"></i> إرسال تنبيه للطلاب</a>
+                        <a href="{% url 'dashboard:instructor_settings' %}" class="nav-link {% if '/instructor/settings/' in request.path %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="key-round" style="width: 15px;"></i> إعدادات الحساب</a>
                     {% elif user.is_authenticated %}
                         <a href="{% url 'dashboard:student_dashboard' %}" class="nav-link {% if request.path == '/dashboard/student/' %}active{% endif %}">الرئيسية</a>
                         <a href="{% url 'dashboard:my_courses' %}" class="nav-link {% if 'my-courses' in request.path %}active{% endif %}">مكتبتي</a>
@@ -306,7 +310,11 @@
                     <i data-lucide="award" style="width: 14px; margin-left: 4px;"></i>
                     <span>لوحة الأستاذ</span>
                 </div>
-                <a href="{% url 'dashboard:instructor_dashboard' %}" class="mobile-nav-link gold"><i data-lucide="layout"></i> لوحة التحكم الرئيسية</a>
+                <a href="{% url 'dashboard:instructor_courses' %}" class="mobile-nav-link {% if '/instructor/courses/' in request.path or request.path == '/instructor/' %}active{% endif %}"><i data-lucide="graduation-cap"></i> دوراتي التدريبية</a>
+                <a href="{% url 'dashboard:instructor_students' %}" class="mobile-nav-link {% if '/instructor/students/' in request.path %}active{% endif %}"><i data-lucide="users"></i> سجل الطلاب</a>
+                <a href="{% url 'dashboard:instructor_finance' %}" class="mobile-nav-link {% if '/instructor/finance/' in request.path %}active{% endif %}"><i data-lucide="wallet"></i> المالية والأرباح</a>
+                <a href="{% url 'dashboard:instructor_announcements' %}" class="mobile-nav-link {% if '/instructor/announcements/' in request.path %}active{% endif %}"><i data-lucide="send"></i> إرسال تنبيه للطلاب</a>
+                <a href="{% url 'dashboard:instructor_settings' %}" class="mobile-nav-link {% if '/instructor/settings/' in request.path %}active{% endif %}"><i data-lucide="key-round"></i> إعدادات الحساب</a>
                 
                 <div class="mobile-auth-separator"></div>
                 <form action="{% url 'logout' %}" method="post" style="width: 100%;">
@@ -376,7 +384,7 @@
                 <!-- Instructor Bottom Nav -->
                 <a href="{% url 'dashboard:instructor_courses' %}" class="bottom-nav-item {% if '/instructor/courses/' in request.path or request.path == '/instructor/' %}active{% endif %}">
                     <i data-lucide="graduation-cap"></i>
-                    <span>دوراتي</span>
+                    <span>الدورات</span>
                 </a>
                 <a href="{% url 'dashboard:instructor_students' %}" class="bottom-nav-item {% if '/instructor/students/' in request.path %}active{% endif %}">
                     <i data-lucide="users"></i>
@@ -388,11 +396,7 @@
                 </a>
                 <a href="{% url 'dashboard:instructor_announcements' %}" class="bottom-nav-item {% if '/instructor/announcements/' in request.path %}active{% endif %}">
                     <i data-lucide="send"></i>
-                    <span>إرسال تنبيه</span>
-                </a>
-                <a href="{% url 'dashboard:instructor_settings' %}" class="bottom-nav-item {% if '/instructor/settings/' in request.path %}active{% endif %}">
-                    <i data-lucide="key-round"></i>
-                    <span>الإعدادات</span>
+                    <span>إشعار</span>
                 </a>
             {% else %}
                 <!-- Student Bottom Nav -->
