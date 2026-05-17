@@ -572,9 +572,11 @@ def login_view(request):
         if resolved_user:
             post_data = request.POST.copy()
             post_data["username"] = resolved_user.username
-            request.POST = post_data
-
-    form = AuthenticationForm(request, data=request.POST or None)
+            form = AuthenticationForm(request, data=post_data)
+        else:
+            form = AuthenticationForm(request, data=request.POST or None)
+    else:
+        form = AuthenticationForm(request, data=None)
     if request.method == "POST" and _login_is_rate_limited(request):
         messages.error(request, "لقد تجاوزت الحد المسموح به من محاولات تسجيل الدخول الفاشلة. يرجى المحاولة لاحقاً.")
         return render(request, "registration/login.html", {"form": form}, status=429)

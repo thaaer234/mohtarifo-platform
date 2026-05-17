@@ -4,12 +4,26 @@ from __future__ import annotations
 import re
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.utils import ProgrammingError, OperationalError
 from django.utils.text import slugify
 
 from .models import InstructorProfile, StudentProfile
 
 User = get_user_model()
 PHONE_DIGITS_RE = re.compile(r"^09\d{8}$")
+
+
+def get_instructor_profile(user):
+    """يُرجع ملف المدرس أو None دون رفع استثناء."""
+    if not user or not getattr(user, "pk", None):
+        return None
+    try:
+        return user.instructor_profile
+    except ObjectDoesNotExist:
+        return None
+    except InstructorProfile.DoesNotExist:
+        return None
 
 
 def normalize_phone(phone: str) -> str:
@@ -46,13 +60,16 @@ def _find_instructor_by_phone(raw: str):
     if not variants:
         return None
 
-    profile = (
-        InstructorProfile.objects.filter(phone__in=variants)
-        .select_related("user")
-        .first()
-    )
-    if profile:
-        return profile.user
+    try:
+        profile = (
+            InstructorProfile.objects.filter(phone__in=variants)
+            .select_related("user")
+            .first()
+        )
+        if profile:
+            return profile.user
+    except (ProgrammingError, OperationalError):
+        pass
 
     user = (
         User.objects.filter(instructor_profile__isnull=False, username__in=variants)
@@ -65,9 +82,12 @@ def _find_instructor_by_phone(raw: str):
     if not norm:
         return None
 
-    for profile in InstructorProfile.objects.select_related("user").exclude(phone=""):
-        if normalize_phone(profile.phone) == norm:
-            return profile.user
+    try:
+        for profile in InstructorProfile.objects.select_related("user").exclude(phone=""):
+            if normalize_phone(profile.phone) == norm:
+                return profile.user
+    except (ProgrammingError, OperationalError):
+        pass
 
     for user in User.objects.filter(instructor_profile__isnull=False).only("id", "username"):
         if normalize_phone(user.username) == norm:
@@ -123,7 +143,7 @@ def _find_instructor_by_name(raw: str):
 def is_instructor_account(user) -> bool:
     if not user or not user.is_active:
         return False
-    if hasattr(user, "instructor_profile"):
+    if get_instructor_profile(user):
         return True
     return bool(user.is_staff and PHONE_DIGITS_RE.fullmatch(normalize_phone(user.username)))
 
@@ -174,7 +194,7 @@ def resolve_user_for_login(raw_identifier: str):
 def instructor_password_candidates(user) -> list[str]:
     """قيم محتملة لكلمة مرور المدرس (هاتف الملف، اسم المستخدم إن كان رقماً...)."""
     candidates: list[str] = []
-    profile = getattr(user, "instructor_profile", None)
+    profile = get_instructor_profile(user)
     if profile and profile.phone:
         candidates.append(normalize_phone(profile.phone))
     username_digits = normalize_phone(user.username)
@@ -214,7 +234,7 @@ def verify_instructor_password(user, password: str) -> bool:
 
 def normalize_login_password(user, password: str) -> str:
     """للمدرس: إذا أدخل رقماً ككلمة مرور نُوحّد التنسيق."""
-    if hasattr(user, "instructor_profile"):
+    if get_instructor_profile(user):
         digits = normalize_phone(password)
         if digits and PHONE_DIGITS_RE.fullmatch(digits):
             return digits
@@ -223,11 +243,14 @@ def normalize_login_password(user, password: str) -> str:
 
 def get_instructor_login_phone(user) -> str:
     """رقم الهاتف لإرسال OTP."""
-    profile = getattr(user, "instructor_profile", None)
+    profile = get_instructor_profile(user)
     if profile and profile.phone:
         return profile.phone
-    if hasattr(user, "student_profile") and user.student_profile.phone:
-        return user.student_profile.phone
-    if profile and PHONE_DIGITS_RE.fullmatch(normalize_phone(user.username)):
+    try:
+        if user.student_profile.phone:
+            return user.student_profile.phone
+    except ObjectDoesNotExist:
+        pass
+    if PHONE_DIGITS_RE.fullmatch(normalize_phone(user.username)):
         return normalize_phone(user.username)
     return user.username

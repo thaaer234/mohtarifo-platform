@@ -30,7 +30,7 @@
                 <label>اسم المستخدم أو الهاتف</label>
                 <div class="input-glow-wrapper">
                     <i data-lucide="user" class="field-icon"></i>
-                    <input type="text" name="username" placeholder="اسم المستخدم أو الهاتف" required value="{{ login_username|default:form.username.value|default:'' }}">
+                    <input type="text" name="username" placeholder="اسم المستخدم أو الهاتف" required value="{% if login_username %}{{ login_username }}{% elif form.is_bound %}{{ form.username.value|default:'' }}{% endif %}">
                 </div>
             </div>
 

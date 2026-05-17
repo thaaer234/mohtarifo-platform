@@ -194,12 +194,12 @@
                     <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Mohtarifo Logo" class="main-logo">
                 </a>
                 
-                {% if user.is_staff and not user.instructor_profile %}
+                {% if user_is_platform_admin %}
                     <div class="badge badge-gold desktop-only mr-4">
                         <i data-lucide="shield-check" style="width: 14px;"></i>
                         <span>لوحة الإدارة</span>
                     </div>
-                {% elif user.instructor_profile %}
+                {% elif user_has_instructor_profile %}
                     <div class="badge badge-success desktop-only mr-4" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);">
                         <i data-lucide="award" style="width: 14px;"></i>
                         <span>لوحة الأستاذ</span>
@@ -209,7 +209,7 @@
             
             <div class="navbar-center desktop-only" style="flex: 1; justify-content: center; display: flex;">
                 <div class="nav-links">
-                    {% if user.is_staff and not user.instructor_profile %}
+                    {% if user_is_platform_admin %}
                         <a href="{% url 'dashboard:admin_dashboard' %}" class="nav-link {% if request.path == '/admin-dashboard/' %}active{% endif %}">الرئيسية</a>
                         <a href="{% url 'dashboard:admin_content_hub' %}" class="nav-link {% if 'content-hub' in request.path or '/admin-dashboard/courses/' in request.path %}active{% endif %}">المحتوى</a>
                         <a href="{% url 'dashboard:admin_catalog_manager' %}" class="nav-link {% if 'catalog-manager' in request.path %}active{% endif %}">الاستكشاف</a>
@@ -222,7 +222,7 @@
                         <a href="{% url 'dashboard:admin_sell_codes' %}" class="nav-link {% if 'sell-codes' in request.path %}active{% endif %}" style="color: var(--brand-gold); font-weight: 800; display: flex; align-items: center; gap: 4px;"><i data-lucide="sparkles" style="width: 13px;"></i> بيع أكواد</a>
                         <a href="{% url 'dashboard:admin_partners' %}" class="nav-link {% if 'partners' in request.path %}active{% endif %}">الشركاء</a>
                         <a href="{% url 'dashboard:admin_packages' %}" class="nav-link {% if 'packages' in request.path %}active{% endif %}">الباقات</a>
-                    {% elif user.instructor_profile %}
+                    {% elif user_has_instructor_profile %}
                         <a href="{% url 'dashboard:instructor_courses' %}" class="nav-link {% if '/instructor/courses/' in request.path or request.path == '/instructor/' %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="graduation-cap" style="width: 15px;"></i> دوراتي التدريبية</a>
                         <a href="{% url 'dashboard:instructor_students' %}" class="nav-link {% if '/instructor/students/' in request.path %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="users" style="width: 15px;"></i> سجل الطلاب</a>
                         <a href="{% url 'dashboard:instructor_finance' %}" class="nav-link {% if '/instructor/finance/' in request.path %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="wallet" style="width: 15px;"></i> المالية والأرباح</a>
@@ -246,9 +246,9 @@
                 <div class="auth-actions desktop-only">
                     {% if user.is_authenticated %}
                         <div class="flex-center gap-4">
-                            <span class="text-muted font-bold">{% if user.is_staff and not user.instructor_profile %}المدير: {% elif user.instructor_profile %}الأستاذ: {% endif %}{{ user.get_full_name|default:user.username }}</span>
+                            <span class="text-muted font-bold">{% if user_is_platform_admin %}المدير: {% elif user_has_instructor_profile %}الأستاذ: {% endif %}{{ user.get_full_name|default:user.username }}</span>
                             <a href="{% url 'dashboard:profile' %}" class="nav-icon-link" title="حسابي">
-                                <i data-lucide="{% if user.is_staff and not user.instructor_profile %}settings{% else %}user{% endif %}"></i>
+                                <i data-lucide="{% if user_is_platform_admin %}settings{% else %}user{% endif %}"></i>
                             </a>
                             <form action="{% url 'logout' %}" method="post" style="display:inline;">
                                 {% csrf_token %}
@@ -282,7 +282,7 @@
             <button class="close-menu" id="menu-close"><i data-lucide="x"></i></button>
         </div>
         <div class="mobile-nav-links">
-            {% if user.is_staff and not user.instructor_profile %}
+            {% if user_is_platform_admin %}
                 <div class="badge badge-gold mb-4" style="display: inline-flex; width: 100%; justify-content: center; padding: 10px; border-radius: 8px;">
                     <i data-lucide="shield-check" style="width: 14px; margin-left: 4px;"></i>
                     <span>لوحة الإدارة</span>
@@ -305,7 +305,7 @@
                     {% csrf_token %}
                     <button type="submit" class="mobile-nav-link text-danger" style="background: none; border: none; width: 100%; text-align: right; display: flex; align-items: center; gap: 8px; padding: 12px 16px;"><i data-lucide="log-out"></i> خروج</button>
                 </form>
-            {% elif user.instructor_profile %}
+            {% elif user_has_instructor_profile %}
                 <div class="badge badge-success mb-4" style="display: inline-flex; width: 100%; justify-content: center; padding: 10px; border-radius: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);">
                     <i data-lucide="award" style="width: 14px; margin-left: 4px;"></i>
                     <span>لوحة الأستاذ</span>
@@ -362,7 +362,7 @@
     <!-- Mobile Bottom Navigation -->
     <nav class="mobile-bottom-nav mobile-only">
         {% if user.is_authenticated %}
-            {% if user.is_staff and not user.instructor_profile %}
+            {% if user_is_platform_admin %}
                 <!-- Admin Bottom Nav -->
                 <a href="{% url 'dashboard:admin_dashboard' %}" class="bottom-nav-item {% if '/admin-dashboard/' in request.path and 'students' not in request.path and 'instructors' not in request.path %}active{% endif %}">
                     <i data-lucide="home"></i>
@@ -380,7 +380,7 @@
                     <i data-lucide="user"></i>
                     <span>حسابي</span>
                 </a>
-            {% elif user.instructor_profile %}
+            {% elif user_has_instructor_profile %}
                 <!-- Instructor Bottom Nav -->
                 <a href="{% url 'dashboard:instructor_courses' %}" class="bottom-nav-item {% if '/instructor/courses/' in request.path or request.path == '/instructor/' %}active{% endif %}">
                     <i data-lucide="graduation-cap"></i>
