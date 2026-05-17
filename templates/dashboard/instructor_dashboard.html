@@ -2,112 +2,574 @@
 {% block title %}لوحة المدرس | محترفو التعليم{% endblock %}
 
 {% block content %}
-<div class="pro-container animate-up" dir="rtl">
-    <header class="d-flex justify-content-between align-items-center mb-12">
+<div class="pro-container animate-up" dir="rtl" style="font-family: 'Cairo', sans-serif;">
+    
+    <!-- Top Welcome Header -->
+    <header class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-4 mb-8" style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 2rem;">
         <div>
-            <span class="badge badge-success mb-2">حساب أستاذ</span>
-            <h1 class="font-weight-bold" style="font-size: 2.8rem;">لوحة الأستاذ: <span class="text-success">{{ request.user.get_full_name|default:request.user.username }}</span></h1>
-            <p class="text-muted" style="font-size: 1.1rem;">مرحباً بك مجدداً، إليك ملخص نشاطك التعليمي اليوم.</p>
+            <div class="d-flex align-items-center gap-2 mb-2">
+                <span class="badge badge-success px-3 py-1 rounded-pill" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); font-weight: 700;">حساب أستاذ معتمد</span>
+                <span class="badge badge-gold px-3 py-1 rounded-pill" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.2); font-weight: 700;">عرض فقط</span>
+            </div>
+            <h1 class="font-weight-bold" style="font-size: 2.4rem; color: var(--text-primary); letter-spacing: -0.5px; margin: 0;">
+                الأستاذ: <span style="color: var(--brand-gold); text-shadow: 0 0 15px rgba(245, 158, 11, 0.1);">{{ request.user.get_full_name|default:request.user.username }}</span>
+            </h1>
+            <p class="text-muted mb-0" style="font-size: 1.05rem; margin-top: 0.5rem;">أهلاً بك مجدداً. يمكنك متابعة دوراتك، أرباحك، وطلابك، والتواصل معهم بكل سهولة.</p>
         </div>
-        <div class="avatar-side desktop-only">
-             <div class="flex-center" style="width: 80px; height: 80px; border-radius: 20px; background: rgba(16, 185, 129, 0.1); color: var(--pro-accent); border: 2px solid var(--pro-accent);">
-                <i data-lucide="award" style="width: 40px; height: 40px;"></i>
+        <div class="d-flex align-items-center gap-3">
+            <div class="avatar-side flex-center" style="width: 70px; height: 70px; border-radius: 20px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.02) 100%); color: var(--brand-gold); border: 1px solid rgba(245, 158, 11, 0.25); box-shadow: var(--shadow-glow);">
+                <i data-lucide="award" style="width: 36px; height: 36px;"></i>
             </div>
         </div>
     </header>
 
+    <!-- Stat Cards Row -->
     <div class="row mb-8">
-        <div class="col-md-4 mb-4">
-            <div class="pro-card d-flex align-items-center gap-4 p-5">
-                <div class="stat-icon" style="width: 70px; height: 70px; border-radius: 20px; background: rgba(16, 185, 129, 0.1); color: var(--pro-accent); display: flex; align-items: center; justify-content: center;">
-                    <i data-lucide="users" style="width: 35px; height: 35px;"></i>
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="pro-card d-flex align-items-center gap-4 p-5" style="border-radius: 20px; transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(145deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.03) 100%);">
+                <div class="stat-icon flex-center" style="width: 60px; height: 60px; border-radius: 16px; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.15);">
+                    <i data-lucide="users" style="width: 28px; height: 28px;"></i>
                 </div>
                 <div>
-                    <span class="text-muted small font-weight-bold d-block">إجمالي الطلاب المفعّلين</span>
-                    <h2 class="mb-0 font-weight-bold" style="font-size: 2.5rem;">{{ students_count }}</h2>
+                    <span class="text-muted small font-weight-bold d-block mb-1">الطلاب المفعّلين</span>
+                    <h2 class="mb-0 font-weight-bold" style="font-size: 2rem; color: var(--text-primary);">{{ students_count }}</h2>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-4">
-            <div class="pro-card d-flex align-items-center gap-4 p-5">
-                <div class="stat-icon" style="width: 70px; height: 70px; border-radius: 20px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; display: flex; align-items: center; justify-content: center;">
-                    <i data-lucide="book-open" style="width: 35px; height: 35px;"></i>
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="pro-card d-flex align-items-center gap-4 p-5" style="border-radius: 20px; transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(145deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.03) 100%);">
+                <div class="stat-icon flex-center" style="width: 60px; height: 60px; border-radius: 16px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.15);">
+                    <i data-lucide="book-open" style="width: 28px; height: 28px;"></i>
                 </div>
                 <div>
-                    <span class="text-muted small font-weight-bold d-block">عدد الدورات النشطة</span>
-                    <h2 class="mb-0 font-weight-bold" style="font-size: 2.5rem;">{{ courses_count }}</h2>
+                    <span class="text-muted small font-weight-bold d-block mb-1">الدورات النشطة</span>
+                    <h2 class="mb-0 font-weight-bold" style="font-size: 2rem; color: var(--text-primary);">{{ courses_count }}</h2>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-4">
-            <div class="pro-card d-flex align-items-center gap-4 p-5" style="border-right: 4px solid var(--pro-accent);">
-                <div class="stat-icon" style="width: 70px; height: 70px; border-radius: 20px; background: rgba(245, 158, 11, 0.1); color: #f59e0b; display: flex; align-items: center; justify-content: center;">
-                    <i data-lucide="wallet" style="width: 35px; height: 35px;"></i>
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="pro-card d-flex align-items-center gap-4 p-5" style="border-radius: 20px; transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(145deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.03) 100%);">
+                <div class="stat-icon flex-center" style="width: 60px; height: 60px; border-radius: 16px; background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.15);">
+                    <i data-lucide="play" style="width: 28px; height: 28px;"></i>
                 </div>
                 <div>
-                    <span class="text-muted small font-weight-bold d-block">رصيد أرباحي (ل.س)</span>
-                    <h2 class="mb-0 font-weight-bold text-success" style="font-size: 2.5rem;">{{ wallet.balance|default:"0.00"|floatformat:0 }}</h2>
+                    <span class="text-muted small font-weight-bold d-block mb-1">الدروس المرفوعة</span>
+                    <h2 class="mb-0 font-weight-bold" style="font-size: 2rem; color: var(--text-primary);">{{ lessons_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="pro-card d-flex align-items-center gap-4 p-5" style="border-radius: 20px; transition: all 0.3s ease; border: 1px solid rgba(245, 158, 11, 0.15); background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(245, 158, 11, 0.01) 100%);">
+                <div class="stat-icon flex-center" style="width: 60px; height: 60px; border-radius: 16px; background: rgba(245, 158, 11, 0.15); color: var(--brand-gold); border: 1px solid rgba(245, 158, 11, 0.25);">
+                    <i data-lucide="wallet" style="width: 28px; height: 28px;"></i>
+                </div>
+                <div>
+                    <span class="text-muted small font-weight-bold d-block mb-1">الرصيد المالي</span>
+                    <h2 class="mb-0 font-weight-bold text-success" style="font-size: 1.8rem; font-weight: 800;">{{ wallet.balance|default:"0.00"|floatformat:0 }} <span style="font-size: 0.9rem; font-weight: 500;">ل.س</span></h2>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="pro-card p-5">
-        <div class="d-flex align-items-center gap-3 mb-6">
-            <div class="bg-success-soft p-2 rounded-lg">
-                <i data-lucide="graduation-cap" class="text-success"></i>
-            </div>
-            <h3 class="mb-0 font-weight-bold">دوراتي التدريبية</h3>
-        </div>
+    <!-- Navigation Tabs -->
+    <div class="d-flex align-items-center gap-3 mb-6 scroll-x" style="border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
+        <button class="tab-btn active d-flex align-items-center gap-2 px-5 py-3 rounded-lg" onclick="switchTab(event, 'courses-tab')" style="background: none; border: none; font-size: 1.05rem; font-weight: 700; color: var(--text-secondary); transition: all 0.2s ease; outline: none;">
+            <i data-lucide="graduation-cap" style="width: 18px;"></i>
+            <span>دوراتي التدريبية</span>
+        </button>
+        <button class="tab-btn d-flex align-items-center gap-2 px-5 py-3 rounded-lg" onclick="switchTab(event, 'students-tab')" style="background: none; border: none; font-size: 1.05rem; font-weight: 700; color: var(--text-secondary); transition: all 0.2s ease; outline: none;">
+            <i data-lucide="users" style="width: 18px;"></i>
+            <span>سجل الطلاب</span>
+        </button>
+        <button class="tab-btn d-flex align-items-center gap-2 px-5 py-3 rounded-lg" onclick="switchTab(event, 'financial-tab')" style="background: none; border: none; font-size: 1.05rem; font-weight: 700; color: var(--text-secondary); transition: all 0.2s ease; outline: none;">
+            <i data-lucide="wallet" style="width: 18px;"></i>
+            <span>المالية والأرباح</span>
+        </button>
+        <button class="tab-btn d-flex align-items-center gap-2 px-5 py-3 rounded-lg" id="message-tab-trigger" onclick="switchTab(event, 'message-tab')" style="background: none; border: none; font-size: 1.05rem; font-weight: 700; color: var(--text-secondary); transition: all 0.2s ease; outline: none;">
+            <i data-lucide="send" style="width: 18px;"></i>
+            <span>إرسال تنبيه للطلاب</span>
+        </button>
+    </div>
+
+    <!-- Tab Contents -->
+    <div class="tab-content-wrapper">
         
-        <div class="table-responsive">
-            <table class="table custom-table">
-                <thead>
-                    <tr class="text-muted small font-weight-bold">
-                        <th>اسم الدورة</th>
-                        <th>المادة العلمية</th>
-                        <th class="text-center">عدد الطلاب</th>
-                        <th class="text-left">الإجراءات</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for course in courses %}
-                    <tr class="align-middle">
-                        <td>
-                            <div class="d-flex align-items-center gap-3">
-                                <div class="course-mini-thumb" style="width: 45px; height: 45px; border-radius: 10px; background: #f1f5f9; overflow: hidden;">
-                                    {% if course.cover %}
-                                        <img src="{{ course.cover.url }}" class="w-100 h-100 object-fit-cover">
-                                    {% else %}
-                                        <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted"><i data-lucide="image" style="width: 16px;"></i></div>
-                                    {% endif %}
-                                </div>
-                                <strong class="text-primary">{{ course.title }}</strong>
-                            </div>
-                        </td>
-                        <td><span class="badge badge-light p-2">{{ course.subject.name }}</span></td>
-                        <td class="text-center">
-                            <span class="badge badge-success-soft text-success px-3 py-2" style="font-size: 0.9rem; font-weight: 800;">{{ course.grants_total }}</span>
-                        </td>
-                        <td class="text-left">
-                            <button class="btn btn-sm btn-outline-primary rounded-pill">عرض الإحصائيات</button>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="4" class="text-center py-12 text-muted">لا توجد دورات مسجلة باسمك بعد.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <!-- Tab 1: Courses -->
+        <div id="courses-tab" class="tab-pane active fade-in">
+            <div class="pro-card p-6" style="border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); background: rgba(30, 30, 30, 0.25); backdrop-filter: blur(10px);">
+                <div class="d-flex align-items-center justify-content-between mb-6">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-success-soft p-2.5 rounded-lg flex-center" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.15);">
+                            <i data-lucide="book-open"></i>
+                        </div>
+                        <h3 class="mb-0 font-weight-bold" style="font-size: 1.4rem;">الدورات التدريبية المخصصة لك</h3>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table custom-table">
+                        <thead>
+                            <tr class="text-muted small font-weight-bold" style="border-bottom: 2px solid rgba(255,255,255,0.05);">
+                                <th style="padding: 1.25rem 1rem;">اسم الدورة</th>
+                                <th style="padding: 1.25rem 1rem;">المادة العلمية</th>
+                                <th class="text-center" style="padding: 1.25rem 1rem;">عدد الدروس</th>
+                                <th class="text-center" style="padding: 1.25rem 1rem;">عدد الطلاب</th>
+                                <th class="text-left" style="padding: 1.25rem 1rem; width: 150px;">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for course in courses %}
+                            <tr class="align-middle" style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                <td style="padding: 1.5rem 1rem;">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="course-mini-thumb" style="width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.05); overflow: hidden; border: 1px solid rgba(255,255,255,0.08);">
+                                            {% if course.cover %}
+                                                <img src="{{ course.cover.url }}" class="w-100 h-100 object-fit-cover">
+                                            {% else %}
+                                                <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted"><i data-lucide="image" style="width: 18px;"></i></div>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            <strong class="text-primary d-block mb-1" style="font-size: 1.05rem; color: var(--text-primary) !important;">{{ course.title }}</strong>
+                                            <span class="text-muted small">تاريخ الإنشاء: {{ course.created_at|date:"Y-m-d" }}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="padding: 1.5rem 1rem;"><span class="badge badge-light px-3 py-2 rounded-md" style="font-size: 0.85rem; font-weight: 700; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: var(--text-secondary);">{{ course.subject.name }}</span></td>
+                                <td class="text-center" style="padding: 1.5rem 1rem;">
+                                    <span class="badge px-3 py-2 rounded-md" style="font-size: 0.85rem; font-weight: 700; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.15);">{{ course.lessons_total }} درس</span>
+                                </td>
+                                <td class="text-center" style="padding: 1.5rem 1rem;">
+                                    <span class="badge px-3 py-2 rounded-md" style="font-size: 0.9rem; font-weight: 800; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);">{{ course.grants_total }} طالب</span>
+                                </td>
+                                <td class="text-left" style="padding: 1.5rem 1rem;">
+                                    <button class="btn btn-sm px-4 rounded-pill" onclick="triggerMessageForm('{{ course.id }}')" style="background: rgba(245, 158, 11, 0.12); color: var(--brand-gold); border: 1px solid rgba(245, 158, 11, 0.25); font-weight: 700; font-size: 0.85rem;">
+                                        <i data-lucide="message-circle" style="width: 14px; margin-left: 4px; vertical-align: middle;"></i> مراسلة
+                                    </button>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-12 text-muted" style="padding: 4rem;">
+                                    <i data-lucide="folder-open" class="mb-4" style="width: 48px; height: 48px; opacity: 0.5;"></i>
+                                    <p class="mb-0" style="font-size: 1.1rem; font-weight: 600;">لا توجد دورات مسجلة باسمك بعد.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
+
+        <!-- Tab 2: Students Ledger -->
+        <div id="students-tab" class="tab-pane fade-in" style="display: none;">
+            <div class="pro-card p-6" style="border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); background: rgba(30, 30, 30, 0.25); backdrop-filter: blur(10px);">
+                
+                <!-- Filters Header -->
+                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-4 mb-6" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1.5rem;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-primary-soft p-2.5 rounded-lg flex-center" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.15);">
+                            <i data-lucide="users"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0 font-weight-bold" style="font-size: 1.4rem;">سجل انتساب الطلاب</h3>
+                            <p class="text-muted small mb-0 mt-1">قائمة تفصيلية بكافة الطلاب المفعلين لدوراتك التعليمية حالياً.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Course Filter Dropdown -->
+                    <div class="d-flex align-items-center gap-3">
+                        <label class="text-muted small font-weight-bold mb-0" style="white-space: nowrap;">تصفية حسب الدورة:</label>
+                        <form method="GET" action="" id="filter-form">
+                            <select name="course_id" class="form-control rounded-lg" onchange="submitFilter()" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); padding: 0.5rem 2.5rem 0.5rem 1rem; border-radius: 12px; font-weight: 700; outline: none; cursor: pointer; -webkit-appearance: none;">
+                                <option value="">كل دوراتي التدريبية</option>
+                                {% for course in courses %}
+                                <option value="{{ course.id }}" {% if selected_course_id == course.id|stringformat:"s" %}selected{% endif %}>{{ course.title }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table custom-table">
+                        <thead>
+                            <tr class="text-muted small font-weight-bold" style="border-bottom: 2px solid rgba(255,255,255,0.05);">
+                                <th style="padding: 1.25rem 1rem;">اسم الطالب</th>
+                                <th style="padding: 1.25rem 1rem;">رقم الهاتف / اسم المستخدم</th>
+                                <th style="padding: 1.25rem 1rem;">المادة والفرع</th>
+                                <th class="text-center" style="padding: 1.25rem 1rem;">نوع التفعيل</th>
+                                <th class="text-center" style="padding: 1.25rem 1rem;">تاريخ الانضمام</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for grant in grants_list %}
+                            <tr class="align-middle" style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                <td style="padding: 1.25rem 1rem;">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="student-avatar flex-center" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.02) 100%); color: var(--brand-gold); border: 1px solid rgba(245, 158, 11, 0.2); font-weight: bold; font-size: 1rem;">
+                                            {{ grant.user.get_full_name|default:grant.user.username|slice:":1" }}
+                                        </div>
+                                        <div>
+                                            <strong style="color: var(--text-primary);">{{ grant.user.get_full_name|default:grant.user.username }}</strong>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="padding: 1.25rem 1rem; font-family: monospace; font-size: 0.95rem; color: var(--text-secondary);">
+                                    {{ grant.user.student_profile.phone|default:grant.user.username }}
+                                </td>
+                                <td style="padding: 1.25rem 1rem;">
+                                    <div class="d-flex flex-column gap-1">
+                                        <span class="font-weight-bold" style="color: var(--brand-gold);">{{ grant.course.title }}</span>
+                                        <span class="text-muted small">{{ grant.course.subject.name }} ({{ grant.course.get_academic_track_display }})</span>
+                                    </div>
+                                </td>
+                                <td class="text-center" style="padding: 1.25rem 1rem;">
+                                    <span class="badge px-2.5 py-1.5 rounded-md" style="font-size: 0.8rem; font-weight: 700;
+                                        {% if grant.source == 'admin' %}background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.15);
+                                        {% elif grant.source == 'code' %}background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.15);
+                                        {% else %}background: rgba(245, 158, 11, 0.1); color: var(--brand-gold); border: 1px solid rgba(245, 158, 11, 0.15);{% endif %}">
+                                        {{ grant.get_source_display|default:grant.source }}
+                                    </span>
+                                </td>
+                                <td class="text-center" style="padding: 1.25rem 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                                    {{ grant.created_at|date:"Y-m-d H:i" }}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-12 text-muted" style="padding: 4rem;">
+                                    <i data-lucide="users-2" class="mb-4" style="width: 48px; height: 48px; opacity: 0.5;"></i>
+                                    <p class="mb-0" style="font-size: 1.1rem; font-weight: 600;">لا يوجد طلاب منضمين للمادة/المواد المحددة حالياً.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Financial Overview & Wallet Transactions -->
+        <div id="financial-tab" class="tab-pane fade-in" style="display: none;">
+            <div class="row">
+                
+                <!-- Wallet Status Card -->
+                <div class="col-lg-4 mb-6">
+                    <div class="pro-card p-6 mb-6" style="border-radius: 24px; border: 1px solid rgba(245, 158, 11, 0.25); background: linear-gradient(145deg, rgba(245, 158, 11, 0.06) 0%, rgba(10, 10, 10, 0.6) 100%);">
+                        <div class="d-flex justify-content-between align-items-start mb-6">
+                            <div>
+                                <span class="badge badge-gold px-3 py-1.5 rounded-pill mb-2" style="background: rgba(245,158,11,0.1); color: var(--brand-gold); border: 1px solid rgba(245,158,11,0.2);">محفظة أرباح المدرس</span>
+                                <h4 class="font-weight-bold mt-2" style="font-size: 1.2rem;">رصيد الأستاذ الحالي</h4>
+                            </div>
+                            <div class="flex-center" style="width: 48px; height: 48px; border-radius: 14px; background: rgba(245,158,11,0.1); color: var(--brand-gold);">
+                                <i data-lucide="wallet"></i>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h2 class="font-weight-bold text-success" style="font-size: 2.8rem; margin: 0; line-height: 1.1;">
+                                {{ wallet.balance|default:"0.00"|floatformat:0 }}
+                                <span style="font-size: 1.2rem; font-weight: 500; color: var(--text-secondary);">ل.س</span>
+                            </h2>
+                            <p class="text-muted small mt-2">آخر تحديث: {{ wallet.updated_at|date:"Y-m-d H:i" }}</p>
+                        </div>
+                        
+                        <!-- Extra balance info details -->
+                        <div class="pt-4" style="border-top: 1px solid rgba(255,255,255,0.06);">
+                            <div class="d-flex justify-content-between mb-3">
+                                <span class="text-muted small">رصيد قيد الانتظار</span>
+                                <strong class="small" style="color: var(--text-primary);">{{ wallet.pending_balance|default:"0.00"|floatformat:0 }} ل.س</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted small">الرصيد المجمّد</span>
+                                <strong class="small text-danger">{{ wallet.frozen_balance|default:"0.00"|floatformat:0 }} ل.س</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Transactions Ledger -->
+                <div class="col-lg-8 mb-6">
+                    <div class="pro-card p-6" style="border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); background: rgba(30, 30, 30, 0.25); backdrop-filter: blur(10px); height: 100%;">
+                        <div class="d-flex align-items-center gap-3 mb-6" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
+                            <div class="bg-success-soft p-2 rounded-lg flex-center" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                                <i data-lucide="receipt"></i>
+                            </div>
+                            <h3 class="mb-0 font-weight-bold" style="font-size: 1.3rem;">سجل آخر المعاملات المالية</h3>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table custom-table">
+                                <thead>
+                                    <tr class="text-muted small font-weight-bold" style="border-bottom: 2px solid rgba(255,255,255,0.05);">
+                                        <th style="padding: 1rem;">رقم المعاملة</th>
+                                        <th style="padding: 1rem;">نوع العملية</th>
+                                        <th style="padding: 1rem;">المبلغ</th>
+                                        <th style="padding: 1rem;">التفاصيل والوصف</th>
+                                        <th class="text-center" style="padding: 1rem;">التاريخ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for tx in transactions %}
+                                    <tr class="align-middle" style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                        <td style="padding: 1.25rem 1rem; font-family: monospace; font-size: 0.85rem; color: var(--text-muted);">
+                                            {{ tx.id|stringformat:"s"|slice:":8" }}...
+                                        </td>
+                                        <td style="padding: 1.25rem 1rem;">
+                                            <span class="badge px-2 py-1 rounded" style="font-size: 0.85rem; font-weight: 700;
+                                                {% if tx.transaction_type == 'credit' %}background: rgba(16, 185, 129, 0.1); color: #10b981;
+                                                {% else %}background: rgba(239, 68, 68, 0.1); color: #ef4444;{% endif %}">
+                                                {% if tx.transaction_type == 'credit' %}إيداع{% else %}سحب{% endif %}
+                                            </span>
+                                        </td>
+                                        <td style="padding: 1.25rem 1rem; font-weight: bold; {% if tx.transaction_type == 'credit' %}color: #10b981;{% else %}color: #ef4444;{% endif %}">
+                                            {% if tx.transaction_type == 'credit' %}+{% else %}-{% endif %}{{ tx.amount|floatformat:0 }} ل.س
+                                        </td>
+                                        <td style="padding: 1.25rem 1rem; font-size: 0.9rem; color: var(--text-secondary);">
+                                            {{ tx.description }}
+                                            {% if tx.source_event %}
+                                                <span class="badge bg-dark text-muted small mr-2" style="font-size: 0.75rem;">{{ tx.source_event }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center" style="padding: 1.25rem 1rem; color: var(--text-muted); font-size: 0.85rem;">
+                                            {{ tx.created_at|date:"Y-m-d H:i" }}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center py-12 text-muted" style="padding: 3rem;">
+                                            <i data-lucide="receipt" class="mb-4" style="width: 40px; height: 40px; opacity: 0.4;"></i>
+                                            <p class="mb-0" style="font-size: 1rem;">لا توجد حركات مالية مسجلة في محفظتك حتى الآن.</p>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Broadcast Message to Course Students -->
+        <div id="message-tab" class="tab-pane fade-in" style="display: none;">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="pro-card p-6" style="border-radius: 24px; border: 1px solid rgba(245, 158, 11, 0.25); background: rgba(30, 30, 30, 0.25); backdrop-filter: blur(10px);">
+                        
+                        <div class="d-flex align-items-center gap-3 mb-6" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
+                            <div class="flex-center" style="width: 45px; height: 45px; border-radius: 12px; background: rgba(245,158,11,0.1); color: var(--brand-gold);">
+                                <i data-lucide="send"></i>
+                            </div>
+                            <div>
+                                <h3 class="mb-0 font-weight-bold" style="font-size: 1.4rem;">إرسال رسالة تنبيه جماعية لطلابك</h3>
+                                <p class="text-muted small mb-0 mt-1">أرسل إعلانات، تنبيهات، أو مهام دراسية لجميع الطلاب المشتركين في دوراتك.</p>
+                            </div>
+                        </div>
+
+                        <!-- Broadcast Form -->
+                        <form method="POST" action="" style="margin-top: 1.5rem;">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="send_message">
+                            
+                            <!-- Course Selection dropdown -->
+                            <div class="form-group mb-5">
+                                <label class="text-primary font-weight-bold mb-2" style="font-size: 1rem; color: var(--text-primary) !important;">1. حدد الطلاب المستهدفين (الدورة):</label>
+                                <select name="course_id" id="message-course-select" class="form-control rounded-lg" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); padding: 0.8rem 2.5rem 0.8rem 1rem; border-radius: 14px; font-weight: 700; width: 100%; font-size: 1rem; outline: none; cursor: pointer;">
+                                    <option value="all">كل الطلاب في جميع دوراتي ({{ students_count }} طالب)</option>
+                                    {% for course in courses %}
+                                    <option value="{{ course.id }}">طلاب دورة: {{ course.title }} ({{ course.grants_total }} طالب)</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <!-- Message Content Box -->
+                            <div class="form-group mb-5">
+                                <label class="text-primary font-weight-bold mb-2" style="font-size: 1rem; color: var(--text-primary) !important;">2. اكتب نص الرسالة:</label>
+                                <textarea name="message_body" rows="6" class="form-control" placeholder="اكتب هنا ما تريد إيصاله للطلاب... (مثال: أهلاً بكم طلابي الأعزاء، تم اليوم رفع ملف المذاكرة الشاملة للجلسة الثالثة، يرجى مراجعته فوراً.)" required style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 16px; padding: 1.25rem; font-size: 1.05rem; line-height: 1.6; outline: none; width: 100%; resize: vertical;"></textarea>
+                            </div>
+
+                            <!-- Preview Panel -->
+                            <div class="p-4 mb-5" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px;">
+                                <span class="text-muted small font-weight-bold d-block mb-2"><i data-lucide="eye" style="width: 14px; margin-left: 4px; vertical-align: middle;"></i> معاينة شكل الرسالة لدى الطلاب:</span>
+                                <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(245, 158, 11, 0.2); padding: 1rem 1.25rem; border-radius: 12px; color: var(--text-primary); font-size: 0.95rem;">
+                                    <strong>رسالة من الأستاذ {{ request.user.get_full_name|default:request.user.username }}:</strong>
+                                    <p class="mb-0 mt-2 text-muted" id="preview-text" style="line-height: 1.5; font-style: italic;">[ما ستكتبه في الصندوق أعلاه سيظهر هنا للطلاب...]</p>
+                                </div>
+                            </div>
+
+                            <!-- WhatsApp Dispatch Checkbox -->
+                            <div class="form-group mb-6">
+                                <div class="custom-control custom-checkbox d-flex align-items-center gap-3 p-3" style="background: rgba(37, 211, 102, 0.05); border: 1px solid rgba(37, 211, 102, 0.2); border-radius: 14px;">
+                                    <input type="checkbox" name="send_whatsapp" id="send_whatsapp" class="custom-control-input" style="width: 20px; height: 20px; cursor: pointer;">
+                                    <label class="custom-control-label font-weight-bold mb-0" for="send_whatsapp" style="cursor: pointer; color: #25D366; font-size: 1rem;">
+                                        <i data-lucide="message-square" style="width: 16px; margin-left: 4px; vertical-align: middle;"></i> إرسال كرسالة واتساب أيضاً إلى هواتف الطلاب المفعلين 📲
+                                    </label>
+                                </div>
+                                <span class="text-muted small d-block mt-2" style="padding-right: 0.5rem;"><i data-lucide="info" style="width: 12px; vertical-align: middle;"></i> سيتم ترحيل الرسالة في الخلفية إلى هواتف الطلاب لضمان عدم حدوث بطء في التصفح.</span>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn btn-primary btn-glow w-100 py-3" style="border-radius: 14px; font-size: 1.1rem; font-weight: 800; background: var(--brand-gold); border: none; color: #000;">
+                                <i data-lucide="send" style="width: 18px; margin-left: 6px; vertical-align: middle;"></i> بث وإرسال التنبيه الآن
+                            </button>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 
+<!-- Tabs and Preview Script Logic -->
+<script>
+    function switchTab(evt, tabId) {
+        // Hide all tab panes
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        tabPanes.forEach(pane => {
+            pane.style.display = 'none';
+            pane.classList.remove('active');
+        });
+
+        // Remove active class from all tab buttons
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        tabButtons.forEach(btn => {
+            btn.classList.remove('active');
+            btn.style.color = 'var(--text-secondary)';
+            btn.style.borderBottom = 'none';
+        });
+
+        // Show selected tab pane
+        const activePane = document.getElementById(tabId);
+        activePane.style.display = 'block';
+        setTimeout(() => activePane.classList.add('active'), 50);
+
+        // Highlight selected tab button
+        evt.currentTarget.classList.add('active');
+        evt.currentTarget.style.color = 'var(--brand-gold)';
+    }
+
+    function triggerMessageForm(courseId) {
+        // Switch to message tab
+        const trigger = document.getElementById('message-tab-trigger');
+        if (trigger) {
+            trigger.click();
+        }
+        
+        // Select specific course in dropdown
+        const select = document.getElementById('message-course-select');
+        if (select) {
+            select.value = courseId;
+        }
+    }
+
+    function submitFilter() {
+        document.getElementById('filter-form').submit();
+    }
+
+    // Dynamic Preview Update
+    document.addEventListener("DOMContentLoaded", () => {
+        const textarea = document.querySelector('textarea[name="message_body"]');
+        const preview = document.getElementById('preview-text');
+
+        if (textarea && preview) {
+            textarea.addEventListener("input", (e) => {
+                const val = e.target.value.trim();
+                if (val) {
+                    preview.textContent = val;
+                    preview.style.fontStyle = "normal";
+                    preview.style.color = "var(--text-primary)";
+                } else {
+                    preview.textContent = "[ما ستكتبه في الصندوق أعلاه سيظهر هنا للطلاب...]";
+                    preview.style.fontStyle = "italic";
+                    preview.style.color = "var(--text-muted)";
+                }
+            });
+        }
+        
+        // Auto trigger Tab if filtering parameter is present
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('course_id')) {
+            const btns = document.querySelectorAll('.tab-btn');
+            if (btns[1]) {
+                btns[1].click();
+            }
+        }
+    });
+</script>
+
+<!-- Styles for premium feel -->
 <style>
-    .custom-table thead th { border: none; padding: 1.5rem 1rem; border-bottom: 2px solid #f1f5f9; }
-    .custom-table tbody td { border: none; padding: 1.5rem 1rem; border-bottom: 1px solid #f8fafc; }
-    .bg-success-soft { background: rgba(16, 185, 129, 0.1); }
-    .badge-success-soft { background: rgba(16, 185, 129, 0.08); color: #059669; }
+    .tab-btn {
+        position: relative;
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        font-weight: 700;
+        cursor: pointer;
+        padding: 0.75rem 1.5rem;
+    }
+    .tab-btn.active {
+        color: var(--brand-gold) !important;
+    }
+    .tab-btn.active::after {
+        content: '';
+        position: absolute;
+        bottom: -12px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--brand-gold);
+        border-radius: 4px;
+        box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+    }
+    .tab-btn:hover {
+        color: var(--text-primary);
+        background: rgba(255, 255, 255, 0.02);
+    }
+    .custom-table {
+        width: 100%;
+        margin-top: 1rem;
+    }
+    .custom-table th {
+        font-family: 'Cairo', sans-serif;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+    .custom-table td {
+        color: var(--text-primary);
+        font-family: 'Cairo', sans-serif;
+    }
+    .bg-success-soft {
+        background: rgba(16, 185, 129, 0.1);
+    }
+    .bg-primary-soft {
+        background: rgba(59, 130, 246, 0.1);
+    }
+    .scroll-x {
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+    .scroll-x::-webkit-scrollbar {
+        height: 4px;
+    }
+    .scroll-x::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.1);
+        border-radius: 10px;
+    }
+    /* Simple Animation */
+    .fade-in {
+        animation: fadeIn 0.4s ease-out forwards;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
 </style>
 {% endblock %}

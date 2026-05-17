@@ -520,6 +520,14 @@ def _record_failed_login(request):
         cache.touch(key, settings.LOGIN_RATE_LIMIT_TIMEOUT_SECONDS)
 
 
+def _get_user_phone(user):
+    # 1. Check if they have a student profile with a phone number
+    if hasattr(user, 'student_profile') and user.student_profile.phone:
+        return user.student_profile.phone
+    # 2. Fallback: if username is digit-only, it's their phone number
+    return user.username
+
+
 def login_view(request):
     from analytics.services import TrackingService
     TrackingService.log_landing_visit(request)
@@ -527,16 +535,36 @@ def login_view(request):
     if request.user.is_authenticated:
         return redirect("dashboard:home")
 
+    if request.method == "POST":
+        raw_username = request.POST.get("username", "").strip()
+        
+        # Resolve User object from username, phone number or email
+        user = User.objects.filter(username=raw_username).first()
+        if not user:
+            from accounts.models import StudentProfile
+            sp = StudentProfile.objects.filter(phone=raw_username).first()
+            if sp:
+                user = sp.user
+        if not user:
+            user = User.objects.filter(email=raw_username).first()
+            
+        if user:
+            # Mutate request.POST to replace the raw input with the actual user's username
+            post_data = request.POST.copy()
+            post_data["username"] = user.username
+            request.POST = post_data
+
     form = AuthenticationForm(request, data=request.POST or None)
     if request.method == "POST" and _login_is_rate_limited(request):
-        messages.error(request, "Too many failed login attempts. Please try again later.")
+        messages.error(request, "لقد تجاوزت الحد المسموح به من محاولات تسجيل الدخول الفاشلة. يرجى المحاولة لاحقاً.")
         return render(request, "registration/login.html", {"form": form}, status=429)
 
     if request.method == "POST" and form.is_valid():
         user = form.get_user()
         
-        # Send OTP to everyone (including Admin) for maximum security
-        phone = user.username
+        # Resolve the phone number associated with the user
+        phone = _get_user_phone(user)
+        
         request.session["otp_login_user_id"] = user.id
         request.session["otp_login_phone"] = phone
         
@@ -1767,6 +1795,71 @@ def instructor_dashboard(request):
         .select_related("subject")
         .annotate(lessons_total=Count("units__lessons", distinct=True), grants_total=Count("access_grants", distinct=True))
     )
+    
+    # Handle Send Message Action
+    if request.method == "POST" and request.POST.get("action") == "send_message":
+        course_id = request.POST.get("course_id", "").strip()
+        message_body = request.POST.get("message_body", "").strip()
+        send_whatsapp = request.POST.get("send_whatsapp") == "on"
+        
+        if not message_body:
+            messages.warning(request, "تنبيه: نص الرسالة فارغ لا يمكن إرساله.")
+        else:
+            # Determine target grants
+            if course_id == "all":
+                grants = AccessGrant.objects.filter(course__instructor=request.user)
+            elif course_id.isdigit():
+                grants = AccessGrant.objects.filter(course_id=int(course_id), course__instructor=request.user)
+            else:
+                grants = AccessGrant.objects.none()
+                
+            students = User.objects.filter(access_grants__in=grants).distinct()
+            
+            if not students.exists():
+                messages.warning(request, "لم يتم العثور على طلاب مفعلين في المادة المحددة لإرسال الرسالة إليهم.")
+            else:
+                instructor_name = request.user.get_full_name() or request.user.first_name or request.user.username
+                full_message = f"رسالة من الأستاذ {instructor_name}: {message_body}"
+                
+                # Bulk create notifications
+                notifications = [
+                    StudentNotification(
+                        user=student,
+                        notification_type="system",
+                        title=f"رسالة من الأستاذ {instructor_name}",
+                        body=message_body,
+                        url="/student/notifications/"
+                    )
+                    for student in students
+                ]
+                StudentNotification.objects.bulk_create(notifications)
+                
+                # Send WhatsApp if checked
+                if send_whatsapp:
+                    import threading
+                    from .whatsapp_utils import send_whatsapp_message
+                    
+                    def send_bulk_whatsapp_bg(students_list, text):
+                        for student in students_list:
+                            phone = None
+                            if hasattr(student, 'student_profile') and student.student_profile.phone:
+                                phone = student.student_profile.phone
+                            elif student.username.isdigit():
+                                phone = student.username
+                            if phone:
+                                send_whatsapp_message(phone, text)
+                                
+                    threading.Thread(
+                        target=send_bulk_whatsapp_bg,
+                        args=(list(students), full_message),
+                        daemon=True
+                    ).start()
+                    messages.success(request, f"✅ تم إرسال التنبيه الداخلي وجاري إرسال رسائل الواتساب بالخلفية لـ {students.count()} طالب.")
+                else:
+                    messages.success(request, f"✅ تم إرسال التنبيه الداخلي بنجاح لـ {students.count()} طالب.")
+                    
+            return redirect("dashboard:instructor_dashboard")
+
     sessions = (
         OnlineLessonSession.objects.filter(lesson__unit__course__in=courses)
         .select_related("lesson", "lesson__unit", "lesson__unit__course")
@@ -1780,6 +1873,16 @@ def instructor_dashboard(request):
     # Wallet & Accounting
     instructor_profile = getattr(request.user, 'instructor_profile', None)
     wallet = Wallet.objects.filter(instructor=instructor_profile).first()
+    transactions = wallet.transactions.all()[:20] if wallet else []
+    
+    # Students List with filtering
+    grants_list = AccessGrant.objects.filter(course__instructor=request.user).select_related(
+        "user", "course", "user__student_profile"
+    ).order_by("-created_at")
+    
+    selected_course_id = request.GET.get("course_id", "")
+    if selected_course_id and selected_course_id.isdigit():
+        grants_list = grants_list.filter(course_id=int(selected_course_id))
 
     context = {
         "courses": courses,
@@ -1792,7 +1895,10 @@ def instructor_dashboard(request):
         "sessions": sessions[:8],
         "attendance_rows": attendance_rows[:10],
         "wallet": wallet,
-     }
+        "transactions": transactions,
+        "grants_list": grants_list,
+        "selected_course_id": selected_course_id,
+    }
     return render(request, "dashboard/instructor_dashboard.html", context)
 
 
