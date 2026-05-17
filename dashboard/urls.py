@@ -24,7 +24,6 @@ urlpatterns = [
     path("admin/instructor/add/", views.admin_instructor_add, name="admin_instructor_add"),
     path("admin-dashboard/instructors/", views.admin_instructors, name="admin_instructors"),
     path("admin-dashboard/instructors/<int:instructor_id>/edit/", views.admin_instructor_edit, name="admin_instructor_edit"),
-    path("instructor/<int:instructor_id>/courses/", views.instructor_courses, name="instructor_courses"),
     path("faq/", views.faq_page, name="faq"),
     path("privacy/", views.privacy_page, name="privacy"),
     path("terms/", views.terms_page, name="terms"),

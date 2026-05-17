@@ -47,7 +47,7 @@
                     </div>
                 </div>
                 <div class="inst-actions mt-8">
-                    <a href="{% url 'dashboard:instructor_courses' instructor.id %}" class="btn btn-primary w-full btn-glow">عرض كافة الدورات</a>
+                    <a href="{% url 'dashboard:landing' %}?instructor={{ instructor.id }}" class="btn btn-primary w-full btn-glow">عرض كافة الدورات</a>
                 </div>
             </div>
         </div>

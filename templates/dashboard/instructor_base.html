@@ -25,15 +25,15 @@
     <div class="row g-4">
         <!-- Right Sidebar (Col-lg-4) -->
         <div class="col-lg-4 d-none d-lg-block">
-            <div class="pro-card sticky-sidebar" style="border-radius: 32px; border: 1px solid rgba(255,255,255,0.06); background: linear-gradient(145deg, rgba(22, 22, 22, 0.75) 0%, rgba(12, 12, 12, 0.85) 100%); backdrop-filter: blur(25px); box-shadow: 0 30px 60px rgba(0,0,0,0.45); padding: 2rem;">
+            <div class="pro-card sticky-sidebar" style="border-radius: 32px; border: 1px solid var(--sidebar-border); background: var(--sidebar-bg); backdrop-filter: blur(25px); box-shadow: var(--card-shadow); padding: 2rem;">
                 
                 <!-- Instructor Premium Profile Card -->
-                <div class="text-center mb-6" style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 2rem;">
+                <div class="text-center mb-6" style="border-bottom: 1px solid var(--sidebar-border); padding-bottom: 2rem;">
                     <div class="profile-avatar-container mx-auto mb-4 position-relative" style="width: 130px; height: 130px;">
                         <!-- Glowing spinning ring -->
                         <div class="position-absolute" style="inset: -6px; border-radius: 50%; background: linear-gradient(135deg, var(--brand-gold) 0%, #f59e0b 50%, #d97706 100%); padding: 3px; filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.5)); animation: spinGlowing 10s linear infinite;"></div>
                         <!-- Profile Image -->
-                        <div class="position-relative w-100 h-100" style="border-radius: 50%; overflow: hidden; border: 5px solid #161616; background: #161616;">
+                        <div class="position-relative w-100 h-100" style="border-radius: 50%; overflow: hidden; border: 5px solid var(--sidebar-avatar-border); background: var(--sidebar-avatar-border);">
                             {% if avatar_url %}
                                 <img src="{{ avatar_url }}" alt="{{ request.user.get_full_name }}" style="width: 100%; height: 100%; object-fit: cover;">
                             {% else %}
@@ -44,9 +44,14 @@
                         </div>
                     </div>
                     
-                    <h3 class="font-weight-bold mb-1" style="font-size: 1.6rem; color: var(--text-primary); text-shadow: 0 2px 10px rgba(0,0,0,0.5);">الأستاذ {{ request.user.get_full_name|default:request.user.username }}</h3>
-                    <div class="badge px-3 py-1.5 rounded-pill mb-4" style="background: rgba(245,158,11,0.08); color: var(--brand-gold); border: 1px solid rgba(245,158,11,0.2); font-weight: 700; font-size: 0.85rem;">
-                        {{ specialty }}
+                    <h3 class="font-weight-bold mb-1" style="font-size: 1.6rem; color: var(--text-primary-override); text-shadow: var(--sidebar-text-shadow);">الأستاذ {{ request.user.get_full_name|default:request.user.username }}</h3>
+                    <div class="d-flex align-items-center justify-content-center gap-2 mb-4">
+                        <div class="badge px-3 py-1.5 rounded-pill" style="background: rgba(245,158,11,0.08); color: var(--brand-gold); border: 1px solid rgba(245,158,11,0.2); font-weight: 700; font-size: 0.85rem;">
+                            {{ specialty }}
+                        </div>
+                        <a href="{% url 'dashboard:instructor_settings' %}" class="btn-profile-settings" title="إعدادات الحساب" style="color: var(--text-muted); transition: all 0.3s ease; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: var(--stat-tile-bg); border: 1px solid var(--stat-tile-border); text-decoration: none;">
+                            <i data-lucide="settings" style="width: 15px; height: 15px;"></i>
+                        </a>
                     </div>
                     
                     <!-- Stats Grid inside Profile Sidebar -->
@@ -110,10 +115,6 @@
                         <i data-lucide="send"></i>
                         <span>إرسال تنبيه للطلاب</span>
                     </a>
-                    <a href="{% url 'dashboard:instructor_settings' %}" class="sidebar-nav-btn {% if active_page == 'settings' %}active{% endif %}" style="text-decoration: none;">
-                        <i data-lucide="key-round"></i>
-                        <span>إعدادات الحساب</span>
-                    </a>
                 </div>
             </div>
         </div>
@@ -130,8 +131,52 @@
 <!-- Premium Global Styling & Effects -->
 <style>
     :root {
+        --glass-bg: rgba(255, 255, 255, 0.75);
+        --glass-border: rgba(0, 0, 0, 0.08);
+        --card-bg-gradient: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(245, 245, 245, 0.95) 100%);
+        --text-primary-override: #1f2937;
+        --text-secondary-override: #4b5563;
+        --sidebar-avatar-border: #ffffff;
+        --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        --stat-tile-bg: rgba(0, 0, 0, 0.02);
+        --stat-tile-border: rgba(0, 0, 0, 0.04);
+        --table-row-bg: rgba(0, 0, 0, 0.02);
+        --table-row-border: rgba(0, 0, 0, 0.04);
+        --table-row-hover-bg: rgba(0, 0, 0, 0.03);
+        --table-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        --sidebar-bg: rgba(255, 255, 255, 0.85);
+        --sidebar-border: rgba(0, 0, 0, 0.06);
+        --sidebar-text-shadow: none;
+    }
+    
+    .dark-theme :root, html.dark-theme {
         --glass-bg: rgba(30, 30, 30, 0.3);
         --glass-border: rgba(255, 255, 255, 0.06);
+        --card-bg-gradient: linear-gradient(145deg, rgba(22, 22, 22, 0.75) 0%, rgba(12, 12, 12, 0.85) 100%);
+        --text-primary-override: #ffffff;
+        --text-secondary-override: rgba(255, 255, 255, 0.7);
+        --sidebar-avatar-border: #161616;
+        --card-shadow: 0 30px 60px rgba(0,0,0,0.45);
+        --stat-tile-bg: rgba(255, 255, 255, 0.01);
+        --stat-tile-border: rgba(255, 255, 255, 0.03);
+        --table-row-bg: rgba(255, 255, 255, 0.02);
+        --table-row-border: rgba(255, 255, 255, 0.03);
+        --table-row-hover-bg: rgba(255, 255, 255, 0.04);
+        --table-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        --sidebar-bg: linear-gradient(145deg, rgba(22, 22, 22, 0.75) 0%, rgba(12, 12, 12, 0.85) 100%);
+        --sidebar-border: rgba(255, 255, 255, 0.06);
+        --sidebar-text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+    
+    .btn-profile-settings {
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+    }
+    
+    .btn-profile-settings:hover {
+        color: var(--brand-gold) !important;
+        background: rgba(245, 158, 11, 0.12) !important;
+        border-color: rgba(245, 158, 11, 0.25) !important;
+        transform: scale(1.1) rotate(45deg);
     }
     .sticky-sidebar {
         position: -webkit-sticky;

@@ -22,7 +22,7 @@
                 <i data-lucide="arrow-right"></i>
                 رجوع
             </a>
-            <a href="{% url 'dashboard:instructor_courses' instructor.id %}" class="btn btn-primary" target="_blank">
+            <a href="{% url 'dashboard:landing' %}?instructor={{ instructor.id }}" class="btn btn-primary" target="_blank">
                 <i data-lucide="eye"></i>
                 عرض صفحة المدرس
             </a>
