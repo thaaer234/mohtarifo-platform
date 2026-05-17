@@ -114,7 +114,23 @@
         <h3>لا يوجد طلاب مشتركون</h3>
         <p>لم يقم أي طالب بالاشتراك في المادة أو المواد المحددة حالياً.</p>
       </div>
-  <style>
+      {% endfor %}
+    </div>
+
+    <!-- JS No-Results Row (hidden by default) -->
+    <div class="is-empty-row" id="noResultsRow" style="display:none">
+      <div class="is-empty-icon" style="background: rgba(239,68,68,0.06); color:#ef4444; border-color: rgba(239,68,68,0.15)">
+        <i data-lucide="search-x" style="width:34px;height:34px"></i>
+      </div>
+      <h3>لا توجد نتائج مطابقة</h3>
+      <p>تأكد من صحة البحث أو جرب مصطلحات مختلفة.</p>
+    </div>
+
+  </div>
+
+</div>
+
+<style>
 /* ═══════════════════════════════════
    STUDENTS PAGE — Exclusive Design
    Identity: Blue/Cyan + Ledger Grid

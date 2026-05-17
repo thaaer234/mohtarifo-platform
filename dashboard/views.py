@@ -1855,6 +1855,12 @@ def _get_instructor_context(request):
             except Exception:
                 course.cover_url = ""
                 
+            # Safely fetch teacher photo URL
+            try:
+                course.teacher_photo_url = course.teacher_photo.url if course.teacher_photo else ""
+            except Exception:
+                course.teacher_photo_url = ""
+                
             # Safely fetch subject name
             try:
                 course.subject_name = course.subject.name if course.subject else "غير محدد"

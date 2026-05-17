@@ -121,9 +121,27 @@
         <div class="if-tx-amount {% if tx.transaction_type == 'credit' %}if-amount-green{% else %}if-amount-red{% endif %}">
           {% if tx.transaction_type == 'credit' %}+{% else %}-{% endif %}{{ tx.amount|floatformat:0 }} <small>ل.س</small>
         </div>
-
         <!-- TX Date -->
-        <<style>
+        <div class="if-tx-date">
+          {{ tx.created_at|date:"Y-m-d" }}
+          <span>{{ tx.created_at|date:"H:i" }}</span>
+        </div>
+      </div>
+      {% empty %}
+      <div class="if-empty-ledger">
+        <div class="if-empty-ledger-icon">
+          <i data-lucide="receipt" style="width:32px;height:32px"></i>
+        </div>
+        <h3>دفتر الحسابات فارغ</h3>
+        <p>لم يتم تسجيل أي معاملات أو حركات مالية حتى الآن.</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
+<style>
 /* ═══════════════════════════════════
    FINANCE PAGE — Exclusive Design
    Identity: Emerald + Gold Wallet
