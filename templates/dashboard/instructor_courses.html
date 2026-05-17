@@ -5,268 +5,372 @@
 <div class="ic-courses-page" dir="rtl">
 
   <!-- ══════════════════════════════════
-       HERO BANNER — Courses Identity
-       Golden Academy theme
+       AURORA HERO — Golden Academy
+       Unique: Particle field + aurora glow
   ══════════════════════════════════ -->
-  <div class="ic-hero-banner mb-5">
-    <div class="ic-hero-glow-1"></div>
-    <div class="ic-hero-glow-2"></div>
-    <div class="ic-hero-inner">
-      <div class="ic-hero-left">
-        <div class="ic-hero-icon-wrap">
-          <i data-lucide="graduation-cap"></i>
-        </div>
-        <div>
-          <h1 class="ic-hero-title">حقيبتك التدريبية</h1>
-          <p class="ic-hero-sub">جميع دوراتك الأكاديمية في مكان واحد — تابع الطلاب، الوحدات، والتفاعل</p>
-        </div>
+  <div class="ic-aurora-hero">
+    <div class="ic-aurora-wave ic-aurora-wave-1"></div>
+    <div class="ic-aurora-wave ic-aurora-wave-2"></div>
+    <div class="ic-aurora-wave ic-aurora-wave-3"></div>
+    <canvas class="ic-particles-canvas" id="icParticlesCanvas"></canvas>
+    <div class="ic-aurora-content">
+      <div class="ic-aurora-badge">
+        <div class="ic-aurora-badge-ring"></div>
+        <i data-lucide="graduation-cap"></i>
       </div>
-      <div class="ic-hero-stat-pill">
-        <i data-lucide="layers" style="width:15px"></i>
-        {{ courses_count }} دورة نشطة
+      <div class="ic-aurora-text">
+        <h1 class="ic-aurora-title">حقيبتك التدريبية</h1>
+        <p class="ic-aurora-desc">جميع دوراتك الأكاديمية في مكان واحد — تابع الطلاب والوحدات والتفاعل</p>
+      </div>
+      <div class="ic-aurora-counter">
+        <div class="ic-counter-ring">
+          <svg viewBox="0 0 80 80">
+            <circle cx="40" cy="40" r="35" class="ic-ring-bg"/>
+            <circle cx="40" cy="40" r="35" class="ic-ring-fill" style="--progress: {{ courses_count|default:0 }};"/>
+          </svg>
+          <span class="ic-counter-num">{{ courses_count }}</span>
+        </div>
+        <span class="ic-counter-label">دورة نشطة</span>
       </div>
     </div>
   </div>
 
   <!-- ══════════════════════════════════
-       COURSES GRID
+       COURSE CARDS GRID — 3D Tilt
   ══════════════════════════════════ -->
   {% if courses %}
-  <div class="ic-courses-grid">
+  <div class="ic-masonry-grid">
     {% for course in courses %}
-    <div class="ic-course-card">
-
-      <!-- Thumbnail Strip -->
-      <div class="ic-thumb-wrap">
+    <div class="ic-card-3d" data-tilt>
+      <!-- Parallax Thumbnail -->
+      <div class="ic-card-visual">
         {% if course.cover_url %}
-          <img src="{{ course.cover_url }}" alt="{{ course.title }}" class="ic-thumb-img">
+          <img src="{{ course.cover_url }}" alt="{{ course.title }}" class="ic-card-cover" loading="lazy">
         {% else %}
-          <div class="ic-thumb-placeholder">
-            <i data-lucide="image" style="width:42px;height:42px;opacity:.3"></i>
+          <div class="ic-card-no-cover">
+            <i data-lucide="video" style="width:48px;height:48px;opacity:.15"></i>
           </div>
         {% endif %}
-        <!-- Subject Badge -->
-        <span class="ic-subject-badge">{{ course.subject_name }}</span>
-        <!-- Shimmer overlay -->
-        <div class="ic-thumb-shimmer"></div>
+        <div class="ic-card-overlay"></div>
+        <span class="ic-card-subject-glass">
+          <i data-lucide="bookmark" style="width:11px"></i>
+          {{ course.subject_name }}
+        </span>
+        <div class="ic-card-shimmer-sweep"></div>
       </div>
 
-      <!-- Card Body -->
-      <div class="ic-card-body">
-        <h4 class="ic-course-title">{{ course.title }}</h4>
-
-        <div class="ic-course-meta">
-          <i data-lucide="calendar" style="width:12px;color:var(--brand-gold)"></i>
+      <!-- Card Content -->
+      <div class="ic-card-content">
+        <h4 class="ic-card-title">{{ course.title }}</h4>
+        <div class="ic-card-date-row">
+          <i data-lucide="calendar-days" style="width:13px;color:#f59e0b"></i>
           <span>{{ course.formatted_date|default:"لم يُحدد" }}</span>
         </div>
 
-        <!-- Stats Row -->
-        <div class="ic-stats-row">
-          <div class="ic-stat-item ic-stat-green">
-            <div class="ic-stat-icon">
-              <i data-lucide="users" style="width:14px"></i>
-            </div>
-            <div>
-              <span class="ic-stat-val">{{ course.grants_total }}</span>
-              <span class="ic-stat-lbl">طالب</span>
-            </div>
+        <!-- Stat Capsules -->
+        <div class="ic-capsules-row">
+          <div class="ic-capsule ic-capsule-amber">
+            <div class="ic-capsule-dot"></div>
+            <i data-lucide="users" style="width:13px"></i>
+            <strong>{{ course.grants_total }}</strong>
+            <span>طالب</span>
           </div>
-          <div class="ic-stat-item ic-stat-blue">
-            <div class="ic-stat-icon">
-              <i data-lucide="book-open" style="width:14px"></i>
-            </div>
-            <div>
-              <span class="ic-stat-val">{{ course.lessons_total }}</span>
-              <span class="ic-stat-lbl">درس</span>
-            </div>
+          <div class="ic-capsule ic-capsule-orange">
+            <div class="ic-capsule-dot"></div>
+            <i data-lucide="book-open" style="width:13px"></i>
+            <strong>{{ course.lessons_total }}</strong>
+            <span>درس</span>
           </div>
         </div>
       </div>
 
-      <!-- Card Footer Actions -->
-      <div class="ic-card-footer">
-        <a href="{% url 'dashboard:instructor_students' %}?course_id={{ course.id }}" class="ic-action-btn ic-action-secondary">
-          <i data-lucide="eye" style="width:13px"></i>
+      <!-- Card Actions -->
+      <div class="ic-card-actions">
+        <a href="{% url 'dashboard:instructor_students' %}?course_id={{ course.id }}" class="ic-act-btn ic-act-ghost">
+          <i data-lucide="eye" style="width:14px"></i>
           استعراض الطلاب
         </a>
-        <a href="{% url 'dashboard:instructor_announcements' %}?course_id={{ course.id }}" class="ic-action-btn ic-action-primary">
-          <i data-lucide="send" style="width:13px"></i>
+        <a href="{% url 'dashboard:instructor_announcements' %}?course_id={{ course.id }}" class="ic-act-btn ic-act-gold">
+          <i data-lucide="send" style="width:14px"></i>
           إرسال تنبيه
         </a>
       </div>
-
     </div>
     {% endfor %}
   </div>
 
   {% else %}
-  <!-- Empty State -->
-  <div class="ic-empty-state">
-    <div class="ic-empty-icon">
-      <i data-lucide="folder-search" style="width:38px;height:38px"></i>
+  <!-- Empty State — Floating Animation -->
+  <div class="ic-empty-float">
+    <div class="ic-empty-orb">
+      <i data-lucide="folder-search" style="width:44px;height:44px"></i>
     </div>
-    <h3>لا توجد دورات تدريبية</h3>
-    <p>لم يتم تخصيص أي دورات لحسابك حتى الآن. تواصل مع الإدارة لتفعيل مقرراتك.</p>
+    <h3 class="ic-empty-title">لا توجد دورات تدريبية</h3>
+    <p class="ic-empty-desc">لم يتم تخصيص أي دورات لحسابك حتى الآن. تواصل مع الإدارة لتفعيل مقرراتك.</p>
   </div>
   {% endif %}
 
 </div>
 
 <style>
-/* ═══════════════════════════════════
-   COURSES PAGE — Exclusive Design
-   Identity: Gold + Deep Dark + Depth
-═══════════════════════════════════ */
+/* ═══════════════════════════════════════════════
+   PAGE 1: COURSES — GOLDEN ACADEMY IDENTITY
+   Colors: Amber #f59e0b → Deep Orange #ea580c
+   Unique: Aurora waves, particle canvas, 3D tilt cards
+   Prefix: ic-
+═══════════════════════════════════════════════ */
 .ic-courses-page {
   padding-bottom: 2rem;
 }
 
-/* Hero Banner */
-.ic-hero-banner {
+/* ─── AURORA HERO ─── */
+.ic-aurora-hero {
   position: relative;
-  border-radius: 28px;
-  border: 1px solid rgba(245, 158, 11, 0.18);
-  background: linear-gradient(135deg, rgba(245,158,11,0.05) 0%, rgba(15,15,15,0.6) 100%);
-  padding: 2rem 1.75rem;
+  border-radius: 32px;
+  background: linear-gradient(160deg, #1a1407 0%, #120e08 40%, #0d0b08 100%);
+  border: 1px solid rgba(245,158,11,0.2);
+  padding: 2.5rem 2rem;
   overflow: hidden;
+  margin-bottom: 2rem;
+  min-height: 160px;
 }
-.ic-hero-glow-1 {
+.ic-aurora-wave {
   position: absolute;
-  width: 280px; height: 280px;
-  background: radial-gradient(circle, rgba(245,158,11,0.15) 0%, transparent 70%);
-  top: -120px; left: -100px;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.35;
   pointer-events: none;
+  animation: icAuroraFloat 8s ease-in-out infinite;
 }
-.ic-hero-glow-2 {
+.ic-aurora-wave-1 {
+  width: 300px; height: 200px;
+  background: radial-gradient(ellipse, #f59e0b 0%, transparent 70%);
+  top: -80px; right: -60px;
+  animation-delay: 0s;
+}
+.ic-aurora-wave-2 {
+  width: 200px; height: 140px;
+  background: radial-gradient(ellipse, #ea580c 0%, transparent 70%);
+  bottom: -60px; left: 10%;
+  animation-delay: -3s;
+}
+.ic-aurora-wave-3 {
+  width: 160px; height: 120px;
+  background: radial-gradient(ellipse, #d97706 0%, transparent 70%);
+  top: 20%; left: 40%;
+  animation-delay: -5s;
+  opacity: 0.2;
+}
+@keyframes icAuroraFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(15px, -10px) scale(1.05); }
+  66% { transform: translate(-10px, 8px) scale(0.97); }
+}
+
+.ic-particles-canvas {
   position: absolute;
-  width: 180px; height: 180px;
-  background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%);
-  bottom: -80px; right: -60px;
+  inset: 0;
+  width: 100%; height: 100%;
   pointer-events: none;
+  z-index: 1;
 }
-.ic-hero-inner {
+
+.ic-aurora-content {
   position: relative;
   z-index: 2;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 1.25rem;
   flex-wrap: wrap;
-  gap: 1rem;
 }
-.ic-hero-left {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-.ic-hero-icon-wrap {
-  width: 54px; height: 54px;
-  border-radius: 18px;
+.ic-aurora-badge {
+  position: relative;
+  width: 62px; height: 62px;
+  border-radius: 20px;
   background: rgba(245,158,11,0.12);
-  border: 1px solid rgba(245,158,11,0.25);
-  color: var(--brand-gold);
+  border: 1px solid rgba(245,158,11,0.3);
+  color: #f59e0b;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
-.ic-hero-icon-wrap svg { width: 26px; height: 26px; }
-.ic-hero-title {
-  font-size: clamp(1.3rem, 4vw, 1.7rem);
+.ic-aurora-badge svg { width: 28px; height: 28px; }
+.ic-aurora-badge-ring {
+  position: absolute;
+  inset: -4px;
+  border-radius: 24px;
+  border: 2px solid rgba(245,158,11,0.15);
+  animation: icBadgePulse 3s ease-in-out infinite;
+}
+@keyframes icBadgePulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.08); opacity: 0; }
+}
+.ic-aurora-text { flex: 1; min-width: 200px; }
+.ic-aurora-title {
+  font-size: clamp(1.4rem, 4vw, 1.8rem);
   font-weight: 900;
   color: #fff;
-  margin: 0 0 4px;
+  margin: 0 0 6px;
   line-height: 1.2;
+  background: linear-gradient(135deg, #fff 20%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
-.ic-hero-sub {
+.ic-aurora-desc {
   font-size: 0.85rem;
-  color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.45);
   margin: 0;
-  line-height: 1.4;
-}
-.ic-hero-stat-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(245,158,11,0.08);
-  border: 1px solid rgba(245,158,11,0.22);
-  color: var(--brand-gold);
-  font-weight: 800;
-  font-size: 0.9rem;
-  padding: 0.55rem 1.1rem;
-  border-radius: 99px;
-  white-space: nowrap;
+  line-height: 1.5;
 }
 
-/* Courses Grid */
-.ic-courses-grid {
+/* Counter Ring */
+.ic-aurora-counter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.ic-counter-ring {
+  position: relative;
+  width: 72px; height: 72px;
+}
+.ic-counter-ring svg {
+  width: 100%; height: 100%;
+  transform: rotate(-90deg);
+}
+.ic-ring-bg {
+  fill: none;
+  stroke: rgba(245,158,11,0.1);
+  stroke-width: 4;
+}
+.ic-ring-fill {
+  fill: none;
+  stroke: #f59e0b;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 220;
+  stroke-dashoffset: calc(220 - (220 * min(var(--progress), 10) / 10));
+  transition: stroke-dashoffset 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+  filter: drop-shadow(0 0 6px rgba(245,158,11,0.5));
+}
+.ic-counter-num {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #f59e0b;
+  font-family: monospace;
+}
+.ic-counter-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: rgba(245,158,11,0.6);
+  letter-spacing: 0.5px;
+}
+
+/* ─── MASONRY GRID ─── */
+.ic-masonry-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
   gap: 1.5rem;
 }
 
-/* Course Card */
-.ic-course-card {
-  border-radius: 24px;
-  border: 1px solid rgba(255,255,255,0.06);
-  background: rgba(18,18,18,0.6);
-  backdrop-filter: blur(14px);
+/* ─── 3D CARD ─── */
+.ic-card-3d {
+  border-radius: 26px;
+  background: linear-gradient(165deg, rgba(26,20,7,0.8) 0%, rgba(14,12,8,0.9) 100%);
+  border: 1px solid rgba(245,158,11,0.1);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.ic-course-card:hover {
-  transform: translateY(-6px);
-  border-color: rgba(245,158,11,0.3);
-  box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 0 0 1px rgba(245,158,11,0.08);
-}
-
-/* Thumbnail */
-.ic-thumb-wrap {
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
-  height: 175px;
-  background: #0e0e0e;
+}
+.ic-card-3d::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 26px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(245,158,11,0.2), transparent 50%, rgba(234,88,12,0.15));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.ic-card-3d:hover {
+  transform: translateY(-8px) scale(1.01);
+  box-shadow: 0 24px 60px rgba(245,158,11,0.15), 0 0 1px rgba(245,158,11,0.3);
+}
+.ic-card-3d:hover::before { opacity: 1; }
+
+/* Visual / Thumbnail */
+.ic-card-visual {
+  position: relative;
+  height: 185px;
+  background: #0a0908;
   overflow: hidden;
   flex-shrink: 0;
 }
-.ic-thumb-img {
+.ic-card-cover {
   width: 100%; height: 100%;
   object-fit: cover;
-  transition: transform 0.5s ease;
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.ic-course-card:hover .ic-thumb-img { transform: scale(1.07); }
-.ic-thumb-placeholder {
+.ic-card-3d:hover .ic-card-cover { transform: scale(1.08); }
+.ic-card-no-cover {
   width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+  background: linear-gradient(135deg, #1a1407 0%, #0d0b08 100%);
+  color: rgba(245,158,11,0.2);
 }
-.ic-thumb-shimmer {
+.ic-card-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.65) 100%);
+  background: linear-gradient(180deg, transparent 30%, rgba(10,9,8,0.85) 100%);
   pointer-events: none;
 }
-.ic-subject-badge {
+.ic-card-subject-glass {
   position: absolute;
-  top: 12px; right: 12px;
-  background: rgba(0,0,0,0.75);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.12);
-  color: #fff;
-  font-size: 0.78rem;
+  top: 14px; right: 14px;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid rgba(245,158,11,0.2);
+  color: #fbbf24;
+  font-size: 0.75rem;
   font-weight: 800;
-  padding: 5px 12px;
-  border-radius: 10px;
-  z-index: 2;
+  padding: 6px 14px;
+  border-radius: 12px;
+  display: flex; align-items: center; gap: 5px;
+  z-index: 3;
+}
+.ic-card-shimmer-sweep {
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(245,158,11,0.06), transparent);
+  transform: skewX(-15deg);
+  pointer-events: none;
+  transition: left 0s;
+}
+.ic-card-3d:hover .ic-card-shimmer-sweep {
+  left: 150%;
+  transition: left 0.8s ease;
 }
 
-/* Card Body */
-.ic-card-body {
-  padding: 1.25rem 1.4rem 1rem;
+/* Card Content */
+.ic-card-content {
+  padding: 1.4rem 1.5rem 1rem;
   flex: 1;
 }
-.ic-course-title {
+.ic-card-title {
   font-size: 1.1rem;
   font-weight: 800;
-  color: var(--text-primary, #fff);
+  color: #fff;
   margin: 0 0 8px;
   line-height: 1.4;
   display: -webkit-box;
@@ -274,139 +378,204 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-.ic-course-meta {
+.ic-card-date-row {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-size: 0.78rem;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255,255,255,0.35);
   margin-bottom: 1.1rem;
 }
-.ic-stats-row {
+
+/* Capsules */
+.ic-capsules-row {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
-.ic-stat-item {
+.ic-capsule {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-radius: 12px;
+  gap: 7px;
+  padding: 9px 14px;
+  border-radius: 14px;
   flex: 1;
+  position: relative;
+  overflow: hidden;
 }
-.ic-stat-green {
-  background: rgba(16,185,129,0.06);
-  border: 1px solid rgba(16,185,129,0.15);
+.ic-capsule-dot {
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  animation: icDotPulse 2s ease-in-out infinite;
 }
-.ic-stat-blue {
-  background: rgba(59,130,246,0.06);
-  border: 1px solid rgba(59,130,246,0.15);
+@keyframes icDotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
 }
-.ic-stat-icon {
-  width: 30px; height: 30px;
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
+.ic-capsule-amber {
+  background: rgba(245,158,11,0.06);
+  border: 1px solid rgba(245,158,11,0.15);
+  color: #fbbf24;
 }
-.ic-stat-green .ic-stat-icon { background: rgba(16,185,129,0.12); color: #10b981; }
-.ic-stat-blue .ic-stat-icon { background: rgba(59,130,246,0.12); color: #3b82f6; }
-.ic-stat-val {
-  display: block;
-  font-weight: 900;
+.ic-capsule-amber .ic-capsule-dot { background: #f59e0b; }
+.ic-capsule-orange {
+  background: rgba(234,88,12,0.06);
+  border: 1px solid rgba(234,88,12,0.15);
+  color: #fb923c;
+}
+.ic-capsule-orange .ic-capsule-dot { background: #ea580c; }
+.ic-capsule strong {
   font-size: 1rem;
+  font-weight: 900;
   font-family: monospace;
-  line-height: 1.1;
 }
-.ic-stat-green .ic-stat-val { color: #10b981; }
-.ic-stat-blue .ic-stat-val { color: #3b82f6; }
-.ic-stat-lbl {
-  display: block;
+.ic-capsule span {
   font-size: 0.68rem;
-  color: rgba(255,255,255,0.4);
   font-weight: 700;
+  opacity: 0.6;
 }
 
-/* Card Footer */
-.ic-card-footer {
+/* Card Actions */
+.ic-card-actions {
   display: flex;
   gap: 8px;
-  padding: 1rem 1.4rem 1.25rem;
-  border-top: 1px solid rgba(255,255,255,0.04);
+  padding: 1rem 1.5rem 1.3rem;
+  border-top: 1px solid rgba(245,158,11,0.06);
   background: rgba(0,0,0,0.15);
 }
-.ic-action-btn {
+.ic-act-btn {
   flex: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 9px 10px;
-  border-radius: 12px;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 14px;
   font-size: 0.82rem;
   font-weight: 700;
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   white-space: nowrap;
+  position: relative;
+  overflow: hidden;
 }
-.ic-action-primary {
-  background: rgba(245,158,11,0.1);
-  border: 1px solid rgba(245,158,11,0.25);
-  color: var(--brand-gold);
+.ic-act-gold {
+  background: linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(234,88,12,0.08) 100%);
+  border: 1px solid rgba(245,158,11,0.28);
+  color: #fbbf24;
 }
-.ic-action-primary:hover {
-  background: rgba(245,158,11,0.18);
-  border-color: rgba(245,158,11,0.4);
+.ic-act-gold:hover {
+  background: linear-gradient(135deg, rgba(245,158,11,0.22) 0%, rgba(234,88,12,0.15) 100%);
+  border-color: rgba(245,158,11,0.5);
   color: #fff;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(245,158,11,0.2);
 }
-.ic-action-secondary {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.55);
-}
-.ic-action-secondary:hover {
-  background: rgba(255,255,255,0.06);
-  border-color: rgba(255,255,255,0.12);
-  color: #fff;
-  transform: translateY(-1px);
-}
-
-/* Empty State */
-.ic-empty-state {
-  text-align: center;
-  padding: 5rem 2rem;
-  border-radius: 24px;
-  border: 1px dashed rgba(255,255,255,0.07);
-  background: rgba(255,255,255,0.01);
-}
-.ic-empty-icon {
-  width: 72px; height: 72px;
-  margin: 0 auto 1.25rem;
-  border-radius: 20px;
+.ic-act-ghost {
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.06);
-  display: flex; align-items: center; justify-content: center;
-  color: rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.5);
 }
-.ic-empty-state h3 {
-  font-size: 1.2rem;
+.ic-act-ghost:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.12);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+/* ─── EMPTY STATE ─── */
+.ic-empty-float {
+  text-align: center;
+  padding: 5rem 2rem;
+  border-radius: 28px;
+  border: 1px dashed rgba(245,158,11,0.12);
+  background: rgba(26,20,7,0.3);
+}
+.ic-empty-orb {
+  width: 82px; height: 82px;
+  margin: 0 auto 1.5rem;
+  border-radius: 24px;
+  background: rgba(245,158,11,0.06);
+  border: 1px solid rgba(245,158,11,0.12);
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(245,158,11,0.3);
+  animation: icFloatOrb 4s ease-in-out infinite;
+}
+@keyframes icFloatOrb {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+.ic-empty-title {
+  font-size: 1.25rem;
   font-weight: 800;
   color: #fff;
   margin-bottom: 8px;
 }
-.ic-empty-state p {
+.ic-empty-desc {
   font-size: 0.88rem;
-  color: rgba(255,255,255,0.4);
-  max-width: 380px;
+  color: rgba(255,255,255,0.38);
+  max-width: 400px;
   margin: 0 auto;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
-/* Responsive */
-@media (max-width: 576px) {
-  .ic-courses-grid { grid-template-columns: 1fr; }
-  .ic-hero-banner { padding: 1.5rem 1.25rem; }
-  .ic-hero-left { flex-direction: column; align-items: flex-start; }
+/* ─── RESPONSIVE ─── */
+@media (max-width: 768px) {
+  .ic-masonry-grid { grid-template-columns: 1fr; }
+  .ic-aurora-hero { padding: 1.75rem 1.25rem; border-radius: 24px; }
+  .ic-aurora-content { flex-direction: column; align-items: flex-start; text-align: right; }
+  .ic-aurora-counter { flex-direction: row; gap: 12px; align-items: center; }
+  .ic-counter-ring { width: 52px; height: 52px; }
+  .ic-counter-num { font-size: 1rem; }
+}
+@media (max-width: 480px) {
+  .ic-capsules-row { flex-direction: column; gap: 8px; }
+  .ic-card-actions { flex-direction: column; }
+  .ic-card-visual { height: 155px; }
 }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Particle canvas for aurora hero
+document.addEventListener("DOMContentLoaded", () => {
+  const canvas = document.getElementById("icParticlesCanvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  let particles = [];
+  function resize() {
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+  }
+  resize();
+  window.addEventListener("resize", resize);
+  for (let i = 0; i < 30; i++) {
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 1.5 + 0.5,
+      dx: (Math.random() - 0.5) * 0.3,
+      dy: (Math.random() - 0.5) * 0.3,
+      alpha: Math.random() * 0.4 + 0.1
+    });
+  }
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(245,158,11,${p.alpha})`;
+      ctx.fill();
+      p.x += p.dx;
+      p.y += p.dy;
+      if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
+      if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+});
+</script>
 {% endblock %}
