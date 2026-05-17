@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 from billing.devices import activate_user_device
 
-from .auth_utils import normalize_login_password, resolve_user_for_login
+from .auth_utils import resolve_user_for_login, verify_instructor_password
 
 
 class AuthCsrfApiView(APIView):
@@ -33,8 +33,10 @@ class AuthLoginApiView(APIView):
             return Response({"detail": "username and password are required."}, status=status.HTTP_400_BAD_REQUEST)
 
         user = resolve_user_for_login(raw_username)
-        if user:
-            password = normalize_login_password(user, password)
+        if user and hasattr(user, "instructor_profile"):
+            if not verify_instructor_password(user, password):
+                user = None
+        elif user:
             user = authenticate(request, username=user.username, password=password)
         if not user:
             return Response({"detail": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)

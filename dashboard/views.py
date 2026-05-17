@@ -535,17 +535,35 @@ def login_view(request):
 
     if request.method == "POST":
         raw_username = request.POST.get("username", "").strip()
+        raw_password = request.POST.get("password", "")
 
-        from accounts.auth_utils import resolve_user_for_login
+        from accounts.auth_utils import resolve_user_for_login, verify_instructor_password
 
-        from accounts.auth_utils import normalize_login_password
+        resolved_user = resolve_user_for_login(raw_username)
 
-        user = resolve_user_for_login(raw_username)
+        if resolved_user and hasattr(resolved_user, "instructor_profile"):
+            if _login_is_rate_limited(request):
+                messages.error(request, "لقد تجاوزت الحد المسموح به من محاولات تسجيل الدخول الفاشلة. يرجى المحاولة لاحقاً.")
+                return render(request, "registration/login.html", {"form": AuthenticationForm()}, status=429)
 
-        if user:
+            if verify_instructor_password(resolved_user, raw_password):
+                phone = _get_user_phone(resolved_user)
+                request.session["otp_login_user_id"] = resolved_user.id
+                request.session["otp_login_phone"] = phone
+                otp_result = send_otp(phone, purpose="login", request=request)
+                if not otp_result["success"]:
+                    messages.error(request, otp_result["message"])
+                    return render(request, "registration/login.html", {"form": AuthenticationForm()})
+                cache.delete(_login_attempt_key(request))
+                return redirect("dashboard:verify_login_otp")
+
+            _record_failed_login(request)
+            messages.error(request, "الرجاء إدخال اسم المستخدم وكلمة السر الصحيحين.")
+            return render(request, "registration/login.html", {"form": AuthenticationForm()})
+
+        if resolved_user:
             post_data = request.POST.copy()
-            post_data["username"] = user.username
-            post_data["password"] = normalize_login_password(user, post_data.get("password", ""))
+            post_data["username"] = resolved_user.username
             request.POST = post_data
 
     form = AuthenticationForm(request, data=request.POST or None)

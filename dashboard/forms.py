@@ -25,6 +25,17 @@ def _course_display_label(course):
     return f"{course.title} - {subject} - {instructor}"
 
 
+def _instructor_phone_initial(instructor, profile):
+    from accounts.auth_utils import PHONE_DIGITS_RE, normalize_phone
+
+    if profile.phone:
+        return profile.phone
+    username_digits = normalize_phone(instructor.username)
+    if PHONE_DIGITS_RE.fullmatch(username_digits):
+        return username_digits
+    return ""
+
+
 class StudentRegistrationForm(UserCreationForm):
     first_name = forms.CharField(label="الاسم الكامل", max_length=120)
     username = forms.CharField(label="رقم الهاتف", max_length=40)
@@ -582,11 +593,15 @@ class InstructorAddForm(forms.Form):
 class InstructorEditForm(forms.Form):
     first_name = forms.CharField(label="الاسم الأول", max_length=120, required=False)
     last_name = forms.CharField(label="الكنية", max_length=120, required=False)
-    phone = forms.CharField(label="رقم الهاتف", max_length=40)
-    username = forms.CharField(
-        label="اسم المستخدم الداخلي",
-        max_length=150,
-        help_text="للنظام فقط — المدرس يدخل بالاسم الكامل أو رقم الهاتف.",
+    phone = forms.CharField(
+        label="رقم الهاتف",
+        max_length=40,
+        help_text="09xxxxxxxx — للدخول وكلمة المرور. عند الحفظ تُحدَّث كلمة المرور لتطابق الهاتف.",
+    )
+    reset_password_to_phone = forms.BooleanField(
+        label="إعادة تعيين كلمة المرور = رقم الهاتف",
+        required=False,
+        initial=True,
     )
     specialty = forms.CharField(label="التخصص", max_length=120, required=False)
     bio = forms.CharField(label="النبذة التعريفية", widget=forms.Textarea(attrs={"rows": 3}), required=False)
@@ -602,8 +617,8 @@ class InstructorEditForm(forms.Form):
                 **initial,
                 "first_name": instructor.first_name,
                 "last_name": instructor.last_name,
-                "phone": profile.phone or instructor.username,
-                "username": instructor.username,
+                "phone": _instructor_phone_initial(instructor, profile),
+                "reset_password_to_phone": True,
                 "specialty": profile.specialty,
                 "bio": profile.bio,
                 "status": profile.status,
@@ -620,33 +635,36 @@ class InstructorEditForm(forms.Form):
         if self.instructor is not None:
             qs = qs.exclude(user_id=self.instructor.id)
         if qs.exists():
-            raise ValidationError("رقم الهاتف مستخدم مسبقاً.")
-        return phone
+            other = qs.select_related("user").first()
+            raise ValidationError(
+                f"رقم الهاتف مستخدم مسبقاً للمدرس: {other.user.get_full_name() or other.user.username}."
+            )
 
-    def clean_username(self):
-        username = self.cleaned_data["username"].strip()
-        qs = User.objects.filter(username=username)
+        user_qs = User.objects.filter(username=phone)
         if self.instructor is not None:
-            qs = qs.exclude(id=self.instructor.id)
-        if qs.exists():
-            raise ValidationError("اسم المستخدم مستخدم مسبقاً.")
-        return username
+            user_qs = user_qs.exclude(pk=self.instructor.pk)
+        if user_qs.exists():
+            raise ValidationError("رقم الهاتف مستخدم كاسم مستخدم لحساب آخر (طالب أو مدرس).")
+        return phone
 
     def save(self):
         instructor = self.instructor
         profile = instructor.instructor_profile
+        phone = self.cleaned_data["phone"]
         instructor.first_name = self.cleaned_data["first_name"].strip()
         instructor.last_name = self.cleaned_data["last_name"].strip()
-        instructor.username = self.cleaned_data["username"]
         instructor.is_staff = True
-        instructor.save(update_fields=["first_name", "last_name", "username", "is_staff"])
-        profile.phone = self.cleaned_data["phone"]
+        instructor.save(update_fields=["first_name", "last_name", "is_staff"])
+        profile.phone = phone
         profile.specialty = self.cleaned_data["specialty"].strip()
         profile.bio = self.cleaned_data["bio"].strip()
         profile.status = self.cleaned_data["status"]
         if self.cleaned_data.get("avatar"):
             profile.avatar = self.cleaned_data["avatar"]
         profile.save()
+        if self.cleaned_data.get("reset_password_to_phone", True):
+            instructor.set_password(phone)
+            instructor.save(update_fields=["password"])
         return instructor
 
 

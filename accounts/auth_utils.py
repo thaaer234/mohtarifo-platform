@@ -83,10 +83,18 @@ def _find_instructor_by_name(raw: str):
 
     parts = compact.split()
     if len(parts) >= 2:
+        last = " ".join(parts[1:])
         user = User.objects.filter(
             instructor_profile__isnull=False,
             first_name__iexact=parts[0],
-            last_name__iexact=" ".join(parts[1:]),
+            last_name__iexact=last,
+        ).first()
+        if user:
+            return user
+        user = User.objects.filter(
+            instructor_profile__isnull=False,
+            first_name__icontains=parts[0],
+            last_name__icontains=last,
         ).first()
         if user:
             return user
@@ -142,6 +150,47 @@ def resolve_user_for_login(raw_identifier: str):
         return sp.user
 
     return User.objects.filter(email__iexact=raw).first()
+
+
+def instructor_password_candidates(user) -> list[str]:
+    """قيم محتملة لكلمة مرور المدرس (هاتف الملف، اسم المستخدم إن كان رقماً...)."""
+    candidates: list[str] = []
+    profile = getattr(user, "instructor_profile", None)
+    if profile and profile.phone:
+        candidates.append(normalize_phone(profile.phone))
+    username_digits = normalize_phone(user.username)
+    if PHONE_DIGITS_RE.fullmatch(username_digits):
+        candidates.append(username_digits)
+    return [c for c in candidates if c]
+
+
+def verify_instructor_password(user, password: str) -> bool:
+    """
+    يتحقق من كلمة مرور المدرس.
+    يقبل الهاتف الحالي، أو رقم الهاتف القديم المحفوظ كاسم مستخدم.
+    """
+    if not hasattr(user, "instructor_profile"):
+        return False
+
+    raw = (password or "").strip()
+    if not raw:
+        return False
+
+    tried: set[str] = set()
+    digits = normalize_phone(raw)
+    if digits:
+        tried.add(digits)
+    tried.add(raw)
+
+    for candidate in tried:
+        if user.check_password(candidate):
+            return True
+
+    for candidate in instructor_password_candidates(user):
+        if candidate not in tried and user.check_password(candidate):
+            return True
+
+    return False
 
 
 def normalize_login_password(user, password: str) -> str:
