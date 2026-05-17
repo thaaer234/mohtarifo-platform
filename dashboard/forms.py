@@ -203,11 +203,7 @@ class CourseCreateForm(forms.ModelForm):
             name_parts = new_instructor_name.split(" ", 1)
             first_name = name_parts[0]
             last_name = name_parts[1] if len(name_parts) > 1 else ""
-            username = build_instructor_username(
-                first_name=first_name,
-                last_name=last_name,
-                login_username_type="name",
-            )
+            username = build_instructor_username(first_name=first_name, last_name=last_name)
             instructor = User.objects.create_user(
                 username=username,
                 password=raw_phone or username,
@@ -554,58 +550,32 @@ class PackageCodeSaleForm(forms.Form):
 
 
 class InstructorAddForm(forms.Form):
-    LOGIN_USERNAME_CHOICES = [
-        ("name", "الاسم الأول والكنية"),
-        ("national_id", "رقم الهوية"),
-    ]
-
     first_name = forms.CharField(label="الاسم الأول")
     last_name = forms.CharField(label="الكنية")
-    phone = forms.CharField(label="رقم الهاتف", help_text="يُستخدم لإرسال رمز التحقق وكلمة المرور الافتراضية.")
-    login_username_type = forms.ChoiceField(
-        label="اسم المستخدم لتسجيل الدخول",
-        choices=LOGIN_USERNAME_CHOICES,
-        initial="name",
-        widget=forms.RadioSelect,
+    phone = forms.CharField(
+        label="رقم الهاتف",
+        help_text="صيغة 09xxxxxxxx — يُستخدم لتسجيل الدخول وكلمة المرور الافتراضية.",
     )
-    national_id = forms.CharField(label="رقم الهوية", required=False, help_text="مطلوب إذا اخترت رقم الهوية كاسم مستخدم.")
     specialty = forms.CharField(label="التخصص", required=False)
     bio = forms.CharField(label="النبذة التعريفية", widget=forms.Textarea(attrs={"rows": 3}), required=False)
     photo = forms.ImageField(label="الصورة الشخصية", required=False)
 
     def clean_phone(self):
-        from accounts.auth_utils import normalize_phone
+        from accounts.auth_utils import PHONE_DIGITS_RE, normalize_phone
 
         phone = normalize_phone(self.cleaned_data["phone"])
-        if not phone:
-            raise ValidationError("رقم الهاتف مطلوب.")
+        if not PHONE_DIGITS_RE.fullmatch(phone):
+            raise ValidationError("رقم الهاتف يجب أن يكون 10 خانات ويبدأ بـ 09.")
         if InstructorProfile.objects.filter(phone=phone).exists():
             raise ValidationError("رقم الهاتف مستخدم مسبقاً لمدرس آخر.")
         return phone
 
-    def clean(self):
-        cleaned = super().clean()
-        login_type = cleaned.get("login_username_type")
-        national_id = (cleaned.get("national_id") or "").strip() or None
-        if login_type == "national_id":
-            if not national_id:
-                self.add_error("national_id", "أدخل رقم الهوية عند اختياره كاسم مستخدم.")
-            elif InstructorProfile.objects.filter(national_id=national_id).exists():
-                self.add_error("national_id", "رقم الهوية مستخدم مسبقاً.")
-        elif national_id and InstructorProfile.objects.filter(national_id=national_id).exists():
-            self.add_error("national_id", "رقم الهوية مستخدم مسبقاً.")
-        cleaned["national_id"] = national_id
-        return cleaned
-
     def build_username(self):
         from accounts.auth_utils import build_instructor_username
 
-        national_id = (self.cleaned_data.get("national_id") or "").strip()
         return build_instructor_username(
             first_name=self.cleaned_data["first_name"],
             last_name=self.cleaned_data["last_name"],
-            login_username_type=self.cleaned_data["login_username_type"],
-            national_id=national_id,
         )
 
 
@@ -613,8 +583,11 @@ class InstructorEditForm(forms.Form):
     first_name = forms.CharField(label="الاسم الأول", max_length=120, required=False)
     last_name = forms.CharField(label="الكنية", max_length=120, required=False)
     phone = forms.CharField(label="رقم الهاتف", max_length=40)
-    username = forms.CharField(label="اسم المستخدم (لتسجيل الدخول)", max_length=150)
-    national_id = forms.CharField(label="رقم الهوية", max_length=40, required=False)
+    username = forms.CharField(
+        label="اسم المستخدم الداخلي",
+        max_length=150,
+        help_text="للنظام فقط — المدرس يدخل بالاسم الكامل أو رقم الهاتف.",
+    )
     specialty = forms.CharField(label="التخصص", max_length=120, required=False)
     bio = forms.CharField(label="النبذة التعريفية", widget=forms.Textarea(attrs={"rows": 3}), required=False)
     avatar = forms.ImageField(label="الصورة الشخصية", required=False)
@@ -631,7 +604,6 @@ class InstructorEditForm(forms.Form):
                 "last_name": instructor.last_name,
                 "phone": profile.phone or instructor.username,
                 "username": instructor.username,
-                "national_id": profile.national_id or "",
                 "specialty": profile.specialty,
                 "bio": profile.bio,
                 "status": profile.status,
@@ -639,11 +611,11 @@ class InstructorEditForm(forms.Form):
         super().__init__(*args, initial=initial, **kwargs)
 
     def clean_phone(self):
-        from accounts.auth_utils import normalize_phone
+        from accounts.auth_utils import PHONE_DIGITS_RE, normalize_phone
 
         phone = normalize_phone(self.cleaned_data["phone"])
-        if not phone:
-            raise ValidationError("رقم الهاتف مطلوب.")
+        if not PHONE_DIGITS_RE.fullmatch(phone):
+            raise ValidationError("رقم الهاتف يجب أن يكون 10 خانات ويبدأ بـ 09.")
         qs = InstructorProfile.objects.filter(phone=phone)
         if self.instructor is not None:
             qs = qs.exclude(user_id=self.instructor.id)
@@ -660,16 +632,6 @@ class InstructorEditForm(forms.Form):
             raise ValidationError("اسم المستخدم مستخدم مسبقاً.")
         return username
 
-    def clean_national_id(self):
-        national_id = (self.cleaned_data.get("national_id") or "").strip() or None
-        if national_id:
-            qs = InstructorProfile.objects.filter(national_id=national_id)
-            if self.instructor is not None:
-                qs = qs.exclude(user_id=self.instructor.id)
-            if qs.exists():
-                raise ValidationError("رقم الهوية مستخدم مسبقاً.")
-        return national_id
-
     def save(self):
         instructor = self.instructor
         profile = instructor.instructor_profile
@@ -679,7 +641,6 @@ class InstructorEditForm(forms.Form):
         instructor.is_staff = True
         instructor.save(update_fields=["first_name", "last_name", "username", "is_staff"])
         profile.phone = self.cleaned_data["phone"]
-        profile.national_id = self.cleaned_data["national_id"]
         profile.specialty = self.cleaned_data["specialty"].strip()
         profile.bio = self.cleaned_data["bio"].strip()
         profile.status = self.cleaned_data["status"]

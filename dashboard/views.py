@@ -538,12 +538,14 @@ def login_view(request):
 
         from accounts.auth_utils import resolve_user_for_login
 
+        from accounts.auth_utils import normalize_login_password
+
         user = resolve_user_for_login(raw_username)
 
         if user:
-            # Mutate request.POST to replace the raw input with the actual user's username
             post_data = request.POST.copy()
             post_data["username"] = user.username
+            post_data["password"] = normalize_login_password(user, post_data.get("password", ""))
             request.POST = post_data
 
     form = AuthenticationForm(request, data=request.POST or None)
@@ -1479,7 +1481,6 @@ def admin_instructor_add(request):
         with transaction.atomic():
             phone = form.cleaned_data["phone"]
             username = form.build_username()
-            national_id = form.cleaned_data.get("national_id")
             user = User.objects.create_user(
                 username=username,
                 password=phone,
@@ -1491,18 +1492,16 @@ def admin_instructor_add(request):
                 user=user,
                 defaults={
                     "phone": phone,
-                    "national_id": national_id,
                     "specialty": form.cleaned_data["specialty"],
                     "bio": form.cleaned_data["bio"],
                     "avatar": form.cleaned_data["photo"],
                     "force_password_change": True,
                 },
             )
-            login_hint = "رقم الهوية" if form.cleaned_data["login_username_type"] == "national_id" else "الاسم"
             messages.success(
                 request,
                 f"تم إضافة المدرس {user.get_full_name()} بنجاح. "
-                f"اسم الدخول: {username} ({login_hint}) · كلمة المرور الافتراضية: {phone}",
+                f"يمكنه الدخول بالاسم الكامل أو رقم الهاتف ({phone}) · كلمة المرور: {phone}",
             )
             return redirect("dashboard:admin_instructors")
                 
@@ -1525,7 +1524,6 @@ def admin_instructors(request):
             | models.Q(last_name__icontains=search)
             | models.Q(username__icontains=search)
             | models.Q(instructor_profile__phone__icontains=search)
-            | models.Q(instructor_profile__national_id__icontains=search)
             | models.Q(instructor_profile__specialty__icontains=search)
         )
     if status:

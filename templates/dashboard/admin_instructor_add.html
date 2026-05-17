@@ -7,7 +7,7 @@
 <div class="admin-form-wrapper reveal-up">
     <header class="form-header mb-10">
         <h1 class="page-title">إضافة <span class="gold">مدرس جديد</span></h1>
-        <p class="text-muted">رقم الهاتف = كلمة المرور الافتراضية · اسم الدخول = الاسم أو رقم الهوية</p>
+        <p class="text-muted">الدخول: الاسم الكامل أو رقم الهاتف · كلمة المرور الافتراضية = رقم الهاتف (09xxxxxxxx)</p>
     </header>
 
     <div class="premium-card p-10 max-w-800 mx-auto">
@@ -30,22 +30,6 @@
                 {{ form.phone }}
                 {% if form.phone.help_text %}<small class="text-muted mt-2 block">{{ form.phone.help_text }}</small>{% endif %}
                 {% for error in form.phone.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
-            </div>
-
-            <div class="form-group mb-6">
-                <label>{{ form.login_username_type.label }}</label>
-                <div class="radio-group mt-2">
-                    {% for radio in form.login_username_type %}
-                        <label class="radio-option">{{ radio.tag }} {{ radio.choice_label }}</label>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <div class="form-group mb-8">
-                <label>{{ form.national_id.label }}</label>
-                {{ form.national_id }}
-                {% if form.national_id.help_text %}<small class="text-muted mt-2 block">{{ form.national_id.help_text }}</small>{% endif %}
-                {% for error in form.national_id.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
             </div>
 
             <hr class="my-10 border-light">
@@ -89,8 +73,6 @@
         width: 100%; padding: 1.25rem; background: var(--bg-base); border: 1px solid var(--border-light);
         border-radius: 16px; color: var(--text-primary);
     }
-    .radio-group { display: flex; flex-direction: column; gap: 0.75rem; }
-    .radio-option { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; cursor: pointer; }
     .image-upload-wrapper { position: relative; }
     .image-upload-wrapper i { position: absolute; left: 1.25rem; top: 50%; transform: translateY(-50%); color: var(--brand-gold); }
 </style>

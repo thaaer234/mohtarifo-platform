@@ -1,27 +1,38 @@
 """مساعدات تسجيل الدخول وإنشاء حسابات المدرسين."""
 from __future__ import annotations
 
+import re
+
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
 
 from .models import InstructorProfile, StudentProfile
 
 User = get_user_model()
+PHONE_DIGITS_RE = re.compile(r"^09\d{8}$")
 
 
 def normalize_phone(phone: str) -> str:
-    return "".join(ch for ch in (phone or "").strip() if ch.isdigit() or ch == "+")
+    """تنسيق موحّد لأرقام سورية: 09xxxxxxxx"""
+    return re.sub(r"\D", "", (phone or "").strip())
 
 
-def build_instructor_username(*, first_name: str, last_name: str, login_username_type: str, national_id: str = "") -> str:
-    """يُنشئ اسم مستخدم فريد من الاسم أو رقم الهوية."""
-    if login_username_type == "national_id":
-        base = national_id.strip()
-    else:
-        full = f"{first_name.strip()} {last_name.strip()}".strip()
-        base = slugify(full, allow_unicode=True) or slugify(f"{first_name}-{last_name}", allow_unicode=False)
+def phone_lookup_variants(raw: str) -> set[str]:
+    norm = normalize_phone(raw)
+    variants = {v for v in {(raw or "").strip(), norm} if v}
+    if norm.startswith("0") and len(norm) > 1:
+        variants.add(norm.lstrip("0"))
+    if norm and not norm.startswith("963"):
+        variants.add(f"963{norm.lstrip('0')}")
+    return variants
+
+
+def build_instructor_username(*, first_name: str, last_name: str) -> str:
+    """اسم مستخدم داخلي من الاسم الأول والكنية."""
+    full = f"{first_name.strip()} {last_name.strip()}".strip()
+    base = slugify(full, allow_unicode=True) or slugify(f"{first_name}-{last_name}", allow_unicode=False)
     if not base:
-        raise ValueError("تعذر إنشاء اسم مستخدم.")
+        raise ValueError("تعذر إنشاء اسم مستخدم من الاسم.")
     username = base
     counter = 2
     while User.objects.filter(username=username).exists():
@@ -30,60 +41,125 @@ def build_instructor_username(*, first_name: str, last_name: str, login_username
     return username
 
 
-def resolve_user_for_login(raw_identifier: str):
-    """يحوّل المدخل (اسم مستخدم، هاتف، هوية، اسم كامل...) إلى مستخدم."""
-    raw = (raw_identifier or "").strip()
-    if not raw:
+def _find_instructor_by_phone(raw: str):
+    variants = phone_lookup_variants(raw)
+    if not variants:
         return None
 
-    user = User.objects.filter(username=raw).first()
-    if user:
-        return user
-
-    instructor = (
-        InstructorProfile.objects.filter(phone=raw)
+    profile = (
+        InstructorProfile.objects.filter(phone__in=variants)
         .select_related("user")
         .first()
     )
-    if instructor:
-        return instructor.user
+    if profile:
+        return profile.user
 
-    instructor = (
-        InstructorProfile.objects.filter(national_id=raw)
-        .select_related("user")
+    user = (
+        User.objects.filter(instructor_profile__isnull=False, username__in=variants)
         .first()
     )
-    if instructor:
-        return instructor.user
-
-    sp = StudentProfile.objects.filter(phone=raw).select_related("user").first()
-    if sp:
-        return sp.user
-
-    user = User.objects.filter(email=raw).first()
     if user:
         return user
 
-    parts = raw.split()
-    if len(parts) >= 2:
-        first_name = parts[0]
-        last_name = " ".join(parts[1:])
-        user = User.objects.filter(
-            instructor_profile__isnull=False,
-            first_name__iexact=first_name,
-            last_name__iexact=last_name,
-        ).first()
-        if user:
+    norm = normalize_phone(raw)
+    if not norm:
+        return None
+
+    for profile in InstructorProfile.objects.select_related("user").exclude(phone=""):
+        if normalize_phone(profile.phone) == norm:
+            return profile.user
+
+    for user in User.objects.filter(instructor_profile__isnull=False).only("id", "username"):
+        if normalize_phone(user.username) == norm:
             return user
 
     return None
 
 
+def _find_instructor_by_name(raw: str):
+    compact = " ".join((raw or "").split())
+    if not compact:
+        return None
+
+    parts = compact.split()
+    if len(parts) >= 2:
+        user = User.objects.filter(
+            instructor_profile__isnull=False,
+            first_name__iexact=parts[0],
+            last_name__iexact=" ".join(parts[1:]),
+        ).first()
+        if user:
+            return user
+
+    slug = slugify(compact, allow_unicode=True)
+    if slug:
+        user = User.objects.filter(
+            instructor_profile__isnull=False,
+            username__iexact=slug,
+        ).first()
+        if user:
+            return user
+
+    users = User.objects.filter(instructor_profile__isnull=False).only(
+        "id", "username", "first_name", "last_name"
+    )
+    lower = compact.casefold()
+    for user in users:
+        full = (user.get_full_name() or "").strip()
+        if full and full.casefold() == lower:
+            return user
+
+    return None
+
+
+def resolve_user_for_login(raw_identifier: str):
+    """
+    يحوّل مدخل تسجيل الدخول إلى مستخدم.
+    للمدرس: الاسم الكامل، اسم المستخدم، أو رقم الهاتف.
+    """
+    raw = (raw_identifier or "").strip()
+    if not raw:
+        return None
+
+    user = User.objects.filter(username__iexact=raw).first()
+    if user:
+        return user
+
+    user = _find_instructor_by_phone(raw)
+    if user:
+        return user
+
+    user = _find_instructor_by_name(raw)
+    if user:
+        return user
+
+    sp = StudentProfile.objects.filter(phone=raw).select_related("user").first()
+    if not sp:
+        norm = normalize_phone(raw)
+        if norm:
+            sp = StudentProfile.objects.filter(phone=norm).select_related("user").first()
+    if sp:
+        return sp.user
+
+    return User.objects.filter(email__iexact=raw).first()
+
+
+def normalize_login_password(user, password: str) -> str:
+    """للمدرس: إذا أدخل رقماً ككلمة مرور نُوحّد التنسيق."""
+    if hasattr(user, "instructor_profile"):
+        digits = normalize_phone(password)
+        if digits and PHONE_DIGITS_RE.fullmatch(digits):
+            return digits
+    return password
+
+
 def get_instructor_login_phone(user) -> str:
-    """رقم الهاتف المستخدم لإرسال OTP للمدرس."""
+    """رقم الهاتف لإرسال OTP."""
     profile = getattr(user, "instructor_profile", None)
     if profile and profile.phone:
         return profile.phone
     if hasattr(user, "student_profile") and user.student_profile.phone:
         return user.student_profile.phone
+    if profile and PHONE_DIGITS_RE.fullmatch(normalize_phone(user.username)):
+        return normalize_phone(user.username)
     return user.username

@@ -30,12 +30,12 @@
                 <label>اسم المستخدم أو الهاتف</label>
                 <div class="input-glow-wrapper">
                     <i data-lucide="user" class="field-icon"></i>
-                    <input type="text" name="username" placeholder="اسم المستخدم، رقم الهوية، الهاتف، أو الاسم الكامل" required value="{{ form.username.value|default:'' }}">
+                    <input type="text" name="username" placeholder="للمدرس: الاسم الكامل أو رقم الهاتف 09xxxxxxxx" required value="{{ form.username.value|default:'' }}">
                 </div>
             </div>
 
             <div class="premium-field mb-8">
-                <label>كلمة المرور</label>
+                <label>كلمة المرور <small class="text-muted">(للمدرس: رقم الهاتف)</small></label>
                 <div class="input-glow-wrapper password-field">
                     <i data-lucide="lock" class="field-icon"></i>
                     <input type="password" name="password" id="login-pwd" placeholder="••••••••" required>

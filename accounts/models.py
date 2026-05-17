@@ -71,7 +71,6 @@ class InstructorProfile(models.Model):
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="instructor_profile")
     phone = models.CharField(max_length=40, blank=True, verbose_name="رقم الهاتف")
-    national_id = models.CharField(max_length=40, blank=True, unique=True, null=True, verbose_name="رقم الهوية")
     specialty = models.CharField(max_length=120)
     bio = models.TextField(blank=True)
     avatar = models.ImageField(upload_to="instructors/avatars/", blank=True, null=True)
