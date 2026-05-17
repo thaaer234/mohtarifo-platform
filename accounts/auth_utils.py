@@ -222,12 +222,8 @@ def verify_instructor_password(user, password: str) -> bool:
     if not is_instructor_account(user):
         return False
 
-    from django.contrib.auth import authenticate
-
     for attempt in _password_attempts(password, user):
         if user.check_password(attempt):
-            return True
-        if authenticate(username=user.username, password=attempt):
             return True
     return False
 
