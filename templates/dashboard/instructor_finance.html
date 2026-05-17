@@ -47,6 +47,37 @@
 
     <!-- Side Sub-Wallets -->
     <div class="if-sub-wallets">
+      <!-- Card 1: Total Sales (منباع له) -->
+      <div class="if-sub-card if-sub-amber">
+        <div class="if-sub-head">
+          <div class="if-sub-icon if-sub-icon-amber">
+            <i data-lucide="shopping-bag" style="width:16px"></i>
+          </div>
+          <i data-lucide="help-circle" style="width:14px;opacity:.4;cursor:help" title="إجمالي مبيعات بطاقات وأكواد دوراتك بالكامل"></i>
+        </div>
+        <span class="if-sub-label">إجمالي مبيعاتك (منباع لك)</span>
+        <div class="if-sub-amount if-sub-amount-amber">
+          {{ total_gross_sales|floatformat:0|default:"0" }}
+          <span style="font-size:.85rem;font-weight:600;opacity:.7">ل.س</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Actual Deserved Earnings (أرباح المبيعات) -->
+      <div class="if-sub-card if-sub-emerald">
+        <div class="if-sub-head">
+          <div class="if-sub-icon if-sub-icon-emerald">
+            <i data-lucide="trending-up" style="width:16px"></i>
+          </div>
+          <i data-lucide="help-circle" style="width:14px;opacity:.4;cursor:help" title="حصتك الفعلية وأرباحك المستحقة من المبيعات بغض النظر عن تحويلها للمحفظة"></i>
+        </div>
+        <span class="if-sub-label">أرباح المبيعات المستحقة</span>
+        <div class="if-sub-amount if-sub-amount-emerald">
+          {{ total_net_earnings|floatformat:0|default:"0" }}
+          <span style="font-size:.85rem;font-weight:600;opacity:.7">ل.س</span>
+        </div>
+      </div>
+
+      <!-- Card 3: Pending Balance -->
       <div class="if-sub-card if-sub-blue">
         <div class="if-sub-head">
           <div class="if-sub-icon if-sub-icon-blue">
@@ -61,6 +92,7 @@
         </div>
       </div>
 
+      <!-- Card 4: Frozen Balance -->
       <div class="if-sub-card if-sub-red">
         <div class="if-sub-head">
           <div class="if-sub-icon if-sub-icon-red">
@@ -159,6 +191,10 @@
   --if-sub-blue-border: rgba(59,130,246,0.18);
   --if-sub-red-bg: linear-gradient(135deg, rgba(239,68,68,0.05) 0%, rgba(10,10,18,0.6) 100%);
   --if-sub-red-border: rgba(239,68,68,0.18);
+  --if-sub-amber-bg: linear-gradient(135deg, rgba(245,158,11,0.05) 0%, rgba(10,10,18,0.6) 100%);
+  --if-sub-amber-border: rgba(245,158,11,0.18);
+  --if-sub-emerald-bg: linear-gradient(135deg, rgba(16,185,129,0.05) 0%, rgba(10,10,18,0.6) 100%);
+  --if-sub-emerald-border: rgba(16,185,129,0.18);
   --if-ledger-bg: rgba(10,10,16,0.6);
   --if-ledger-border: rgba(255,255,255,0.05);
   --if-divider: rgba(255,255,255,0.05);
@@ -184,6 +220,10 @@ body:not(.dark-theme) .if-finance-page,
   --if-sub-blue-border: rgba(59,130,246,0.25);
   --if-sub-red-bg: linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(255,255,255,0.95) 100%);
   --if-sub-red-border: rgba(239,68,68,0.25);
+  --if-sub-amber-bg: linear-gradient(135deg, rgba(245,158,11,0.06) 0%, rgba(255,255,255,0.95) 100%);
+  --if-sub-amber-border: rgba(245,158,11,0.25);
+  --if-sub-emerald-bg: linear-gradient(135deg, rgba(16,185,129,0.06) 0%, rgba(255,255,255,0.95) 100%);
+  --if-sub-emerald-border: rgba(16,185,129,0.25);
   --if-ledger-bg: rgba(255, 255, 255, 0.85);
   --if-ledger-border: rgba(0, 0, 0, 0.06);
   --if-divider: rgba(0, 0, 0, 0.08);
@@ -201,7 +241,7 @@ body:not(.dark-theme) .if-finance-page,
 /* Hero Wallet Section */
 .if-wallet-hero {
   display: grid;
-  grid-template-columns: 1fr 280px;
+  grid-template-columns: 1fr 480px;
   gap: 1.25rem;
   align-items: stretch;
   position: relative;
@@ -311,13 +351,13 @@ body:not(.dark-theme) .if-finance-page,
 
 /* Sub Wallets */
 .if-sub-wallets {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
 }
 .if-sub-card {
   border-radius: 24px;
-  padding: 1.5rem;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -335,6 +375,14 @@ body:not(.dark-theme) .if-finance-page,
 .if-sub-red {
   background: var(--if-sub-red-bg);
   border: 1px solid var(--if-sub-red-border);
+}
+.if-sub-amber {
+  background: var(--if-sub-amber-bg);
+  border: 1px solid var(--if-sub-amber-border);
+}
+.if-sub-emerald {
+  background: var(--if-sub-emerald-bg);
+  border: 1px solid var(--if-sub-emerald-border);
 }
 .if-sub-head {
   display: flex;
@@ -356,19 +404,31 @@ body:not(.dark-theme) .if-finance-page,
   border: 1px solid rgba(239,68,68,0.2);
   color: #f87171;
 }
+.if-sub-icon-amber {
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.2);
+  color: #f59e0b;
+}
+.if-sub-icon-emerald {
+  background: rgba(16,185,129,0.12);
+  border: 1px solid rgba(16,185,129,0.2);
+  color: #34d399;
+}
 .if-sub-label {
   font-size: 0.8rem;
   color: var(--if-text-secondary);
   font-weight: 700;
 }
 .if-sub-amount {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 900;
   font-family: monospace;
   line-height: 1;
 }
 .if-sub-amount-blue { color: #3b82f6; }
 .if-sub-amount-red { color: #ef4444; }
+.if-sub-amount-amber { color: #f59e0b; }
+.if-sub-amount-emerald { color: #10b981; }
 
 /* Ledger */
 .if-ledger {
@@ -515,12 +575,10 @@ body:not(.dark-theme) .if-finance-page,
 }
 
 /* Responsive */
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
   .if-wallet-hero {
     grid-template-columns: 1fr;
   }
-  .if-sub-wallets { flex-direction: row; }
-  .if-sub-card { flex: 1; }
 }
 @media (max-width: 600px) {
   .if-tx-row {
@@ -531,6 +589,7 @@ body:not(.dark-theme) .if-finance-page,
   .if-tx-id { display: none; }
   .if-tx-amount { grid-column: 2; font-size: 0.95rem; }
   .if-tx-date { grid-column: 2; flex-direction: row; gap: 6px; }
-  .if-sub-wallets { flex-direction: column; }
+  .if-sub-wallets { grid-template-columns: 1fr; }
+}
 </style>
 {% endblock %}

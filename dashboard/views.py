@@ -1901,12 +1901,32 @@ def _get_instructor_context(request):
     # 4. Fetch Wallet and transactions safely
     wallet = None
     transactions = []
+    total_gross_sales = 0
+    total_net_earnings = 0
     try:
         instructor_profile = getattr(request.user, 'instructor_profile', None)
         if instructor_profile:
             wallet = Wallet.objects.filter(instructor=instructor_profile).first()
             if wallet:
                 transactions = list(wallet.transactions.all()[:20])
+                
+        # Calculate Total Gross Sales and Net Earnings dynamically
+        from django.db.models import Sum
+        from billing.models import AccessCode
+        from apps.instructor_finance.models import RevenueShareAgreement
+        
+        # 1. Total Gross Sales (L.S)
+        total_gross_sales = (AccessCode.objects.filter(course__instructor=request.user, sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0) // 100
+        
+        # 2. Total Net Earnings based on agreements/defaults (L.S)
+        courses_list = Course.objects.filter(instructor=request.user)
+        for c in courses_list:
+            c_gross_cents = AccessCode.objects.filter(course=c, sale_status="sold").aggregate(total=Sum("sold_price_cents"))["total"] or 0
+            agreement = RevenueShareAgreement.objects.filter(instructor=request.user, course=c, is_active=True).first()
+            if not agreement:
+                agreement = RevenueShareAgreement.objects.filter(instructor=request.user, course=None, is_active=True).first()
+            share_bps = agreement.commission_bps if agreement else 3000  # Default 30%
+            total_net_earnings += int(c_gross_cents * (share_bps / 10000.0)) // 100
     except Exception:
         pass
 
@@ -1969,6 +1989,8 @@ def _get_instructor_context(request):
         "selected_course_id": selected_course_id,
         "avatar_url": avatar_url,
         "specialty": specialty,
+        "total_gross_sales": total_gross_sales,
+        "total_net_earnings": total_net_earnings,
     }
 
 
