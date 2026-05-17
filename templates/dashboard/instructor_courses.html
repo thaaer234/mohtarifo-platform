@@ -1,158 +1,74 @@
-{% extends "dashboard/base.html" %}
-{% load static inline_static %}
+{% extends "dashboard/instructor_base.html" %}
 
-{% block title %}دورات الأستاذ {{ instructor.get_full_name }} | محترفو التعليم{% endblock %}
-{% block meta_description %}تصفح دورات الأستاذ {{ instructor.get_full_name|default:instructor.username }} على منصة محترفو التعليم: مكثفات ودروس منظمة لطلاب سوريا.{% endblock %}
-{% block og_title %}دورات الأستاذ {{ instructor.get_full_name|default:instructor.username }} | محترفو التعليم{% endblock %}
-{% block og_description %}كل الدورات المنشورة للأستاذ {{ instructor.get_full_name|default:instructor.username }} في مكان واحد ضمن منصة محترفو التعليم.{% endblock %}
-{% block og_image %}{% if instructor_profile.avatar %}{{ SEO_SITE_URL }}{{ instructor_profile.avatar.url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
-{% block twitter_image %}{% if instructor_profile.avatar %}{{ SEO_SITE_URL }}{{ instructor_profile.avatar.url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
-{% block og_image_alt %}الأستاذ {{ instructor.get_full_name|default:instructor.username }}{% endblock %}
+{% block instructor_title %}دوراتي التدريبية{% endblock %}
 
-{% block structured_data %}
-{{ block.super }}
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Person",
-  "name": "{{ instructor.get_full_name|default:instructor.username|escapejs }}",
-  "jobTitle": "{{ instructor_profile.specialty|default:'مدرس متخصص'|escapejs }}",
-  "url": "{{ SEO_CANONICAL_URL|escapejs }}",
-  "worksFor": {
-    "@type": "EducationalOrganization",
-    "name": "{{ SEO_SITE_NAME|escapejs }}",
-    "url": "{{ SEO_SITE_URL|escapejs }}"
-  }{% if instructor_profile.avatar %},
-  "image": "{{ SEO_SITE_URL|escapejs }}{{ instructor_profile.avatar.url|escapejs }}"{% endif %}
-}
-</script>
-{% endblock %}
-
-{% block content %}
-<div class="instructor-courses-wrapper reveal-up">
-    <!-- Instructor Profile Header -->
-    <header class="instructor-header-premium mb-16">
-        <div class="container header-grid">
-            <div class="inst-avatar-large">
-                {% instructor_cover_static_path instructor as instructor_cover %}
-                <img src="{% static instructor_cover %}" alt="{{ instructor.get_full_name|default:instructor.username }}">
-            </div>
-            <div class="inst-details">
-                <h1 class="inst-name-title mb-2">{{ instructor.get_full_name|default:instructor.username }}</h1>
-                <p class="inst-specialty-tag">{{ instructor_profile.specialty|default:"مدرس متخصص" }}</p>
-                {% if instructor_profile.bio %}
-                    <p class="inst-bio-text mt-6">{{ instructor_profile.bio }}</p>
-                {% endif %}
-                <div class="inst-stats-row mt-8" style="display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;">
-                    <div class="stat-badge">
-                        <i data-lucide="book-open"></i>
-                        <span>{{ courses.count }} دورة منشورة</span>
-                    </div>
-                    {% if user.is_staff %}
-                        <a href="{% url 'dashboard:admin_instructor_report' instructor.id %}" class="btn btn-secondary btn-glow" target="_blank" style="min-height: 40px; padding: 0.5rem 1rem; border-radius: 10px; font-size: 0.88rem; display: inline-flex; align-items: center; gap: 0.5rem;">
-                            <i data-lucide="file-spreadsheet" class="gold" style="width: 16px; height: 16px;"></i>
-                            <span>عرض التقرير المالي والطلاب</span>
-                        </a>
-                    {% endif %}
+{% block instructor_content %}
+<div class="tab-pane active fade-in">
+    <div class="pro-card p-6" style="border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); background: rgba(30, 30, 30, 0.25); backdrop-filter: blur(10px);">
+        <div class="d-flex align-items-center justify-content-between mb-6">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-success-soft p-2.5 rounded-lg flex-center" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.15); display: flex; justify-content: center; align-items: center; width: 42px; height: 42px;">
+                    <i data-lucide="book-open"></i>
                 </div>
+                <h3 class="mb-0 font-weight-bold" style="font-size: 1.4rem;">الدورات التدريبية المخصصة لك</h3>
             </div>
         </div>
-    </header>
 
-    <!-- Courses Grid -->
-    <section class="courses-catalog">
-        <div class="container">
-            <div class="section-header-simple mb-12">
-                <h2 class="section-title">الدورات <span class="gold">المتاحة</span></h2>
-                <p class="text-muted">تصفح كافة المكثفات والدروس المقدمة من قبل الأستاذ.</p>
-            </div>
-
-            <div class="grid-3 gap-8">
-                {% for course in courses %}
-                    <article class="course-card-premium reveal-up">
-                        <div class="course-image">
-                            {% if course.cover %}
-                                <img src="{{ course.cover.url }}" alt="{{ course.title }}">
-                            {% else %}
-                                <div class="image-placeholder">
-                                    <i data-lucide="book"></i>
+        <div class="table-responsive">
+            <table class="table custom-table">
+                <thead>
+                    <tr class="text-muted small font-weight-bold" style="border-bottom: 2px solid rgba(255,255,255,0.05);">
+                        <th style="padding: 1.25rem 1rem; text-align: right;">اسم الدورة</th>
+                        <th style="padding: 1.25rem 1rem; text-align: right;">المادة العلمية</th>
+                        <th class="text-center" style="padding: 1.25rem 1rem;">عدد الدروس</th>
+                        <th class="text-center" style="padding: 1.25rem 1rem;">عدد الطلاب</th>
+                        <th class="text-left" style="padding: 1.25rem 1rem; width: 150px; text-align: left;">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in courses %}
+                    <tr class="align-middle" style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                        <td style="padding: 1.5rem 1rem; text-align: right;">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="course-mini-thumb" style="width: 48px; height: 48px; border-radius: 12px; background: rgba(255,255,255,0.05); overflow: hidden; border: 1px solid rgba(255,255,255,0.08);">
+                                    {% if course.cover %}
+                                        <img src="{{ course.cover.url }}" class="w-100 h-100 object-fit-cover">
+                                    {% else %}
+                                        <div class="w-100 h-100 d-flex align-items-center justify-content-center text-muted"><i data-lucide="image" style="width: 18px;"></i></div>
+                                    {% endif %}
                                 </div>
-                            {% endif %}
-                            <div class="course-badge">{{ course.get_kind_display }}</div>
-                        </div>
-                        <div class="course-body">
-                            <span class="course-subject">{{ course.subject.name }}</span>
-                            <h3 class="course-title">{{ course.title }}</h3>
-                            <div class="course-footer">
-                                <div class="instructor">
-                                    <i data-lucide="user"></i>
-                                    <span>{{ course.instructor.get_full_name|default:course.instructor.username }}</span>
+                                <div>
+                                    <strong class="text-primary d-block mb-1" style="font-size: 1.05rem; color: var(--text-primary) !important;">{{ course.title }}</strong>
+                                    <span class="text-muted small">تاريخ الإنشاء: {{ course.created_at|date:"Y-m-d" }}</span>
                                 </div>
-                                <a href="{% url 'dashboard:public_course_detail' course.id %}" class="btn-arrow stretched-link">
-                                    <span>التفاصيل</span>
-                                    <i data-lucide="chevron-left"></i>
-                                </a>
                             </div>
-                        </div>
-                    </article>
-                {% empty %}
-                    <div class="empty-state full-width text-center p-20">
-                        <i data-lucide="search-x" style="width: 80px; height: 80px; opacity: 0.1; margin-bottom: 2rem;"></i>
-                        <h3>لا يوجد دورات منشورة لهذا المدرس حالياً</h3>
-                        <a href="{% url 'dashboard:instructors_list' %}" class="btn btn-glass mt-6">العودة لقائمة الأساتذة</a>
-                    </div>
-                {% endfor %}
-            </div>
+                        </td>
+                        <td style="padding: 1.5rem 1rem; text-align: right;">
+                            <span class="badge badge-light px-3 py-2 rounded-md" style="font-size: 0.85rem; font-weight: 700; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: var(--text-secondary);">{{ course.subject.name }}</span>
+                        </td>
+                        <td class="text-center" style="padding: 1.5rem 1rem;">
+                            <span class="badge px-3 py-2 rounded-md" style="font-size: 0.85rem; font-weight: 700; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.15);">{{ course.lessons_total }} درس</span>
+                        </td>
+                        <td class="text-center" style="padding: 1.5rem 1rem;">
+                            <span class="badge px-3 py-2 rounded-md" style="font-size: 0.9rem; font-weight: 800; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);">{{ course.grants_total }} طالب</span>
+                        </td>
+                        <td class="text-left" style="padding: 1.5rem 1rem; text-align: left;">
+                            <a href="{% url 'dashboard:instructor_announcements' %}?course_id={{ course.id }}" class="btn btn-sm px-4 rounded-pill" style="background: rgba(245, 158, 11, 0.12); color: var(--brand-gold); border: 1px solid rgba(245, 158, 11, 0.25); font-weight: 700; font-size: 0.85rem; text-decoration: none;">
+                                <i data-lucide="message-circle" style="width: 14px; margin-left: 4px; vertical-align: middle;"></i> مراسلة
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-12 text-muted" style="padding: 4rem;">
+                            <i data-lucide="folder-open" class="mb-4" style="width: 48px; height: 48px; opacity: 0.5;"></i>
+                            <p class="mb-0" style="font-size: 1.1rem; font-weight: 600;">لا توجد دورات مسجلة باسمك بعد.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-    </section>
+    </div>
 </div>
-
-<style>
-    .instructor-courses-wrapper { padding-bottom: 6rem; }
-    .course-card-premium { position: relative; }
-    .stretched-link::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        z-index: 2;
-        cursor: pointer;
-    }
-    
-    .instructor-header-premium { 
-        background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(197, 160, 89, 0.05) 100%);
-        border-bottom: 1px solid var(--border-light);
-        padding: 6rem 0;
-        position: relative;
-        overflow: hidden;
-    }
-    .instructor-header-premium::before {
-        content: ''; position: absolute; top: -50%; left: -10%; width: 40%; height: 200%;
-        background: radial-gradient(circle, rgba(197, 160, 89, 0.05) 0%, transparent 70%);
-        transform: rotate(-15deg);
-    }
-
-    .header-grid { display: grid; grid-template-columns: 200px 1fr; gap: 4rem; align-items: center; position: relative; z-index: 2; }
-    
-    .inst-avatar-large { 
-        width: 200px; height: 200px; border-radius: 40px; overflow: hidden; 
-        box-shadow: 0 20px 40px rgba(0,0,0,0.3); border: 2px solid var(--brand-gold);
-    }
-    .inst-avatar-large img { width: 100%; height: 100%; object-fit: cover; }
-    .avatar-placeholder { width: 100%; height: 100%; background: var(--bg-base); display: flex; align-items: center; justify-content: center; }
-    .avatar-placeholder i { width: 80px; height: 80px; color: var(--text-muted); opacity: 0.2; }
-
-    .inst-name-title { font-size: 3rem; font-weight: 900; color: var(--text-primary); }
-    .inst-specialty-tag { display: inline-block; padding: 0.5rem 1.5rem; background: var(--brand-gold-glow); color: var(--brand-gold); border-radius: 100px; font-weight: 800; font-size: 0.9rem; }
-    .inst-bio-text { font-size: 1.1rem; line-height: 1.8; color: var(--text-muted); max-width: 800px; }
-
-    .stat-badge { display: flex; align-items: center; gap: 0.75rem; color: var(--text-primary); font-weight: 700; }
-    .stat-badge i { color: var(--brand-gold); }
-
-    .full-width { grid-column: 1 / -1; }
-
-    @media (max-width: 992px) {
-        .header-grid { grid-template-columns: 1fr; text-align: center; justify-items: center; gap: 2rem; }
-        .inst-name-title { font-size: 2.2rem; }
-    }
-</style>
 {% endblock %}

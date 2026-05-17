@@ -1,0 +1,64 @@
+{% extends "dashboard/instructor_base.html" %}
+
+{% block instructor_title %}إعدادات الحساب{% endblock %}
+
+{% block instructor_content %}
+<div class="tab-pane active fade-in">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %} mb-6 p-4 rounded-lg" style="border-radius: 12px;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="pro-card p-6" style="border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); background: rgba(30, 30, 30, 0.25); backdrop-filter: blur(10px);">
+                <div class="mb-5 text-center">
+                    <div class="flex-center mx-auto mb-4" style="width: 64px; height: 64px; border-radius: 16px; background: rgba(245, 158, 11, 0.1); color: var(--brand-gold); display: inline-flex; justify-content: center; align-items: center;">
+                        <i data-lucide="key-round" style="width: 32px; height: 32px;"></i>
+                    </div>
+                    <h3 class="font-weight-bold mb-2">تغيير كلمة المرور</h3>
+                    <p class="text-muted small">يمكنك تعديل كلمة المرور الحالية وتعيين كلمة مرور جديدة لحماية حسابك.</p>
+                </div>
+
+                <form method="post" action="" class="d-flex flex-column gap-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="change_password">
+
+                    <!-- Current Password -->
+                    <div class="form-group mb-4">
+                        <label class="text-muted small font-weight-bold mb-2 d-block text-right">كلمة المرور الحالية:</label>
+                        <div class="position-relative">
+                            <input type="password" name="current_password" required class="form-control" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 14px; padding: 0.8rem 1.2rem; width: 100%; outline: none;" placeholder="••••••••">
+                        </div>
+                    </div>
+
+                    <!-- New Password -->
+                    <div class="form-group mb-4">
+                        <label class="text-muted small font-weight-bold mb-2 d-block text-right">كلمة المرور الجديدة (8 خانات على الأقل):</label>
+                        <div class="position-relative">
+                            <input type="password" name="new_password" required class="form-control" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 14px; padding: 0.8rem 1.2rem; width: 100%; outline: none;" placeholder="••••••••">
+                        </div>
+                    </div>
+
+                    <!-- Confirm New Password -->
+                    <div class="form-group mb-4">
+                        <label class="text-muted small font-weight-bold mb-2 d-block text-right">تأكيد كلمة المرور الجديدة:</label>
+                        <div class="position-relative">
+                            <input type="password" name="confirm_password" required class="form-control" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 14px; padding: 0.8rem 1.2rem; width: 100%; outline: none;" placeholder="••••••••">
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-primary btn-glow w-100 py-3 mt-4" style="border-radius: 14px; font-size: 1.05rem; font-weight: 800; background: var(--brand-gold); border: none; color: #000;">
+                        <i data-lucide="check" style="width: 18px; margin-left: 6px; vertical-align: middle;"></i> حفظ كلمة المرور الجديدة
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

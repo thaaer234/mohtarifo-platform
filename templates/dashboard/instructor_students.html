@@ -1,0 +1,101 @@
+{% extends "dashboard/instructor_base.html" %}
+
+{% block instructor_title %}سجل الطلاب{% endblock %}
+
+{% block instructor_content %}
+<div class="tab-pane active fade-in">
+    <div class="pro-card p-6" style="border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); background: rgba(30, 30, 30, 0.25); backdrop-filter: blur(10px);">
+        
+        <!-- Filters Header -->
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-4 mb-6" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1.5rem;">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-primary-soft p-2.5 rounded-lg flex-center" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.15); display: flex; justify-content: center; align-items: center; width: 42px; height: 42px;">
+                    <i data-lucide="users"></i>
+                </div>
+                <div>
+                    <h3 class="mb-0 font-weight-bold" style="font-size: 1.4rem; text-align: right;">سجل انتساب الطلاب</h3>
+                    <p class="text-muted small mb-0 mt-1" style="text-align: right;">قائمة تفصيلية بكافة الطلاب المفعلين لدوراتك التعليمية حالياً.</p>
+                </div>
+            </div>
+            
+            <!-- Course Filter Dropdown -->
+            <div class="d-flex align-items-center gap-3">
+                <label class="text-muted small font-weight-bold mb-0" style="white-space: nowrap;">تصفية حسب الدورة:</label>
+                <form method="GET" action="" id="filter-form">
+                    <select name="course_id" class="form-control rounded-lg" onchange="submitFilter()" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); padding: 0.5rem 2.5rem 0.5rem 1rem; border-radius: 12px; font-weight: 700; outline: none; cursor: pointer; -webkit-appearance: none;">
+                        <option value="">كل دوراتي التدريبية</option>
+                        {% for course in courses %}
+                        <option value="{{ course.id }}" {% if selected_course_id == course.id|stringformat:"s" %}selected{% endif %}>{{ course.title }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table custom-table">
+                <thead>
+                    <tr class="text-muted small font-weight-bold" style="border-bottom: 2px solid rgba(255,255,255,0.05);">
+                        <th style="padding: 1.25rem 1rem; text-align: right;">اسم الطالب</th>
+                        <th style="padding: 1.25rem 1rem; text-align: right;">رقم الهاتف / اسم المستخدم</th>
+                        <th style="padding: 1.25rem 1rem; text-align: right;">المادة والفرع</th>
+                        <th class="text-center" style="padding: 1.25rem 1rem;">نوع التفعيل</th>
+                        <th class="text-center" style="padding: 1.25rem 1rem;">تاريخ الانضمام</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for grant in grants_list %}
+                    <tr class="align-middle" style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                        <td style="padding: 1.25rem 1rem; text-align: right;">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="student-avatar flex-center" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.02) 100%); color: var(--brand-gold); border: 1px solid rgba(245, 158, 11, 0.2); font-weight: bold; font-size: 1rem; display: flex; justify-content: center; align-items: center;">
+                                    {{ grant.user.get_full_name|default:grant.user.username|slice:":1" }}
+                                </div>
+                                <div>
+                                    <strong style="color: var(--text-primary);">{{ grant.user.get_full_name|default:grant.user.username }}</strong>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="padding: 1.25rem 1rem; font-family: monospace; font-size: 0.95rem; color: var(--text-secondary); text-align: right;">
+                            {{ grant.user.student_profile.phone|default:grant.user.username }}
+                        </td>
+                        <td style="padding: 1.25rem 1rem; text-align: right;">
+                            <div class="d-flex flex-column gap-1">
+                                <span class="font-weight-bold" style="color: var(--brand-gold);">{{ grant.course.title }}</span>
+                                <span class="text-muted small">{{ grant.course.subject.name }} ({{ grant.course.get_academic_track_display }})</span>
+                            </div>
+                        </td>
+                        <td class="text-center" style="padding: 1.25rem 1rem;">
+                            <span class="badge px-2.5 py-1.5 rounded-md" style="font-size: 0.8rem; font-weight: 700;
+                                {% if grant.source == 'admin' %}background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.15);
+                                {% elif grant.source == 'code' %}background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.15);
+                                {% else %}background: rgba(245, 158, 11, 0.1); color: var(--brand-gold); border: 1px solid rgba(245, 158, 11, 0.15);{% endif %}">
+                                {{ grant.get_source_display|default:grant.source }}
+                            </span>
+                        </td>
+                        <td class="text-center" style="padding: 1.25rem 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                            {{ grant.created_at|date:"Y-m-d H:i" }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-12 text-muted" style="padding: 4rem;">
+                            <i data-lucide="users-2" class="mb-4" style="width: 48px; height: 48px; opacity: 0.5;"></i>
+                            <p class="mb-0" style="font-size: 1.1rem; font-weight: 600;">لا يوجد طلاب منضمين للمادة/المواد المحددة حالياً.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function submitFilter() {
+        document.getElementById('filter-form').submit();
+    }
+</script>
+{% endblock %}

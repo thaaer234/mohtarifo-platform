@@ -1,0 +1,106 @@
+{% extends "dashboard/instructor_base.html" %}
+
+{% block instructor_title %}إرسال تنبيه للطلاب{% endblock %}
+
+{% block instructor_content %}
+<div class="tab-pane active fade-in">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %} mb-6 p-4 rounded-lg" style="border-radius: 12px;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="pro-card p-6" style="border-radius: 24px; border: 1px solid rgba(245, 158, 11, 0.25); background: rgba(30, 30, 30, 0.25); backdrop-filter: blur(10px);">
+                
+                <div class="d-flex align-items-center gap-3 mb-6" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
+                    <div class="flex-center" style="width: 45px; height: 45px; border-radius: 12px; background: rgba(245,158,11,0.1); color: var(--brand-gold); display: flex; justify-content: center; align-items: center;">
+                        <i data-lucide="send"></i>
+                    </div>
+                    <div>
+                        <h3 class="mb-0 font-weight-bold" style="font-size: 1.4rem; text-align: right;">إرسال رسالة تنبيه جماعية لطلابك</h3>
+                        <p class="text-muted small mb-0 mt-1" style="text-align: right;">أرسل إعلانات، تنبيهات، أو مهام دراسية لجميع الطلاب المشتركين في دوراتك.</p>
+                    </div>
+                </div>
+
+                <!-- Broadcast Form -->
+                <form method="POST" action="" style="margin-top: 1.5rem;">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="send_message">
+                    
+                    <!-- Course Selection dropdown -->
+                    <div class="form-group mb-5">
+                        <label class="text-primary font-weight-bold mb-2" style="font-size: 1rem; color: var(--text-primary) !important; text-align: right; display: block;">1. حدد الطلاب المستهدفين (الدورة):</label>
+                        <select name="course_id" id="message-course-select" class="form-control rounded-lg" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); padding: 0.8rem 2.5rem 0.8rem 1rem; border-radius: 14px; font-weight: 700; width: 100%; font-size: 1rem; outline: none; cursor: pointer;">
+                            <option value="all">كل الطلاب في جميع دوراتي ({{ students_count }} طالب)</option>
+                            {% for course in courses %}
+                            <option value="{{ course.id }}" {% if selected_course_id == course.id|stringformat:"s" %}selected{% endif %}>طلاب دورة: {{ course.title }} ({{ course.grants_total }} طالب)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Message Content Box -->
+                    <div class="form-group mb-5">
+                        <label class="text-primary font-weight-bold mb-2" style="font-size: 1rem; color: var(--text-primary) !important; text-align: right; display: block;">2. اكتب نص الرسالة:</label>
+                        <textarea name="message_body" rows="6" class="form-control" placeholder="اكتب هنا ما تريد إيصاله للطلاب... (مثال: أهلاً بكم طلابي الأعزاء، تم اليوم رفع ملف المذاكرة الشاملة للجلسة الثالثة، يرجى مراجعته فوراً.)" required style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 16px; padding: 1.25rem; font-size: 1.05rem; line-height: 1.6; outline: none; width: 100%; resize: vertical;"></textarea>
+                    </div>
+
+                    <!-- Preview Panel -->
+                    <div class="p-4 mb-5" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px;">
+                        <span class="text-muted small font-weight-bold d-block mb-2" style="text-align: right;"><i data-lucide="eye" style="width: 14px; margin-left: 4px; vertical-align: middle;"></i> معاينة شكل الرسالة لدى الطلاب:</span>
+                        <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(245, 158, 11, 0.2); padding: 1rem 1.25rem; border-radius: 12px; color: var(--text-primary); font-size: 0.95rem; text-align: right;">
+                            <strong>رسالة من الأستاذ {{ request.user.get_full_name|default:request.user.username }}:</strong>
+                            <p class="mb-0 mt-2 text-muted" id="preview-text" style="line-height: 1.5; font-style: italic;">[ما ستكتبه في الصندوق أعلاه سيظهر هنا للطلاب...]</p>
+                        </div>
+                    </div>
+
+                    <!-- WhatsApp Dispatch Checkbox -->
+                    <div class="form-group mb-6">
+                        <div class="custom-control custom-checkbox d-flex align-items-center gap-3 p-3" style="background: rgba(37, 211, 102, 0.05); border: 1px solid rgba(37, 211, 102, 0.2); border-radius: 14px;">
+                            <input type="checkbox" name="send_whatsapp" id="send_whatsapp" class="custom-control-input" style="width: 20px; height: 20px; cursor: pointer;">
+                            <label class="custom-control-label font-weight-bold mb-0" for="send_whatsapp" style="cursor: pointer; color: #25D366; font-size: 1rem;">
+                                <i data-lucide="message-square" style="width: 16px; margin-left: 4px; vertical-align: middle;"></i> إرسال كرسالة واتساب أيضاً إلى هواتف الطلاب المفعلين 📲
+                            </label>
+                        </div>
+                        <span class="text-muted small d-block mt-2" style="padding-right: 0.5rem; text-align: right;"><i data-lucide="info" style="width: 12px; vertical-align: middle;"></i> سيتم ترحيل الرسالة في الخلفية إلى هواتف الطلاب لضمان عدم حدوث بطء في التصفح.</span>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn btn-primary btn-glow w-100 py-3" style="border-radius: 14px; font-size: 1.1rem; font-weight: 800; background: var(--brand-gold); border: none; color: #000;">
+                        <i data-lucide="send" style="width: 18px; margin-left: 6px; vertical-align: middle;"></i> بث وإرسال التنبيه الآن
+                    </button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const textarea = document.querySelector('textarea[name="message_body"]');
+        const preview = document.getElementById('preview-text');
+
+        if (textarea && preview) {
+            textarea.addEventListener("input", (e) => {
+                const val = e.target.value.trim();
+                if (val) {
+                    preview.textContent = val;
+                    preview.style.fontStyle = "normal";
+                    preview.style.color = "var(--text-primary)";
+                } else {
+                    preview.textContent = "[ما ستكتبه في الصندوق أعلاه سيظهر هنا للطلاب...]";
+                    preview.style.fontStyle = "italic";
+                    preview.style.color = "var(--text-muted)";
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

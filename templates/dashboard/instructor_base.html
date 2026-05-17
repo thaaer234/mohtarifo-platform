@@ -1,0 +1,217 @@
+{% extends "dashboard/base.html" %}
+{% block title %}{% block instructor_title %}لوحة المدرس{% endblock %} | محترفو التعليم{% endblock %}
+
+{% block content %}
+<div class="pro-container animate-up" dir="rtl" style="font-family: 'Cairo', sans-serif;">
+    
+    {% if request.session.impersonator_admin_id %}
+    <div class="d-flex align-items-center justify-content-between p-4 mb-6 rounded-lg animate-up" style="background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); color: #f87171; border-radius: 16px;">
+        <div class="d-flex align-items-center gap-3">
+            <div class="flex-center" style="width: 42px; height: 42px; border-radius: 12px; background: rgba(239, 68, 68, 0.15); color: #ef4444; display: inline-flex; justify-content: center; align-items: center;">
+                <i data-lucide="shield-alert" style="width: 22px; height: 22px;"></i>
+            </div>
+            <div>
+                <span class="d-block" style="font-weight: 800; font-size: 1.05rem; color: #f87171; text-align: right;">وضع المعاينة النشط للإدارة ⚠️</span>
+                <span class="text-muted small d-block mt-0.5" style="color: rgba(248, 113, 113, 0.7) !important; text-align: right;">أنت تتصفح لوحة التحكم حالياً بصفتك الأستاذ: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong></span>
+            </div>
+        </div>
+        <a href="{% url 'dashboard:exit_impersonate' %}" class="btn px-4 py-2" style="font-weight: 800; background: #ef4444; color: #fff; border: none; border-radius: 12px; font-size: 0.9rem; transition: all 0.2s; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3); text-decoration: none;">
+            إنهاء المعاينة والعودة للإدارة
+        </a>
+    </div>
+    {% endif %}
+    
+    <div class="row">
+        <!-- Right Sidebar (Col-lg-4) -->
+        <div class="col-lg-4 mb-6">
+            <div class="pro-card p-6 sticky-sidebar" style="border-radius: 28px; border: 1px solid rgba(255,255,255,0.06); background: linear-gradient(135deg, rgba(25, 25, 25, 0.45) 0%, rgba(15, 15, 15, 0.6) 100%); backdrop-filter: blur(20px); box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+                <!-- Instructor Premium Profile Card -->
+                <div class="text-center mb-6" style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 2rem;">
+                    <div class="profile-avatar-container mx-auto mb-4 position-relative" style="width: 120px; height: 120px;">
+                        <!-- Glowing circular ring -->
+                        <div class="position-absolute" style="inset: -4px; border-radius: 50%; background: linear-gradient(135deg, var(--brand-gold) 0%, #d97706 100%); padding: 2px; filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.45)); animation: spinGlowing 8s linear infinite;"></div>
+                        <!-- Profile Image -->
+                        <div class="position-relative w-100 h-100" style="border-radius: 50%; overflow: hidden; border: 4px solid #1a1a1a;">
+                            {% if request.user.instructor_profile.avatar %}
+                                <img src="{{ request.user.instructor_profile.avatar.url }}" alt="{{ request.user.get_full_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                            {% else %}
+                                <div class="w-100 h-100 flex-center" style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%); color: var(--brand-gold); display: flex; justify-content: center; align-items: center;">
+                                    <i data-lucide="user" style="width: 50px; height: 50px;"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <h3 class="font-weight-bold mb-1" style="font-size: 1.5rem; color: var(--text-primary); text-shadow: 0 0 10px rgba(255,255,255,0.05);">الأستاذ {{ request.user.get_full_name|default:request.user.username }}</h3>
+                    <p class="text-muted small mb-4">{{ request.user.instructor_profile.specialty|default:"مدرس معتمد" }}</p>
+                    
+                    <!-- Stats Grid inside Profile Sidebar -->
+                    <div class="row g-2 text-center">
+                        <div class="col-4">
+                            <div class="p-2" style="border-radius: 14px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.1);">
+                                <span class="text-success font-weight-bold d-block" style="font-size: 1.25rem;">{{ students_count }}</span>
+                                <span class="text-muted small d-block" style="font-size: 0.72rem; font-weight: 600;">طالب نشط</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2" style="border-radius: 14px; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.1);">
+                                <span class="text-primary font-weight-bold d-block" style="font-size: 1.25rem;">{{ courses_count }}</span>
+                                <span class="text-muted small d-block" style="font-size: 0.72rem; font-weight: 600;">دورة</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2" style="border-radius: 14px; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.1);">
+                                <span class="text-purple font-weight-bold d-block" style="font-size: 1.25rem; color: #a78bfa;">{{ lessons_count }}</span>
+                                <span class="text-muted small d-block" style="font-size: 0.72rem; font-weight: 600;">درس</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stat Card: Wallet Integrated into Sidebar -->
+                <div class="wallet-sidebar-card mb-6 p-4 text-right" style="border-radius: 20px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.02) 100%); border: 1px solid rgba(245, 158, 11, 0.25); box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <div class="flex-center" style="width: 38px; height: 38px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); color: var(--brand-gold); display: flex; justify-content: center; align-items: center;">
+                            <i data-lucide="wallet" style="width: 18px; height: 18px;"></i>
+                        </div>
+                        <div>
+                            <span class="text-muted small font-weight-bold d-block">الرصيد المالي المتاح</span>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-baseline justify-content-between">
+                        <h2 class="mb-0 font-weight-bold text-success" style="font-size: 1.8rem; font-weight: 900; letter-spacing: -0.5px;">{{ wallet.balance|default:"0.00"|floatformat:0 }}</h2>
+                        <span class="small font-weight-bold text-muted" style="margin-right: 6px;">ل.س</span>
+                    </div>
+                </div>
+
+                <!-- Sidebar Vertical Navigation Menu -->
+                <div class="sidebar-nav-menu d-flex flex-column gap-2">
+                    <a href="{% url 'dashboard:instructor_courses' %}" class="sidebar-nav-btn {% if active_page == 'courses' %}active{% endif %}" style="text-decoration: none;">
+                        <i data-lucide="graduation-cap"></i>
+                        <span>دوراتي التدريبية</span>
+                    </a>
+                    <a href="{% url 'dashboard:instructor_students' %}" class="sidebar-nav-btn {% if active_page == 'students' %}active{% endif %}" style="text-decoration: none;">
+                        <i data-lucide="users"></i>
+                        <span>سجل الطلاب</span>
+                    </a>
+                    <a href="{% url 'dashboard:instructor_finance' %}" class="sidebar-nav-btn {% if active_page == 'finance' %}active{% endif %}" style="text-decoration: none;">
+                        <i data-lucide="wallet"></i>
+                        <span>المالية والأرباح</span>
+                    </a>
+                    <a href="{% url 'dashboard:instructor_announcements' %}" class="sidebar-nav-btn {% if active_page == 'announcements' %}active{% endif %}" style="text-decoration: none;">
+                        <i data-lucide="send"></i>
+                        <span>إرسال تنبيه للطلاب</span>
+                    </a>
+                    <a href="{% url 'dashboard:instructor_settings' %}" class="sidebar-nav-btn {% if active_page == 'settings' %}active{% endif %}" style="text-decoration: none;">
+                        <i data-lucide="key-round"></i>
+                        <span>إعدادات الحساب</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Left Content Panes (Col-lg-8) -->
+        <div class="col-lg-8 mb-6">
+            <div class="tab-content-wrapper">
+                {% block instructor_content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Styles for premium feel -->
+<style>
+    .sticky-sidebar {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 90px;
+        z-index: 10;
+        transition: all 0.3s ease;
+    }
+    @keyframes spinGlowing {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .sidebar-nav-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        width: 100%;
+        padding: 0.9rem 1.2rem;
+        background: rgba(255, 255, 255, 0.01);
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        color: var(--text-secondary);
+        font-weight: 700;
+        font-size: 0.95rem;
+        text-align: right;
+        border-radius: 16px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        outline: none;
+    }
+    .sidebar-nav-btn i {
+        width: 18px;
+        height: 18px;
+        color: var(--text-muted);
+        transition: all 0.3s ease;
+    }
+    .sidebar-nav-btn:hover {
+        color: var(--text-primary);
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .sidebar-nav-btn:hover i {
+        color: var(--brand-gold);
+        transform: translateX(-3px);
+    }
+    .sidebar-nav-btn.active {
+        color: var(--brand-gold) !important;
+        background: rgba(245, 158, 11, 0.08) !important;
+        border: 1px solid rgba(245, 158, 11, 0.25) !important;
+        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.05);
+    }
+    .sidebar-nav-btn.active i {
+        color: var(--brand-gold) !important;
+    }
+    .custom-table {
+        width: 100%;
+        margin-top: 1rem;
+    }
+    .custom-table th {
+        font-family: 'Cairo', sans-serif;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+    .custom-table td {
+        color: var(--text-primary);
+        font-family: 'Cairo', sans-serif;
+    }
+    .bg-success-soft {
+        background: rgba(16, 185, 129, 0.1);
+    }
+    .bg-primary-soft {
+        background: rgba(59, 130, 246, 0.1);
+    }
+    .scroll-x {
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+    .scroll-x::-webkit-scrollbar {
+        height: 4px;
+    }
+    .scroll-x::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.1);
+        border-radius: 10px;
+    }
+    .fade-in {
+        animation: fadeIn 0.4s ease-out forwards;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% block extra_js %}{% endblock %}
+{% endblock %}

@@ -1789,36 +1789,81 @@ def admin_course_control(request, course_id):
     )
 
 
-@instructor_required
-def instructor_dashboard(request):
+def _get_instructor_context(request):
     courses = (
         Course.objects.filter(instructor=request.user)
         .select_related("subject")
         .annotate(lessons_total=Count("units__lessons", distinct=True), grants_total=Count("access_grants", distinct=True))
     )
     
-    # Handle Send Message Action & Change Password
-    if request.method == "POST" and request.POST.get("action") == "change_password":
-        current_password = request.POST.get("current_password", "").strip()
-        new_password = request.POST.get("new_password", "").strip()
-        confirm_password = request.POST.get("confirm_password", "").strip()
-        
-        if not request.user.check_password(current_password):
-            messages.error(request, "⚠️ كلمة المرور الحالية غير صحيحة.")
-        elif len(new_password) < 8:
-            messages.error(request, "⚠️ يجب أن تتكون كلمة المرور الجديدة من 8 خانات على الأقل.")
-        elif new_password != confirm_password:
-            messages.error(request, "⚠️ كلمة المرور الجديدة وتأكيدها غير متطابقتين.")
-        else:
-            request.user.set_password(new_password)
-            request.user.save()
-            from django.contrib.auth import update_session_auth_hash
-            update_session_auth_hash(request, request.user)
-            messages.success(request, "✅ تم تغيير كلمة المرور بنجاح.")
-            
-        return redirect("dashboard:instructor_dashboard")
+    sessions = (
+        OnlineLessonSession.objects.filter(lesson__unit__course__in=courses)
+        .select_related("lesson", "lesson__unit", "lesson__unit__course")
+        .annotate(attendance_total=Count("attendances", distinct=True))
+        .order_by("starts_at")
+    )
+    attendance_rows = LessonAttendance.objects.filter(session__lesson__unit__course__in=courses).select_related(
+        "user", "session", "session__lesson", "session__lesson__unit", "session__lesson__unit__course"
+    ).order_by("-created_at")
 
-    elif request.method == "POST" and request.POST.get("action") == "send_message":
+    instructor_profile = getattr(request.user, 'instructor_profile', None)
+    wallet = Wallet.objects.filter(instructor=instructor_profile).first()
+    transactions = wallet.transactions.all()[:20] if wallet else []
+    
+    grants_list = AccessGrant.objects.filter(course__instructor=request.user).select_related(
+        "user", "course", "user__student_profile"
+    ).order_by("-created_at")
+    
+    selected_course_id = request.GET.get("course_id", "")
+    if selected_course_id and selected_course_id.isdigit():
+        grants_list = grants_list.filter(course_id=int(selected_course_id))
+
+    return {
+        "courses": courses,
+        "courses_count": courses.count(),
+        "lessons_count": Lesson.objects.filter(unit__course__in=courses).count(),
+        "sessions_count": sessions.count(),
+        "attendance_count": attendance_rows.count(),
+        "students_count": AccessGrant.objects.filter(course__in=courses).values("user").distinct().count(),
+        "codes_count": AccessCode.objects.filter(course__in=courses).count(),
+        "sessions": sessions[:8],
+        "attendance_rows": attendance_rows[:10],
+        "wallet": wallet,
+        "transactions": transactions,
+        "grants_list": grants_list,
+        "selected_course_id": selected_course_id,
+    }
+
+
+@instructor_required
+def instructor_dashboard(request):
+    return redirect("dashboard:instructor_courses")
+
+
+@instructor_required
+def instructor_courses(request):
+    context = _get_instructor_context(request)
+    context["active_page"] = "courses"
+    return render(request, "dashboard/instructor_courses.html", context)
+
+
+@instructor_required
+def instructor_students(request):
+    context = _get_instructor_context(request)
+    context["active_page"] = "students"
+    return render(request, "dashboard/instructor_students.html", context)
+
+
+@instructor_required
+def instructor_finance(request):
+    context = _get_instructor_context(request)
+    context["active_page"] = "finance"
+    return render(request, "dashboard/instructor_finance.html", context)
+
+
+@instructor_required
+def instructor_announcements(request):
+    if request.method == "POST" and request.POST.get("action") == "send_message":
         course_id = request.POST.get("course_id", "").strip()
         message_body = request.POST.get("message_body", "").strip()
         send_whatsapp = request.POST.get("send_whatsapp") == "on"
@@ -1826,7 +1871,6 @@ def instructor_dashboard(request):
         if not message_body:
             messages.warning(request, "تنبيه: نص الرسالة فارغ لا يمكن إرساله.")
         else:
-            # Determine target grants
             if course_id == "all":
                 grants = AccessGrant.objects.filter(course__instructor=request.user)
             elif course_id.isdigit():
@@ -1842,7 +1886,6 @@ def instructor_dashboard(request):
                 instructor_name = request.user.get_full_name() or request.user.first_name or request.user.username
                 full_message = f"رسالة من الأستاذ {instructor_name}: {message_body}"
                 
-                # Bulk create notifications
                 notifications = [
                     StudentNotification(
                         user=student,
@@ -1855,7 +1898,6 @@ def instructor_dashboard(request):
                 ]
                 StudentNotification.objects.bulk_create(notifications)
                 
-                # Send WhatsApp if checked
                 if send_whatsapp:
                     import threading
                     from .whatsapp_utils import send_whatsapp_message
@@ -1879,48 +1921,38 @@ def instructor_dashboard(request):
                 else:
                     messages.success(request, f"✅ تم إرسال التنبيه الداخلي بنجاح لـ {students.count()} طالب.")
                     
-            return redirect("dashboard:instructor_dashboard")
+        return redirect("dashboard:instructor_announcements")
 
-    sessions = (
-        OnlineLessonSession.objects.filter(lesson__unit__course__in=courses)
-        .select_related("lesson", "lesson__unit", "lesson__unit__course")
-        .annotate(attendance_total=Count("attendances", distinct=True))
-        .order_by("starts_at")
-    )
-    attendance_rows = LessonAttendance.objects.filter(session__lesson__unit__course__in=courses).select_related(
-        "user", "session", "session__lesson", "session__lesson__unit", "session__lesson__unit__course"
-    ).order_by("-created_at")
+    context = _get_instructor_context(request)
+    context["active_page"] = "announcements"
+    return render(request, "dashboard/instructor_announcements.html", context)
 
-    # Wallet & Accounting
-    instructor_profile = getattr(request.user, 'instructor_profile', None)
-    wallet = Wallet.objects.filter(instructor=instructor_profile).first()
-    transactions = wallet.transactions.all()[:20] if wallet else []
-    
-    # Students List with filtering
-    grants_list = AccessGrant.objects.filter(course__instructor=request.user).select_related(
-        "user", "course", "user__student_profile"
-    ).order_by("-created_at")
-    
-    selected_course_id = request.GET.get("course_id", "")
-    if selected_course_id and selected_course_id.isdigit():
-        grants_list = grants_list.filter(course_id=int(selected_course_id))
 
-    context = {
-        "courses": courses,
-        "courses_count": courses.count(),
-        "lessons_count": Lesson.objects.filter(unit__course__in=courses).count(),
-        "sessions_count": sessions.count(),
-        "attendance_count": attendance_rows.count(),
-        "students_count": AccessGrant.objects.filter(course__in=courses).values("user").distinct().count(),
-        "codes_count": AccessCode.objects.filter(course__in=courses).count(),
-        "sessions": sessions[:8],
-        "attendance_rows": attendance_rows[:10],
-        "wallet": wallet,
-        "transactions": transactions,
-        "grants_list": grants_list,
-        "selected_course_id": selected_course_id,
-    }
-    return render(request, "dashboard/instructor_dashboard.html", context)
+@instructor_required
+def instructor_settings(request):
+    if request.method == "POST" and request.POST.get("action") == "change_password":
+        current_password = request.POST.get("current_password", "").strip()
+        new_password = request.POST.get("new_password", "").strip()
+        confirm_password = request.POST.get("confirm_password", "").strip()
+        
+        if not request.user.check_password(current_password):
+            messages.error(request, "⚠️ كلمة المرور الحالية غير صحيحة.")
+        elif len(new_password) < 8:
+            messages.error(request, "⚠️ يجب أن تتكون كلمة المرور الجديدة من 8 خانات على الأقل.")
+        elif new_password != confirm_password:
+            messages.error(request, "⚠️ كلمة المرور الجديدة وتأكيدها غير متطابقتين.")
+        else:
+            request.user.set_password(new_password)
+            request.user.save()
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(request, request.user)
+            messages.success(request, "✅ تم تغيير كلمة المرور بنجاح.")
+            
+        return redirect("dashboard:instructor_settings")
+
+    context = _get_instructor_context(request)
+    context["active_page"] = "settings"
+    return render(request, "dashboard/instructor_settings.html", context)
 
 
 

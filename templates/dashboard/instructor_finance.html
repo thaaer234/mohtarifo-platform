@@ -1,0 +1,105 @@
+{% extends "dashboard/instructor_base.html" %}
+
+{% block instructor_title %}المالية والأرباح{% endblock %}
+
+{% block instructor_content %}
+<div class="tab-pane active fade-in">
+    <div class="row">
+        
+        <!-- Wallet Status Card -->
+        <div class="col-lg-4 mb-6">
+            <div class="pro-card p-6 mb-6" style="border-radius: 24px; border: 1px solid rgba(245, 158, 11, 0.25); background: linear-gradient(145deg, rgba(245, 158, 11, 0.06) 0%, rgba(10, 10, 10, 0.6) 100%);">
+                <div class="d-flex justify-content-between align-items-start mb-6">
+                    <div>
+                        <span class="badge badge-gold px-3 py-1.5 rounded-pill mb-2" style="background: rgba(245,158,11,0.1); color: var(--brand-gold); border: 1px solid rgba(245,158,11,0.2);">محفظة أرباح المدرس</span>
+                        <h4 class="font-weight-bold mt-2" style="font-size: 1.2rem; text-align: right;">رصيد الأستاذ الحالي</h4>
+                    </div>
+                    <div class="flex-center" style="width: 48px; height: 48px; border-radius: 14px; background: rgba(245,158,11,0.1); color: var(--brand-gold); display: flex; justify-content: center; align-items: center;">
+                        <i data-lucide="wallet"></i>
+                    </div>
+                </div>
+                
+                <div class="mb-6" style="text-align: right;">
+                    <h2 class="font-weight-bold text-success" style="font-size: 2.8rem; margin: 0; line-height: 1.1;">
+                        {{ wallet.balance|default:"0.00"|floatformat:0 }}
+                        <span style="font-size: 1.2rem; font-weight: 500; color: var(--text-secondary);">ل.س</span>
+                    </h2>
+                    <p class="text-muted small mt-2">آخر تحديث: {{ wallet.updated_at|date:"Y-m-d H:i" }}</p>
+                </div>
+                
+                <div class="pt-4" style="border-top: 1px solid rgba(255,255,255,0.06);">
+                    <div class="d-flex justify-content-between mb-3">
+                        <span class="text-muted small">رصيد قيد الانتظار</span>
+                        <strong class="small" style="color: var(--text-primary);">{{ wallet.pending_balance|default:"0.00"|floatformat:0 }} ل.س</strong>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small">الرصيد المجمّد</span>
+                        <strong class="small text-danger">{{ wallet.frozen_balance|default:"0.00"|floatformat:0 }} ل.س</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Transactions Ledger -->
+        <div class="col-lg-8 mb-6">
+            <div class="pro-card p-6" style="border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); background: rgba(30, 30, 30, 0.25); backdrop-filter: blur(10px); height: 100%;">
+                <div class="d-flex align-items-center gap-3 mb-6" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
+                    <div class="bg-success-soft p-2 rounded-lg flex-center" style="background: rgba(16, 185, 129, 0.1); color: #10b981; display: flex; justify-content: center; align-items: center; width: 36px; height: 36px;">
+                        <i data-lucide="receipt"></i>
+                    </div>
+                    <h3 class="mb-0 font-weight-bold" style="font-size: 1.3rem;">سجل آخر المعاملات المالية</h3>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table custom-table">
+                        <thead>
+                            <tr class="text-muted small font-weight-bold" style="border-bottom: 2px solid rgba(255,255,255,0.05);">
+                                <th style="padding: 1rem; text-align: right;">رقم المعاملة</th>
+                                <th style="padding: 1rem; text-align: right;">نوع العملية</th>
+                                <th style="padding: 1rem; text-align: right;">المبلغ</th>
+                                <th style="padding: 1rem; text-align: right;">التفاصيل والوصف</th>
+                                <th class="text-center" style="padding: 1rem;">التاريخ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tx in transactions %}
+                            <tr class="align-middle" style="border-bottom: 1px solid rgba(255,255,255,0.03);">
+                                <td style="padding: 1.25rem 1rem; font-family: monospace; font-size: 0.85rem; color: var(--text-muted); text-align: right;">
+                                    {{ tx.id|stringformat:"s"|slice:":8" }}...
+                                </td>
+                                <td style="padding: 1.25rem 1rem; text-align: right;">
+                                    <span class="badge px-2 py-1 rounded" style="font-size: 0.85rem; font-weight: 700;
+                                        {% if tx.transaction_type == 'credit' %}background: rgba(16, 185, 129, 0.1); color: #10b981;
+                                        {% else %}background: rgba(239, 68, 68, 0.1); color: #ef4444;{% endif %}">
+                                        {% if tx.transaction_type == 'credit' %}إيداع{% else %}سحب{% endif %}
+                                    </span>
+                                </td>
+                                <td style="padding: 1.25rem 1rem; font-weight: bold; text-align: right; {% if tx.transaction_type == 'credit' %}color: #10b981;{% else %}color: #ef4444;{% endif %}">
+                                    {% if tx.transaction_type == 'credit' %}+{% else %}-{% endif %}{{ tx.amount|floatformat:0 }} ل.س
+                                </td>
+                                <td style="padding: 1.25rem 1rem; font-size: 0.9rem; color: var(--text-secondary); text-align: right;">
+                                    {{ tx.description }}
+                                    {% if tx.source_event %}
+                                        <span class="badge bg-dark text-muted small mr-2" style="font-size: 0.75rem;">{{ tx.source_event }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center" style="padding: 1.25rem 1rem; color: var(--text-muted); font-size: 0.85rem;">
+                                    {{ tx.created_at|date:"Y-m-d H:i" }}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-12 text-muted" style="padding: 3rem;">
+                                    <i data-lucide="receipt" class="mb-4" style="width: 40px; height: 40px; opacity: 0.4;"></i>
+                                    <p class="mb-0" style="font-size: 1rem;">لا توجد حركات مالية مسجلة في محفظتك حتى الآن.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

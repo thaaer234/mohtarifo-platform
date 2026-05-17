@@ -374,13 +374,25 @@
                 </a>
             {% elif user.instructor_profile %}
                 <!-- Instructor Bottom Nav -->
-                <a href="{% url 'dashboard:instructor_dashboard' %}" class="bottom-nav-item {% if '/instructor/' in request.path %}active{% endif %}">
-                    <i data-lucide="layout"></i>
-                    <span>الرئيسية</span>
+                <a href="{% url 'dashboard:instructor_courses' %}" class="bottom-nav-item {% if '/instructor/courses/' in request.path or request.path == '/instructor/' %}active{% endif %}">
+                    <i data-lucide="graduation-cap"></i>
+                    <span>دوراتي</span>
                 </a>
-                <a href="{% url 'dashboard:profile' %}" class="bottom-nav-item {% if '/profile/' in request.path %}active{% endif %}">
-                    <i data-lucide="user"></i>
-                    <span>حسابي</span>
+                <a href="{% url 'dashboard:instructor_students' %}" class="bottom-nav-item {% if '/instructor/students/' in request.path %}active{% endif %}">
+                    <i data-lucide="users"></i>
+                    <span>الطلاب</span>
+                </a>
+                <a href="{% url 'dashboard:instructor_finance' %}" class="bottom-nav-item {% if '/instructor/finance/' in request.path %}active{% endif %}">
+                    <i data-lucide="wallet"></i>
+                    <span>المالية</span>
+                </a>
+                <a href="{% url 'dashboard:instructor_announcements' %}" class="bottom-nav-item {% if '/instructor/announcements/' in request.path %}active{% endif %}">
+                    <i data-lucide="send"></i>
+                    <span>إرسال تنبيه</span>
+                </a>
+                <a href="{% url 'dashboard:instructor_settings' %}" class="bottom-nav-item {% if '/instructor/settings/' in request.path %}active{% endif %}">
+                    <i data-lucide="key-round"></i>
+                    <span>الإعدادات</span>
                 </a>
             {% else %}
                 <!-- Student Bottom Nav -->
