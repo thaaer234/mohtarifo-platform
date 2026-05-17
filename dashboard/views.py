@@ -533,15 +533,19 @@ def login_view(request):
     if request.user.is_authenticated:
         return redirect("dashboard:home")
 
+    login_error = None
+    login_username_value = ""
+
     if request.method == "POST":
         raw_username = request.POST.get("username", "").strip()
         raw_password = request.POST.get("password", "")
+        login_username_value = raw_username
 
-        from accounts.auth_utils import resolve_user_for_login, verify_instructor_password
+        from accounts.auth_utils import is_instructor_account, resolve_user_for_login, verify_instructor_password
 
         resolved_user = resolve_user_for_login(raw_username)
 
-        if resolved_user and hasattr(resolved_user, "instructor_profile"):
+        if resolved_user and is_instructor_account(resolved_user):
             if _login_is_rate_limited(request):
                 messages.error(request, "لقد تجاوزت الحد المسموح به من محاولات تسجيل الدخول الفاشلة. يرجى المحاولة لاحقاً.")
                 return render(request, "registration/login.html", {"form": AuthenticationForm()}, status=429)
@@ -558,8 +562,12 @@ def login_view(request):
                 return redirect("dashboard:verify_login_otp")
 
             _record_failed_login(request)
-            messages.error(request, "الرجاء إدخال اسم المستخدم وكلمة السر الصحيحين.")
-            return render(request, "registration/login.html", {"form": AuthenticationForm()})
+            login_error = "كلمة المرور غير صحيحة. جرّب رقم هاتفك أو تواصل مع الإدارة لإعادة التعيين."
+            return render(
+                request,
+                "registration/login.html",
+                {"form": AuthenticationForm(), "login_error": login_error, "login_username": raw_username},
+            )
 
         if resolved_user:
             post_data = request.POST.copy()
@@ -591,8 +599,21 @@ def login_view(request):
     
     if request.method == "POST":
         _record_failed_login(request)
+        if not login_error:
+            if not resolve_user_for_login(request.POST.get("username", "").strip()):
+                login_error = "لا يوجد حساب بهذا الاسم أو الرقم."
+            else:
+                login_error = "كلمة المرور غير صحيحة."
 
-    return render(request, "registration/login.html", {"form": form})
+    return render(
+        request,
+        "registration/login.html",
+        {
+            "form": form,
+            "login_error": login_error,
+            "login_username": login_username_value,
+        },
+    )
 
 
 def verify_login_otp(request):

@@ -120,6 +120,14 @@ def _find_instructor_by_name(raw: str):
     return None
 
 
+def is_instructor_account(user) -> bool:
+    if not user or not user.is_active:
+        return False
+    if hasattr(user, "instructor_profile"):
+        return True
+    return bool(user.is_staff and PHONE_DIGITS_RE.fullmatch(normalize_phone(user.username)))
+
+
 def resolve_user_for_login(raw_identifier: str):
     """
     يحوّل مدخل تسجيل الدخول إلى مستخدم.
@@ -129,25 +137,36 @@ def resolve_user_for_login(raw_identifier: str):
     if not raw:
         return None
 
-    user = User.objects.filter(username__iexact=raw).first()
-    if user:
-        return user
+    norm = normalize_phone(raw)
+    is_phone = bool(norm and PHONE_DIGITS_RE.fullmatch(norm))
 
-    user = _find_instructor_by_phone(raw)
-    if user:
-        return user
+    # أرقام الهاتف: المدرس أولاً (تجنب التباس مع حساب طالب بنفس الرقم)
+    if is_phone:
+        user = _find_instructor_by_phone(raw)
+        if user:
+            return user
 
     user = _find_instructor_by_name(raw)
     if user:
         return user
 
+    user = User.objects.filter(username__iexact=raw).first()
+    if user:
+        return user
+
+    if not is_phone:
+        user = _find_instructor_by_phone(raw)
+        if user:
+            return user
+
     sp = StudentProfile.objects.filter(phone=raw).select_related("user").first()
-    if not sp:
-        norm = normalize_phone(raw)
-        if norm:
-            sp = StudentProfile.objects.filter(phone=norm).select_related("user").first()
+    if not sp and norm:
+        sp = StudentProfile.objects.filter(phone=norm).select_related("user").first()
     if sp:
         return sp.user
+
+    if is_phone:
+        return User.objects.filter(username__iexact=norm).first()
 
     return User.objects.filter(email__iexact=raw).first()
 
@@ -164,32 +183,32 @@ def instructor_password_candidates(user) -> list[str]:
     return [c for c in candidates if c]
 
 
-def verify_instructor_password(user, password: str) -> bool:
-    """
-    يتحقق من كلمة مرور المدرس.
-    يقبل الهاتف الحالي، أو رقم الهاتف القديم المحفوظ كاسم مستخدم.
-    """
-    if not hasattr(user, "instructor_profile"):
-        return False
-
+def _password_attempts(password: str, user) -> list[str]:
     raw = (password or "").strip()
-    if not raw:
+    attempts: list[str] = []
+    if raw:
+        attempts.append(raw)
+    digits = normalize_phone(raw)
+    if digits and digits not in attempts:
+        attempts.append(digits)
+    for candidate in instructor_password_candidates(user):
+        if candidate not in attempts:
+            attempts.append(candidate)
+    return attempts
+
+
+def verify_instructor_password(user, password: str) -> bool:
+    """يتحقق من كلمة مرور المدرس (الهاتف أو اسم المستخدم القديم كرقم)."""
+    if not is_instructor_account(user):
         return False
 
-    tried: set[str] = set()
-    digits = normalize_phone(raw)
-    if digits:
-        tried.add(digits)
-    tried.add(raw)
+    from django.contrib.auth import authenticate
 
-    for candidate in tried:
-        if user.check_password(candidate):
+    for attempt in _password_attempts(password, user):
+        if user.check_password(attempt):
             return True
-
-    for candidate in instructor_password_candidates(user):
-        if candidate not in tried and user.check_password(candidate):
+        if authenticate(username=user.username, password=attempt):
             return True
-
     return False
 
 
