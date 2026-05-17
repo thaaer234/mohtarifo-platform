@@ -62,22 +62,7 @@
         </div>
       </div>
 
-      <!-- Card 2: Actual Deserved Earnings (أرباح المبيعات) -->
-      <div class="if-sub-card if-sub-emerald">
-        <div class="if-sub-head">
-          <div class="if-sub-icon if-sub-icon-emerald">
-            <i data-lucide="trending-up" style="width:16px"></i>
-          </div>
-          <i data-lucide="help-circle" style="width:14px;opacity:.4;cursor:help" title="حصتك الفعلية وأرباحك المستحقة من المبيعات بغض النظر عن تحويلها للمحفظة"></i>
-        </div>
-        <span class="if-sub-label">أرباح المبيعات المستحقة</span>
-        <div class="if-sub-amount if-sub-amount-emerald">
-          {{ total_net_earnings|floatformat:0|default:"0" }}
-          <span style="font-size:.85rem;font-weight:600;opacity:.7">ل.س</span>
-        </div>
-      </div>
-
-      <!-- Card 3: Pending Balance -->
+      <!-- Card 2: Pending Balance -->
       <div class="if-sub-card if-sub-blue">
         <div class="if-sub-head">
           <div class="if-sub-icon if-sub-icon-blue">
@@ -92,7 +77,7 @@
         </div>
       </div>
 
-      <!-- Card 4: Frozen Balance -->
+      <!-- Card 3: Frozen Balance -->
       <div class="if-sub-card if-sub-red">
         <div class="if-sub-head">
           <div class="if-sub-icon if-sub-icon-red">
@@ -241,7 +226,7 @@ body:not(.dark-theme) .if-finance-page,
 /* Hero Wallet Section */
 .if-wallet-hero {
   display: grid;
-  grid-template-columns: 1fr 480px;
+  grid-template-columns: 1fr 280px;
   gap: 1.25rem;
   align-items: stretch;
   position: relative;
@@ -351,9 +336,9 @@ body:not(.dark-theme) .if-finance-page,
 
 /* Sub Wallets */
 .if-sub-wallets {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 .if-sub-card {
   border-radius: 24px;
@@ -575,10 +560,12 @@ body:not(.dark-theme) .if-finance-page,
 }
 
 /* Responsive */
-@media (max-width: 1100px) {
+@media (max-width: 900px) {
   .if-wallet-hero {
     grid-template-columns: 1fr;
   }
+  .if-sub-wallets { flex-direction: row; }
+  .if-sub-card { flex: 1; }
 }
 @media (max-width: 600px) {
   .if-tx-row {
@@ -589,7 +576,7 @@ body:not(.dark-theme) .if-finance-page,
   .if-tx-id { display: none; }
   .if-tx-amount { grid-column: 2; font-size: 0.95rem; }
   .if-tx-date { grid-column: 2; flex-direction: row; gap: 6px; }
-  .if-sub-wallets { grid-template-columns: 1fr; }
+  .if-sub-wallets { flex-direction: column; }
 }
 </style>
 {% endblock %}
