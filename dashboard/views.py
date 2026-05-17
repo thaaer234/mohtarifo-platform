@@ -468,7 +468,7 @@ def sitemap_xml(request):
         .order_by("id")
     )
     for instructor in instructors:
-        urls.append((reverse("dashboard:instructor_courses", args=[instructor.id]), "weekly", "0.7"))
+        urls.append((reverse("dashboard:landing") + f"?instructor={instructor.id}", "weekly", "0.7"))
 
     items = []
     for entry in urls:
@@ -2975,7 +2975,7 @@ def _catalog_tabs(include_hidden=False):
         return _default_catalog_tabs()
 
 
-def instructor_courses(request, instructor_id):
+def public_instructor_courses(request, instructor_id):
     instructor = get_object_or_404(User, id=instructor_id)
     courses = (
         Course.objects.filter(instructor=instructor, status="published")
