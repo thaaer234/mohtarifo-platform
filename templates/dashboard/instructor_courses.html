@@ -2,139 +2,411 @@
 {% block instructor_title %}دوراتي التدريبية{% endblock %}
 
 {% block instructor_content %}
-<div class="tab-pane active fade-in" dir="rtl">
-    
-    <!-- Top Showcase Header -->
-    <div class="pro-card mb-6 p-5 position-relative overflow-hidden" style="border-radius: 24px; border: 1px solid rgba(245, 158, 11, 0.2); background: linear-gradient(135deg, rgba(245,158,11,0.06) 0%, rgba(30,30,30,0.3) 100%);">
-        <div class="position-absolute" style="width: 200px; height: 200px; background: radial-gradient(circle, rgba(245,158,11,0.12) 0%, rgba(0,0,0,0) 70%); bottom: -80px; left: -80px; pointer-events: none;"></div>
-        <div class="d-flex align-items-center justify-content-between position-relative" style="z-index: 2;">
-            <div class="d-flex align-items-center gap-3">
-                <div class="flex-center" style="width: 50px; height: 50px; border-radius: 16px; background: rgba(245, 158, 11, 0.15); color: var(--brand-gold); display: flex; justify-content: center; align-items: center; border: 1px solid rgba(245, 158, 11, 0.25);">
-                    <i data-lucide="graduation-cap" style="width: 24px; height: 24px;"></i>
-                </div>
-                <div>
-                    <h3 class="mb-0 font-weight-bold" style="font-size: 1.5rem; text-shadow: 0 2px 10px rgba(0,0,0,0.3);">حقيبتك التدريبية الأكاديمية</h3>
-                    <p class="text-muted small mb-0 mt-1">تتبع مقرراتك الدراسية، أعداد الطلاب المسجلين، وتفاعل معهم مباشرةً.</p>
-                </div>
-            </div>
-            <div class="badge px-4 py-2" style="border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); font-weight: 800; font-size: 0.95rem; color: var(--brand-gold);">
-                إجمالي الدورات: {{ courses_count }}
-            </div>
+<div class="ic-courses-page" dir="rtl">
+
+  <!-- ══════════════════════════════════
+       HERO BANNER — Courses Identity
+       Golden Academy theme
+  ══════════════════════════════════ -->
+  <div class="ic-hero-banner mb-5">
+    <div class="ic-hero-glow-1"></div>
+    <div class="ic-hero-glow-2"></div>
+    <div class="ic-hero-inner">
+      <div class="ic-hero-left">
+        <div class="ic-hero-icon-wrap">
+          <i data-lucide="graduation-cap"></i>
         </div>
+        <div>
+          <h1 class="ic-hero-title">حقيبتك التدريبية</h1>
+          <p class="ic-hero-sub">جميع دوراتك الأكاديمية في مكان واحد — تابع الطلاب، الوحدات، والتفاعل</p>
+        </div>
+      </div>
+      <div class="ic-hero-stat-pill">
+        <i data-lucide="layers" style="width:15px"></i>
+        {{ courses_count }} دورة نشطة
+      </div>
     </div>
+  </div>
 
-    <!-- Courses Grid -->
-    <div class="row g-4">
-        {% for course in courses %}
-        <div class="col-md-6 col-12">
-            <div class="course-premium-card position-relative overflow-hidden" style="border-radius: 28px; border: 1px solid rgba(255,255,255,0.06); background: rgba(22, 22, 22, 0.55); backdrop-filter: blur(15px); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); height: 100%; display: flex; flex-column: column; justify-content: space-between;">
-                <!-- Glowing corner effect -->
-                <div class="position-absolute glow-effect" style="width: 120px; height: 120px; background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, rgba(0,0,0,0) 70%); top: -30px; left: -30px; pointer-events: none; opacity: 0; transition: all 0.4s ease;"></div>
-                
-                <div>
-                    <!-- Course Image & Badges -->
-                    <div class="position-relative overflow-hidden" style="height: 180px; border-radius: 22px; margin: 0.75rem; border: 1px solid rgba(255,255,255,0.05); background: #121212;">
-                        {% if course.cover_url %}
-                            <img src="{{ course.cover_url }}" alt="{{ course.title }}" style="width: 100%; height: 100%; object-fit: cover; transition: all 0.5s ease;" class="course-cover-img">
-                        {% else %}
-                            <div class="w-100 h-100 flex-center" style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%); color: rgba(255,255,255,0.15); display: flex; justify-content: center; align-items: center;">
-                                <i data-lucide="image" style="width: 48px; height: 48px;"></i>
-                            </div>
-                        {% endif %}
-                        <!-- Subject Badge -->
-                        <span class="position-absolute" style="top: 15px; right: 15px; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.15); color: #fff; font-weight: 800; font-size: 0.8rem; padding: 0.5rem 1rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
-                            {{ course.subject_name }}
-                        </span>
-                    </div>
+  <!-- ══════════════════════════════════
+       COURSES GRID
+  ══════════════════════════════════ -->
+  {% if courses %}
+  <div class="ic-courses-grid">
+    {% for course in courses %}
+    <div class="ic-course-card">
 
-                    <!-- Course Title & Meta -->
-                    <div class="px-4 pt-3 pb-2 text-right">
-                        <h4 class="font-weight-bold mb-2 text-gradient-title" style="font-size: 1.25rem; line-height: 1.4; color: var(--text-primary);">{{ course.title }}</h4>
-                        <span class="text-muted small d-flex align-items-center gap-1.5 justify-content-start" style="font-size: 0.8rem; display: flex; align-items: center;">
-                            <i data-lucide="calendar" style="width: 13px; color: var(--brand-gold);"></i>
-                            تاريخ الإطلاق: {{ course.formatted_date|default:"غير محدد" }}
-                        </span>
-                    </div>
-                </div>
+      <!-- Thumbnail Strip -->
+      <div class="ic-thumb-wrap">
+        {% if course.cover_url %}
+          <img src="{{ course.cover_url }}" alt="{{ course.title }}" class="ic-thumb-img">
+        {% else %}
+          <div class="ic-thumb-placeholder">
+            <i data-lucide="image" style="width:42px;height:42px;opacity:.3"></i>
+          </div>
+        {% endif %}
+        <!-- Subject Badge -->
+        <span class="ic-subject-badge">{{ course.subject_name }}</span>
+        <!-- Shimmer overlay -->
+        <div class="ic-thumb-shimmer"></div>
+      </div>
 
-                <!-- Metrics & Actions Footer -->
-                <div class="px-4 pb-4 pt-3" style="border-top: 1px solid rgba(255,255,255,0.04); background: rgba(0,0,0,0.15); border-bottom-left-radius: 28px; border-bottom-right-radius: 28px; margin-top: 1.5rem;">
-                    <div class="d-flex align-items-center justify-content-between mb-4">
-                        <!-- Stat Item: Students -->
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="flex-center" style="width: 32px; height: 32px; border-radius: 10px; background: rgba(16, 185, 129, 0.1); color: #10b981; display: flex; justify-content: center; align-items: center;">
-                                <i data-lucide="users" style="width: 15px;"></i>
-                            </div>
-                            <div>
-                                <span class="d-block font-weight-bold text-success" style="font-size: 0.95rem; font-family: monospace; line-height: 1.1;">{{ course.grants_total }}</span>
-                                <span class="text-muted" style="font-size: 0.7rem; font-weight: 700;">طالب مشترك</span>
-                            </div>
-                        </div>
-                        <!-- Stat Item: Lessons -->
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="flex-center" style="width: 32px; height: 32px; border-radius: 10px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; display: flex; justify-content: center; align-items: center;">
-                                <i data-lucide="book-open" style="width: 15px;"></i>
-                            </div>
-                            <div>
-                                <span class="d-block font-weight-bold text-primary" style="font-size: 0.95rem; font-family: monospace; line-height: 1.1;">{{ course.lessons_total }}</span>
-                                <span class="text-muted" style="font-size: 0.7rem; font-weight: 700;">درس متاح</span>
-                            </div>
-                        </div>
-                    </div>
+      <!-- Card Body -->
+      <div class="ic-card-body">
+        <h4 class="ic-course-title">{{ course.title }}</h4>
 
-                    <!-- Action buttons -->
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <a href="{% url 'dashboard:instructor_announcements' %}?course_id={{ course.id }}" class="btn w-100 py-2.5 font-weight-bold d-flex align-items-center justify-content-center gap-1.5 text-decoration-none" style="border-radius: 14px; background: rgba(245, 158, 11, 0.12); color: var(--brand-gold); border: 1px solid rgba(245, 158, 11, 0.25); font-size: 0.85rem; transition: all 0.3s ease;">
-                                <i data-lucide="send" style="width: 13px;"></i>
-                                بث إشعار للطلاب
-                            </a>
-                        </div>
-                        <div class="col-6">
-                            <a href="{% url 'dashboard:instructor_students' %}?course_id={{ course.id }}" class="btn w-100 py-2.5 font-weight-bold d-flex align-items-center justify-content-center gap-1.5 text-decoration-none" style="border-radius: 14px; background: rgba(255,255,255,0.03); color: var(--text-secondary); border: 1px solid rgba(255,255,255,0.08); font-size: 0.85rem; transition: all 0.3s ease;">
-                                <i data-lucide="eye" style="width: 13px;"></i>
-                                استعراض الطلاب
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="ic-course-meta">
+          <i data-lucide="calendar" style="width:12px;color:var(--brand-gold)"></i>
+          <span>{{ course.formatted_date|default:"لم يُحدد" }}</span>
         </div>
-        {% empty %}
-        <div class="col-12">
-            <div class="pro-card text-center py-12 text-muted" style="border-radius: 28px; padding: 5rem 2rem;">
-                <div class="flex-center mx-auto mb-4" style="width: 64px; height: 64px; border-radius: 16px; background: rgba(255,255,255,0.02); color: var(--text-muted); display: inline-flex; justify-content: center; align-items: center; border: 1px solid rgba(255,255,255,0.05);">
-                    <i data-lucide="folder-search" style="width: 32px; height: 32px;"></i>
-                </div>
-                <h4 class="font-weight-bold text-white mb-2" style="font-size: 1.25rem;">لا توجد دورات مسجلة</h4>
-                <p class="text-muted small max-w-md mx-auto">لم يتم تخصيص أي دورات تدريبية لحسابك حالياً. يرجى التواصل مع الإدارة لتفعيل مقرراتك الأكاديمية.</p>
+
+        <!-- Stats Row -->
+        <div class="ic-stats-row">
+          <div class="ic-stat-item ic-stat-green">
+            <div class="ic-stat-icon">
+              <i data-lucide="users" style="width:14px"></i>
             </div>
+            <div>
+              <span class="ic-stat-val">{{ course.grants_total }}</span>
+              <span class="ic-stat-lbl">طالب</span>
+            </div>
+          </div>
+          <div class="ic-stat-item ic-stat-blue">
+            <div class="ic-stat-icon">
+              <i data-lucide="book-open" style="width:14px"></i>
+            </div>
+            <div>
+              <span class="ic-stat-val">{{ course.lessons_total }}</span>
+              <span class="ic-stat-lbl">درس</span>
+            </div>
+          </div>
         </div>
-        {% endfor %}
+      </div>
+
+      <!-- Card Footer Actions -->
+      <div class="ic-card-footer">
+        <a href="{% url 'dashboard:instructor_students' %}?course_id={{ course.id }}" class="ic-action-btn ic-action-secondary">
+          <i data-lucide="eye" style="width:13px"></i>
+          استعراض الطلاب
+        </a>
+        <a href="{% url 'dashboard:instructor_announcements' %}?course_id={{ course.id }}" class="ic-action-btn ic-action-primary">
+          <i data-lucide="send" style="width:13px"></i>
+          إرسال تنبيه
+        </a>
+      </div>
+
     </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <!-- Empty State -->
+  <div class="ic-empty-state">
+    <div class="ic-empty-icon">
+      <i data-lucide="folder-search" style="width:38px;height:38px"></i>
+    </div>
+    <h3>لا توجد دورات تدريبية</h3>
+    <p>لم يتم تخصيص أي دورات لحسابك حتى الآن. تواصل مع الإدارة لتفعيل مقرراتك.</p>
+  </div>
+  {% endif %}
 
 </div>
 
-<!-- Specific Styles for Courses Grid -->
 <style>
-    .course-premium-card:hover {
-        transform: translateY(-6px);
-        border-color: rgba(245, 158, 11, 0.3) !important;
-        box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35) !important;
-    }
-    .course-premium-card:hover .glow-effect {
-        opacity: 1;
-    }
-    .course-premium-card:hover .course-cover-img {
-        transform: scale(1.05);
-    }
-    .course-premium-card:hover .btn {
-        transform: translateY(-1px);
-    }
-    .course-premium-card .btn:hover {
-        background: rgba(245, 158, 11, 0.22) !important;
-        border-color: rgba(245, 158, 11, 0.4) !important;
-        color: #fff !important;
-    }
+/* ═══════════════════════════════════
+   COURSES PAGE — Exclusive Design
+   Identity: Gold + Deep Dark + Depth
+═══════════════════════════════════ */
+.ic-courses-page {
+  padding-bottom: 2rem;
+}
+
+/* Hero Banner */
+.ic-hero-banner {
+  position: relative;
+  border-radius: 28px;
+  border: 1px solid rgba(245, 158, 11, 0.18);
+  background: linear-gradient(135deg, rgba(245,158,11,0.05) 0%, rgba(15,15,15,0.6) 100%);
+  padding: 2rem 1.75rem;
+  overflow: hidden;
+}
+.ic-hero-glow-1 {
+  position: absolute;
+  width: 280px; height: 280px;
+  background: radial-gradient(circle, rgba(245,158,11,0.15) 0%, transparent 70%);
+  top: -120px; left: -100px;
+  pointer-events: none;
+}
+.ic-hero-glow-2 {
+  position: absolute;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, rgba(245,158,11,0.08) 0%, transparent 70%);
+  bottom: -80px; right: -60px;
+  pointer-events: none;
+}
+.ic-hero-inner {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.ic-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.ic-hero-icon-wrap {
+  width: 54px; height: 54px;
+  border-radius: 18px;
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.25);
+  color: var(--brand-gold);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ic-hero-icon-wrap svg { width: 26px; height: 26px; }
+.ic-hero-title {
+  font-size: clamp(1.3rem, 4vw, 1.7rem);
+  font-weight: 900;
+  color: #fff;
+  margin: 0 0 4px;
+  line-height: 1.2;
+}
+.ic-hero-sub {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.5);
+  margin: 0;
+  line-height: 1.4;
+}
+.ic-hero-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.22);
+  color: var(--brand-gold);
+  font-weight: 800;
+  font-size: 0.9rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 99px;
+  white-space: nowrap;
+}
+
+/* Courses Grid */
+.ic-courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Course Card */
+.ic-course-card {
+  border-radius: 24px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(18,18,18,0.6);
+  backdrop-filter: blur(14px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ic-course-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(245,158,11,0.3);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4), 0 0 0 1px rgba(245,158,11,0.08);
+}
+
+/* Thumbnail */
+.ic-thumb-wrap {
+  position: relative;
+  height: 175px;
+  background: #0e0e0e;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.ic-thumb-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.ic-course-card:hover .ic-thumb-img { transform: scale(1.07); }
+.ic-thumb-placeholder {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+}
+.ic-thumb-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.65) 100%);
+  pointer-events: none;
+}
+.ic-subject-badge {
+  position: absolute;
+  top: 12px; right: 12px;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: 10px;
+  z-index: 2;
+}
+
+/* Card Body */
+.ic-card-body {
+  padding: 1.25rem 1.4rem 1rem;
+  flex: 1;
+}
+.ic-course-title {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary, #fff);
+  margin: 0 0 8px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ic-course-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 1.1rem;
+}
+.ic-stats-row {
+  display: flex;
+  gap: 12px;
+}
+.ic-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  flex: 1;
+}
+.ic-stat-green {
+  background: rgba(16,185,129,0.06);
+  border: 1px solid rgba(16,185,129,0.15);
+}
+.ic-stat-blue {
+  background: rgba(59,130,246,0.06);
+  border: 1px solid rgba(59,130,246,0.15);
+}
+.ic-stat-icon {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.ic-stat-green .ic-stat-icon { background: rgba(16,185,129,0.12); color: #10b981; }
+.ic-stat-blue .ic-stat-icon { background: rgba(59,130,246,0.12); color: #3b82f6; }
+.ic-stat-val {
+  display: block;
+  font-weight: 900;
+  font-size: 1rem;
+  font-family: monospace;
+  line-height: 1.1;
+}
+.ic-stat-green .ic-stat-val { color: #10b981; }
+.ic-stat-blue .ic-stat-val { color: #3b82f6; }
+.ic-stat-lbl {
+  display: block;
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.4);
+  font-weight: 700;
+}
+
+/* Card Footer */
+.ic-card-footer {
+  display: flex;
+  gap: 8px;
+  padding: 1rem 1.4rem 1.25rem;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  background: rgba(0,0,0,0.15);
+}
+.ic-action-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 9px 10px;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+.ic-action-primary {
+  background: rgba(245,158,11,0.1);
+  border: 1px solid rgba(245,158,11,0.25);
+  color: var(--brand-gold);
+}
+.ic-action-primary:hover {
+  background: rgba(245,158,11,0.18);
+  border-color: rgba(245,158,11,0.4);
+  color: #fff;
+  transform: translateY(-1px);
+}
+.ic-action-secondary {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.55);
+}
+.ic-action-secondary:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.12);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+/* Empty State */
+.ic-empty-state {
+  text-align: center;
+  padding: 5rem 2rem;
+  border-radius: 24px;
+  border: 1px dashed rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.01);
+}
+.ic-empty-icon {
+  width: 72px; height: 72px;
+  margin: 0 auto 1.25rem;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.25);
+}
+.ic-empty-state h3 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 8px;
+}
+.ic-empty-state p {
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.4);
+  max-width: 380px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+  .ic-courses-grid { grid-template-columns: 1fr; }
+  .ic-hero-banner { padding: 1.5rem 1.25rem; }
+  .ic-hero-left { flex-direction: column; align-items: flex-start; }
+}
 </style>
 {% endblock %}

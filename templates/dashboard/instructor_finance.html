@@ -2,169 +2,487 @@
 {% block instructor_title %}المالية والأرباح{% endblock %}
 
 {% block instructor_content %}
-<div class="tab-pane active fade-in" dir="rtl">
-    
-    <!-- Financial Dashboard Grid -->
-    <div class="row g-4 mb-6">
-        
-        <!-- Large Premium Gold Card (Active Balance) -->
-        <div class="col-md-6 col-12">
-            <div class="financial-premium-card position-relative overflow-hidden" style="border-radius: 28px; background: linear-gradient(135deg, #181512 0%, #0d0b0a 100%); border: 1px solid rgba(245, 158, 11, 0.4); padding: 2rem; box-shadow: 0 20px 45px rgba(245, 158, 11, 0.15); height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
-                <!-- Glowing corner ring -->
-                <div class="position-absolute" style="width: 250px; height: 250px; background: radial-gradient(circle, rgba(245,158,11,0.18) 0%, rgba(0,0,0,0) 70%); top: -100px; right: -100px; pointer-events: none; z-index: 1;"></div>
-                
-                <div class="position-relative" style="z-index: 2;">
-                    <div class="d-flex justify-content-between align-items-center mb-6">
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="flex-center" style="width: 42px; height: 42px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); color: var(--brand-gold); display: flex; justify-content: center; align-items: center; border: 1px solid rgba(245, 158, 11, 0.25);">
-                                <i data-lucide="wallet" style="width: 20px; height: 20px;"></i>
-                            </div>
-                            <span class="font-weight-bold" style="color: var(--brand-gold); font-size: 1.05rem;">محفظة الأستاذ الفاخرة</span>
-                        </div>
-                        <div class="flex-center" style="width: 44px; height: 32px; border-radius: 8px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); display: flex; justify-content: center; align-items: center; box-shadow: 0 4px 15px rgba(245,158,11,0.35);">
-                            <i data-lucide="nfc" style="width: 18px; height: 18px; color: #000;"></i>
-                        </div>
-                    </div>
+<div class="if-finance-page" dir="rtl">
 
-                    <span class="text-muted small d-block mb-2" style="color: rgba(255,255,255,0.5) !important; font-size: 0.9rem;">الرصيد الصافي المتاح للسحب</span>
-                    <div class="d-flex align-items-baseline gap-2">
-                        <h1 class="mb-0 font-weight-bold text-gradient-gold" style="font-size: 3rem; font-weight: 900; background: linear-gradient(135deg, #ffffff 0%, #f59e0b 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-family: monospace;">{{ wallet.balance|floatformat:0|default:"0" }}</h1>
-                        <span class="font-weight-bold" style="color: #f59e0b; font-size: 1.25rem;">ل.س</span>
-                    </div>
-                </div>
+  <!-- ══════════════════════════════════
+       HERO WALLET SECTION
+       Identity: Emerald + Gold + Financial
+  ══════════════════════════════════ -->
+  <div class="if-wallet-hero mb-5">
+    <!-- Animated BG Mesh -->
+    <div class="if-mesh-bg"></div>
 
-                <div class="position-relative mt-6 pt-4" style="z-index: 2; border-top: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between;">
-                    <span class="text-muted small d-flex align-items-center gap-1.5" style="color: rgba(255,255,255,0.4) !important;">
-                        <i data-lucide="clock" style="width: 14px;"></i>
-                        آخر تحديث للمحفظة:
-                    </span>
-                    <span class="small font-weight-bold text-white" style="font-family: monospace;">{{ wallet.updated_at|date:"Y-m-d H:i"|default:"لا يوجد" }}</span>
-                </div>
+    <!-- Main Wallet Card -->
+    <div class="if-main-wallet">
+      <div class="if-wallet-glow"></div>
+      <div class="if-wallet-inner">
+        <div class="if-wallet-top">
+          <div class="if-wallet-label">
+            <div class="if-wallet-icon">
+              <i data-lucide="wallet"></i>
             </div>
+            <span>محفظة الأرباح</span>
+          </div>
+          <div class="if-chip">
+            <i data-lucide="nfc" style="width:18px;color:#000"></i>
+          </div>
         </div>
 
-        <!-- Pending & Frozen Balance Cards (Col-md-6) -->
-        <div class="col-md-6 col-12">
-            <div class="d-flex flex-column gap-4 h-100 justify-content-between">
-                
-                <!-- Pending Card -->
-                <div class="pro-card p-5 card-hover-stat position-relative overflow-hidden" style="border-radius: 24px; border: 1px solid rgba(59, 130, 246, 0.15); background: linear-gradient(135deg, rgba(59, 130, 246, 0.04) 0%, rgba(30, 30, 30, 0.25) 100%); height: 48%; display: flex; flex-direction: column; justify-content: center;">
-                    <div class="position-absolute" style="width: 100px; height: 100px; background: radial-gradient(circle, rgba(59,130,246,0.06) 0%, rgba(0,0,0,0) 70%); top: -20px; left: -20px; pointer-events: none;"></div>
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="flex-center" style="width: 40px; height: 40px; border-radius: 12px; background: rgba(59, 130, 246, 0.1); color: #60a5fa; display: flex; justify-content: center; align-items: center;">
-                                <i data-lucide="clock" style="width: 18px;"></i>
-                            </div>
-                            <div>
-                                <span class="text-muted small d-block font-weight-bold">الرصيد قيد المعالجة (الانتظار)</span>
-                                <h3 class="mb-0 font-weight-bold text-primary mt-1" style="font-size: 1.6rem; font-family: monospace;">{{ wallet.pending_balance|floatformat:0|default:"0" }} <span style="font-size: 0.95rem; font-weight: 500; color: var(--text-secondary);">ل.س</span></h3>
-                            </div>
-                        </div>
-                        <i data-lucide="help-circle" class="text-muted" style="width: 16px; cursor: help;" title="أرباح معلقة في انتظار اكتمال معالجة المدفوعات أو تسوية الطلبات."></i>
-                    </div>
-                </div>
-
-                <!-- Frozen Card -->
-                <div class="pro-card p-5 card-hover-stat position-relative overflow-hidden" style="border-radius: 24px; border: 1px solid rgba(239, 68, 68, 0.15); background: linear-gradient(135deg, rgba(239, 68, 68, 0.04) 0%, rgba(30, 30, 30, 0.25) 100%); height: 48%; display: flex; flex-direction: column; justify-content: center;">
-                    <div class="position-absolute" style="width: 100px; height: 100px; background: radial-gradient(circle, rgba(239,68,68,0.06) 0%, rgba(0,0,0,0) 70%); top: -20px; left: -20px; pointer-events: none;"></div>
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="flex-center" style="width: 40px; height: 40px; border-radius: 12px; background: rgba(239, 68, 68, 0.1); color: #f87171; display: flex; justify-content: center; align-items: center;">
-                                <i data-lucide="lock" style="width: 18px;"></i>
-                            </div>
-                            <div>
-                                <span class="text-muted small d-block font-weight-bold">الرصيد المجمد مؤقتاً</span>
-                                <h3 class="mb-0 font-weight-bold text-danger mt-1" style="font-size: 1.6rem; font-family: monospace;">{{ wallet.frozen_balance|floatformat:0|default:"0" }} <span style="font-size: 0.95rem; font-weight: 500; color: var(--text-secondary);">ل.س</span></h3>
-                            </div>
-                        </div>
-                        <i data-lucide="help-circle" class="text-muted" style="width: 16px; cursor: help;" title="أرصدة مجمدة لأسباب إدارية أو متعلقة بسياسة الاسترجاع."></i>
-                    </div>
-                </div>
-
-            </div>
+        <div class="if-balance-block">
+          <span class="if-balance-label">الرصيد الصافي المتاح</span>
+          <div class="if-balance-amount">
+            <span class="if-balance-num">{{ wallet.balance|floatformat:0|default:"0" }}</span>
+            <span class="if-balance-currency">ل.س</span>
+          </div>
         </div>
 
+        <div class="if-wallet-footer">
+          <span class="if-wallet-update">
+            <i data-lucide="clock" style="width:13px"></i>
+            آخر تحديث: {{ wallet.updated_at|date:"Y-m-d H:i"|default:"غير محدد" }}
+          </span>
+        </div>
+      </div>
     </div>
 
-    <!-- Transactions Ledger List -->
-    <div class="pro-card p-6" style="border-radius: 28px; border: 1px solid rgba(255,255,255,0.06); background: rgba(22, 22, 22, 0.45); backdrop-filter: blur(15px);">
-        <div class="d-flex align-items-center gap-3 mb-6" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1.25rem;">
-            <div class="flex-center" style="width: 44px; height: 44px; border-radius: 14px; background: rgba(16, 185, 129, 0.12); color: #34d399; display: flex; justify-content: center; align-items: center; border: 1px solid rgba(16, 185, 129, 0.2);">
-                <i data-lucide="receipt" style="width: 20px; height: 20px;"></i>
-            </div>
-            <div>
-                <h3 class="mb-0 font-weight-bold" style="font-size: 1.4rem; text-shadow: 0 2px 10px rgba(0,0,0,0.3);">دفتر الحركات المالية</h3>
-                <p class="text-muted small mb-0 mt-1">سجل تفصيلي لآخر 20 معاملة مالية تمت على محفظتك (عمليات إيداع الأرباح وسحب الرصيد).</p>
-            </div>
+    <!-- Side Sub-Wallets -->
+    <div class="if-sub-wallets">
+      <div class="if-sub-card if-sub-blue">
+        <div class="if-sub-head">
+          <div class="if-sub-icon if-sub-icon-blue">
+            <i data-lucide="clock" style="width:16px"></i>
+          </div>
+          <i data-lucide="help-circle" style="width:14px;opacity:.4;cursor:help" title="أرباح في انتظار اكتمال المعالجة"></i>
+        </div>
+        <span class="if-sub-label">قيد المعالجة</span>
+        <div class="if-sub-amount if-sub-amount-blue">
+          {{ wallet.pending_balance|floatformat:0|default:"0" }}
+          <span style="font-size:.85rem;font-weight:600;opacity:.7">ل.س</span>
+        </div>
+      </div>
+
+      <div class="if-sub-card if-sub-red">
+        <div class="if-sub-head">
+          <div class="if-sub-icon if-sub-icon-red">
+            <i data-lucide="lock" style="width:16px"></i>
+          </div>
+          <i data-lucide="help-circle" style="width:14px;opacity:.4;cursor:help" title="أرصدة مجمدة لأسباب إدارية"></i>
+        </div>
+        <span class="if-sub-label">مجمد مؤقتاً</span>
+        <div class="if-sub-amount if-sub-amount-red">
+          {{ wallet.frozen_balance|floatformat:0|default:"0" }}
+          <span style="font-size:.85rem;font-weight:600;opacity:.7">ل.س</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       TRANSACTIONS LEDGER
+  ══════════════════════════════════ -->
+  <div class="if-ledger">
+    <!-- Ledger Header -->
+    <div class="if-ledger-header">
+      <div class="if-ledger-icon">
+        <i data-lucide="receipt" style="width:20px"></i>
+      </div>
+      <div>
+        <h2 class="if-ledger-title">دفتر الحركات المالية</h2>
+        <p class="if-ledger-sub">سجل تفصيلي لآخر 20 معاملة مالية — إيداع الأرباح وسحب الرصيد</p>
+      </div>
+    </div>
+
+    <!-- Transaction List -->
+    <div class="if-tx-list">
+      {% for tx in transactions %}
+      <div class="if-tx-row">
+        <!-- TX Type Icon -->
+        <div class="if-tx-icon-wrap {% if tx.transaction_type == 'credit' %}if-tx-credit{% else %}if-tx-debit{% endif %}">
+          <i data-lucide="{% if tx.transaction_type == 'credit' %}arrow-down-left{% else %}arrow-up-right{% endif %}" style="width:16px"></i>
         </div>
 
-        <div class="table-responsive">
-            <table class="table custom-table mb-0">
-                <thead>
-                    <tr class="text-muted small font-weight-bold" style="border-bottom: 2px solid rgba(255,255,255,0.04);">
-                        <th style="padding: 1.25rem 1rem; text-align: right; font-size: 0.9rem;">رقم المعاملة</th>
-                        <th style="padding: 1.25rem 1rem; text-align: right; font-size: 0.9rem;">نوع العملية</th>
-                        <th style="padding: 1.25rem 1rem; text-align: right; font-size: 0.9rem;">المبلغ الإجمالي</th>
-                        <th style="padding: 1.25rem 1rem; text-align: right; font-size: 0.9rem;">الوصف والبيانات</th>
-                        <th class="text-center" style="padding: 1.25rem 1rem; font-size: 0.9rem;">تاريخ الحركة</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for tx in transactions %}
-                    <tr class="align-middle" style="border-bottom: 1px solid rgba(255,255,255,0.02);">
-                        <td style="padding: 1.4rem 1rem; font-family: monospace; font-size: 0.9rem; color: var(--text-muted); text-align: right;">
-                            <span class="badge" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: var(--text-secondary); font-family: monospace; border-radius: 8px; padding: 0.4rem 0.75rem;">
-                                TX-{{ tx.id|stringformat:"s"|slice:":8"|upper }}
-                            </span>
-                        </td>
-                        <td style="padding: 1.4rem 1rem; text-align: right;">
-                            <span class="badge px-3 py-2 rounded-md" style="font-size: 0.8rem; font-weight: 800; border-radius: 10px;
-                                {% if tx.transaction_type == 'credit' %}background: rgba(16, 185, 129, 0.08); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2);
-                                {% else %}background: rgba(239, 68, 68, 0.08); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2);{% endif %}">
-                                <i data-lucide="{% if tx.transaction_type == 'credit' %}trending-up{% else %}trending-down{% endif %}" style="width: 12px; margin-left: 4px; vertical-align: middle;"></i>
-                                {% if tx.transaction_type == 'credit' %}إيداع أرباح{% else %}سحب رصيد{% endif %}
-                            </span>
-                        </td>
-                        <td style="padding: 1.4rem 1rem; font-weight: 900; font-family: monospace; font-size: 1.05rem; text-align: right; {% if tx.transaction_type == 'credit' %}color: #34d399;{% else %}color: #f87171;{% endif %}">
-                            {% if tx.transaction_type == 'credit' %}+{% else %}-{% endif %}{{ tx.amount|floatformat:0 }} ل.س
-                        </td>
-                        <td style="padding: 1.4rem 1rem; font-size: 0.95rem; color: var(--text-secondary); text-align: right; line-height: 1.5;">
-                            {{ tx.description }}
-                            {% if tx.source_event %}
-                                <span class="badge px-2 py-1 small mr-2" style="font-size: 0.75rem; background: rgba(255,255,255,0.03); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.06); border-radius: 6px;">{{ tx.source_event }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="text-center" style="padding: 1.4rem 1rem; color: var(--text-muted); font-size: 0.88rem; font-family: monospace;">
-                            {{ tx.created_at|date:"Y-m-d H:i" }}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center py-12 text-muted" style="padding: 5rem 2rem;">
-                            <div class="flex-center mx-auto mb-4" style="width: 64px; height: 64px; border-radius: 16px; background: rgba(255,255,255,0.02); color: var(--text-muted); display: inline-flex; justify-content: center; align-items: center; border: 1px solid rgba(255,255,255,0.05);">
-                                <i data-lucide="receipt" style="width: 32px; height: 32px;"></i>
-                            </div>
-                            <h4 class="font-weight-bold text-white mb-2" style="font-size: 1.25rem;">دفتر الحسابات فارغ</h4>
-                            <p class="text-muted small max-w-md mx-auto">لم يتم تسجيل أي معاملات أو حركات مالية في محفظتك حتى هذه اللحظة.</p>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <!-- TX Info -->
+        <div class="if-tx-info">
+          <span class="if-tx-type-label {% if tx.transaction_type == 'credit' %}if-label-green{% else %}if-label-red{% endif %}">
+            {% if tx.transaction_type == 'credit' %}إيداع أرباح{% else %}سحب رصيد{% endif %}
+          </span>
+          <span class="if-tx-desc">{{ tx.description }}</span>
+          {% if tx.source_event %}
+          <span class="if-tx-event-badge">{{ tx.source_event }}</span>
+          {% endif %}
         </div>
+
+        <!-- TX ID -->
+        <div class="if-tx-id">
+          TX-{{ tx.id|stringformat:"s"|slice:":8"|upper }}
+        </div>
+
+        <!-- TX Amount -->
+        <div class="if-tx-amount {% if tx.transaction_type == 'credit' %}if-amount-green{% else %}if-amount-red{% endif %}">
+          {% if tx.transaction_type == 'credit' %}+{% else %}-{% endif %}{{ tx.amount|floatformat:0 }} <small>ل.س</small>
+        </div>
+
+        <!-- TX Date -->
+        <div class="if-tx-date">
+          {{ tx.created_at|date:"Y-m-d" }}
+          <span>{{ tx.created_at|date:"H:i" }}</span>
+        </div>
+      </div>
+      {% empty %}
+      <div class="if-empty-ledger">
+        <div class="if-empty-ledger-icon">
+          <i data-lucide="receipt" style="width:32px;height:32px"></i>
+        </div>
+        <h3>دفتر الحسابات فارغ</h3>
+        <p>لم يتم تسجيل أي معاملات أو حركات مالية حتى الآن.</p>
+      </div>
+      {% endfor %}
     </div>
+  </div>
 
 </div>
 
-<!-- Specific Styles for Financial Cards -->
 <style>
-    .financial-premium-card {
-        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .financial-premium-card:hover {
-        transform: translateY(-5px);
-        border-color: rgba(245, 158, 11, 0.55) !important;
-        box-shadow: 0 25px 50px rgba(245, 158, 11, 0.25) !important;
-    }
+/* ═══════════════════════════════════
+   FINANCE PAGE — Exclusive Design
+   Identity: Emerald + Gold Wallet
+   Dark Financial Aesthetic
+═══════════════════════════════════ */
+.if-finance-page { padding-bottom: 2rem; }
+
+/* Hero Wallet Section */
+.if-wallet-hero {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 1.25rem;
+  align-items: stretch;
+  position: relative;
+}
+
+/* Animated mesh background */
+.if-mesh-bg {
+  position: absolute;
+  inset: 0;
+  background: 
+    repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(245,158,11,0.02) 40px, rgba(245,158,11,0.02) 41px),
+    repeating-linear-gradient(-45deg, transparent, transparent 40px, rgba(16,185,129,0.015) 40px, rgba(16,185,129,0.015) 41px);
+  border-radius: 28px;
+  pointer-events: none;
+}
+
+/* Main Wallet Card */
+.if-main-wallet {
+  position: relative;
+  border-radius: 28px;
+  background: linear-gradient(145deg, #0f0d0a 0%, #1a1410 50%, #0d0b08 100%);
+  border: 1px solid rgba(245,158,11,0.35);
+  padding: 2.25rem;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(245,158,11,0.12), 0 0 0 1px rgba(245,158,11,0.04);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 200px;
+  z-index: 1;
+}
+.if-wallet-glow {
+  position: absolute;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(245,158,11,0.18) 0%, transparent 70%);
+  top: -120px; right: -100px;
+  pointer-events: none;
+}
+.if-wallet-inner { position: relative; z-index: 2; display: flex; flex-direction: column; gap: 1.5rem; }
+.if-wallet-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.if-wallet-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--brand-gold);
+  font-weight: 800;
+  font-size: 1rem;
+}
+.if-wallet-icon {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  background: rgba(245,158,11,0.12);
+  border: 1px solid rgba(245,158,11,0.22);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--brand-gold);
+}
+.if-wallet-icon svg { width: 18px; height: 18px; }
+.if-chip {
+  width: 48px; height: 34px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 15px rgba(245,158,11,0.4);
+}
+
+.if-balance-block { display: flex; flex-direction: column; gap: 4px; }
+.if-balance-label {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.4);
+  font-weight: 600;
+}
+.if-balance-amount {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.if-balance-num {
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  font-weight: 900;
+  font-family: monospace;
+  background: linear-gradient(135deg, #fff 0%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+}
+.if-balance-currency {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #f59e0b;
+}
+.if-wallet-footer {
+  border-top: 1px solid rgba(255,255,255,0.05);
+  padding-top: 1rem;
+}
+.if-wallet-update {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.35);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: monospace;
+}
+
+/* Sub Wallets */
+.if-sub-wallets {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.if-sub-card {
+  border-radius: 24px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  transition: all 0.3s ease;
+}
+.if-sub-card:hover { transform: translateY(-2px); }
+.if-sub-blue {
+  background: linear-gradient(135deg, rgba(59,130,246,0.05) 0%, rgba(10,10,18,0.6) 100%);
+  border: 1px solid rgba(59,130,246,0.18);
+}
+.if-sub-red {
+  background: linear-gradient(135deg, rgba(239,68,68,0.05) 0%, rgba(10,10,18,0.6) 100%);
+  border: 1px solid rgba(239,68,68,0.18);
+}
+.if-sub-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.if-sub-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+.if-sub-icon-blue {
+  background: rgba(59,130,246,0.12);
+  border: 1px solid rgba(59,130,246,0.2);
+  color: #60a5fa;
+}
+.if-sub-icon-red {
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.2);
+  color: #f87171;
+}
+.if-sub-label {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.45);
+  font-weight: 700;
+}
+.if-sub-amount {
+  font-size: 1.5rem;
+  font-weight: 900;
+  font-family: monospace;
+  line-height: 1;
+}
+.if-sub-amount-blue { color: #60a5fa; }
+.if-sub-amount-red { color: #f87171; }
+
+/* Ledger */
+.if-ledger {
+  border-radius: 28px;
+  border: 1px solid rgba(255,255,255,0.05);
+  background: rgba(10,10,16,0.6);
+  backdrop-filter: blur(16px);
+  overflow: hidden;
+}
+.if-ledger-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.75rem 1.75rem 1.25rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.if-ledger-icon {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  background: rgba(16,185,129,0.1);
+  border: 1px solid rgba(16,185,129,0.2);
+  color: #34d399;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.if-ledger-title {
+  font-size: 1.2rem; font-weight: 900;
+  color: #fff; margin: 0 0 4px;
+}
+.if-ledger-sub {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.38);
+  margin: 0;
+}
+
+/* TX Row */
+.if-tx-list { display: flex; flex-direction: column; }
+.if-tx-row {
+  display: grid;
+  grid-template-columns: 44px 1fr auto auto auto;
+  gap: 1rem;
+  padding: 1.2rem 1.75rem;
+  align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.025);
+  transition: background 0.2s ease;
+}
+.if-tx-row:hover { background: rgba(255,255,255,0.02); }
+.if-tx-row:last-child { border-bottom: none; }
+
+.if-tx-icon-wrap {
+  width: 40px; height: 40px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.if-tx-credit {
+  background: rgba(16,185,129,0.1);
+  border: 1px solid rgba(16,185,129,0.2);
+  color: #34d399;
+}
+.if-tx-debit {
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.2);
+  color: #f87171;
+}
+.if-tx-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.if-tx-type-label {
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+.if-label-green { color: #34d399; }
+.if-label-red { color: #f87171; }
+.if-tx-desc {
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.55);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.if-tx-event-badge {
+  font-size: 0.7rem;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.3);
+  align-self: flex-start;
+}
+.if-tx-id {
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: rgba(255,255,255,0.2);
+  white-space: nowrap;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+.if-tx-amount {
+  font-size: 1.05rem;
+  font-weight: 900;
+  font-family: monospace;
+  white-space: nowrap;
+}
+.if-amount-green { color: #34d399; }
+.if-amount-red { color: #f87171; }
+.if-tx-date {
+  text-align: right;
+  font-size: 0.78rem;
+  font-family: monospace;
+  color: rgba(255,255,255,0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+/* Empty Ledger */
+.if-empty-ledger {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+.if-empty-ledger-icon {
+  width: 70px; height: 70px;
+  margin: 0 auto 1.25rem;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.05);
+  display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.2);
+}
+.if-empty-ledger h3 {
+  font-size: 1.1rem; font-weight: 800; color: #fff; margin-bottom: 8px;
+}
+.if-empty-ledger p {
+  font-size: 0.85rem; color: rgba(255,255,255,0.35);
+  max-width: 360px; margin: 0 auto; line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .if-wallet-hero {
+    grid-template-columns: 1fr;
+  }
+  .if-sub-wallets { flex-direction: row; }
+  .if-sub-card { flex: 1; }
+}
+@media (max-width: 600px) {
+  .if-tx-row {
+    grid-template-columns: 40px 1fr;
+    grid-template-rows: auto auto;
+    gap: 8px;
+  }
+  .if-tx-id { display: none; }
+  .if-tx-amount { grid-column: 2; font-size: 0.95rem; }
+  .if-tx-date { grid-column: 2; flex-direction: row; gap: 6px; }
+  .if-sub-wallets { flex-direction: column; }
+}
 </style>
 {% endblock %}
