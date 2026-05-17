@@ -91,4 +91,6 @@ urlpatterns = [
     path("instructor/", views.instructor_dashboard, name="instructor_dashboard"),
     path("admin-dashboard/tools/migrate-thair-data/", views.admin_action_migrate_thair, name="admin_action_migrate_thair"),
     path("admin-dashboard/whatsapp/", views.admin_whatsapp_control, name="admin_whatsapp_control"),
+    path("admin-dashboard/instructors/<int:instructor_id>/impersonate/", views.admin_impersonate_instructor, name="admin_impersonate_instructor"),
+    path("impersonate/exit/", views.exit_impersonate, name="exit_impersonate"),
 ]

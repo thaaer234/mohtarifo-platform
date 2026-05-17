@@ -1489,9 +1489,10 @@ def admin_instructor_add(request):
             messages.error(request, "اسم المستخدم / الهاتف موجود مسبقاً.")
         else:
             with transaction.atomic():
+                raw_password = form.cleaned_data.get("password") or username
                 user = User.objects.create_user(
                     username=username,
-                    password=form.cleaned_data["password"],
+                    password=raw_password,
                     first_name=form.cleaned_data["first_name"],
                     last_name=form.cleaned_data["last_name"],
                     is_staff=True,
@@ -1504,7 +1505,7 @@ def admin_instructor_add(request):
                         "avatar": form.cleaned_data["photo"]
                     }
                 )
-                messages.success(request, f"تم إضافة المدرس {user.get_full_name()} بنجاح.")
+                messages.success(request, f"تم إضافة المدرس {user.get_full_name()} بنجاح. كلمة مرور الحساب الافتراضية هي رقم الهاتف الخاص به.")
                 return redirect("dashboard:admin_instructors")
                 
     return render(request, "dashboard/admin_instructor_add.html", {"form": form})
@@ -1796,8 +1797,28 @@ def instructor_dashboard(request):
         .annotate(lessons_total=Count("units__lessons", distinct=True), grants_total=Count("access_grants", distinct=True))
     )
     
-    # Handle Send Message Action
-    if request.method == "POST" and request.POST.get("action") == "send_message":
+    # Handle Send Message Action & Change Password
+    if request.method == "POST" and request.POST.get("action") == "change_password":
+        current_password = request.POST.get("current_password", "").strip()
+        new_password = request.POST.get("new_password", "").strip()
+        confirm_password = request.POST.get("confirm_password", "").strip()
+        
+        if not request.user.check_password(current_password):
+            messages.error(request, "⚠️ كلمة المرور الحالية غير صحيحة.")
+        elif len(new_password) < 8:
+            messages.error(request, "⚠️ يجب أن تتكون كلمة المرور الجديدة من 8 خانات على الأقل.")
+        elif new_password != confirm_password:
+            messages.error(request, "⚠️ كلمة المرور الجديدة وتأكيدها غير متطابقتين.")
+        else:
+            request.user.set_password(new_password)
+            request.user.save()
+            from django.contrib.auth import update_session_auth_hash
+            update_session_auth_hash(request, request.user)
+            messages.success(request, "✅ تم تغيير كلمة المرور بنجاح.")
+            
+        return redirect("dashboard:instructor_dashboard")
+
+    elif request.method == "POST" and request.POST.get("action") == "send_message":
         course_id = request.POST.get("course_id", "").strip()
         message_body = request.POST.get("message_body", "").strip()
         send_whatsapp = request.POST.get("send_whatsapp") == "on"
@@ -4951,3 +4972,39 @@ def admin_whatsapp_control(request):
         "templates": db_templates,
         "branches": branches
     })
+
+
+@admin_required
+def admin_impersonate_instructor(request, instructor_id):
+    instructor_user = get_object_or_404(User, id=instructor_id)
+    
+    # Verify this user is an active instructor
+    if not hasattr(instructor_user, 'instructor_profile'):
+        messages.error(request, "هذا المستخدم ليس مدرساً.")
+        return redirect("dashboard:admin_instructors")
+        
+    # Store original admin ID in session
+    request.session["impersonator_admin_id"] = request.user.id
+    
+    # Authenticate and login as the instructor
+    login(request, instructor_user)
+    
+    messages.success(request, f"✅ تم تسجيل الدخول بصفتك الأستاذ {instructor_user.get_full_name() or instructor_user.username} بنجاح.")
+    return redirect("dashboard:instructor_dashboard")
+
+
+@login_required
+def exit_impersonate(request):
+    admin_id = request.session.get("impersonator_admin_id")
+    if not admin_id:
+        messages.error(request, "إجراء غير مصرح به.")
+        return redirect("dashboard:home")
+        
+    admin_user = get_object_or_404(User, id=admin_id)
+    
+    # Clear impersonation and login back as admin
+    request.session.pop("impersonator_admin_id", None)
+    login(request, admin_user)
+    
+    messages.success(request, "✅ تم العودة إلى حساب الإدارة بنجاح.")
+    return redirect("dashboard:admin_instructors")

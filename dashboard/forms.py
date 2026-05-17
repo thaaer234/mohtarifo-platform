@@ -550,7 +550,7 @@ class InstructorAddForm(forms.Form):
     first_name = forms.CharField(label="الاسم الأول")
     last_name = forms.CharField(label="الكنية")
     username = forms.CharField(label="اسم المستخدم (رقم الهاتف)")
-    password = forms.CharField(label="كلمة المرور", widget=forms.PasswordInput())
+    password = forms.CharField(label="كلمة المرور (اتركه فارغاً ليكون رقم الهاتف/اسم المستخدم)", widget=forms.PasswordInput(), required=False)
     specialty = forms.CharField(label="التخصص", required=False)
     bio = forms.CharField(label="النبذة التعريفية", widget=forms.Textarea(attrs={"rows": 3}), required=False)
     photo = forms.ImageField(label="الصورة الشخصية", required=False)

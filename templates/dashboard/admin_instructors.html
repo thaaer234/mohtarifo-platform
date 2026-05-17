@@ -73,9 +73,9 @@
                         <i data-lucide="edit-3"></i>
                         تعديل
                     </a>
-                    <a class="btn btn-secondary" href="{% url 'dashboard:instructor_courses' instructor.id %}" target="_blank" title="عرض">
-                        <i data-lucide="eye"></i>
-                        عرض
+                    <a class="btn btn-secondary" href="{% url 'dashboard:admin_impersonate_instructor' instructor.id %}" title="دخول للحساب لرؤية ما يراه المدرس" style="color: #10b981 !important; border-color: rgba(16, 185, 129, 0.3) !important; background: rgba(16, 185, 129, 0.08) !important;">
+                        <i data-lucide="shield-check" style="color: #10b981; vertical-align: middle; margin-left: 4px;"></i>
+                        دخول
                     </a>
                     <a class="btn btn-secondary btn-glow" href="{% url 'dashboard:admin_instructor_report' instructor.id %}" target="_blank" title="عرض التقرير المالي والطلاب" style="padding: 0 0.95rem; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 12px;">
                         <i data-lucide="file-spreadsheet" class="gold"></i>
