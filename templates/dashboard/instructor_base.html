@@ -55,28 +55,35 @@
                     </div>
                     
                     <!-- Stats Grid inside Profile Sidebar -->
+                    {% if active_page == 'courses' or active_page == 'students' %}
                     <div class="row g-2 text-center mt-2">
-                        <div class="col-4">
+                        {% if active_page == 'students' %}
+                        <div class="col-12">
                             <div class="p-3 card-hover-stat" style="border-radius: 18px; background: rgba(16, 185, 129, 0.04); border: 1px solid rgba(16, 185, 129, 0.08); transition: all 0.3s ease;">
                                 <span class="text-success font-weight-bold d-block" style="font-size: 1.35rem; font-family: monospace; letter-spacing: -0.5px;">{{ students_count }}</span>
                                 <span class="text-muted d-block mt-1" style="font-size: 0.72rem; font-weight: 700;">طالب نشط</span>
                             </div>
                         </div>
-                        <div class="col-4">
+                        {% endif %}
+                        {% if active_page == 'courses' %}
+                        <div class="col-6">
                             <div class="p-3 card-hover-stat" style="border-radius: 18px; background: rgba(59, 130, 246, 0.04); border: 1px solid rgba(59, 130, 246, 0.08); transition: all 0.3s ease;">
                                 <span class="text-primary font-weight-bold d-block" style="font-size: 1.35rem; font-family: monospace; letter-spacing: -0.5px;">{{ courses_count }}</span>
                                 <span class="text-muted d-block mt-1" style="font-size: 0.72rem; font-weight: 700;">دورة</span>
                             </div>
                         </div>
-                        <div class="col-4">
+                        <div class="col-6">
                             <div class="p-3 card-hover-stat" style="border-radius: 18px; background: rgba(139, 92, 246, 0.04); border: 1px solid rgba(139, 92, 246, 0.08); transition: all 0.3s ease;">
                                 <span class="text-purple font-weight-bold d-block" style="font-size: 1.35rem; font-family: monospace; color: #a78bfa; letter-spacing: -0.5px;">{{ lessons_count }}</span>
                                 <span class="text-muted d-block mt-1" style="font-size: 0.72rem; font-weight: 700;">درس</span>
                             </div>
                         </div>
+                        {% endif %}
                     </div>
+                    {% endif %}
                 </div>
                 
+                {% if active_page == 'finance' %}
                 <!-- Stat Card: Futuristic Gold Wallet Card -->
                 <div class="wallet-gold-card mb-6 position-relative overflow-hidden" style="border-radius: 24px; background: linear-gradient(135deg, #1e1b18 0%, #120f0d 100%); border: 1px solid rgba(245, 158, 11, 0.35); padding: 1.5rem; box-shadow: 0 15px 35px rgba(245, 158, 11, 0.15); transition: all 0.4s ease;">
                     <!-- Gold glowing aura in corner -->
@@ -96,6 +103,7 @@
                         </div>
                     </div>
                 </div>
+                {% endif %}
 
                 <!-- Sidebar Vertical Navigation Menu -->
                 <div class="sidebar-nav-menu d-flex flex-column gap-2">
