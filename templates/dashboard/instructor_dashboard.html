@@ -21,98 +21,102 @@
     </div>
     {% endif %}
     
-    <!-- Top Welcome Header -->
-    <header class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-4 mb-8" style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 2rem;">
-        <div>
-            <h1 class="font-weight-bold" style="font-size: 2.4rem; color: var(--text-primary); letter-spacing: -0.5px; margin: 0;">
-                الأستاذ: <span style="color: var(--brand-gold); text-shadow: 0 0 15px rgba(245, 158, 11, 0.1);">{{ request.user.get_full_name|default:request.user.username }}</span>
-            </h1>
-            <p class="text-muted mb-0" style="font-size: 1.05rem; margin-top: 0.5rem;">أهلاً بك مجدداً. يمكنك متابعة دوراتك، أرباحك، وطلابك، والتواصل معهم بكل سهولة.</p>
-        </div>
-        <div class="d-flex align-items-center gap-3">
-            <div class="avatar-side flex-center" style="width: 70px; height: 70px; border-radius: 20px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.02) 100%); color: var(--brand-gold); border: 1px solid rgba(245, 158, 11, 0.25); box-shadow: var(--shadow-glow);">
-                <i data-lucide="award" style="width: 36px; height: 36px;"></i>
-            </div>
-        </div>
-    </header>
+    <!-- Redesigned Split Sidebar Layout -->
+    <div class="row">
+        <!-- Right Sidebar (Col-lg-4) -->
+        <div class="col-lg-4 mb-6">
+            <div class="pro-card p-6 sticky-sidebar" style="border-radius: 28px; border: 1px solid rgba(255,255,255,0.06); background: linear-gradient(135deg, rgba(25, 25, 25, 0.45) 0%, rgba(15, 15, 15, 0.6) 100%); backdrop-filter: blur(20px); box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+                <!-- Instructor Premium Profile Card -->
+                <div class="text-center mb-6" style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 2rem;">
+                    <div class="profile-avatar-container mx-auto mb-4 position-relative" style="width: 120px; height: 120px;">
+                        <!-- Glowing circular ring -->
+                        <div class="position-absolute" style="inset: -4px; border-radius: 50%; background: linear-gradient(135deg, var(--brand-gold) 0%, #d97706 100%); padding: 2px; filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.45)); animation: spinGlowing 8s linear infinite;"></div>
+                        <!-- Profile Image -->
+                        <div class="position-relative w-100 h-100" style="border-radius: 50%; overflow: hidden; border: 4px solid #1a1a1a;">
+                            {% if request.user.instructor_profile.avatar %}
+                                <img src="{{ request.user.instructor_profile.avatar.url }}" alt="{{ request.user.get_full_name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                            {% else %}
+                                <div class="w-100 h-100 flex-center" style="background: linear-gradient(135deg, #1f2937 0%, #111827 100%); color: var(--brand-gold); display: flex; justify-content: center; align-items: center;">
+                                    <i data-lucide="user" style="width: 50px; height: 50px;"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <h3 class="font-weight-bold mb-1" style="font-size: 1.5rem; color: var(--text-primary); text-shadow: 0 0 10px rgba(255,255,255,0.05);">الأستاذ {{ request.user.get_full_name|default:request.user.username }}</h3>
+                    <p class="text-muted small mb-4">{{ request.user.instructor_profile.specialty|default:"مدرس معتمد" }}</p>
+                    
+                    <!-- Stats Grid inside Profile Sidebar -->
+                    <div class="row g-2 text-center">
+                        <div class="col-4">
+                            <div class="p-2" style="border-radius: 14px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.1);">
+                                <span class="text-success font-weight-bold d-block" style="font-size: 1.25rem;">{{ students_count }}</span>
+                                <span class="text-muted small d-block" style="font-size: 0.72rem; font-weight: 600;">طالب نشط</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2" style="border-radius: 14px; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.1);">
+                                <span class="text-primary font-weight-bold d-block" style="font-size: 1.25rem;">{{ courses_count }}</span>
+                                <span class="text-muted small d-block" style="font-size: 0.72rem; font-weight: 600;">دورة</span>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-2" style="border-radius: 14px; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.1);">
+                                <span class="text-purple font-weight-bold d-block" style="font-size: 1.25rem; color: #a78bfa;">{{ lessons_count }}</span>
+                                <span class="text-muted small d-block" style="font-size: 0.72rem; font-weight: 600;">درس</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stat Card: Wallet Integrated into Sidebar -->
+                <div class="wallet-sidebar-card mb-6 p-4 text-right" style="border-radius: 20px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.02) 100%); border: 1px solid rgba(245, 158, 11, 0.25); box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <div class="flex-center" style="width: 38px; height: 38px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); color: var(--brand-gold); display: flex; justify-content: center; align-items: center;">
+                            <i data-lucide="wallet" style="width: 18px; height: 18px;"></i>
+                        </div>
+                        <div>
+                            <span class="text-muted small font-weight-bold d-block">الرصيد المالي المتاح</span>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-baseline justify-content-between">
+                        <h2 class="mb-0 font-weight-bold text-success" style="font-size: 1.8rem; font-weight: 900; letter-spacing: -0.5px;">{{ wallet.balance|default:"0.00"|floatformat:0 }}</h2>
+                        <span class="small font-weight-bold text-muted" style="margin-right: 6px;">ل.س</span>
+                    </div>
+                </div>
 
-    <!-- Stat Cards Row -->
-    <div class="row mb-8">
-        <div class="col-md-3 col-sm-6 mb-4">
-            <div class="pro-card d-flex align-items-center gap-4 p-5" style="border-radius: 20px; transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(145deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.03) 100%);">
-                <div class="stat-icon flex-center" style="width: 60px; height: 60px; border-radius: 16px; background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.15);">
-                    <i data-lucide="users" style="width: 28px; height: 28px;"></i>
-                </div>
-                <div>
-                    <span class="text-muted small font-weight-bold d-block mb-1">الطلاب المفعّلين</span>
-                    <h2 class="mb-0 font-weight-bold" style="font-size: 2rem; color: var(--text-primary);">{{ students_count }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-4">
-            <div class="pro-card d-flex align-items-center gap-4 p-5" style="border-radius: 20px; transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(145deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.03) 100%);">
-                <div class="stat-icon flex-center" style="width: 60px; height: 60px; border-radius: 16px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.15);">
-                    <i data-lucide="book-open" style="width: 28px; height: 28px;"></i>
-                </div>
-                <div>
-                    <span class="text-muted small font-weight-bold d-block mb-1">الدورات النشطة</span>
-                    <h2 class="mb-0 font-weight-bold" style="font-size: 2rem; color: var(--text-primary);">{{ courses_count }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-sm-6 mb-4">
-            <div class="pro-card d-flex align-items-center gap-4 p-5" style="border-radius: 20px; transition: all 0.3s ease; border: 1px solid rgba(255,255,255,0.05); background: linear-gradient(145deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.03) 100%);">
-                <div class="stat-icon flex-center" style="width: 60px; height: 60px; border-radius: 16px; background: rgba(139, 92, 246, 0.1); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.15);">
-                    <i data-lucide="play" style="width: 28px; height: 28px;"></i>
-                </div>
-                <div>
-                    <span class="text-muted small font-weight-bold d-block mb-1">الدروس المرفوعة</span>
-                    <h2 class="mb-0 font-weight-bold" style="font-size: 2rem; color: var(--text-primary);">{{ lessons_count }}</h2>
+                <!-- Sidebar Vertical Navigation Menu -->
+                <div class="sidebar-nav-menu d-flex flex-column gap-2">
+                    <button class="sidebar-nav-btn active" onclick="switchTab(event, 'courses-tab')">
+                        <i data-lucide="graduation-cap"></i>
+                        <span>دوراتي التدريبية</span>
+                    </button>
+                    <button class="sidebar-nav-btn" onclick="switchTab(event, 'students-tab')">
+                        <i data-lucide="users"></i>
+                        <span>سجل الطلاب</span>
+                    </button>
+                    <button class="sidebar-nav-btn" onclick="switchTab(event, 'financial-tab')">
+                        <i data-lucide="wallet"></i>
+                        <span>المالية والأرباح</span>
+                    </button>
+                    <button class="sidebar-nav-btn" id="message-tab-trigger" onclick="switchTab(event, 'message-tab')">
+                        <i data-lucide="send"></i>
+                        <span>إرسال تنبيه للطلاب</span>
+                    </button>
+                    <button class="sidebar-nav-btn" onclick="switchTab(event, 'settings-tab')">
+                        <i data-lucide="key-round"></i>
+                        <span>إعدادات الحساب</span>
+                    </button>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 col-sm-6 mb-4">
-            <div class="pro-card d-flex align-items-center gap-4 p-5" style="border-radius: 20px; transition: all 0.3s ease; border: 1px solid rgba(245, 158, 11, 0.15); background: linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(245, 158, 11, 0.01) 100%);">
-                <div class="stat-icon flex-center" style="width: 60px; height: 60px; border-radius: 16px; background: rgba(245, 158, 11, 0.15); color: var(--brand-gold); border: 1px solid rgba(245, 158, 11, 0.25);">
-                    <i data-lucide="wallet" style="width: 28px; height: 28px;"></i>
-                </div>
-                <div>
-                    <span class="text-muted small font-weight-bold d-block mb-1">الرصيد المالي</span>
-                    <h2 class="mb-0 font-weight-bold text-success" style="font-size: 1.8rem; font-weight: 800;">{{ wallet.balance|default:"0.00"|floatformat:0 }} <span style="font-size: 0.9rem; font-weight: 500;">ل.س</span></h2>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Navigation Tabs -->
-    <div class="d-flex align-items-center gap-3 mb-6 scroll-x" style="border-bottom: 2px solid rgba(255,255,255,0.05); padding-bottom: 10px;">
-        <button class="tab-btn active d-flex align-items-center gap-2 px-5 py-3 rounded-lg" onclick="switchTab(event, 'courses-tab')" style="background: none; border: none; font-size: 1.05rem; font-weight: 700; color: var(--text-secondary); transition: all 0.2s ease; outline: none;">
-            <i data-lucide="graduation-cap" style="width: 18px;"></i>
-            <span>دوراتي التدريبية</span>
-        </button>
-        <button class="tab-btn d-flex align-items-center gap-2 px-5 py-3 rounded-lg" onclick="switchTab(event, 'students-tab')" style="background: none; border: none; font-size: 1.05rem; font-weight: 700; color: var(--text-secondary); transition: all 0.2s ease; outline: none;">
-            <i data-lucide="users" style="width: 18px;"></i>
-            <span>سجل الطلاب</span>
-        </button>
-        <button class="tab-btn d-flex align-items-center gap-2 px-5 py-3 rounded-lg" onclick="switchTab(event, 'financial-tab')" style="background: none; border: none; font-size: 1.05rem; font-weight: 700; color: var(--text-secondary); transition: all 0.2s ease; outline: none;">
-            <i data-lucide="wallet" style="width: 18px;"></i>
-            <span>المالية والأرباح</span>
-        </button>
-        <button class="tab-btn d-flex align-items-center gap-2 px-5 py-3 rounded-lg" id="message-tab-trigger" onclick="switchTab(event, 'message-tab')" style="background: none; border: none; font-size: 1.05rem; font-weight: 700; color: var(--text-secondary); transition: all 0.2s ease; outline: none;">
-            <i data-lucide="send" style="width: 18px;"></i>
-            <span>إرسال تنبيه للطلاب</span>
-        </button>
-        <button class="tab-btn d-flex align-items-center gap-2 px-5 py-3 rounded-lg" onclick="switchTab(event, 'settings-tab')" style="background: none; border: none; font-size: 1.05rem; font-weight: 700; color: var(--text-secondary); transition: all 0.2s ease; outline: none;">
-            <i data-lucide="settings" style="width: 18px;"></i>
-            <span>إعدادات الحساب</span>
-        </button>
-    </div>
-
-    <!-- Tab Contents -->
-    <div class="tab-content-wrapper">
-        
-        <!-- Tab 1: Courses -->
-        <div id="courses-tab" class="tab-pane active fade-in">
+        <!-- Left Content Panes (Col-lg-8) -->
+        <div class="col-lg-8 mb-6">
+            <div class="tab-content-wrapper">
+                
+                <!-- Tab 1: Courses -->
+                <div id="courses-tab" class="tab-pane active fade-in">
             <div class="pro-card p-6" style="border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); background: rgba(30, 30, 30, 0.25); backdrop-filter: blur(10px);">
                 <div class="d-flex align-items-center justify-content-between mb-6">
                     <div class="d-flex align-items-center gap-3">
@@ -488,10 +492,11 @@
                     </div>
                 </div>
             </div>
-        </div>
-
-    </div>
-</div>
+        </div> <!-- Closes settings-tab -->
+        </div> <!-- Closes tab-content-wrapper -->
+        </div> <!-- Closes left col-lg-8 -->
+    </div> <!-- Closes row -->
+</div> <!-- Closes pro-container -->
 
 <!-- Tabs and Preview Script Logic -->
 <script>
@@ -503,22 +508,23 @@
             pane.classList.remove('active');
         });
 
-        // Remove active class from all tab buttons
-        const tabButtons = document.querySelectorAll('.tab-btn');
-        tabButtons.forEach(btn => {
+        // Remove active class from all sidebar buttons
+        const sidebarButtons = document.querySelectorAll('.sidebar-nav-btn');
+        sidebarButtons.forEach(btn => {
             btn.classList.remove('active');
-            btn.style.color = 'var(--text-secondary)';
-            btn.style.borderBottom = 'none';
         });
 
         // Show selected tab pane
         const activePane = document.getElementById(tabId);
-        activePane.style.display = 'block';
-        setTimeout(() => activePane.classList.add('active'), 50);
+        if (activePane) {
+            activePane.style.display = 'block';
+            setTimeout(() => activePane.classList.add('active'), 50);
+        }
 
-        // Highlight selected tab button
-        evt.currentTarget.classList.add('active');
-        evt.currentTarget.style.color = 'var(--brand-gold)';
+        // Highlight selected sidebar button
+        if (evt && evt.currentTarget) {
+            evt.currentTarget.classList.add('active');
+        }
     }
 
     function triggerMessageForm(courseId) {
@@ -562,7 +568,7 @@
         // Auto trigger Tab if filtering parameter is present
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('course_id')) {
-            const btns = document.querySelectorAll('.tab-btn');
+            const btns = document.querySelectorAll('.sidebar-nav-btn');
             if (btns[1]) {
                 btns[1].click();
             }
@@ -572,32 +578,57 @@
 
 <!-- Styles for premium feel -->
 <style>
-    .tab-btn {
-        position: relative;
-        background: transparent;
-        border: none;
+    .sticky-sidebar {
+        position: -webkit-sticky;
+        position: sticky;
+        top: 90px;
+        z-index: 10;
+        transition: all 0.3s ease;
+    }
+    @keyframes spinGlowing {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .sidebar-nav-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        width: 100%;
+        padding: 0.9rem 1.2rem;
+        background: rgba(255, 255, 255, 0.01);
+        border: 1px solid rgba(255, 255, 255, 0.03);
         color: var(--text-secondary);
         font-weight: 700;
+        font-size: 0.95rem;
+        text-align: right;
+        border-radius: 16px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer;
-        padding: 0.75rem 1.5rem;
+        outline: none;
     }
-    .tab-btn.active {
-        color: var(--brand-gold) !important;
+    .sidebar-nav-btn i {
+        width: 18px;
+        height: 18px;
+        color: var(--text-muted);
+        transition: all 0.3s ease;
     }
-    .tab-btn.active::after {
-        content: '';
-        position: absolute;
-        bottom: -12px;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: var(--brand-gold);
-        border-radius: 4px;
-        box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
-    }
-    .tab-btn:hover {
+    .sidebar-nav-btn:hover {
         color: var(--text-primary);
-        background: rgba(255, 255, 255, 0.02);
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .sidebar-nav-btn:hover i {
+        color: var(--brand-gold);
+        transform: translateX(-3px);
+    }
+    .sidebar-nav-btn.active {
+        color: var(--brand-gold) !important;
+        background: rgba(245, 158, 11, 0.08) !important;
+        border: 1px solid rgba(245, 158, 11, 0.25) !important;
+        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.05);
+    }
+    .sidebar-nav-btn.active i {
+        color: var(--brand-gold) !important;
     }
     .custom-table {
         width: 100%;
@@ -631,7 +662,6 @@
         background: rgba(255,255,255,0.1);
         border-radius: 10px;
     }
-    /* Simple Animation */
     .fade-in {
         animation: fadeIn 0.4s ease-out forwards;
     }
