@@ -326,7 +326,8 @@
     
     .badge-gold { background: #fff8dd; color: #b78918; }
     .badge-success { background: #e8fff3; color: #049f59; }
-    .badge-pending { background: #ffe2e5; color: #f1416c; }
+    .badge-warning { background: #fff4de; color: #f59e0b; }
+    .badge-danger { background: #ffe2e5; color: #f1416c; }
 
     /* Distribution Grid */
     .dist-grid {
@@ -588,8 +589,10 @@
                         <td class="text-center">
                             {% if code.redeemed_count > 0 %}
                                 <span class="premium-badge badge-success">مفعل</span>
+                            {% elif code.sold_at or code.is_sold %}
+                                <span class="premium-badge badge-warning">قيد الانتظار</span>
                             {% else %}
-                                <span class="premium-badge badge-pending">قيد الانتظار</span>
+                                <span class="premium-badge badge-danger">غير مفعل</span>
                             {% endif %}
                         </td>
                     </tr>
