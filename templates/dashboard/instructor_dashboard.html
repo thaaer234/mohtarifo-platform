@@ -25,14 +25,14 @@
     <div class="row">
         <!-- Right Sidebar (Col-lg-4) -->
         <div class="col-lg-4 mb-6">
-            <div class="pro-card p-6 sticky-sidebar" style="border-radius: 28px; border: 1px solid rgba(255,255,255,0.06); background: linear-gradient(135deg, rgba(25, 25, 25, 0.45) 0%, rgba(15, 15, 15, 0.6) 100%); backdrop-filter: blur(20px); box-shadow: 0 20px 40px rgba(0,0,0,0.3);">
+            <div class="pro-card p-6 sticky-sidebar dashboard-sidebar-card">
                 <!-- Instructor Premium Profile Card -->
-                <div class="text-center mb-6" style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 2rem;">
+                <div class="text-center mb-6 profile-header-divider">
                     <div class="profile-avatar-container mx-auto mb-4 position-relative" style="width: 120px; height: 120px;">
                         <!-- Glowing circular ring -->
                         <div class="position-absolute" style="inset: -4px; border-radius: 50%; background: linear-gradient(135deg, var(--brand-gold) 0%, #d97706 100%); padding: 2px; filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.45)); animation: spinGlowing 8s linear infinite;"></div>
                         <!-- Profile Image -->
-                        <div class="position-relative w-100 h-100" style="border-radius: 50%; overflow: hidden; border: 4px solid #1a1a1a;">
+                        <div class="position-relative w-100 h-100 profile-avatar-img-wrap" style="border-radius: 50%; overflow: hidden;">
                             {% if request.user.instructor_profile.avatar %}
                                 <img src="{{ request.user.instructor_profile.avatar.url }}" alt="{{ request.user.get_full_name }}" style="width: 100%; height: 100%; object-fit: cover;">
                             {% else %}
@@ -49,19 +49,19 @@
                     <!-- Stats Grid inside Profile Sidebar -->
                     <div class="row g-2 text-center">
                         <div class="col-4">
-                            <div class="p-2" style="border-radius: 14px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.1);">
+                            <div class="p-2 dashboard-mini-tile tile-success">
                                 <span class="text-success font-weight-bold d-block" style="font-size: 1.25rem;">{{ students_count }}</span>
                                 <span class="text-muted small d-block" style="font-size: 0.72rem; font-weight: 600;">طالب نشط</span>
                             </div>
                         </div>
                         <div class="col-4">
-                            <div class="p-2" style="border-radius: 14px; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.1);">
+                            <div class="p-2 dashboard-mini-tile tile-primary">
                                 <span class="text-primary font-weight-bold d-block" style="font-size: 1.25rem;">{{ courses_count }}</span>
                                 <span class="text-muted small d-block" style="font-size: 0.72rem; font-weight: 600;">دورة</span>
                             </div>
                         </div>
                         <div class="col-4">
-                            <div class="p-2" style="border-radius: 14px; background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.1);">
+                            <div class="p-2 dashboard-mini-tile tile-purple">
                                 <span class="text-purple font-weight-bold d-block" style="font-size: 1.25rem; color: #a78bfa;">{{ lessons_count }}</span>
                                 <span class="text-muted small d-block" style="font-size: 0.72rem; font-weight: 600;">درس</span>
                             </div>
@@ -70,7 +70,7 @@
                 </div>
                 
                 <!-- Stat Card: Wallet Integrated into Sidebar -->
-                <div class="wallet-sidebar-card mb-6 p-4 text-right" style="border-radius: 20px; background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.02) 100%); border: 1px solid rgba(245, 158, 11, 0.25); box-shadow: 0 10px 25px rgba(0,0,0,0.15);">
+                <div class="wallet-sidebar-card mb-6 p-4 text-right">
                     <div class="d-flex align-items-center gap-3 mb-2">
                         <div class="flex-center" style="width: 38px; height: 38px; border-radius: 12px; background: rgba(245, 158, 11, 0.15); color: var(--brand-gold); display: flex; justify-content: center; align-items: center;">
                             <i data-lucide="wallet" style="width: 18px; height: 18px;"></i>
@@ -117,10 +117,10 @@
                 
                 <!-- Tab 1: Courses -->
                 <div id="courses-tab" class="tab-pane active fade-in">
-            <div class="pro-card p-6" style="border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); background: rgba(30, 30, 30, 0.25); backdrop-filter: blur(10px);">
+            <div class="pro-card p-6 dashboard-main-card">
                 <div class="d-flex align-items-center justify-content-between mb-6">
                     <div class="d-flex align-items-center gap-3">
-                        <div class="bg-success-soft p-2.5 rounded-lg flex-center" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.15);">
+                        <div class="bg-success-soft p-2.5 rounded-lg flex-center dashboard-icon-badge badge-success">
                             <i data-lucide="book-open"></i>
                         </div>
                         <h3 class="mb-0 font-weight-bold" style="font-size: 1.4rem;">الدورات التدريبية المخصصة لك</h3>
@@ -185,12 +185,12 @@
 
         <!-- Tab 2: Students Ledger -->
         <div id="students-tab" class="tab-pane fade-in" style="display: none;">
-            <div class="pro-card p-6" style="border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); background: rgba(30, 30, 30, 0.25); backdrop-filter: blur(10px);">
+            <div class="pro-card p-6 dashboard-main-card">
                 
                 <!-- Filters Header -->
-                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-4 mb-6" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1.5rem;">
+                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-4 mb-6 profile-header-divider" style="padding-bottom: 1.5rem;">
                     <div class="d-flex align-items-center gap-3">
-                        <div class="bg-primary-soft p-2.5 rounded-lg flex-center" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.15);">
+                        <div class="bg-primary-soft p-2.5 rounded-lg flex-center dashboard-icon-badge badge-primary">
                             <i data-lucide="users"></i>
                         </div>
                         <div>
@@ -203,7 +203,7 @@
                     <div class="d-flex align-items-center gap-3">
                         <label class="text-muted small font-weight-bold mb-0" style="white-space: nowrap;">تصفية حسب الدورة:</label>
                         <form method="GET" action="" id="filter-form">
-                            <select name="course_id" class="form-control rounded-lg" onchange="submitFilter()" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); padding: 0.5rem 2.5rem 0.5rem 1rem; border-radius: 12px; font-weight: 700; outline: none; cursor: pointer; -webkit-appearance: none;">
+                            <select name="course_id" class="form-control rounded-lg dashboard-filter-select" onchange="submitFilter()">
                                 <option value="">كل دوراتي التدريبية</option>
                                 {% for course in courses %}
                                 <option value="{{ course.id }}" {% if selected_course_id == course.id|stringformat:"s" %}selected{% endif %}>{{ course.title }}</option>
@@ -278,13 +278,13 @@
                 
                 <!-- Wallet Status Card -->
                 <div class="col-lg-4 mb-6">
-                    <div class="pro-card p-6 mb-6" style="border-radius: 24px; border: 1px solid rgba(245, 158, 11, 0.25); background: linear-gradient(145deg, rgba(245, 158, 11, 0.06) 0%, rgba(10, 10, 10, 0.6) 100%);">
+                    <div class="pro-card p-6 mb-6 dashboard-wallet-card">
                         <div class="d-flex justify-content-between align-items-start mb-6">
                             <div>
-                                <span class="badge badge-gold px-3 py-1.5 rounded-pill mb-2" style="background: rgba(245,158,11,0.1); color: var(--brand-gold); border: 1px solid rgba(245,158,11,0.2);">محفظة أرباح المدرس</span>
+                                <span class="badge badge-gold px-3 py-1.5 rounded-pill mb-2 dashboard-wallet-badge">محفظة أرباح المدرس</span>
                                 <h4 class="font-weight-bold mt-2" style="font-size: 1.2rem;">رصيد الأستاذ الحالي</h4>
                             </div>
-                            <div class="flex-center" style="width: 48px; height: 48px; border-radius: 14px; background: rgba(245,158,11,0.1); color: var(--brand-gold);">
+                            <div class="flex-center dashboard-wallet-icon-badge">
                                 <i data-lucide="wallet"></i>
                             </div>
                         </div>
@@ -298,7 +298,7 @@
                         </div>
                         
                         <!-- Extra balance info details -->
-                        <div class="pt-4" style="border-top: 1px solid rgba(255,255,255,0.06);">
+                        <div class="pt-4 profile-header-divider">
                             <div class="d-flex justify-content-between mb-3">
                                 <span class="text-muted small">رصيد قيد الانتظار</span>
                                 <strong class="small" style="color: var(--text-primary);">{{ wallet.pending_balance|default:"0.00"|floatformat:0 }} ل.س</strong>
@@ -313,9 +313,9 @@
                 
                 <!-- Transactions Ledger -->
                 <div class="col-lg-8 mb-6">
-                    <div class="pro-card p-6" style="border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); background: rgba(30, 30, 30, 0.25); backdrop-filter: blur(10px); height: 100%;">
-                        <div class="d-flex align-items-center gap-3 mb-6" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
-                            <div class="bg-success-soft p-2 rounded-lg flex-center" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+                    <div class="pro-card p-6 dashboard-main-card height-100">
+                        <div class="d-flex align-items-center gap-3 mb-6 profile-header-divider" style="padding-bottom: 1rem;">
+                            <div class="bg-success-soft p-2 rounded-lg flex-center dashboard-icon-badge badge-success">
                                 <i data-lucide="receipt"></i>
                             </div>
                             <h3 class="mb-0 font-weight-bold" style="font-size: 1.3rem;">سجل آخر المعاملات المالية</h3>
@@ -378,10 +378,10 @@
         <div id="message-tab" class="tab-pane fade-in" style="display: none;">
             <div class="row justify-content-center">
                 <div class="col-lg-8">
-                    <div class="pro-card p-6" style="border-radius: 24px; border: 1px solid rgba(245, 158, 11, 0.25); background: rgba(30, 30, 30, 0.25); backdrop-filter: blur(10px);">
+                    <div class="pro-card p-6 dashboard-main-card border-gold">
                         
-                        <div class="d-flex align-items-center gap-3 mb-6" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
-                            <div class="flex-center" style="width: 45px; height: 45px; border-radius: 12px; background: rgba(245,158,11,0.1); color: var(--brand-gold);">
+                        <div class="d-flex align-items-center gap-3 mb-6 profile-header-divider" style="padding-bottom: 1rem;">
+                            <div class="flex-center dashboard-wallet-icon-badge">
                                 <i data-lucide="send"></i>
                             </div>
                             <div>
@@ -397,8 +397,8 @@
                             
                             <!-- Course Selection dropdown -->
                             <div class="form-group mb-5">
-                                <label class="text-primary font-weight-bold mb-2" style="font-size: 1rem; color: var(--text-primary) !important;">1. حدد الطلاب المستهدفين (الدورة):</label>
-                                <select name="course_id" id="message-course-select" class="form-control rounded-lg" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); padding: 0.8rem 2.5rem 0.8rem 1rem; border-radius: 14px; font-weight: 700; width: 100%; font-size: 1rem; outline: none; cursor: pointer;">
+                                <label class="text-primary font-weight-bold mb-2">1. حدد الطلاب المستهدفين (الدورة):</label>
+                                <select name="course_id" id="message-course-select" class="form-control rounded-lg dashboard-form-input">
                                     <option value="all">كل الطلاب في جميع دوراتي ({{ students_count }} طالب)</option>
                                     {% for course in courses %}
                                     <option value="{{ course.id }}">طلاب دورة: {{ course.title }} ({{ course.grants_total }} طالب)</option>
@@ -408,14 +408,14 @@
 
                             <!-- Message Content Box -->
                             <div class="form-group mb-5">
-                                <label class="text-primary font-weight-bold mb-2" style="font-size: 1rem; color: var(--text-primary) !important;">2. اكتب نص الرسالة:</label>
-                                <textarea name="message_body" rows="6" class="form-control" placeholder="اكتب هنا ما تريد إيصاله للطلاب... (مثال: أهلاً بكم طلابي الأعزاء، تم اليوم رفع ملف المذاكرة الشاملة للجلسة الثالثة، يرجى مراجعته فوراً.)" required style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 16px; padding: 1.25rem; font-size: 1.05rem; line-height: 1.6; outline: none; width: 100%; resize: vertical;"></textarea>
+                                <label class="text-primary font-weight-bold mb-2">2. اكتب نص الرسالة:</label>
+                                <textarea name="message_body" rows="6" class="form-control dashboard-form-textarea" placeholder="اكتب هنا ما تريد إيصاله للطلاب... (مثال: أهلاً بكم طلابي الأعزاء، تم اليوم رفع ملف المذاكرة الشاملة للجلسة الثالثة، يرجى مراجعته فوراً.)" required></textarea>
                             </div>
 
                             <!-- Preview Panel -->
-                            <div class="p-4 mb-5" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px;">
+                            <div class="p-4 mb-5 dashboard-preview-panel">
                                 <span class="text-muted small font-weight-bold d-block mb-2"><i data-lucide="eye" style="width: 14px; margin-left: 4px; vertical-align: middle;"></i> معاينة شكل الرسالة لدى الطلاب:</span>
-                                <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(245, 158, 11, 0.2); padding: 1rem 1.25rem; border-radius: 12px; color: var(--text-primary); font-size: 0.95rem;">
+                                <div class="dashboard-preview-box">
                                     <strong>رسالة من الأستاذ {{ request.user.get_full_name|default:request.user.username }}:</strong>
                                     <p class="mb-0 mt-2 text-muted" id="preview-text" style="line-height: 1.5; font-style: italic;">[ما ستكتبه في الصندوق أعلاه سيظهر هنا للطلاب...]</p>
                                 </div>
@@ -423,7 +423,7 @@
 
                             <!-- WhatsApp Dispatch Checkbox -->
                             <div class="form-group mb-6">
-                                <div class="custom-control custom-checkbox d-flex align-items-center gap-3 p-3" style="background: rgba(37, 211, 102, 0.05); border: 1px solid rgba(37, 211, 102, 0.2); border-radius: 14px;">
+                                <div class="custom-control custom-checkbox d-flex align-items-center gap-3 p-3 dashboard-whatsapp-panel">
                                     <input type="checkbox" name="send_whatsapp" id="send_whatsapp" class="custom-control-input" style="width: 20px; height: 20px; cursor: pointer;">
                                     <label class="custom-control-label font-weight-bold mb-0" for="send_whatsapp" style="cursor: pointer; color: #25D366; font-size: 1rem;">
                                         <i data-lucide="message-square" style="width: 16px; margin-left: 4px; vertical-align: middle;"></i> إرسال كرسالة واتساب أيضاً إلى هواتف الطلاب المفعلين 📲
@@ -447,9 +447,9 @@
         <div id="settings-tab" class="tab-pane fade-in" style="display: none;">
             <div class="row justify-content-center">
                 <div class="col-lg-6 col-md-8">
-                    <div class="pro-card p-6" style="border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); background: rgba(30, 30, 30, 0.25); backdrop-filter: blur(10px);">
+            <div class="pro-card p-6 dashboard-main-card">
                         <div class="mb-5 text-center">
-                            <div class="flex-center mx-auto mb-4" style="width: 64px; height: 64px; border-radius: 16px; background: rgba(245, 158, 11, 0.1); color: var(--brand-gold); display: inline-flex; justify-content: center; align-items: center;">
+                            <div class="flex-center mx-auto mb-4 dashboard-icon-badge badge-gold" style="width: 64px; height: 64px; display: inline-flex; justify-content: center; align-items: center;">
                                 <i data-lucide="key-round" style="width: 32px; height: 32px;"></i>
                             </div>
                             <h3 class="font-weight-bold mb-2">تغيير كلمة المرور</h3>
@@ -464,7 +464,7 @@
                             <div class="form-group mb-4">
                                 <label class="text-muted small font-weight-bold mb-2 d-block text-right">كلمة المرور الحالية:</label>
                                 <div class="position-relative">
-                                    <input type="password" name="current_password" required class="form-control" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 14px; padding: 0.8rem 1.2rem; width: 100%; outline: none;" placeholder="••••••••">
+                                    <input type="password" name="current_password" required class="form-control dashboard-form-input" placeholder="••••••••">
                                 </div>
                             </div>
 
@@ -472,7 +472,7 @@
                             <div class="form-group mb-4">
                                 <label class="text-muted small font-weight-bold mb-2 d-block text-right">كلمة المرور الجديدة (8 خانات على الأقل):</label>
                                 <div class="position-relative">
-                                    <input type="password" name="new_password" required class="form-control" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 14px; padding: 0.8rem 1.2rem; width: 100%; outline: none;" placeholder="••••••••">
+                                    <input type="password" name="new_password" required class="form-control dashboard-form-input" placeholder="••••••••">
                                 </div>
                             </div>
 
@@ -480,7 +480,7 @@
                             <div class="form-group mb-4">
                                 <label class="text-muted small font-weight-bold mb-2 d-block text-right">تأكيد كلمة المرور الجديدة:</label>
                                 <div class="position-relative">
-                                    <input type="password" name="confirm_password" required class="form-control" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 14px; padding: 0.8rem 1.2rem; width: 100%; outline: none;" placeholder="••••••••">
+                                    <input type="password" name="confirm_password" required class="form-control dashboard-form-input" placeholder="••••••••">
                                 </div>
                             </div>
 
@@ -614,8 +614,8 @@
     }
     .sidebar-nav-btn:hover {
         color: var(--text-primary);
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: var(--dash-nav-hover-bg);
+        border: 1px solid var(--dash-nav-hover-border);
     }
     .sidebar-nav-btn:hover i {
         color: var(--brand-gold);
@@ -668,6 +668,188 @@
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive Design overrides */
+    :root {
+        --dash-card-bg: rgba(255, 255, 255, 0.85);
+        --dash-card-border: rgba(0, 0, 0, 0.06);
+        --dash-sidebar-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(245, 245, 245, 0.95) 100%);
+        --dash-sidebar-border: rgba(0, 0, 0, 0.08);
+        --dash-divider: 1px solid rgba(0, 0, 0, 0.08);
+        --dash-avatar-border: 4px solid #ffffff;
+        --dash-avatar-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        --dash-input-bg: #ffffff;
+        --dash-input-border: 1px solid rgba(0, 0, 0, 0.12);
+        --dash-nav-hover-bg: rgba(0, 0, 0, 0.03);
+        --dash-nav-hover-border: rgba(0, 0, 0, 0.06);
+        --dash-wallet-bg: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(245, 158, 11, 0.02) 100%);
+        --dash-wallet-border: 1px solid rgba(245, 158, 11, 0.3);
+        --dash-preview-panel-bg: rgba(0, 0, 0, 0.02);
+        --dash-preview-panel-border: 1px solid rgba(0, 0, 0, 0.05);
+        --dash-preview-box-bg: #ffffff;
+        --dash-preview-box-border: 1px solid rgba(245, 158, 11, 0.3);
+        --dash-whatsapp-bg: rgba(37, 211, 102, 0.06);
+        --dash-whatsapp-border: 1px solid rgba(37, 211, 102, 0.25);
+        --dash-card-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+    }
+    
+    .dark-theme :root, html.dark-theme, html.dark-theme :root {
+        --dash-card-bg: rgba(30, 30, 30, 0.25);
+        --dash-card-border: rgba(255, 255, 255, 0.05);
+        --dash-sidebar-bg: linear-gradient(135deg, rgba(25, 25, 25, 0.45) 0%, rgba(15, 15, 15, 0.6) 100%);
+        --dash-sidebar-border: rgba(255, 255, 255, 0.06);
+        --dash-divider: 1px solid rgba(255, 255, 255, 0.06);
+        --dash-avatar-border: 4px solid #1a1a1a;
+        --dash-avatar-shadow: none;
+        --dash-input-bg: rgba(0, 0, 0, 0.25);
+        --dash-input-border: 1px solid rgba(255, 255, 255, 0.1);
+        --dash-nav-hover-bg: rgba(255, 255, 255, 0.04);
+        --dash-nav-hover-border: rgba(255, 255, 255, 0.08);
+        --dash-wallet-bg: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.02) 100%);
+        --dash-wallet-border: 1px solid rgba(245, 158, 11, 0.25);
+        --dash-preview-panel-bg: rgba(255, 255, 255, 0.02);
+        --dash-preview-panel-border: 1px solid rgba(255, 255, 255, 0.05);
+        --dash-preview-box-bg: rgba(0, 0, 0, 0.3);
+        --dash-preview-box-border: 1px solid rgba(245, 158, 11, 0.2);
+        --dash-whatsapp-bg: rgba(37, 211, 102, 0.05);
+        --dash-whatsapp-border: 1px solid rgba(37, 211, 102, 0.2);
+        --dash-card-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+    
+    .dashboard-sidebar-card {
+        border-radius: 28px !important;
+        border: var(--dash-sidebar-border) !important;
+        background: var(--dash-sidebar-bg) !important;
+        backdrop-filter: blur(20px);
+        box-shadow: var(--dash-card-shadow) !important;
+    }
+    .profile-header-divider {
+        border-bottom: var(--dash-divider) !important;
+        padding-bottom: 2rem;
+    }
+    .profile-avatar-img-wrap {
+        border: var(--dash-avatar-border) !important;
+        box-shadow: var(--dash-avatar-shadow) !important;
+    }
+    .dashboard-mini-tile {
+        border-radius: 14px;
+        transition: all 0.2s ease;
+    }
+    .tile-success {
+        background: rgba(16, 185, 129, 0.05);
+        border: 1px solid rgba(16, 185, 129, 0.12);
+    }
+    .tile-primary {
+        background: rgba(59, 130, 246, 0.05);
+        border: 1px solid rgba(59, 130, 246, 0.12);
+    }
+    .tile-purple {
+        background: rgba(139, 92, 246, 0.05);
+        border: 1px solid rgba(139, 92, 246, 0.12);
+    }
+    .wallet-sidebar-card {
+        border-radius: 20px;
+        background: var(--dash-wallet-bg) !important;
+        border: var(--dash-wallet-border) !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+    }
+    .dashboard-main-card {
+        border-radius: 24px !important;
+        border: 1px solid var(--dash-card-border) !important;
+        background: var(--dash-card-bg) !important;
+        backdrop-filter: blur(10px);
+    }
+    .dashboard-main-card.border-gold {
+        border: var(--dash-wallet-border) !important;
+    }
+    .dashboard-wallet-card {
+        border-radius: 24px !important;
+        border: var(--dash-wallet-border) !important;
+        background: var(--dash-wallet-bg) !important;
+    }
+    .dashboard-wallet-badge {
+        background: rgba(245, 158, 11, 0.08) !important;
+        color: var(--brand-gold) !important;
+        border: 1px solid rgba(245, 158, 11, 0.2) !important;
+    }
+    .dashboard-wallet-icon-badge {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        background: rgba(245, 158, 11, 0.08);
+        color: var(--brand-gold);
+    }
+    .dashboard-icon-badge {
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .dashboard-icon-badge.badge-success {
+        background: rgba(16, 185, 129, 0.1) !important;
+        color: #10b981 !important;
+        border: 1px solid rgba(16, 185, 129, 0.15) !important;
+    }
+    .dashboard-icon-badge.badge-primary {
+        background: rgba(59, 130, 246, 0.1) !important;
+        color: #3b82f6 !important;
+        border: 1px solid rgba(59, 130, 246, 0.15) !important;
+    }
+    .dashboard-icon-badge.badge-gold {
+        background: rgba(245, 158, 11, 0.1) !important;
+        color: var(--brand-gold) !important;
+        border: 1px solid rgba(245, 158, 11, 0.15) !important;
+    }
+    .dashboard-filter-select {
+        background: var(--dash-input-bg) !important;
+        border: var(--dash-input-border) !important;
+        color: var(--text-primary) !important;
+        padding: 0.5rem 2.5rem 0.5rem 1rem !important;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        outline: none !important;
+        cursor: pointer !important;
+        -webkit-appearance: none !important;
+    }
+    .dashboard-form-input {
+        background: var(--dash-input-bg) !important;
+        border: var(--dash-input-border) !important;
+        color: var(--text-primary) !important;
+        border-radius: 14px !important;
+        padding: 0.8rem 1.2rem !important;
+        width: 100% !important;
+        outline: none !important;
+    }
+    .dashboard-form-textarea {
+        background: var(--dash-input-bg) !important;
+        border: var(--dash-input-border) !important;
+        color: var(--text-primary) !important;
+        border-radius: 16px !important;
+        padding: 1.25rem !important;
+        font-size: 1.05rem !important;
+        line-height: 1.6 !important;
+        outline: none !important;
+        width: 100% !important;
+        resize: vertical !important;
+    }
+    .dashboard-preview-panel {
+        background: var(--dash-preview-panel-bg) !important;
+        border: var(--dash-preview-panel-border) !important;
+        border-radius: 16px !important;
+    }
+    .dashboard-preview-box {
+        background: var(--dash-preview-box-bg) !important;
+        border: var(--dash-preview-box-border) !important;
+        padding: 1rem 1.25rem !important;
+        border-radius: 12px !important;
+        color: var(--text-primary) !important;
+        font-size: 0.95rem !important;
+    }
+    .dashboard-whatsapp-panel {
+        background: var(--dash-whatsapp-bg) !important;
+        border: var(--dash-whatsapp-border) !important;
+        border-radius: 14px !important;
+    }
+    .height-100 {
+        height: 100% !important;
     }
 </style>
 {% endblock %}

@@ -123,32 +123,62 @@
         </div>
 
         <!-- TX Date -->
-        <div class="if-tx-date">
-          {{ tx.created_at|date:"Y-m-d" }}
-          <span>{{ tx.created_at|date:"H:i" }}</span>
-        </div>
-      </div>
-      {% empty %}
-      <div class="if-empty-ledger">
-        <div class="if-empty-ledger-icon">
-          <i data-lucide="receipt" style="width:32px;height:32px"></i>
-        </div>
-        <h3>دفتر الحسابات فارغ</h3>
-        <p>لم يتم تسجيل أي معاملات أو حركات مالية حتى الآن.</p>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-
-</div>
-
-<style>
+        <<style>
 /* ═══════════════════════════════════
    FINANCE PAGE — Exclusive Design
    Identity: Emerald + Gold Wallet
    Dark Financial Aesthetic
+   Prefix: if-
 ═══════════════════════════════════ */
-.if-finance-page { padding-bottom: 2rem; }
+.if-finance-page {
+  padding-bottom: 2rem;
+  
+  /* Theme-adaptive custom properties (Default: Dark Theme) */
+  --if-hero-bg: linear-gradient(145deg, #0f0d0a 0%, #1a1410 50%, #0d0b08 100%);
+  --if-hero-border: rgba(245,158,11,0.35);
+  --if-balance-gradient: linear-gradient(135deg, #fff 0%, #f59e0b 100%);
+  --if-sub-blue-bg: linear-gradient(135deg, rgba(59,130,246,0.05) 0%, rgba(10,10,18,0.6) 100%);
+  --if-sub-blue-border: rgba(59,130,246,0.18);
+  --if-sub-red-bg: linear-gradient(135deg, rgba(239,68,68,0.05) 0%, rgba(10,10,18,0.6) 100%);
+  --if-sub-red-border: rgba(239,68,68,0.18);
+  --if-ledger-bg: rgba(10,10,16,0.6);
+  --if-ledger-border: rgba(255,255,255,0.05);
+  --if-divider: rgba(255,255,255,0.05);
+  --if-sub-divider: rgba(255,255,255,0.025);
+  --if-text-primary: #ffffff;
+  --if-text-secondary: rgba(255,255,255,0.55);
+  --if-text-muted: rgba(255,255,255,0.35);
+  --if-empty-icon-bg: rgba(255,255,255,0.02);
+  --if-empty-icon-border: rgba(255,255,255,0.05);
+  --if-tx-row-hover: rgba(255,255,255,0.02);
+  --if-tx-badge-bg: rgba(255,255,255,0.03);
+  --if-tx-badge-border: rgba(255,255,255,0.06);
+}
+
+/* Light Theme overrides */
+html:not(.dark-theme) .if-finance-page,
+body:not(.dark-theme) .if-finance-page,
+:root:not(.dark-theme) .if-finance-page {
+  --if-hero-bg: linear-gradient(145deg, #fdf6e2 0%, #faf3dd 50%, #f7ebd0 100%);
+  --if-hero-border: rgba(245,158,11,0.5);
+  --if-balance-gradient: linear-gradient(135deg, #1f2937 0%, #d97706 100%);
+  --if-sub-blue-bg: linear-gradient(135deg, rgba(59,130,246,0.06) 0%, rgba(255,255,255,0.95) 100%);
+  --if-sub-blue-border: rgba(59,130,246,0.25);
+  --if-sub-red-bg: linear-gradient(135deg, rgba(239,68,68,0.06) 0%, rgba(255,255,255,0.95) 100%);
+  --if-sub-red-border: rgba(239,68,68,0.25);
+  --if-ledger-bg: rgba(255, 255, 255, 0.85);
+  --if-ledger-border: rgba(0, 0, 0, 0.06);
+  --if-divider: rgba(0, 0, 0, 0.08);
+  --if-sub-divider: rgba(0, 0, 0, 0.04);
+  --if-text-primary: #1f2937;
+  --if-text-secondary: rgba(55,65,81,0.7);
+  --if-text-muted: rgba(55,65,81,0.5);
+  --if-empty-icon-bg: rgba(0,0,0,0.02);
+  --if-empty-icon-border: rgba(0,0,0,0.06);
+  --if-tx-row-hover: rgba(0,0,0,0.02);
+  --if-tx-badge-bg: rgba(0,0,0,0.02);
+  --if-tx-badge-border: rgba(0,0,0,0.05);
+}
 
 /* Hero Wallet Section */
 .if-wallet-hero {
@@ -174,11 +204,11 @@
 .if-main-wallet {
   position: relative;
   border-radius: 28px;
-  background: linear-gradient(145deg, #0f0d0a 0%, #1a1410 50%, #0d0b08 100%);
-  border: 1px solid rgba(245,158,11,0.35);
+  background: var(--if-hero-bg);
+  border: 1px solid var(--if-hero-border);
   padding: 2.25rem;
   overflow: hidden;
-  box-shadow: 0 20px 50px rgba(245,158,11,0.12), 0 0 0 1px rgba(245,158,11,0.04);
+  box-shadow: 0 20px 50px rgba(245,158,11,0.08);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -226,7 +256,7 @@
 .if-balance-block { display: flex; flex-direction: column; gap: 4px; }
 .if-balance-label {
   font-size: 0.82rem;
-  color: rgba(255,255,255,0.4);
+  color: var(--if-text-muted);
   font-weight: 600;
 }
 .if-balance-amount {
@@ -238,7 +268,7 @@
   font-size: clamp(2rem, 6vw, 3.2rem);
   font-weight: 900;
   font-family: monospace;
-  background: linear-gradient(135deg, #fff 0%, #f59e0b 100%);
+  background: var(--if-balance-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   line-height: 1;
@@ -249,12 +279,12 @@
   color: #f59e0b;
 }
 .if-wallet-footer {
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid var(--if-divider);
   padding-top: 1rem;
 }
 .if-wallet-update {
   font-size: 0.78rem;
-  color: rgba(255,255,255,0.35);
+  color: var(--if-text-muted);
   display: flex;
   align-items: center;
   gap: 5px;
@@ -281,12 +311,12 @@
 }
 .if-sub-card:hover { transform: translateY(-2px); }
 .if-sub-blue {
-  background: linear-gradient(135deg, rgba(59,130,246,0.05) 0%, rgba(10,10,18,0.6) 100%);
-  border: 1px solid rgba(59,130,246,0.18);
+  background: var(--if-sub-blue-bg);
+  border: 1px solid var(--if-sub-blue-border);
 }
 .if-sub-red {
-  background: linear-gradient(135deg, rgba(239,68,68,0.05) 0%, rgba(10,10,18,0.6) 100%);
-  border: 1px solid rgba(239,68,68,0.18);
+  background: var(--if-sub-red-bg);
+  border: 1px solid var(--if-sub-red-border);
 }
 .if-sub-head {
   display: flex;
@@ -310,7 +340,7 @@
 }
 .if-sub-label {
   font-size: 0.8rem;
-  color: rgba(255,255,255,0.45);
+  color: var(--if-text-secondary);
   font-weight: 700;
 }
 .if-sub-amount {
@@ -319,23 +349,24 @@
   font-family: monospace;
   line-height: 1;
 }
-.if-sub-amount-blue { color: #60a5fa; }
-.if-sub-amount-red { color: #f87171; }
+.if-sub-amount-blue { color: #3b82f6; }
+.if-sub-amount-red { color: #ef4444; }
 
 /* Ledger */
 .if-ledger {
   border-radius: 28px;
-  border: 1px solid rgba(255,255,255,0.05);
-  background: rgba(10,10,16,0.6);
+  border: 1px solid var(--if-ledger-border);
+  background: var(--if-ledger-bg);
   backdrop-filter: blur(16px);
   overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.03);
 }
 .if-ledger-header {
   display: flex;
   align-items: center;
   gap: 1rem;
   padding: 1.75rem 1.75rem 1.25rem;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid var(--if-divider);
 }
 .if-ledger-icon {
   width: 48px; height: 48px;
@@ -348,11 +379,11 @@
 }
 .if-ledger-title {
   font-size: 1.2rem; font-weight: 900;
-  color: #fff; margin: 0 0 4px;
+  color: var(--if-text-primary); margin: 0 0 4px;
 }
 .if-ledger-sub {
   font-size: 0.8rem;
-  color: rgba(255,255,255,0.38);
+  color: var(--if-text-secondary);
   margin: 0;
 }
 
@@ -364,10 +395,10 @@
   gap: 1rem;
   padding: 1.2rem 1.75rem;
   align-items: center;
-  border-bottom: 1px solid rgba(255,255,255,0.025);
+  border-bottom: 1px solid var(--if-sub-divider);
   transition: background 0.2s ease;
 }
-.if-tx-row:hover { background: rgba(255,255,255,0.02); }
+.if-tx-row:hover { background: var(--if-tx-row-hover); }
 .if-tx-row:last-child { border-bottom: none; }
 
 .if-tx-icon-wrap {
@@ -396,11 +427,11 @@
   font-size: 0.8rem;
   font-weight: 800;
 }
-.if-label-green { color: #34d399; }
-.if-label-red { color: #f87171; }
+.if-label-green { color: #10b981; }
+.if-label-red { color: #ef4444; }
 .if-tx-desc {
   font-size: 0.88rem;
-  color: rgba(255,255,255,0.55);
+  color: var(--if-text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -409,20 +440,20 @@
   font-size: 0.7rem;
   padding: 2px 7px;
   border-radius: 5px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.3);
+  background: var(--if-tx-badge-bg);
+  border: 1px solid var(--if-tx-badge-border);
+  color: var(--if-text-muted);
   align-self: flex-start;
 }
 .if-tx-id {
   font-size: 0.75rem;
   font-family: monospace;
-  color: rgba(255,255,255,0.2);
+  color: var(--if-text-muted);
   white-space: nowrap;
   padding: 4px 8px;
   border-radius: 6px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.04);
+  background: var(--if-tx-badge-bg);
+  border: 1px solid var(--if-tx-badge-border);
 }
 .if-tx-amount {
   font-size: 1.05rem;
@@ -430,13 +461,13 @@
   font-family: monospace;
   white-space: nowrap;
 }
-.if-amount-green { color: #34d399; }
-.if-amount-red { color: #f87171; }
+.if-amount-green { color: #10b981; }
+.if-amount-red { color: #ef4444; }
 .if-tx-date {
   text-align: right;
   font-size: 0.78rem;
   font-family: monospace;
-  color: rgba(255,255,255,0.35);
+  color: var(--if-text-secondary);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -452,16 +483,16 @@
   width: 70px; height: 70px;
   margin: 0 auto 1.25rem;
   border-radius: 20px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.05);
+  background: var(--if-empty-icon-bg);
+  border: 1px solid var(--if-empty-icon-border);
   display: flex; align-items: center; justify-content: center;
-  color: rgba(255,255,255,0.2);
+  color: var(--if-text-muted);
 }
 .if-empty-ledger h3 {
-  font-size: 1.1rem; font-weight: 800; color: #fff; margin-bottom: 8px;
+  font-size: 1.1rem; font-weight: 800; color: var(--if-text-primary); margin-bottom: 8px;
 }
 .if-empty-ledger p {
-  font-size: 0.85rem; color: rgba(255,255,255,0.35);
+  font-size: 0.85rem; color: var(--if-text-secondary);
   max-width: 360px; margin: 0 auto; line-height: 1.5;
 }
 
@@ -483,6 +514,5 @@
   .if-tx-amount { grid-column: 2; font-size: 0.95rem; }
   .if-tx-date { grid-column: 2; flex-direction: row; gap: 6px; }
   .if-sub-wallets { flex-direction: column; }
-}
 </style>
 {% endblock %}

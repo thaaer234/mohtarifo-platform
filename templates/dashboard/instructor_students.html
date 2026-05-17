@@ -114,35 +114,78 @@
         <h3>لا يوجد طلاب مشتركون</h3>
         <p>لم يقم أي طالب بالاشتراك في المادة أو المواد المحددة حالياً.</p>
       </div>
-      {% endfor %}
-    </div>
-
-    <!-- JS No-Results Row (hidden by default) -->
-    <div class="is-empty-row" id="noResultsRow" style="display:none">
-      <div class="is-empty-icon" style="background: rgba(239,68,68,0.06); color:#ef4444; border-color: rgba(239,68,68,0.15)">
-        <i data-lucide="search-x" style="width:34px;height:34px"></i>
-      </div>
-      <h3>لا توجد نتائج مطابقة</h3>
-      <p>تأكد من صحة البحث أو جرب مصطلحات مختلفة.</p>
-    </div>
-
-  </div>
-
-</div>
-
-<style>
+  <style>
 /* ═══════════════════════════════════
    STUDENTS PAGE — Exclusive Design
    Identity: Blue/Cyan + Ledger Grid
+   Prefix: is-
 ═══════════════════════════════════ */
-.is-students-page { padding-bottom: 2rem; }
+.is-students-page {
+  padding-bottom: 2rem;
+  
+  /* Theme-adaptive custom properties (Default: Dark Theme) */
+  --is-card-bg: rgba(12,12,18,0.5);
+  --is-card-border: rgba(255,255,255,0.05);
+  --is-text-primary: #ffffff;
+  --is-text-secondary: rgba(255,255,255,0.45);
+  --is-text-muted: rgba(255,255,255,0.3);
+  --is-table-head-bg: rgba(255,255,255,0.02);
+  --is-table-head-border: rgba(255,255,255,0.05);
+  --is-table-head-text: rgba(255,255,255,0.35);
+  --is-table-row-border: rgba(255,255,255,0.03);
+  --is-table-row-hover-bg: rgba(59,130,246,0.04);
+  --is-input-bg: rgba(0,0,0,0.3);
+  --is-input-border: rgba(59,130,246,0.2);
+  --is-input-text: #ffffff;
+  --is-input-placeholder: rgba(255,255,255,0.3);
+  --is-select-icon: rgba(255,255,255,0.3);
+  --is-select-border: rgba(255,255,255,0.1);
+  --is-empty-bg: rgba(255,255,255,0.02);
+  --is-empty-border: rgba(255,255,255,0.06);
+  --is-empty-title: #ffffff;
+  --is-empty-desc: rgba(255,255,255,0.35);
+  --is-registry-bg: linear-gradient(135deg, rgba(59,130,246,0.05) 0%, rgba(10,10,18,0.7) 100%);
+  --is-registry-border: rgba(59,130,246,0.18);
+  --is-phone-color: rgba(255,255,255,0.5);
+  --is-phone-bg: rgba(255,255,255,0.02);
+}
+
+/* Light Theme overrides */
+html:not(.dark-theme) .is-students-page,
+body:not(.dark-theme) .is-students-page,
+:root:not(.dark-theme) .is-students-page {
+  --is-card-bg: rgba(255,255,255,0.9);
+  --is-card-border: rgba(59,130,246,0.12);
+  --is-text-primary: #1f2937;
+  --is-text-secondary: rgba(55,65,81,0.65);
+  --is-text-muted: rgba(55,65,81,0.45);
+  --is-table-head-bg: rgba(59,130,246,0.03);
+  --is-table-head-border: rgba(59,130,246,0.08);
+  --is-table-head-text: rgba(55,65,81,0.55);
+  --is-table-row-border: rgba(0,0,0,0.04);
+  --is-table-row-hover-bg: rgba(59,130,246,0.03);
+  --is-input-bg: #ffffff;
+  --is-input-border: rgba(59,130,246,0.25);
+  --is-input-text: #1f2937;
+  --is-input-placeholder: rgba(55,65,81,0.4);
+  --is-select-icon: rgba(55,65,81,0.5);
+  --is-select-border: rgba(59,130,246,0.20);
+  --is-empty-bg: rgba(59,130,246,0.02);
+  --is-empty-border: rgba(59,130,246,0.12);
+  --is-empty-title: #1f2937;
+  --is-empty-desc: rgba(55,65,81,0.6);
+  --is-registry-bg: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(250,248,245,0.95) 100%);
+  --is-registry-border: rgba(59,130,246,0.25);
+  --is-phone-color: #3b82f6;
+  --is-phone-bg: rgba(59,130,246,0.05);
+}
 
 /* Registry Header */
 .is-registry-header {
   position: relative;
   border-radius: 24px;
-  border: 1px solid rgba(59,130,246,0.18);
-  background: linear-gradient(135deg, rgba(59,130,246,0.05) 0%, rgba(10,10,18,0.7) 100%);
+  border: 1px solid var(--is-registry-border);
+  background: var(--is-registry-bg);
   padding: 1.75rem;
   overflow: hidden;
 }
@@ -183,12 +226,12 @@
 .is-reg-title {
   font-size: clamp(1.2rem, 4vw, 1.6rem);
   font-weight: 900;
-  color: #fff;
+  color: var(--is-text-primary);
   margin: 0 0 4px;
 }
 .is-reg-sub {
   font-size: 0.83rem;
-  color: rgba(255,255,255,0.45);
+  color: var(--is-text-secondary);
   margin: 0;
 }
 
@@ -210,14 +253,14 @@
   position: absolute;
   top: 50%; right: 14px;
   transform: translateY(-50%);
-  width: 15px; color: rgba(255,255,255,0.3);
+  width: 15px; color: var(--is-text-muted);
   pointer-events: none;
 }
 .is-search-input {
   width: 100%;
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(59,130,246,0.2);
-  color: #fff;
+  background: var(--is-input-bg);
+  border: 1px solid var(--is-input-border);
+  color: var(--is-input-text);
   border-radius: 12px;
   padding: 0.7rem 2.5rem 0.7rem 1rem;
   font-size: 0.9rem;
@@ -227,10 +270,10 @@
 }
 .is-search-input:focus {
   border-color: rgba(59,130,246,0.5);
-  background: rgba(0,0,0,0.45);
+  background: var(--is-input-bg);
   box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
 }
-.is-search-input::placeholder { color: rgba(255,255,255,0.3); }
+.is-search-input::placeholder { color: var(--is-input-placeholder); }
 
 /* Select */
 .is-filter-form { margin: 0; }
@@ -241,13 +284,13 @@
   position: absolute;
   top: 50%; right: 13px;
   transform: translateY(-50%);
-  width: 14px; color: rgba(255,255,255,0.3);
+  width: 14px; color: var(--is-select-icon);
   pointer-events: none;
 }
 .is-select-input {
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: #fff;
+  background: var(--is-input-bg);
+  border: 1px solid var(--is-select-border);
+  color: var(--is-input-text);
   padding: 0.7rem 2.5rem 0.7rem 1.25rem;
   border-radius: 12px;
   font-size: 0.88rem;
@@ -267,10 +310,11 @@
 /* Ledger Wrap */
 .is-ledger-wrap {
   border-radius: 24px;
-  border: 1px solid rgba(255,255,255,0.05);
-  background: rgba(12,12,18,0.5);
+  border: 1px solid var(--is-card-border);
+  background: var(--is-card-bg);
   backdrop-filter: blur(16px);
   overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
 }
 
 /* Ledger Head */
@@ -279,11 +323,11 @@
   grid-template-columns: 2.5fr 1.5fr 2fr 1.2fr 1.2fr;
   gap: 0;
   padding: 1rem 1.5rem;
-  background: rgba(255,255,255,0.02);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  background: var(--is-table-head-bg);
+  border-bottom: 1px solid var(--is-table-head-border);
   font-size: 0.78rem;
   font-weight: 800;
-  color: rgba(255,255,255,0.35);
+  color: var(--is-table-head-text);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -294,13 +338,13 @@
   grid-template-columns: 2.5fr 1.5fr 2fr 1.2fr 1.2fr;
   gap: 0;
   padding: 1.15rem 1.5rem;
-  border-bottom: 1px solid rgba(255,255,255,0.03);
+  border-bottom: 1px solid var(--is-table-row-border);
   align-items: center;
   transition: all 0.25s ease;
 }
 .is-ledger-row:last-child { border-bottom: none; }
 .is-ledger-row:hover {
-  background: rgba(59,130,246,0.04);
+  background: var(--is-table-row-hover-bg);
 }
 
 /* Columns */
@@ -322,14 +366,14 @@
   display: block;
   font-size: 0.95rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--is-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .is-student-id {
   font-size: 0.72rem;
-  color: rgba(255,255,255,0.3);
+  color: var(--is-text-muted);
   font-family: monospace;
 }
 
@@ -340,7 +384,11 @@
   gap: 5px;
   font-size: 0.82rem;
   font-family: monospace;
-  color: rgba(255,255,255,0.5);
+  color: var(--is-phone-color);
+  background: var(--is-phone-bg);
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(59, 130, 246, 0.08);
 }
 
 .is-col-course { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
@@ -354,7 +402,7 @@
 }
 .is-course-subject {
   font-size: 0.72rem;
-  color: rgba(255,255,255,0.35);
+  color: var(--is-text-secondary);
   display: flex; align-items: center; gap: 4px;
 }
 
@@ -395,13 +443,13 @@
 .is-date-val {
   font-size: 0.82rem;
   font-family: monospace;
-  color: rgba(255,255,255,0.55);
+  color: var(--is-text-primary);
   font-weight: 700;
 }
 .is-date-time {
   font-size: 0.7rem;
   font-family: monospace;
-  color: rgba(255,255,255,0.25);
+  color: var(--is-text-secondary);
 }
 
 /* Empty State */
@@ -413,18 +461,18 @@
   width: 70px; height: 70px;
   margin: 0 auto 1.25rem;
   border-radius: 20px;
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
+  background: var(--is-empty-bg);
+  border: 1px solid var(--is-empty-border);
   display: flex; align-items: center; justify-content: center;
-  color: rgba(255,255,255,0.2);
+  color: var(--is-text-muted);
 }
 .is-empty-row h3 {
   font-size: 1.1rem; font-weight: 800;
-  color: #fff; margin-bottom: 8px;
+  color: var(--is-empty-title); margin-bottom: 8px;
 }
 .is-empty-row p {
   font-size: 0.85rem;
-  color: rgba(255,255,255,0.35);
+  color: var(--is-empty-desc);
   max-width: 360px;
   margin: 0 auto;
   line-height: 1.5;
@@ -439,8 +487,8 @@
     padding: 1.25rem;
     border-radius: 16px;
     margin: 8px;
-    border: 1px solid rgba(255,255,255,0.05);
-    background: rgba(255,255,255,0.015);
+    border: 1px solid var(--is-table-row-border);
+    background: var(--is-card-bg);
   }
   .is-ledger-wrap {
     background: transparent;

@@ -16,7 +16,11 @@
     <div class="ic-aurora-content">
       <div class="ic-aurora-badge">
         <div class="ic-aurora-badge-ring"></div>
-        <i data-lucide="graduation-cap"></i>
+        {% if avatar_url %}
+          <img src="{{ avatar_url }}" alt="المدرس" class="ic-hero-avatar">
+        {% else %}
+          <i data-lucide="graduation-cap"></i>
+        {% endif %}
       </div>
       <div class="ic-aurora-text">
         <h1 class="ic-aurora-title">حقيبتك التدريبية</h1>
@@ -46,6 +50,8 @@
       <div class="ic-card-visual">
         {% if course.cover_url %}
           <img src="{{ course.cover_url }}" alt="{{ course.title }}" class="ic-card-cover" loading="lazy">
+        {% elif avatar_url %}
+          <img src="{{ avatar_url }}" alt="{{ course.title }}" class="ic-card-cover ic-card-avatar-fallback" loading="lazy">
         {% else %}
           <div class="ic-card-no-cover">
             <i data-lucide="video" style="width:48px;height:48px;opacity:.15"></i>
@@ -56,6 +62,11 @@
           <i data-lucide="bookmark" style="width:11px"></i>
           {{ course.subject_name }}
         </span>
+        {% if avatar_url %}
+          <div class="ic-card-avatar-float" title="أستاذ المادة">
+            <img src="{{ avatar_url }}" alt="{{ course.instructor.get_full_name }}">
+          </div>
+        {% endif %}
         <div class="ic-card-shimmer-sweep"></div>
       </div>
 
@@ -121,18 +132,71 @@
 ═══════════════════════════════════════════════ */
 .ic-courses-page {
   padding-bottom: 2rem;
+  
+  /* Theme-adaptive custom properties (Default: Dark Theme) */
+  --ic-hero-bg: linear-gradient(160deg, #1a1407 0%, #120e08 40%, #0d0b08 100%);
+  --ic-hero-border: rgba(245,158,11,0.2);
+  --ic-hero-title: linear-gradient(135deg, #fff 20%, #f59e0b 100%);
+  --ic-hero-desc: rgba(255,255,255,0.45);
+  
+  --ic-card-bg: linear-gradient(165deg, rgba(26,20,7,0.8) 0%, rgba(14,12,8,0.9) 100%);
+  --ic-card-border: rgba(245,158,11,0.1);
+  --ic-card-title: #ffffff;
+  --ic-card-date: rgba(255,255,255,0.35);
+  --ic-card-action-bg: rgba(0,0,0,0.15);
+  --ic-card-action-border: rgba(245,158,11,0.06);
+  --ic-capsule-bg-amber: rgba(245,158,11,0.06);
+  --ic-capsule-border-amber: rgba(245,158,11,0.15);
+  --ic-capsule-bg-orange: rgba(234,88,12,0.06);
+  --ic-capsule-border-orange: rgba(234,88,12,0.15);
+  --ic-act-ghost-bg: rgba(255,255,255,0.02);
+  --ic-act-ghost-border: rgba(255,255,255,0.06);
+  --ic-act-ghost-color: rgba(255,255,255,0.5);
+  --ic-empty-bg: rgba(26,20,7,0.3);
+  --ic-empty-border: rgba(245,158,11,0.12);
+  --ic-empty-desc: rgba(255,255,255,0.38);
+  --ic-text-white: #ffffff;
+}
+
+/* Light Theme overrides - triggered when parent has no dark-theme class */
+html:not(.dark-theme) .ic-courses-page,
+body:not(.dark-theme) .ic-courses-page,
+:root:not(.dark-theme) .ic-courses-page {
+  --ic-hero-bg: linear-gradient(160deg, #fefae0 0%, #fdf6e2 40%, #faf3dd 100%);
+  --ic-hero-border: rgba(245,158,11,0.3);
+  --ic-hero-title: linear-gradient(135deg, #1e1b18 20%, #d97706 100%);
+  --ic-hero-desc: rgba(30,27,24,0.6);
+  
+  --ic-card-bg: linear-gradient(165deg, rgba(255,255,255,0.95) 0%, rgba(250,248,245,0.98) 100%);
+  --ic-card-border: rgba(245,158,11,0.18);
+  --ic-card-title: #1f2937;
+  --ic-card-date: rgba(55,65,81,0.6);
+  --ic-card-action-bg: rgba(245,158,11,0.03);
+  --ic-card-action-border: rgba(245,158,11,0.1);
+  --ic-capsule-bg-amber: rgba(245,158,11,0.08);
+  --ic-capsule-border-amber: rgba(245,158,11,0.25);
+  --ic-capsule-bg-orange: rgba(234,88,12,0.08);
+  --ic-capsule-border-orange: rgba(234,88,12,0.25);
+  --ic-act-ghost-bg: rgba(0,0,0,0.02);
+  --ic-act-ghost-border: rgba(0,0,0,0.08);
+  --ic-act-ghost-color: rgba(55,65,81,0.7);
+  --ic-empty-bg: rgba(245,158,11,0.03);
+  --ic-empty-border: rgba(245,158,11,0.2);
+  --ic-empty-desc: rgba(55,65,81,0.6);
+  --ic-text-white: #1f2937;
 }
 
 /* ─── AURORA HERO ─── */
 .ic-aurora-hero {
   position: relative;
   border-radius: 32px;
-  background: linear-gradient(160deg, #1a1407 0%, #120e08 40%, #0d0b08 100%);
-  border: 1px solid rgba(245,158,11,0.2);
+  background: var(--ic-hero-bg);
+  border: 1px solid var(--ic-hero-border);
   padding: 2.5rem 2rem;
   overflow: hidden;
   margin-bottom: 2rem;
   min-height: 160px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.04);
 }
 .ic-aurora-wave {
   position: absolute;
@@ -192,6 +256,12 @@
   color: #f59e0b;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
+}
+.ic-hero-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .ic-aurora-badge svg { width: 28px; height: 28px; }
 .ic-aurora-badge-ring {
@@ -200,6 +270,8 @@
   border-radius: 24px;
   border: 2px solid rgba(245,158,11,0.15);
   animation: icBadgePulse 3s ease-in-out infinite;
+  z-index: 2;
+  pointer-events: none;
 }
 @keyframes icBadgePulse {
   0%, 100% { transform: scale(1); opacity: 0.5; }
@@ -209,16 +281,15 @@
 .ic-aurora-title {
   font-size: clamp(1.4rem, 4vw, 1.8rem);
   font-weight: 900;
-  color: #fff;
   margin: 0 0 6px;
   line-height: 1.2;
-  background: linear-gradient(135deg, #fff 20%, #f59e0b 100%);
+  background: var(--ic-hero-title);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .ic-aurora-desc {
   font-size: 0.85rem;
-  color: rgba(255,255,255,0.45);
+  color: var(--ic-hero-desc);
   margin: 0;
   line-height: 1.5;
 }
@@ -280,13 +351,14 @@
 /* ─── 3D CARD ─── */
 .ic-card-3d {
   border-radius: 26px;
-  background: linear-gradient(165deg, rgba(26,20,7,0.8) 0%, rgba(14,12,8,0.9) 100%);
-  border: 1px solid rgba(245,158,11,0.1);
+  background: var(--ic-card-bg);
+  border: 1px solid var(--ic-card-border);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
 }
 .ic-card-3d::before {
   content: '';
@@ -321,6 +393,9 @@
   object-fit: cover;
   transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
+.ic-card-avatar-fallback {
+  filter: brightness(0.7) contrast(1.05);
+}
 .ic-card-3d:hover .ic-card-cover { transform: scale(1.08); }
 .ic-card-no-cover {
   width: 100%; height: 100%;
@@ -331,7 +406,7 @@
 .ic-card-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, transparent 30%, rgba(10,9,8,0.85) 100%);
+  background: linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.4) 100%);
   pointer-events: none;
 }
 .ic-card-subject-glass {
@@ -347,6 +422,30 @@
   border-radius: 12px;
   display: flex; align-items: center; gap: 5px;
   z-index: 3;
+}
+.ic-card-avatar-float {
+  position: absolute;
+  bottom: -16px;
+  left: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid #f59e0b;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+  overflow: hidden;
+  z-index: 4;
+  background: var(--bg-surface);
+  transition: all 0.4s ease;
+}
+.ic-card-3d:hover .ic-card-avatar-float {
+  transform: scale(1.1) rotate(5deg);
+  border-color: #ea580c;
+  box-shadow: 0 6px 20px rgba(245,158,11,0.4);
+}
+.ic-card-avatar-float img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .ic-card-shimmer-sweep {
   position: absolute;
@@ -364,13 +463,13 @@
 
 /* Card Content */
 .ic-card-content {
-  padding: 1.4rem 1.5rem 1rem;
+  padding: 1.6rem 1.5rem 1rem;
   flex: 1;
 }
 .ic-card-title {
   font-size: 1.1rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--ic-card-title);
   margin: 0 0 8px;
   line-height: 1.4;
   display: -webkit-box;
@@ -383,7 +482,7 @@
   align-items: center;
   gap: 6px;
   font-size: 0.78rem;
-  color: rgba(255,255,255,0.35);
+  color: var(--ic-card-date);
   margin-bottom: 1.1rem;
 }
 
@@ -414,14 +513,14 @@
   50% { opacity: 0.4; transform: scale(0.7); }
 }
 .ic-capsule-amber {
-  background: rgba(245,158,11,0.06);
-  border: 1px solid rgba(245,158,11,0.15);
+  background: var(--ic-capsule-bg-amber);
+  border: 1px solid var(--ic-capsule-border-amber);
   color: #fbbf24;
 }
 .ic-capsule-amber .ic-capsule-dot { background: #f59e0b; }
 .ic-capsule-orange {
-  background: rgba(234,88,12,0.06);
-  border: 1px solid rgba(234,88,12,0.15);
+  background: var(--ic-capsule-bg-orange);
+  border: 1px solid var(--ic-capsule-border-orange);
   color: #fb923c;
 }
 .ic-capsule-orange .ic-capsule-dot { background: #ea580c; }
@@ -441,8 +540,8 @@
   display: flex;
   gap: 8px;
   padding: 1rem 1.5rem 1.3rem;
-  border-top: 1px solid rgba(245,158,11,0.06);
-  background: rgba(0,0,0,0.15);
+  border-top: 1px solid var(--ic-card-action-border);
+  background: var(--ic-card-action-bg);
 }
 .ic-act-btn {
   flex: 1;
@@ -473,14 +572,14 @@
   box-shadow: 0 6px 20px rgba(245,158,11,0.2);
 }
 .ic-act-ghost {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.5);
+  background: var(--ic-act-ghost-bg);
+  border: 1px solid var(--ic-act-ghost-border);
+  color: var(--ic-act-ghost-color);
 }
 .ic-act-ghost:hover {
   background: rgba(255,255,255,0.05);
-  border-color: rgba(255,255,255,0.12);
-  color: #fff;
+  border-color: rgba(245,158,11,0.2);
+  color: var(--ic-text-white);
   transform: translateY(-2px);
 }
 
@@ -489,8 +588,8 @@
   text-align: center;
   padding: 5rem 2rem;
   border-radius: 28px;
-  border: 1px dashed rgba(245,158,11,0.12);
-  background: rgba(26,20,7,0.3);
+  border: 1px dashed var(--ic-empty-border);
+  background: var(--ic-empty-bg);
 }
 .ic-empty-orb {
   width: 82px; height: 82px;
@@ -509,12 +608,12 @@
 .ic-empty-title {
   font-size: 1.25rem;
   font-weight: 800;
-  color: #fff;
+  color: var(--ic-card-title);
   margin-bottom: 8px;
 }
 .ic-empty-desc {
   font-size: 0.88rem;
-  color: rgba(255,255,255,0.38);
+  color: var(--ic-empty-desc);
   max-width: 400px;
   margin: 0 auto;
   line-height: 1.6;
