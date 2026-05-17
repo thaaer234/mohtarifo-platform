@@ -19,10 +19,17 @@
         <form method="post" class="auth-form-body">
             {% csrf_token %}
             
-            {% if login_error or form.non_field_errors %}
+            {% if login_error %}
                 <div class="alert-premium error mb-6">
                     <i data-lucide="alert-circle"></i>
-                    <span>{{ login_error|default:form.non_field_errors.0 }}</span>
+                    <span>{{ login_error }}</span>
+                </div>
+            {% elif form.non_field_errors %}
+                <div class="alert-premium error mb-6">
+                    <i data-lucide="alert-circle"></i>
+                    {% for error in form.non_field_errors %}
+                        <span>{{ error }}</span>
+                    {% endfor %}
                 </div>
             {% endif %}
 
