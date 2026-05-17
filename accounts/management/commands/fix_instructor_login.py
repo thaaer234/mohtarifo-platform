@@ -24,7 +24,11 @@ class Command(BaseCommand):
 
         user = User.objects.filter(username=username).first()
         if not user:
-            self.stderr.write(self.style.ERROR(f"لم يُعثر على مستخدم: {username}"))
+            from accounts.auth_utils import resolve_user_for_login
+            user = resolve_user_for_login(username)
+            
+        if not user:
+            self.stderr.write(self.style.ERROR(f"لم يُعثر على مستخدم بـ: {username}"))
             return
 
         profile, _ = InstructorProfile.objects.get_or_create(
