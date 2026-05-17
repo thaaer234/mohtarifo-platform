@@ -386,12 +386,31 @@
     }
 
     @media print {
-        body { background: white; }
-        .premium-wrapper { margin: 0; box-shadow: none; border-radius: 0; border: none; }
+        @page {
+            size: A4 portrait;
+            margin: 5mm; /* Reduce margin as much as possible */
+        }
+        body { 
+            background: white; 
+            padding: 0;
+            margin: 0;
+        }
+        .premium-wrapper { 
+            margin: 5mm auto; /* Tiny margin around the box */
+            box-shadow: none; 
+            border-radius: 24px; /* Keep rounded edges */
+            border: 1px solid var(--border-color); /* Subtle border to show the rounding on white paper */
+            overflow: hidden;
+            width: 100%;
+        }
         .stat-card { border: 1px solid var(--border-color); box-shadow: none; }
         .premium-table-wrapper { border: 1px solid var(--border-color); box-shadow: none; }
         .page-break { page-break-after: always; }
-        .premium-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .premium-header { 
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact; 
+            padding: 30px 40px; /* Slightly tighter for print */
+        }
     }
 </style>
 {% endblock %}
