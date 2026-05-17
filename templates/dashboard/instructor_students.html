@@ -1,90 +1,124 @@
 {% extends "dashboard/instructor_base.html" %}
-
 {% block instructor_title %}سجل الطلاب{% endblock %}
 
 {% block instructor_content %}
-<div class="tab-pane active fade-in">
-    <div class="pro-card p-6" style="border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); background: rgba(30, 30, 30, 0.25); backdrop-filter: blur(10px);">
-        
-        <!-- Filters Header -->
-        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-4 mb-6" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1.5rem;">
+<div class="tab-pane active fade-in" dir="rtl">
+    
+    <!-- Top Showcase Banner & Filters -->
+    <div class="pro-card mb-6 p-5" style="border-radius: 24px; border: 1px solid rgba(59, 130, 246, 0.2); background: linear-gradient(135deg, rgba(59,130,246,0.06) 0%, rgba(30,30,30,0.3) 100%);">
+        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-4">
+            
             <div class="d-flex align-items-center gap-3">
-                <div class="bg-primary-soft p-2.5 rounded-lg flex-center" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.15); display: flex; justify-content: center; align-items: center; width: 42px; height: 42px;">
-                    <i data-lucide="users"></i>
+                <div class="flex-center" style="width: 50px; height: 50px; border-radius: 16px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; display: flex; justify-content: center; align-items: center; border: 1px solid rgba(59, 130, 246, 0.25);">
+                    <i data-lucide="users" style="width: 24px; height: 24px;"></i>
                 </div>
                 <div>
-                    <h3 class="mb-0 font-weight-bold" style="font-size: 1.4rem; text-align: right;">سجل انتساب الطلاب</h3>
-                    <p class="text-muted small mb-0 mt-1" style="text-align: right;">قائمة تفصيلية بكافة الطلاب المفعلين لدوراتك التعليمية حالياً.</p>
+                    <h3 class="mb-0 font-weight-bold" style="font-size: 1.5rem; text-shadow: 0 2px 10px rgba(0,0,0,0.3);">سجل انتساب الطلاب</h3>
+                    <p class="text-muted small mb-0 mt-1">تصفح طلابك المشتركين، ابحث عنهم بالاسم أو رقم الهاتف، وتحقق من صلاحياتهم.</p>
                 </div>
             </div>
-            
-            <!-- Course Filter Dropdown -->
-            <div class="d-flex align-items-center gap-3">
-                <label class="text-muted small font-weight-bold mb-0" style="white-space: nowrap;">تصفية حسب الدورة:</label>
-                <form method="GET" action="" id="filter-form">
-                    <select name="course_id" class="form-control rounded-lg" onchange="submitFilter()" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); padding: 0.5rem 2.5rem 0.5rem 1rem; border-radius: 12px; font-weight: 700; outline: none; cursor: pointer; -webkit-appearance: none;">
-                        <option value="">كل دوراتي التدريبية</option>
-                        {% for course in courses %}
-                        <option value="{{ course.id }}" {% if selected_course_id == course.id|stringformat:"s" %}selected{% endif %}>{{ course.title }}</option>
-                        {% endfor %}
-                    </select>
+
+            <!-- Course Filter & Search Grid -->
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <!-- Live Search Bar (UX Enhancement) -->
+                <div class="position-relative" style="min-width: 220px;">
+                    <i data-lucide="search" class="position-absolute" style="top: 50%; right: 14px; transform: translateY(-50%); width: 16px; color: var(--text-muted);"></i>
+                    <input type="text" id="studentSearch" placeholder="ابحث بالاسم أو الهاتف..." class="form-control" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); color: var(--text-primary); border-radius: 14px; padding: 0.6rem 2.5rem 0.6rem 1rem; font-size: 0.9rem; outline: none; width: 100%; transition: all 0.3s ease;">
+                </div>
+
+                <!-- Course Dropdown -->
+                <form method="GET" action="" id="filter-form" class="m-0">
+                    <div class="position-relative">
+                        <select name="course_id" class="form-control" onchange="submitFilter()" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08); color: var(--text-primary); padding: 0.6rem 2.5rem 0.6rem 1.25rem; border-radius: 14px; font-weight: 700; font-size: 0.9rem; outline: none; cursor: pointer; -webkit-appearance: none; -moz-appearance: none; appearance: none; min-width: 200px;">
+                            <option value="">جميع الدورات التدريبية</option>
+                            {% for course in courses %}
+                            <option value="{{ course.id }}" {% if selected_course_id == course.id|stringformat:"s" %}selected{% endif %}>{{ course.title }}</option>
+                            {% endfor %}
+                        </select>
+                        <i data-lucide="chevron-down" class="position-absolute" style="top: 50%; left: 14px; transform: translateY(-50%); width: 16px; color: var(--text-muted); pointer-events: none;"></i>
+                    </div>
                 </form>
             </div>
+            
         </div>
+    </div>
 
+    <!-- Students Table Ledger Card -->
+    <div class="pro-card p-6" style="border-radius: 28px; border: 1px solid rgba(255,255,255,0.06); background: rgba(22, 22, 22, 0.45); backdrop-filter: blur(15px);">
         <div class="table-responsive">
-            <table class="table custom-table">
+            <table class="table custom-table mb-0">
                 <thead>
-                    <tr class="text-muted small font-weight-bold" style="border-bottom: 2px solid rgba(255,255,255,0.05);">
-                        <th style="padding: 1.25rem 1rem; text-align: right;">اسم الطالب</th>
-                        <th style="padding: 1.25rem 1rem; text-align: right;">رقم الهاتف / اسم المستخدم</th>
-                        <th style="padding: 1.25rem 1rem; text-align: right;">المادة والفرع</th>
-                        <th class="text-center" style="padding: 1.25rem 1rem;">نوع التفعيل</th>
-                        <th class="text-center" style="padding: 1.25rem 1rem;">تاريخ الانضمام</th>
+                    <tr class="text-muted small font-weight-bold" style="border-bottom: 2px solid rgba(255,255,255,0.04);">
+                        <th style="padding: 1.25rem 1rem; text-align: right; font-size: 0.9rem;">اسم الطالب</th>
+                        <th style="padding: 1.25rem 1rem; text-align: right; font-size: 0.9rem;">بيانات الاتصال</th>
+                        <th style="padding: 1.25rem 1rem; text-align: right; font-size: 0.9rem;">المقرر التدريبي المفعّل</th>
+                        <th class="text-center" style="padding: 1.25rem 1rem; font-size: 0.9rem;">طريقة التفعيل</th>
+                        <th class="text-center" style="padding: 1.25rem 1rem; font-size: 0.9rem;">تاريخ الانضمام</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="studentTableBody">
                     {% for grant in grants_list %}
-                    <tr class="align-middle" style="border-bottom: 1px solid rgba(255,255,255,0.03);">
-                        <td style="padding: 1.25rem 1rem; text-align: right;">
+                    <tr class="align-middle student-row" style="border-bottom: 1px solid rgba(255,255,255,0.02);">
+                        <td style="padding: 1.4rem 1rem; text-align: right;">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="student-avatar flex-center" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.02) 100%); color: var(--brand-gold); border: 1px solid rgba(245, 158, 11, 0.2); font-weight: bold; font-size: 1rem; display: flex; justify-content: center; align-items: center;">
-                                    {{ grant.user.get_full_name|default:grant.user.username|slice:":1" }}
+                                <div class="student-avatar-ring position-relative" style="width: 44px; height: 44px;">
+                                    <div class="position-absolute" style="inset: 0; border-radius: 50%; background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%); padding: 1.5px; opacity: 0.75;"></div>
+                                    <div class="w-100 h-100 position-relative flex-center" style="border-radius: 50%; background: #161616; overflow: hidden; display: flex; justify-content: center; align-items: center; color: #fff; font-weight: 800; font-size: 0.95rem; font-family: 'Cairo', sans-serif;">
+                                        {{ grant.user.get_full_name|default:grant.user.username|slice:":1" }}
+                                    </div>
                                 </div>
                                 <div>
-                                    <strong style="color: var(--text-primary);">{{ grant.user.get_full_name|default:grant.user.username }}</strong>
+                                    <strong class="d-block student-name" style="color: var(--text-primary); font-size: 1rem;">{{ grant.user.get_full_name|default:grant.user.username }}</strong>
+                                    <span class="text-muted small">ID: #{{ grant.user.id }}</span>
                                 </div>
                             </div>
                         </td>
-                        <td style="padding: 1.25rem 1rem; font-family: monospace; font-size: 0.95rem; color: var(--text-secondary); text-align: right;">
-                            {{ grant.user.student_profile.phone|default:grant.user.username }}
+                        <td style="padding: 1.4rem 1rem; text-align: right;">
+                            <span class="d-flex align-items-center gap-1.5 student-phone" style="font-family: monospace; font-size: 0.95rem; color: var(--text-secondary); display: flex; align-items: center;">
+                                <i data-lucide="phone" style="width: 14px; color: rgba(255,255,255,0.35);"></i>
+                                {{ grant.user.student_profile.phone|default:grant.user.username }}
+                            </span>
                         </td>
-                        <td style="padding: 1.25rem 1rem; text-align: right;">
+                        <td style="padding: 1.4rem 1rem; text-align: right;">
                             <div class="d-flex flex-column gap-1">
-                                <span class="font-weight-bold" style="color: var(--brand-gold);">{{ grant.course.title }}</span>
-                                <span class="text-muted small">{{ grant.course.subject.name }} ({{ grant.course.get_academic_track_display }})</span>
+                                <span class="font-weight-bold" style="color: var(--brand-gold); font-size: 0.95rem;">{{ grant.course.title }}</span>
+                                <span class="text-muted small d-flex align-items-center gap-1"><i data-lucide="book-open" style="width: 12px;"></i> {{ grant.course.subject.name }}</span>
                             </div>
                         </td>
-                        <td class="text-center" style="padding: 1.25rem 1rem;">
-                            <span class="badge px-2.5 py-1.5 rounded-md" style="font-size: 0.8rem; font-weight: 700;
-                                {% if grant.source == 'admin' %}background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.15);
-                                {% elif grant.source == 'code' %}background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.15);
-                                {% else %}background: rgba(245, 158, 11, 0.1); color: var(--brand-gold); border: 1px solid rgba(245, 158, 11, 0.15);{% endif %}">
+                        <td class="text-center" style="padding: 1.4rem 1rem;">
+                            <span class="badge px-3 py-2 rounded-md" style="font-size: 0.8rem; font-weight: 800; border-radius: 10px;
+                                {% if grant.source == 'admin' %}background: rgba(59, 130, 246, 0.08); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2);
+                                {% elif grant.source == 'code' %}background: rgba(16, 185, 129, 0.08); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2);
+                                {% else %}background: rgba(245, 158, 11, 0.08); color: var(--brand-gold); border: 1px solid rgba(245, 158, 11, 0.2);{% endif %}">
+                                <i data-lucide="{% if grant.source == 'code' %}key{% else %}user-check{% endif %}" style="width: 12px; margin-left: 4px; vertical-align: middle;"></i>
                                 {{ grant.get_source_display|default:grant.source }}
                             </span>
                         </td>
-                        <td class="text-center" style="padding: 1.25rem 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                        <td class="text-center" style="padding: 1.4rem 1rem; color: var(--text-muted); font-size: 0.9rem; font-family: monospace;">
                             {{ grant.created_at|date:"Y-m-d H:i" }}
                         </td>
                     </tr>
                     {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center py-12 text-muted" style="padding: 4rem;">
-                            <i data-lucide="users-2" class="mb-4" style="width: 48px; height: 48px; opacity: 0.5;"></i>
-                            <p class="mb-0" style="font-size: 1.1rem; font-weight: 600;">لا يوجد طلاب منضمين للمادة/المواد المحددة حالياً.</p>
+                    <tr id="emptyRow">
+                        <td colspan="5" class="text-center py-12 text-muted" style="padding: 5rem 2rem;">
+                            <div class="flex-center mx-auto mb-4" style="width: 64px; height: 64px; border-radius: 16px; background: rgba(255,255,255,0.02); color: var(--text-muted); display: inline-flex; justify-content: center; align-items: center; border: 1px solid rgba(255,255,255,0.05);">
+                                <i data-lucide="users" style="width: 32px; height: 32px;"></i>
+                            </div>
+                            <h4 class="font-weight-bold text-white mb-2" style="font-size: 1.25rem;">لا يوجد طلاب مشتركين</h4>
+                            <p class="text-muted small max-w-md mx-auto">لم يقم أي طالب بالاشتراك في المادة/المواد المحددة حالياً.</p>
                         </td>
                     </tr>
                     {% endfor %}
+                    <!-- JavaScript Search Fallback Empty Row -->
+                    <tr id="noResultsRow" style="display: none;">
+                        <td colspan="5" class="text-center py-12 text-muted" style="padding: 5rem 2rem;">
+                            <div class="flex-center mx-auto mb-4" style="width: 64px; height: 64px; border-radius: 16px; background: rgba(239, 68, 68, 0.05); color: #ef4444; display: inline-flex; justify-content: center; align-items: center; border: 1px solid rgba(239, 68, 68, 0.15);">
+                                <i data-lucide="search-code" style="width: 32px; height: 32px;"></i>
+                            </div>
+                            <h4 class="font-weight-bold text-white mb-2" style="font-size: 1.25rem;">لم يتم العثور على أي نتائج</h4>
+                            <p class="text-muted small max-w-md mx-auto">تأكد من كتابة الاسم أو رقم الهاتف بشكل صحيح، أو جرب مصطلحات بحث أخرى.</p>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -97,5 +131,41 @@
     function submitFilter() {
         document.getElementById('filter-form').submit();
     }
+
+    // Client-side real-time filtering script (Extreme UX Upgrade)
+    document.addEventListener("DOMContentLoaded", () => {
+        const searchInput = document.getElementById("studentSearch");
+        const rows = document.querySelectorAll(".student-row");
+        const noResultsRow = document.getElementById("noResultsRow");
+        const emptyRow = document.getElementById("emptyRow");
+
+        if (searchInput) {
+            searchInput.addEventListener("input", (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                let visibleCount = 0;
+
+                rows.forEach(row => {
+                    const name = row.querySelector(".student-name").textContent.toLowerCase();
+                    const phone = row.querySelector(".student-phone").textContent.toLowerCase();
+
+                    if (name.includes(query) || phone.includes(query)) {
+                        row.style.display = "";
+                        visibleCount++;
+                    } else {
+                        row.style.display = "none";
+                    }
+                });
+
+                // Show/hide empty state row
+                if (rows.length > 0) {
+                    if (visibleCount === 0) {
+                        noResultsRow.style.display = "";
+                    } else {
+                        noResultsRow.style.display = "none";
+                    }
+                }
+            });
+        }
+    });
 </script>
 {% endblock %}

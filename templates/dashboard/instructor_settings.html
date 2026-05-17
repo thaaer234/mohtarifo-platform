@@ -1,64 +1,140 @@
 {% extends "dashboard/instructor_base.html" %}
-
 {% block instructor_title %}إعدادات الحساب{% endblock %}
 
 {% block instructor_content %}
-<div class="tab-pane active fade-in">
+<div class="tab-pane active fade-in" dir="rtl">
     <div class="row justify-content-center">
-        <div class="col-lg-6 col-md-8">
+        <div class="col-lg-7 col-md-9 col-12">
             
             {% if messages %}
                 {% for message in messages %}
-                    <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %} mb-6 p-4 rounded-lg" style="border-radius: 12px;">
-                        {{ message }}
+                    <div class="alert {% if message.tags == 'success' %}alert-success-glow{% else %}alert-danger-glow{% endif %} mb-6 p-4" style="border-radius: 16px; backdrop-filter: blur(10px); font-weight: 700; text-align: right; display: flex; align-items: center; gap: 10px;">
+                        <i data-lucide="{% if message.tags == 'success' %}check-circle{% else %}alert-circle{% endif %}"></i>
+                        <span>{{ message }}</span>
                     </div>
                 {% endfor %}
             {% endif %}
 
-            <div class="pro-card p-6" style="border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); background: rgba(30, 30, 30, 0.25); backdrop-filter: blur(10px);">
-                <div class="mb-5 text-center">
-                    <div class="flex-center mx-auto mb-4" style="width: 64px; height: 64px; border-radius: 16px; background: rgba(245, 158, 11, 0.1); color: var(--brand-gold); display: inline-flex; justify-content: center; align-items: center;">
-                        <i data-lucide="key-round" style="width: 32px; height: 32px;"></i>
+            <!-- Settings Card -->
+            <div class="pro-card p-6" style="border-radius: 30px; border: 1px solid rgba(255,255,255,0.06); background: rgba(22, 22, 22, 0.45); backdrop-filter: blur(15px);">
+                
+                <div class="mb-6 text-center" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1.5rem;">
+                    <div class="flex-center mx-auto mb-3 position-relative" style="width: 60px; height: 60px; border-radius: 16px; background: rgba(245, 158, 11, 0.12); color: var(--brand-gold); display: flex; justify-content: center; align-items: center; border: 1px solid rgba(245, 158, 11, 0.2);">
+                        <i data-lucide="shield-check" style="width: 28px; height: 28px;"></i>
                     </div>
-                    <h3 class="font-weight-bold mb-2">تغيير كلمة المرور</h3>
-                    <p class="text-muted small">يمكنك تعديل كلمة المرور الحالية وتعيين كلمة مرور جديدة لحماية حسابك.</p>
+                    <h3 class="font-weight-bold mb-1" style="font-size: 1.4rem; color: var(--text-primary);">تعديل كلمة مرور الحساب</h3>
+                    <p class="text-muted small mb-0 mt-2" style="max-width: 400px; margin: 0 auto; line-height: 1.5;">قم بتعيين كلمة مرور قوية وجديدة لزيادة حماية حسابك من الدخول غير المصرح به.</p>
                 </div>
 
+                <!-- Form -->
                 <form method="post" action="" class="d-flex flex-column gap-4">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="change_password">
 
                     <!-- Current Password -->
-                    <div class="form-group mb-4">
-                        <label class="text-muted small font-weight-bold mb-2 d-block text-right">كلمة المرور الحالية:</label>
+                    <div class="form-group">
+                        <label class="text-white small font-weight-bold mb-2 d-block text-right">كلمة المرور الحالية المعتمدة:</label>
                         <div class="position-relative">
-                            <input type="password" name="current_password" required class="form-control" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 14px; padding: 0.8rem 1.2rem; width: 100%; outline: none;" placeholder="••••••••">
+                            <i data-lucide="lock" class="position-absolute" style="top: 50%; right: 14px; transform: translateY(-50%); width: 16px; color: var(--text-muted);"></i>
+                            <input type="password" name="current_password" id="current_password" required class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); color: var(--text-primary); border-radius: 14px; padding: 0.8rem 2.5rem 0.8rem 2.5rem; width: 100%; outline: none; transition: all 0.3s ease; text-align: right;" placeholder="••••••••">
+                            <button type="button" class="position-absolute toggle-password-btn" onclick="togglePasswordVisibility('current_password')" style="top: 50%; left: 14px; transform: translateY(-50%); background: none; border: none; padding: 0; color: var(--text-muted); cursor: pointer; outline: none; display: flex; align-items: center;">
+                                <i data-lucide="eye" style="width: 16px;" class="eye-icon"></i>
+                            </button>
                         </div>
                     </div>
 
                     <!-- New Password -->
-                    <div class="form-group mb-4">
-                        <label class="text-muted small font-weight-bold mb-2 d-block text-right">كلمة المرور الجديدة (8 خانات على الأقل):</label>
+                    <div class="form-group">
+                        <label class="text-white small font-weight-bold mb-2 d-block text-right">كلمة المرور الجديدة المقترحة:</label>
                         <div class="position-relative">
-                            <input type="password" name="new_password" required class="form-control" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 14px; padding: 0.8rem 1.2rem; width: 100%; outline: none;" placeholder="••••••••">
+                            <i data-lucide="key-round" class="position-absolute" style="top: 50%; right: 14px; transform: translateY(-50%); width: 16px; color: var(--text-muted);"></i>
+                            <input type="password" name="new_password" id="new_password" required class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); color: var(--text-primary); border-radius: 14px; padding: 0.8rem 2.5rem 0.8rem 2.5rem; width: 100%; outline: none; transition: all 0.3s ease; text-align: right;" placeholder="••••••••">
+                            <button type="button" class="position-absolute toggle-password-btn" onclick="togglePasswordVisibility('new_password')" style="top: 50%; left: 14px; transform: translateY(-50%); background: none; border: none; padding: 0; color: var(--text-muted); cursor: pointer; outline: none; display: flex; align-items: center;">
+                                <i data-lucide="eye" style="width: 16px;" class="eye-icon"></i>
+                            </button>
                         </div>
                     </div>
 
                     <!-- Confirm New Password -->
-                    <div class="form-group mb-4">
-                        <label class="text-muted small font-weight-bold mb-2 d-block text-right">تأكيد كلمة المرور الجديدة:</label>
+                    <div class="form-group">
+                        <label class="text-white small font-weight-bold mb-2 d-block text-right">تأكيد كلمة المرور الجديدة:</label>
                         <div class="position-relative">
-                            <input type="password" name="confirm_password" required class="form-control" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 14px; padding: 0.8rem 1.2rem; width: 100%; outline: none;" placeholder="••••••••">
+                            <i data-lucide="key-round" class="position-absolute" style="top: 50%; right: 14px; transform: translateY(-50%); width: 16px; color: var(--text-muted);"></i>
+                            <input type="password" name="confirm_password" id="confirm_password" required class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); color: var(--text-primary); border-radius: 14px; padding: 0.8rem 2.5rem 0.8rem 2.5rem; width: 100%; outline: none; transition: all 0.3s ease; text-align: right;" placeholder="••••••••">
+                            <button type="button" class="position-absolute toggle-password-btn" onclick="togglePasswordVisibility('confirm_password')" style="top: 50%; left: 14px; transform: translateY(-50%); background: none; border: none; padding: 0; color: var(--text-muted); cursor: pointer; outline: none; display: flex; align-items: center;">
+                                <i data-lucide="eye" style="width: 16px;" class="eye-icon"></i>
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Submit Button -->
-                    <button type="submit" class="btn btn-primary btn-glow w-100 py-3 mt-4" style="border-radius: 14px; font-size: 1.05rem; font-weight: 800; background: var(--brand-gold); border: none; color: #000;">
-                        <i data-lucide="check" style="width: 18px; margin-left: 6px; vertical-align: middle;"></i> حفظ كلمة المرور الجديدة
+                    <!-- Security Guidelines -->
+                    <div class="p-4 rounded-lg" style="background: rgba(245, 158, 11, 0.03); border: 1px solid rgba(245, 158, 11, 0.12); border-radius: 16px;">
+                        <span class="text-white small font-weight-bold d-block mb-2 text-right"><i data-lucide="info" style="width: 14px; vertical-align: middle; margin-left: 4px; color: var(--brand-gold);"></i> شروط كلمة المرور القوية:</span>
+                        <ul class="text-muted small mb-0 pr-4" style="list-style-type: disc; text-align: right; line-height: 1.6;">
+                            <li>يجب ألا تقل كلمة المرور عن 8 خانات كحد أدنى.</li>
+                            <li>يفضل إدراج مزيج من الحروف الكبيرة (A-Z) والصغيرة (a-z).</li>
+                            <li>ننصح بشدة بإضافة أرقام ورموز خاصة مثل (!@#$%).</li>
+                        </ul>
+                    </div>
+
+                    <!-- Submit -->
+                    <button type="submit" class="btn btn-primary btn-glow w-100 py-3 mt-2" style="border-radius: 14px; font-size: 1.05rem; font-weight: 800; background: var(--brand-gold); border: none; color: #000; display: flex; justify-content: center; align-items: center; gap: 6px;">
+                        <i data-lucide="check" style="width: 18px;"></i>
+                        حفظ وتطبيق كلمة المرور الجديدة
                     </button>
                 </form>
+
             </div>
         </div>
     </div>
 </div>
+
+<!-- Styles for password toggler -->
+<style>
+    .alert-success-glow {
+        background: rgba(16, 185, 129, 0.08) !important;
+        border: 1px solid rgba(16, 185, 129, 0.3) !important;
+        color: #34d399 !important;
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.12);
+    }
+    .alert-danger-glow {
+        background: rgba(239, 68, 68, 0.08) !important;
+        border: 1px solid rgba(239, 68, 68, 0.3) !important;
+        color: #f87171 !important;
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.12);
+    }
+    .form-control:focus {
+        background: rgba(0,0,0,0.4) !important;
+        border-color: rgba(245, 158, 11, 0.4) !important;
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.12) !important;
+    }
+    .toggle-password-btn:hover {
+        color: #fff !important;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // UX Upgrade: Real-time password visibility toggler
+    function togglePasswordVisibility(fieldId) {
+        const inputField = document.getElementById(fieldId);
+        const btn = inputField.nextElementSibling;
+        const icon = btn.querySelector('.eye-icon');
+
+        if (inputField.type === "password") {
+            inputField.type = "text";
+            if (window.lucide) {
+                icon.setAttribute("data-lucide", "eye-off");
+                window.lucide.createIcons();
+            }
+        } else {
+            inputField.type = "password";
+            if (window.lucide) {
+                icon.setAttribute("data-lucide", "eye");
+                window.lucide.createIcons();
+            }
+        }
+    }
+</script>
 {% endblock %}

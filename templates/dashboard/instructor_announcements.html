@@ -1,84 +1,180 @@
 {% extends "dashboard/instructor_base.html" %}
-
 {% block instructor_title %}إرسال تنبيه للطلاب{% endblock %}
 
 {% block instructor_content %}
-<div class="tab-pane active fade-in">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert {% if message.tags == 'success' %}alert-success{% else %}alert-danger{% endif %} mb-6 p-4 rounded-lg" style="border-radius: 12px;">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
+<div class="tab-pane active fade-in" dir="rtl">
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert {% if message.tags == 'success' %}alert-success-glow{% else %}alert-danger-glow{% endif %} mb-6 p-4" style="border-radius: 16px; backdrop-filter: blur(10px); font-weight: 700; text-align: right; display: flex; align-items: center; gap: 10px;">
+                <i data-lucide="{% if message.tags == 'success' %}check-circle{% else %}alert-circle{% endif %}"></i>
+                <span>{{ message }}</span>
+            </div>
+        {% endfor %}
+    {% endif %}
 
-            <div class="pro-card p-6" style="border-radius: 24px; border: 1px solid rgba(245, 158, 11, 0.25); background: rgba(30, 30, 30, 0.25); backdrop-filter: blur(10px);">
+    <div class="row g-4">
+        <!-- Right Column: Broadcast Form (Col-lg-7) -->
+        <div class="col-lg-7">
+            <div class="pro-card p-6" style="border-radius: 28px; border: 1px solid rgba(245, 158, 11, 0.2); background: rgba(22, 22, 22, 0.45); backdrop-filter: blur(15px); height: 100%;">
                 
-                <div class="d-flex align-items-center gap-3 mb-6" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1rem;">
-                    <div class="flex-center" style="width: 45px; height: 45px; border-radius: 12px; background: rgba(245,158,11,0.1); color: var(--brand-gold); display: flex; justify-content: center; align-items: center;">
-                        <i data-lucide="send"></i>
+                <div class="d-flex align-items-center gap-3 mb-6" style="border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 1.25rem;">
+                    <div class="flex-center" style="width: 46px; height: 46px; border-radius: 14px; background: rgba(245,158,11,0.15); color: var(--brand-gold); display: flex; justify-content: center; align-items: center; border: 1px solid rgba(245,158,11,0.25);">
+                        <i data-lucide="send" style="width: 20px; height: 20px;"></i>
                     </div>
                     <div>
-                        <h3 class="mb-0 font-weight-bold" style="font-size: 1.4rem; text-align: right;">إرسال رسالة تنبيه جماعية لطلابك</h3>
-                        <p class="text-muted small mb-0 mt-1" style="text-align: right;">أرسل إعلانات، تنبيهات، أو مهام دراسية لجميع الطلاب المشتركين في دوراتك.</p>
+                        <h3 class="mb-0 font-weight-bold" style="font-size: 1.4rem; text-shadow: 0 2px 10px rgba(0,0,0,0.3); text-align: right;">إرسال رسالة جماعية لطلابك</h3>
+                        <p class="text-muted small mb-0 mt-1" style="text-align: right;">أرسل إعلانات، تنبيهات، أو مهام دراسية لجميع الطلاب المشتركين في دوراتك التدريبية.</p>
                     </div>
                 </div>
 
                 <!-- Broadcast Form -->
-                <form method="POST" action="" style="margin-top: 1.5rem;">
+                <form method="POST" action="" class="d-flex flex-column gap-4">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="send_message">
                     
-                    <!-- Course Selection dropdown -->
-                    <div class="form-group mb-5">
-                        <label class="text-primary font-weight-bold mb-2" style="font-size: 1rem; color: var(--text-primary) !important; text-align: right; display: block;">1. حدد الطلاب المستهدفين (الدورة):</label>
-                        <select name="course_id" id="message-course-select" class="form-control rounded-lg" style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); padding: 0.8rem 2.5rem 0.8rem 1rem; border-radius: 14px; font-weight: 700; width: 100%; font-size: 1rem; outline: none; cursor: pointer;">
-                            <option value="all">كل الطلاب في جميع دوراتي ({{ students_count }} طالب)</option>
-                            {% for course in courses %}
-                            <option value="{{ course.id }}" {% if selected_course_id == course.id|stringformat:"s" %}selected{% endif %}>طلاب دورة: {{ course.title }} ({{ course.grants_total }} طالب)</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <!-- Message Content Box -->
-                    <div class="form-group mb-5">
-                        <label class="text-primary font-weight-bold mb-2" style="font-size: 1rem; color: var(--text-primary) !important; text-align: right; display: block;">2. اكتب نص الرسالة:</label>
-                        <textarea name="message_body" rows="6" class="form-control" placeholder="اكتب هنا ما تريد إيصاله للطلاب... (مثال: أهلاً بكم طلابي الأعزاء، تم اليوم رفع ملف المذاكرة الشاملة للجلسة الثالثة، يرجى مراجعته فوراً.)" required style="background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); border-radius: 16px; padding: 1.25rem; font-size: 1.05rem; line-height: 1.6; outline: none; width: 100%; resize: vertical;"></textarea>
-                    </div>
-
-                    <!-- Preview Panel -->
-                    <div class="p-4 mb-5" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 16px;">
-                        <span class="text-muted small font-weight-bold d-block mb-2" style="text-align: right;"><i data-lucide="eye" style="width: 14px; margin-left: 4px; vertical-align: middle;"></i> معاينة شكل الرسالة لدى الطلاب:</span>
-                        <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(245, 158, 11, 0.2); padding: 1rem 1.25rem; border-radius: 12px; color: var(--text-primary); font-size: 0.95rem; text-align: right;">
-                            <strong>رسالة من الأستاذ {{ request.user.get_full_name|default:request.user.username }}:</strong>
-                            <p class="mb-0 mt-2 text-muted" id="preview-text" style="line-height: 1.5; font-style: italic;">[ما ستكتبه في الصندوق أعلاه سيظهر هنا للطلاب...]</p>
+                    <!-- Course Target -->
+                    <div class="form-group">
+                        <label class="text-white font-weight-bold mb-2 d-block text-right" style="font-size: 0.95rem;">
+                            <i data-lucide="users" style="width: 14px; margin-left: 4px; vertical-align: middle; color: var(--brand-gold);"></i>
+                            1. تحديد الشريحة المستهدفة من الطلاب:
+                        </label>
+                        <div class="position-relative">
+                            <select name="course_id" id="message-course-select" class="form-control" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); color: var(--text-primary); padding: 0.8rem 2.5rem 0.8rem 1.25rem; border-radius: 14px; font-weight: 700; width: 100%; font-size: 0.95rem; outline: none; cursor: pointer; -webkit-appearance: none; appearance: none;">
+                                <option value="all">كل الطلاب في جميع دوراتي ({{ students_count }} طالب)</option>
+                                {% for course in courses %}
+                                <option value="{{ course.id }}" {% if selected_course_id == course.id|stringformat:"s" %}selected{% endif %}>طلاب دورة: {{ course.title }} ({{ course.grants_total }} طالب)</option>
+                                {% endfor %}
+                            </select>
+                            <i data-lucide="chevron-down" class="position-absolute" style="top: 50%; left: 14px; transform: translateY(-50%); width: 16px; color: var(--text-muted); pointer-events: none;"></i>
                         </div>
                     </div>
 
-                    <!-- WhatsApp Dispatch Checkbox -->
-                    <div class="form-group mb-6">
-                        <div class="custom-control custom-checkbox d-flex align-items-center gap-3 p-3" style="background: rgba(37, 211, 102, 0.05); border: 1px solid rgba(37, 211, 102, 0.2); border-radius: 14px;">
-                            <input type="checkbox" name="send_whatsapp" id="send_whatsapp" class="custom-control-input" style="width: 20px; height: 20px; cursor: pointer;">
-                            <label class="custom-control-label font-weight-bold mb-0" for="send_whatsapp" style="cursor: pointer; color: #25D366; font-size: 1rem;">
-                                <i data-lucide="message-square" style="width: 16px; margin-left: 4px; vertical-align: middle;"></i> إرسال كرسالة واتساب أيضاً إلى هواتف الطلاب المفعلين 📲
-                            </label>
+                    <!-- Message Body -->
+                    <div class="form-group">
+                        <label class="text-white font-weight-bold mb-2 d-block text-right" style="font-size: 0.95rem;">
+                            <i data-lucide="edit-3" style="width: 14px; margin-left: 4px; vertical-align: middle; color: var(--brand-gold);"></i>
+                            2. صياغة نص الرسالة:
+                        </label>
+                        <textarea name="message_body" rows="6" class="form-control" placeholder="اكتب هنا ما تريد إيصاله للطلاب... (مثال: أهلاً بكم طلابي الأعزاء، تم اليوم رفع ملف المذاكرة الشاملة للجلسة الثالثة، يرجى مراجعته فوراً.)" required style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); color: var(--text-primary); border-radius: 16px; padding: 1.25rem; font-size: 1rem; line-height: 1.6; outline: none; width: 100%; resize: vertical; transition: all 0.3s ease; text-align: right;"></textarea>
+                    </div>
+
+                    <!-- WhatsApp Dispatch Option -->
+                    <div class="form-group">
+                        <div class="custom-control custom-checkbox d-flex align-items-start gap-3 p-3.5" style="background: rgba(37, 211, 102, 0.04); border: 1px solid rgba(37, 211, 102, 0.2); border-radius: 16px; transition: all 0.3s ease;" id="whatsapp-toggle-box">
+                            <input type="checkbox" name="send_whatsapp" id="send_whatsapp" class="custom-control-input" style="width: 20px; height: 20px; cursor: pointer; margin-top: 3px;">
+                            <div style="cursor: pointer;">
+                                <label class="custom-control-label font-weight-bold mb-0" for="send_whatsapp" style="cursor: pointer; color: #25D366; font-size: 0.95rem; display: flex; align-items: center; gap: 4px;">
+                                    <i data-lucide="phone-call" style="width: 15px;"></i>
+                                    إرسال كرسالة واتساب أيضاً إلى هواتف الطلاب 📲
+                                </label>
+                                <span class="text-muted small d-block mt-1" style="color: rgba(37, 211, 102, 0.7) !important; font-size: 0.8rem; line-height: 1.4;">سيتم ترحيل الرسالة في الخلفية إلى هواتف الطلاب المفعلين لضمان سرعة التصفح وعدم التأثير على أدائك.</span>
+                            </div>
                         </div>
-                        <span class="text-muted small d-block mt-2" style="padding-right: 0.5rem; text-align: right;"><i data-lucide="info" style="width: 12px; vertical-align: middle;"></i> سيتم ترحيل الرسالة في الخلفية إلى هواتف الطلاب لضمان عدم حدوث بطء في التصفح.</span>
                     </div>
 
                     <!-- Submit Button -->
-                    <button type="submit" class="btn btn-primary btn-glow w-100 py-3" style="border-radius: 14px; font-size: 1.1rem; font-weight: 800; background: var(--brand-gold); border: none; color: #000;">
-                        <i data-lucide="send" style="width: 18px; margin-left: 6px; vertical-align: middle;"></i> بث وإرسال التنبيه الآن
+                    <button type="submit" class="btn btn-primary btn-glow w-100 py-3 mt-2" style="border-radius: 14px; font-size: 1.1rem; font-weight: 800; background: var(--brand-gold); border: none; color: #000; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                        <i data-lucide="send" style="width: 18px;"></i>
+                        بث وإرسال التنبيه الآن
                     </button>
                 </form>
 
             </div>
         </div>
+
+        <!-- Left Column: Realistic Smartphone Notification Mockup (Col-lg-5) -->
+        <div class="col-lg-5 col-12 d-flex justify-content-center align-items-center">
+            <div class="phone-mockup position-relative" style="width: 290px; height: 580px; border-radius: 40px; border: 8px solid #2d2d2d; background: #0c0c0c; box-shadow: 0 25px 60px rgba(0,0,0,0.6); overflow: hidden; display: flex; flex-direction: column;">
+                
+                <!-- Phone Notch -->
+                <div class="position-absolute" style="top: 0; left: 50%; transform: translateX(-50%); width: 110px; height: 18px; background: #2d2d2d; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; z-index: 10;"></div>
+                
+                <!-- Phone Screen Content -->
+                <div class="w-100 h-100 position-relative p-4" style="background: linear-gradient(135deg, #181c24 0%, #0d0f14 100%); display: flex; flex-direction: column; justify-content: start; z-index: 2; padding-top: 2.5rem !important;">
+                    
+                    <!-- Academy Phone Header -->
+                    <div class="d-flex align-items-center justify-content-between mb-6" style="border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 0.75rem;">
+                        <div class="d-flex align-items-center gap-2">
+                            <div style="width: 24px; height: 24px; border-radius: 6px; background: rgba(245,158,11,0.12); display: flex; justify-content: center; align-items: center; color: var(--brand-gold);">
+                                <i data-lucide="award" style="width: 12px;"></i>
+                            </div>
+                            <span class="small font-weight-bold text-white" style="font-size: 0.75rem;">Pro Academy</span>
+                        </div>
+                        <span class="text-muted" style="font-size: 0.65rem; font-family: monospace;">12:00 PM</span>
+                    </div>
+
+                    <!-- Live WhatsApp Alert Banner (Conditional CSS layout) -->
+                    <div id="phone-whatsapp-banner" class="mb-4 p-2.5" style="border-radius: 12px; background: rgba(37, 211, 102, 0.08); border: 1px solid rgba(37, 211, 102, 0.25); display: none; align-items: center; gap: 8px;">
+                        <div style="width: 18px; height: 18px; border-radius: 50%; background: #25D366; display: flex; justify-content: center; align-items: center; color: #fff;">
+                            <i data-lucide="message-square" style="width: 10px; height: 10px;"></i>
+                        </div>
+                        <span style="color: #25D366; font-size: 0.7rem; font-weight: 800;">تنبيه WhatsApp نشط 📲</span>
+                    </div>
+
+                    <!-- Smartphone Notification Bubble (Mockup) -->
+                    <div class="p-4" style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align: right;" id="phone-notification-bubble">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--brand-gold) 0%, #d97706 100%); color: #000; display: flex; justify-content: center; align-items: center; font-weight: 900; font-size: 0.75rem;">
+                                    {{ request.user.get_full_name|default:request.user.username|slice:":1"|upper }}
+                                </div>
+                                <div style="text-align: right;">
+                                    <strong class="text-white d-block" style="font-size: 0.8rem; line-height: 1.2;">الأستاذ {{ request.user.get_full_name|default:request.user.username }}</strong>
+                                    <span class="text-muted" style="font-size: 0.65rem;">رسالة جديدة</span>
+                                </div>
+                            </div>
+                            <span class="text-muted" style="font-size: 0.6rem;">الآن</span>
+                        </div>
+                        
+                        <!-- Notification Text -->
+                        <div style="background: rgba(0,0,0,0.25); border: 1px solid rgba(245, 158, 11, 0.15); padding: 0.75rem 1rem; border-radius: 12px; color: var(--text-secondary); font-size: 0.78rem; line-height: 1.5; font-style: italic;" id="preview-text">
+                            [اكتب رسالتك في الصندوق على اليمين لتشاهد المعاينة هنا مباشرة...]
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Lockscreen Mockup Details -->
+                    <div class="mt-auto text-center" style="border-top: 1px solid rgba(255,255,255,0.04); padding-top: 1rem;">
+                        <i data-lucide="lock" class="text-muted mb-2" style="width: 14px; opacity: 0.6;"></i>
+                        <span class="text-muted d-block" style="font-size: 0.65rem;">شاشة القفل الخاصة بالطالب</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- Premium Broadcast Styles -->
+<style>
+    .alert-success-glow {
+        background: rgba(16, 185, 129, 0.08) !important;
+        border: 1px solid rgba(16, 185, 129, 0.3) !important;
+        color: #34d399 !important;
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.12);
+    }
+    .alert-danger-glow {
+        background: rgba(239, 68, 68, 0.08) !important;
+        border: 1px solid rgba(239, 68, 68, 0.3) !important;
+        color: #f87171 !important;
+        box-shadow: 0 0 15px rgba(239, 68, 68, 0.12);
+    }
+    textarea:focus {
+        background: rgba(0,0,0,0.4) !important;
+        border-color: rgba(245, 158, 11, 0.4) !important;
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.12) !important;
+    }
+    #send_whatsapp:checked ~ div label {
+        color: #25D366 !important;
+    }
+    .phone-mockup {
+        transition: all 0.4s ease;
+    }
+    .phone-mockup:hover {
+        transform: translateY(-4px) rotate(-1deg);
+        box-shadow: 0 35px 70px rgba(0,0,0,0.75) !important;
+    }
+</style>
 {% endblock %}
 
 {% block extra_js %}
@@ -86,6 +182,9 @@
     document.addEventListener("DOMContentLoaded", () => {
         const textarea = document.querySelector('textarea[name="message_body"]');
         const preview = document.getElementById('preview-text');
+        const whatsappCheckbox = document.getElementById('send_whatsapp');
+        const whatsappBanner = document.getElementById('phone-whatsapp-banner');
+        const whatsappToggleBox = document.getElementById('whatsapp-toggle-box');
 
         if (textarea && preview) {
             textarea.addEventListener("input", (e) => {
@@ -95,9 +194,23 @@
                     preview.style.fontStyle = "normal";
                     preview.style.color = "var(--text-primary)";
                 } else {
-                    preview.textContent = "[ما ستكتبه في الصندوق أعلاه سيظهر هنا للطلاب...]";
+                    preview.textContent = "[اكتب رسالتك في الصندوق على اليمين لتشاهد المعاينة هنا مباشرة...]";
                     preview.style.fontStyle = "italic";
                     preview.style.color = "var(--text-muted)";
+                }
+            });
+        }
+
+        if (whatsappCheckbox && whatsappBanner && whatsappToggleBox) {
+            whatsappCheckbox.addEventListener("change", (e) => {
+                if (e.target.checked) {
+                    whatsappBanner.style.display = "flex";
+                    whatsappToggleBox.style.background = "rgba(37, 211, 102, 0.08)";
+                    whatsappToggleBox.style.borderColor = "rgba(37, 211, 102, 0.4)";
+                } else {
+                    whatsappBanner.style.display = "none";
+                    whatsappToggleBox.style.background = "rgba(37, 211, 102, 0.04)";
+                    whatsappToggleBox.style.borderColor = "rgba(37, 211, 102, 0.2)";
                 }
             });
         }
