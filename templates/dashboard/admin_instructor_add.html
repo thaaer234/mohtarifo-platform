@@ -7,13 +7,13 @@
 <div class="admin-form-wrapper reveal-up">
     <header class="form-header mb-10">
         <h1 class="page-title">إضافة <span class="gold">مدرس جديد</span></h1>
-        <p class="text-muted">قم بإنشاء حساب جديد للمدرس وتعبئة بياناته المهنية.</p>
+        <p class="text-muted">رقم الهاتف = كلمة المرور الافتراضية · اسم الدخول = الاسم أو رقم الهوية</p>
     </header>
 
     <div class="premium-card p-10 max-w-800 mx-auto">
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
-            
+
             <div class="grid-2 gap-6 mb-8">
                 <div class="form-group">
                     <label>{{ form.first_name.label }}</label>
@@ -25,16 +25,27 @@
                 </div>
             </div>
 
-            <div class="grid-2 gap-6 mb-8">
-                <div class="form-group">
-                    <label>{{ form.username.label }}</label>
-                    {{ form.username }}
-                    <small class="text-muted mt-2 block">سيتم استخدامه لتسجيل الدخول.</small>
+            <div class="form-group mb-8">
+                <label>{{ form.phone.label }}</label>
+                {{ form.phone }}
+                {% if form.phone.help_text %}<small class="text-muted mt-2 block">{{ form.phone.help_text }}</small>{% endif %}
+                {% for error in form.phone.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
+            </div>
+
+            <div class="form-group mb-6">
+                <label>{{ form.login_username_type.label }}</label>
+                <div class="radio-group mt-2">
+                    {% for radio in form.login_username_type %}
+                        <label class="radio-option">{{ radio.tag }} {{ radio.choice_label }}</label>
+                    {% endfor %}
                 </div>
-                <div class="form-group">
-                    <label>{{ form.password.label }}</label>
-                    {{ form.password }}
-                </div>
+            </div>
+
+            <div class="form-group mb-8">
+                <label>{{ form.national_id.label }}</label>
+                {{ form.national_id }}
+                {% if form.national_id.help_text %}<small class="text-muted mt-2 block">{{ form.national_id.help_text }}</small>{% endif %}
+                {% for error in form.national_id.errors %}<small class="text-danger">{{ error }}</small>{% endfor %}
             </div>
 
             <hr class="my-10 border-light">
@@ -42,7 +53,6 @@
             <div class="form-group mb-8">
                 <label>{{ form.specialty.label }}</label>
                 {{ form.specialty }}
-                <small class="text-muted mt-2 block">مثل: مدرس مادة الرياضيات، خبير الفيزياء...</small>
             </div>
 
             <div class="form-group mb-8">
@@ -62,7 +72,7 @@
                 <button type="submit" class="btn btn-primary btn-massive w-full btn-glow">
                     <i data-lucide="user-plus"></i> إنشاء حساب المدرس
                 </button>
-                <a href="{% url 'dashboard:instructors_list' %}" class="btn btn-glass w-full mt-4">إلغاء والعودة</a>
+                <a href="{% url 'dashboard:admin_instructors' %}" class="btn btn-glass w-full mt-4">إلغاء والعودة</a>
             </div>
         </form>
     </div>
@@ -72,16 +82,16 @@
     .admin-form-wrapper { padding: 4rem 0; }
     .max-w-800 { max-width: 800px; }
     .mx-auto { margin-left: auto; margin-right: auto; }
-    
-    .form-group label { display: block; margin-bottom: 0.75rem; font-weight: 800; color: var(--text-primary); font-size: 0.95rem; }
-    .form-group input, .form-group textarea { 
-        width: 100%; padding: 1.25rem; background: var(--bg-base); border: 1px solid var(--border-light); 
-        border-radius: 16px; color: var(--text-primary); transition: 0.3s; font-family: inherit;
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } }
+    .form-group label { display: block; margin-bottom: 0.75rem; font-weight: 800; }
+    .form-group input, .form-group textarea {
+        width: 100%; padding: 1.25rem; background: var(--bg-base); border: 1px solid var(--border-light);
+        border-radius: 16px; color: var(--text-primary);
     }
-    .form-group input:focus, .form-group textarea:focus { border-color: var(--brand-gold); box-shadow: var(--shadow-glow); outline: none; }
-    
+    .radio-group { display: flex; flex-direction: column; gap: 0.75rem; }
+    .radio-option { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; cursor: pointer; }
     .image-upload-wrapper { position: relative; }
-    .image-upload-wrapper input { padding-left: 3rem; }
     .image-upload-wrapper i { position: absolute; left: 1.25rem; top: 50%; transform: translateY(-50%); color: var(--brand-gold); }
 </style>
 {% endblock %}

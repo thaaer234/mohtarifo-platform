@@ -243,8 +243,414 @@
         </div>
     </footer>
 
+    <!-- Instructor Force Password Change Modal -->
+    <div id="forcePasswordChangeModal" class="force-password-modal" style="display: none;">
+        <div class="force-password-overlay"></div>
+        <div class="force-password-dialog">
+            <div class="force-password-header">
+                <div class="force-password-title-group">
+                    <div class="force-password-icon">
+                        <i data-lucide="key" style="width: 24px; height: 24px;"></i>
+                    </div>
+                    <div>
+                        <h3>تغيير كلمة المرور</h3>
+                        <p>لا يمكنك المتابعة قبل تغيير كلمة المرور</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="force-password-body">
+                <div class="alert-warning-custom">
+                    <i data-lucide="alert-circle"></i>
+                    <div>
+                        <strong>يرجى تغيير كلمة المرور</strong>
+                        <p>من فضلك قم بتعديل كلمة المرور الافتراضية لحماية حسابك</p>
+                    </div>
+                </div>
+                
+                <form id="changePasswordForm">
+                    <div class="form-group">
+                        <label>كلمة المرور الحالية:</label>
+                        <input type="password" name="old_password" id="currentPassword" placeholder="••••••••" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>كلمة المرور الجديدة:</label>
+                        <input type="password" name="new_password" id="newPassword" placeholder="••••••••" required>
+                        <small>يجب أن تكون 8 خانات على الأقل</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>تأكيد كلمة المرور:</label>
+                        <input type="password" name="confirm_password" id="confirmPassword" placeholder="••••••••" required>
+                    </div>
+                    
+                    <div id="passwordErrorMsg" class="alert-error-custom" style="display: none;"></div>
+                    <div id="passwordSuccessMsg" class="alert-success-custom" style="display: none;"></div>
+                    
+                    <div class="force-password-actions">
+                        <button type="submit" id="submitPasswordChangeBtn" class="btn btn-primary">
+                            <i data-lucide="check" style="width: 18px; height: 18px;"></i>
+                            حفظ كلمة المرور الجديدة
+                        </button>
+                        <button type="button" id="skipPasswordBtn" class="btn btn-secondary">تخطى</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script>{% inline_static 'JS/ui.js' %}</script>
+    <script>
+        // Instructor Force Password Change Modal Handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('forcePasswordChangeModal');
+            const changePasswordForm = document.getElementById('changePasswordForm');
+            const submitBtn = document.getElementById('submitPasswordChangeBtn');
+            const skipBtn = document.getElementById('skipPasswordBtn');
+            const errorMsg = document.getElementById('passwordErrorMsg');
+            const successMsg = document.getElementById('passwordSuccessMsg');
+            
+            window.showForcePasswordChangeModal = function() {
+                if (modal) {
+                    modal.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                }
+            };
+            
+            window.hideForcePasswordChangeModal = function() {
+                if (modal) {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                }
+            };
+            
+            if (skipBtn) {
+                skipBtn.addEventListener('click', function() {
+                    window.hideForcePasswordChangeModal();
+                    window.location.href = '/dashboard/';
+                });
+            }
+            
+            if (changePasswordForm) {
+                changePasswordForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    errorMsg.style.display = 'none';
+                    successMsg.style.display = 'none';
+                    
+                    const oldPassword = document.getElementById('currentPassword').value.trim();
+                    const newPassword = document.getElementById('newPassword').value.trim();
+                    const confirmPassword = document.getElementById('confirmPassword').value.trim();
+                    
+                    if (!oldPassword) {
+                        errorMsg.textContent = 'كلمة المرور الحالية مطلوبة';
+                        errorMsg.style.display = 'block';
+                        return;
+                    }
+                    
+                    if (!newPassword || !confirmPassword) {
+                        errorMsg.textContent = 'كلمة المرور الجديدة وتأكيدها مطلوبة';
+                        errorMsg.style.display = 'block';
+                        return;
+                    }
+                    
+                    if (newPassword.length < 8) {
+                        errorMsg.textContent = 'كلمة المرور يجب أن تكون 8 خانات على الأقل';
+                        errorMsg.style.display = 'block';
+                        return;
+                    }
+                    
+                    if (newPassword !== confirmPassword) {
+                        errorMsg.textContent = 'كلمات المرور الجديدة غير متطابقة';
+                        errorMsg.style.display = 'block';
+                        return;
+                    }
+                    
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'جار المعالجة...';
+                    
+                    try {
+                        const response = await fetch('/api/accounts/auth/instructor/change-password/', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken'),
+                            },
+                            body: JSON.stringify({
+                                old_password: oldPassword,
+                                new_password: newPassword,
+                                confirm_password: confirmPassword,
+                            }),
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            successMsg.textContent = 'تم تغيير كلمة المرور بنجاح! سيتم إعادة التوجيه...';
+                            successMsg.style.display = 'block';
+                            
+                            changePasswordForm.reset();
+                            
+                            setTimeout(() => {
+                                window.hideForcePasswordChangeModal();
+                                window.location.href = '/dashboard/';
+                            }, 2000);
+                        } else {
+                            errorMsg.textContent = data.detail || 'حدث خطأ في تغيير كلمة المرور';
+                            errorMsg.style.display = 'block';
+                        }
+                    } catch (error) {
+                        errorMsg.textContent = 'حدث خطأ في الاتصال بالخادم';
+                        errorMsg.style.display = 'block';
+                        console.error('Error:', error);
+                    } finally {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i data-lucide="check" style="width: 18px; height: 18px;"></i> حفظ كلمة المرور الجديدة';
+                        lucide.createIcons();
+                    }
+                });
+            }
+        });
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+    <style>
+        .force-password-modal {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 2000;
+        }
+        
+        .force-password-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(2px);
+        }
+        
+        .force-password-dialog {
+            position: relative;
+            z-index: 2001;
+            background: rgba(20, 20, 20, 0.95);
+            border: 1px solid rgba(245, 158, 11, 0.25);
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+        
+        .force-password-header {
+            padding: 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .force-password-title-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .force-password-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .force-password-title-group h3 {
+            margin: 0;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #fff;
+        }
+        
+        .force-password-title-group p {
+            margin: 0.25rem 0 0;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .force-password-body {
+            padding: 2rem;
+        }
+        
+        .alert-warning-custom {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .alert-warning-custom i {
+            width: 20px;
+            height: 20px;
+            color: #ef4444;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        
+        .alert-warning-custom strong {
+            display: block;
+            color: #ef4444;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .alert-warning-custom p {
+            margin: 0;
+            color: rgba(239, 68, 68, 0.8);
+            font-size: 0.85rem;
+        }
+        
+        .force-password-body .form-group {
+            margin-bottom: 1.25rem;
+        }
+        
+        .force-password-body label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+            color: #fff;
+            font-size: 0.95rem;
+        }
+        
+        .force-password-body input {
+            width: 100%;
+            padding: 0.9rem 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        .force-password-body input:focus {
+            background: rgba(0, 0, 0, 0.4);
+            border-color: rgba(245, 158, 11, 0.4);
+        }
+        
+        .force-password-body small {
+            display: block;
+            margin-top: 0.5rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.8rem;
+        }
+        
+        .alert-error-custom {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: #ef4444;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .alert-success-custom {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: #10b981;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .force-password-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .force-password-actions .btn {
+            flex: 1;
+            padding: 0.9rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .force-password-actions .btn-primary {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #000;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+        }
+        
+        .force-password-actions .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+        }
+        
+        .force-password-actions .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .force-password-actions .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .force-password-actions .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

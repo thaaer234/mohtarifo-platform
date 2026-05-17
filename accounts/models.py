@@ -70,10 +70,13 @@ class InstructorProfile(models.Model):
     ]
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="instructor_profile")
+    phone = models.CharField(max_length=40, blank=True, verbose_name="رقم الهاتف")
+    national_id = models.CharField(max_length=40, blank=True, unique=True, null=True, verbose_name="رقم الهوية")
     specialty = models.CharField(max_length=120)
     bio = models.TextField(blank=True)
     avatar = models.ImageField(upload_to="instructors/avatars/", blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
+    force_password_change = models.BooleanField(default=True, verbose_name="إجبار تغيير كلمة المرور", help_text="إذا كان صحيحاً، سيطلب من المدرس تغيير كلمة المرور عند أول دخول")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

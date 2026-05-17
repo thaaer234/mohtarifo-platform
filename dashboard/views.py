@@ -521,11 +521,9 @@ def _record_failed_login(request):
 
 
 def _get_user_phone(user):
-    # 1. Check if they have a student profile with a phone number
-    if hasattr(user, 'student_profile') and user.student_profile.phone:
-        return user.student_profile.phone
-    # 2. Fallback: if username is digit-only, it's their phone number
-    return user.username
+    from accounts.auth_utils import get_instructor_login_phone
+
+    return get_instructor_login_phone(user)
 
 
 def login_view(request):
@@ -537,17 +535,11 @@ def login_view(request):
 
     if request.method == "POST":
         raw_username = request.POST.get("username", "").strip()
-        
-        # Resolve User object from username, phone number or email
-        user = User.objects.filter(username=raw_username).first()
-        if not user:
-            from accounts.models import StudentProfile
-            sp = StudentProfile.objects.filter(phone=raw_username).first()
-            if sp:
-                user = sp.user
-        if not user:
-            user = User.objects.filter(email=raw_username).first()
-            
+
+        from accounts.auth_utils import resolve_user_for_login
+
+        user = resolve_user_for_login(raw_username)
+
         if user:
             # Mutate request.POST to replace the raw input with the actual user's username
             post_data = request.POST.copy()
@@ -1484,29 +1476,35 @@ def admin_export_students(request):
 def admin_instructor_add(request):
     form = InstructorAddForm(request.POST or None, request.FILES or None)
     if request.method == "POST" and form.is_valid():
-        username = form.cleaned_data["username"]
-        if User.objects.filter(username=username).exists():
-            messages.error(request, "اسم المستخدم / الهاتف موجود مسبقاً.")
-        else:
-            with transaction.atomic():
-                raw_password = form.cleaned_data.get("password") or username
-                user = User.objects.create_user(
-                    username=username,
-                    password=raw_password,
-                    first_name=form.cleaned_data["first_name"],
-                    last_name=form.cleaned_data["last_name"],
-                    is_staff=True,
-                )
-                InstructorProfile.objects.update_or_create(
-                    user=user,
-                    defaults={
-                        "specialty": form.cleaned_data["specialty"],
-                        "bio": form.cleaned_data["bio"],
-                        "avatar": form.cleaned_data["photo"]
-                    }
-                )
-                messages.success(request, f"تم إضافة المدرس {user.get_full_name()} بنجاح. كلمة مرور الحساب الافتراضية هي رقم الهاتف الخاص به.")
-                return redirect("dashboard:admin_instructors")
+        with transaction.atomic():
+            phone = form.cleaned_data["phone"]
+            username = form.build_username()
+            national_id = form.cleaned_data.get("national_id")
+            user = User.objects.create_user(
+                username=username,
+                password=phone,
+                first_name=form.cleaned_data["first_name"],
+                last_name=form.cleaned_data["last_name"],
+                is_staff=True,
+            )
+            InstructorProfile.objects.update_or_create(
+                user=user,
+                defaults={
+                    "phone": phone,
+                    "national_id": national_id,
+                    "specialty": form.cleaned_data["specialty"],
+                    "bio": form.cleaned_data["bio"],
+                    "avatar": form.cleaned_data["photo"],
+                    "force_password_change": True,
+                },
+            )
+            login_hint = "رقم الهوية" if form.cleaned_data["login_username_type"] == "national_id" else "الاسم"
+            messages.success(
+                request,
+                f"تم إضافة المدرس {user.get_full_name()} بنجاح. "
+                f"اسم الدخول: {username} ({login_hint}) · كلمة المرور الافتراضية: {phone}",
+            )
+            return redirect("dashboard:admin_instructors")
                 
     return render(request, "dashboard/admin_instructor_add.html", {"form": form})
 
@@ -1526,6 +1524,8 @@ def admin_instructors(request):
             models.Q(first_name__icontains=search)
             | models.Q(last_name__icontains=search)
             | models.Q(username__icontains=search)
+            | models.Q(instructor_profile__phone__icontains=search)
+            | models.Q(instructor_profile__national_id__icontains=search)
             | models.Q(instructor_profile__specialty__icontains=search)
         )
     if status:
@@ -2038,8 +2038,12 @@ def instructor_settings(request):
             request.user.save()
             from django.contrib.auth import update_session_auth_hash
             update_session_auth_hash(request, request.user)
+            profile = request.user.instructor_profile
+            profile.force_password_change = False
+            profile.save(update_fields=["force_password_change"])
+            request.session.pop("instructor_password_modal_dismissed", None)
             messages.success(request, "✅ تم تغيير كلمة المرور بنجاح.")
-            
+
         return redirect("dashboard:instructor_settings")
 
     context = _get_instructor_context(request)
