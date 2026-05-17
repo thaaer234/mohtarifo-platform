@@ -1790,6 +1790,18 @@ def admin_course_control(request, course_id):
 
 
 def _get_instructor_context(request):
+    # Safe profile avatar and specialty fallbacks
+    avatar_url = ""
+    specialty = "مدرس معتمد"
+    try:
+        profile = getattr(request.user, 'instructor_profile', None)
+        if profile:
+            specialty = profile.specialty or "مدرس معتمد"
+            if profile.avatar:
+                avatar_url = profile.avatar.url
+    except Exception:
+        pass
+
     # 1. Fetch courses safely
     try:
         courses = Course.objects.filter(instructor=request.user).select_related("subject")
@@ -1797,6 +1809,24 @@ def _get_instructor_context(request):
         for course in courses:
             course.lessons_total = Lesson.objects.filter(unit__course=course).count()
             course.grants_total = AccessGrant.objects.filter(course=course).count()
+            
+            # Safely fetch cover URL
+            try:
+                course.cover_url = course.cover.url if course.cover else ""
+            except Exception:
+                course.cover_url = ""
+                
+            # Safely fetch subject name
+            try:
+                course.subject_name = course.subject.name if course.subject else "غير محدد"
+            except Exception:
+                course.subject_name = "غير محدد"
+                
+            # Safely format created_at date
+            try:
+                course.formatted_date = course.created_at.strftime("%Y-%m-%d") if course.created_at else ""
+            except Exception:
+                course.formatted_date = ""
     except Exception:
         courses = Course.objects.none()
 
@@ -1892,6 +1922,8 @@ def _get_instructor_context(request):
         "transactions": transactions,
         "grants_list": grants_list,
         "selected_course_id": selected_course_id,
+        "avatar_url": avatar_url,
+        "specialty": specialty,
     }
 
 
