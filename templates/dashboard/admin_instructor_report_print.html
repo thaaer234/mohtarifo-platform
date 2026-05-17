@@ -156,26 +156,34 @@
     }
 
     .profile-icon {
-        width: 65px;
-        height: 65px;
+        width: 75px;
+        height: 75px;
         background: linear-gradient(45deg, var(--accent), var(--accent-dark));
-        border-radius: 16px;
+        border-radius: 18px;
         display: flex;
         align-items: center;
         justify-content: center;
         box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         flex-shrink: 0;
+        overflow: hidden;
+        border: 2px solid rgba(212, 175, 55, 0.5); /* Subtle gold border */
+    }
+
+    .profile-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
     }
 
     .profile-icon svg {
-        width: 32px;
-        height: 32px;
+        width: 36px;
+        height: 36px;
         fill: var(--white);
     }
 
     .instructor-details h1 {
-        font-size: 2.2rem;
-        font-weight: 900;
+        font-size: 1.9rem;
+        font-weight: 800;
         margin: 0 0 5px 0;
         color: var(--white);
         text-shadow: 0 2px 4px rgba(0,0,0,0.3);
@@ -407,7 +415,11 @@
 
         <div class="instructor-profile">
             <div class="profile-icon">
-                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                {% if instructor.instructor_profile.avatar %}
+                    <img src="{{ instructor.instructor_profile.avatar.url }}" alt="{{ instructor.get_full_name }}">
+                {% else %}
+                    <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                {% endif %}
             </div>
             <div class="instructor-details">
                 <h1>{{ instructor.get_full_name|default:instructor.username }}</h1>
