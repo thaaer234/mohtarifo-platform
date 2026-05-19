@@ -4,12 +4,19 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
-from learning.models import Course
+from billing.models import Subscription, Payment
 
-print("Auditing course subjects...")
-for course in Course.objects.all():
-    try:
-        subject_name = course.subject.name if course.subject else "None"
-        print(f"Course ID: {course.id}, Subject: {subject_name}")
-    except Exception as e:
-        print(f"Course ID: {course.id} crashed on subject: {e}")
+print("--- Subscriptions Count by Status ---")
+from django.db.models import Count
+subs = Subscription.objects.values('status').annotate(count=Count('status'))
+for s in subs:
+    print(f"Status: {s['status']}, Count: {s['count']}")
+
+print("\n--- Payments Count by Status ---")
+pmts = Payment.objects.values('status').annotate(count=Count('status'))
+for p in pmts:
+    print(f"Status: {p['status']}, Count: {p['count']}")
+
+print("\n--- Let's inspect some payments ---")
+for p in Payment.objects.all()[:5]:
+    print(f"User: {p.user}, Amount: {p.amount_cents}, Provider: {p.provider}, Status: {p.status}")
