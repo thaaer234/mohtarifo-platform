@@ -486,15 +486,15 @@
     <div class="stats-container">
         <div class="stat-card">
             <div class="stat-title">💰 إجمالي الإيرادات الرقمية</div>
-            <div class="stat-value num-val currency-usd">{{ total_revenue|default:0|floatformat:2 }} $</div>
+            <div class="stat-value num-val currency-usd">{{ total_revenue|currency_format }} $</div>
         </div>
         <div class="stat-card">
             <div class="stat-title">🏦 صندوق الأكواد العام</div>
-            <div class="stat-value num-val currency-sy">{{ general_fund_syp|default:0|floatformat:2|intcomma }} ل.س</div>
+            <div class="stat-value num-val currency-sy">{{ general_fund_syp|currency_format }} ل.س</div>
         </div>
         <div class="stat-card">
             <div class="stat-title">🏅 إجمالي الإيرادات الفعلية للأكواد</div>
-            <div class="stat-value num-val gold">{{ total_centers_earned|floatformat:0|intcomma }} ل.س</div>
+            <div class="stat-value num-val gold">{{ total_centers_earned|currency_format }} ل.س</div>
         </div>
         <div class="stat-card" style="border-bottom-color: var(--primary);">
             <div class="stat-title">👥 الاشتراكات النشطة</div>
@@ -527,10 +527,10 @@
                         <td>{{ item.center.institute.name|default:"—" }}</td>
                         <td class="text-center num-val">{{ item.total_codes|default:0 }}</td>
                         <td class="text-center num-val highlight-green">{{ item.sold_codes_count|default:0 }}</td>
-                        <td class="text-center num-val">{{ item.expected_balance|floatformat:0|intcomma|default:"0" }} ل.س</td>
-                        <td class="text-center num-val">{{ item.real_standard|floatformat:0|intcomma|default:"0" }} ل.س</td>
+                        <td class="text-center num-val">{{ item.expected_balance|currency_format }} ل.س</td>
+                        <td class="text-center num-val">{{ item.real_standard|currency_format }} ل.س</td>
                         <td class="text-center num-val" style="font-weight: 900; color: var(--accent-dark); background: rgba(212, 175, 55, 0.03);">
-                            {{ item.actual_earned|floatformat:0|intcomma|default:"0" }} ل.س
+                            {{ item.actual_earned|currency_format }} ل.س
                         </td>
                     </tr>
                     {% empty %}
@@ -544,7 +544,7 @@
                     <tr>
                         <td colspan="4" class="text-right" style="font-weight: 800;">📈 إجمالي الإيرادات الفعلية للأكواد:</td>
                         <td colspan="3" class="text-center num-val" style="font-weight: 900; font-size: 1.05rem; color: var(--accent-dark); background: rgba(212, 175, 55, 0.05);">
-                            {{ total_centers_earned|floatformat:0|intcomma }} ل.س
+                            {{ total_centers_earned|currency_format }} ل.س
                         </td>
                     </tr>
                 </tfoot>
@@ -579,7 +579,7 @@
                         <td class="text-center num-val">{{ row.codes|default:0 }}</td>
                         <td class="text-center num-val highlight-green">{{ row.sold|default:0 }}</td>
                         <td class="text-center num-val" style="color: var(--accent-dark);">{{ row.activated|default:0 }}</td>
-                        <td class="text-center num-val" style="font-weight: 800;">{{ row.gross|default:0|floatformat:2|intcomma }} ل.س</td>
+                        <td class="text-center num-val" style="font-weight: 800;">{{ row.gross|currency_format }} ل.س</td>
                     </tr>
                     {% empty %}
                     <tr>
@@ -591,7 +591,7 @@
                     <tr>
                         <td colspan="5" class="text-right" style="font-weight: 800;">🔻 الإجمالي الكلي لقيمة الأكواد:</td>
                         <td class="text-center num-val" style="font-weight: 900; font-size: 1.05rem; background: rgba(212, 175, 55, 0.05); color: var(--accent-dark);">
-                            {{ total_filter_gross|default:0|floatformat:2|intcomma }} ل.س
+                            {{ total_filter_gross|currency_format }} ل.س
                         </td>
                     </tr>
                 </tfoot>
@@ -654,7 +654,7 @@
                             <tr>
                                 <td style="font-weight: 600; color: var(--primary);">{{ p.user.get_full_name|default:p.user.username|truncatechars:18 }}</td>
                                 <td class="num-val text-center highlight-green" style="font-weight: 800;">
-                                    {{ p.amount_dollars|floatformat:2|intcomma }} $
+                                    {{ p.amount_dollars|currency_format }} $
                                 </td>
                                 <td style="font-size: 0.75rem; color: var(--text-light);">{{ p.provider|default:"—" }}</td>
                             </tr>
