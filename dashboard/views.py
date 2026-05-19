@@ -429,13 +429,7 @@ def robots_txt(request):
         "Allow: /static/",
         "",
         "Disallow: /admin/",
-        f"Disallow: /{settings.ADMIN_URL}",
-        "Disallow: /admin-dashboard/",
         "Disallow: /api/",
-        "Disallow: /student/",
-        "Disallow: /login/",
-        "Disallow: /register/",
-        "Disallow: /device-logged-out/",
         "",
         f"Sitemap: {site_url}/sitemap.xml",
     ]

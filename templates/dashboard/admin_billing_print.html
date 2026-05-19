@@ -1,89 +1,444 @@
 {% extends "accounting_erp/base_print_accounting.html" %}
-{% load humanize %}
-{% load static %}
+{% load humanize inline_static static %}
 
 {% block title %}طباعة البيان المالي الموحد - تقرير شامل{% endblock %}
-
-{% block report_name %}البيان المالي والعمليات التجارية الشامل{% endblock %}
-
-{% block report_subtitle %}تحليل أداء مراكز المبيعات وإيرادات الأكواد والاشتراكات{% endblock %}
 
 {% block extra_css %}
 {{ block.super }}
 <style>
-    /* تحسينات إضافية خاصة بهذا التقرير */
-    .highlight-green {
-        background-color: rgba(22, 163, 74, 0.08);
+    /* =========================================
+       OVERRIDE BASE TEMPLATE COMPONENTS
+       ========================================= */
+    .page-wrapper > header.report-header,
+    .page-wrapper > .report-title-box,
+    .page-wrapper > .signatures-grid {
+        display: none !important;
+    }
+
+    .page-wrapper {
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        margin: 0 auto !important;
+        max-width: 210mm !important;
+    }
+
+    /* =========================================
+       PREMIUM DESIGN SYSTEM
+       ========================================= */
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
+
+    :root {
+        --primary: #1e1e2d;
+        --secondary: #1b1b29;
+        --accent: #d4af37; /* Gold */
+        --accent-glow: rgba(212, 175, 55, 0.15);
+        --accent-dark: #aa8c2c;
+        --text-main: #2b2b36;
+        --text-light: #7e8299;
+        --bg-main: #f4f6f9;
+        --white: #ffffff;
+        --success: #10b981;
+        --danger: #f1416c;
+        --border-color: #e4e6ef;
+        --radius: 20px;
+    }
+
+    body {
+        font-family: 'Cairo', Arial, sans-serif;
+        background-color: #e9ecef;
+        color: var(--text-main);
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .premium-wrapper {
+        background: var(--white);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        border-radius: 24px;
+        overflow: hidden;
+        position: relative;
+        margin: 20px auto;
+        min-height: 290mm;
+    }
+
+    /* Watermark */
+    .watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-15deg);
+        width: 60%;
+        opacity: 0.03;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    /* Modern Header */
+    .premium-header {
+        position: relative;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        padding: 40px 50px;
+        color: var(--white);
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    .premium-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -10%; /* Flipped for RTL */
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+        border-radius: 50%;
+        z-index: -1;
+    }
+
+    .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .logo-container {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .logo-img {
+        height: 50px;
+        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+    }
+
+    .platform-name {
+        font-size: 1.4rem;
+        font-weight: 900;
+        color: var(--accent);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        font-family: 'Cairo', Arial, sans-serif;
+    }
+
+    .report-meta {
+        text-align: right;
+    }
+
+    .report-badge {
+        background: rgba(212, 175, 55, 0.1);
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        padding: 6px 18px;
+        border-radius: 30px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        display: inline-block;
+        margin-bottom: 8px;
+        box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+    }
+
+    .meta-text {
+        font-size: 0.8rem;
+        color: #a1a5b7;
+        font-family: 'Cairo', Arial, sans-serif;
+    }
+
+    /* Report Profile Header Info */
+    .report-profile {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        position: relative;
+    }
+
+    .profile-icon {
+        width: 75px;
+        height: 75px;
+        background: linear-gradient(45deg, var(--accent), var(--accent-dark));
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        flex-shrink: 0;
+        border: 2px solid rgba(212, 175, 55, 0.5); /* Subtle gold border */
+    }
+
+    .profile-icon svg {
+        width: 36px;
+        height: 36px;
+        stroke: var(--white);
+    }
+
+    .report-details h1 {
+        font-size: 1.8rem;
         font-weight: 800;
-        color: #16a34a;
+        margin: 0 0 5px 0;
+        color: var(--white);
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        white-space: nowrap;
+    }
+
+    .report-id {
+        font-size: 1rem;
+        color: var(--accent);
+        font-weight: 600;
+        font-family: 'Cairo', Arial, sans-serif;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Stats Grid */
+    .stats-container {
+        padding: 0 40px;
+        margin-top: -25px;
+        position: relative;
+        z-index: 10;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+    }
+
+    .stat-card {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        border: 1px solid rgba(255,255,255,0.8);
+        border-bottom: 4px solid var(--accent);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-title {
+        font-size: 0.8rem;
+        color: var(--text-light);
+        font-weight: 700;
+        margin-bottom: 8px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 900;
+        color: var(--primary);
+        font-family: 'Cairo', Arial, sans-serif;
+        line-height: 1.2;
+        position: relative;
+        z-index: 1;
+    }
+
+    .stat-value.gold { color: var(--accent-dark); }
+    .stat-value.green { color: var(--success); }
+
+    /* Main Content Area */
+    .content-area {
+        padding: 30px 40px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 900;
+        color: var(--primary);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .section-title::before {
+        content: '';
+        display: block;
+        width: 6px;
+        height: 24px;
+        background: var(--accent);
+        border-radius: 4px;
+    }
+
+    .section-subtitle {
+        margin-bottom: 20px;
+        font-size: 0.85rem;
+        color: var(--text-light);
+        padding-right: 18px;
+    }
+
+    /* Premium Tables */
+    .premium-table-wrapper {
+        background: var(--white);
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    table.premium-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: auto;
+    }
+
+    table.premium-table thead {
+        background: var(--bg-main);
+    }
+
+    table.premium-table th {
+        padding: 14px 16px;
+        text-align: right;
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: var(--text-light);
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    table.premium-table td {
+        padding: 14px 16px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-main);
+        vertical-align: middle;
+    }
+
+    table.premium-table tr:last-child td { border-bottom: none; }
+    table.premium-table tr:nth-child(even) { background-color: #fafbfc; }
+
+    table.premium-table th.text-center, 
+    table.premium-table td.text-center { text-align: center !important; }
+    table.premium-table th.text-right, 
+    table.premium-table td.text-right { text-align: right !important; }
+
+    table.premium-table tfoot td {
+        background: var(--bg-main);
+        font-weight: 800;
+        font-size: 0.95rem;
+        color: var(--primary);
+        border-top: 2px solid var(--primary);
+    }
+
+    /* Badges & Indicators */
+    .premium-badge {
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 800;
+        font-family: 'Cairo', Arial, sans-serif;
+        display: inline-block;
     }
     
-    .stat-box.green-border {
-        border-color: #34d399;
-        background: linear-gradient(135deg, #ffffff, #f0fdf4);
-    }
-    
-    .two-columns-grid {
+    .badge-gold { background: #fff8dd; color: #b78918; }
+    .badge-success { background: #e8fff3; color: #049f59; }
+    .badge-warning { background: #fff4de; color: #f59e0b; }
+    .badge-danger { background: #ffe2e5; color: #f1416c; }
+
+    /* Grid for side-by-side tables */
+    .dist-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 1.5rem;
-        margin-top: 0.5rem;
+        gap: 25px;
+        margin-bottom: 30px;
     }
-    
-    .sub-section-title {
-        font-family: 'Cairo', sans-serif;
-        font-size: 1rem;
-        font-weight: 800;
-        border-right: 3px solid var(--brand-gold);
-        padding-right: 0.75rem;
-        margin: 1.25rem 0 1rem 0;
-        color: var(--primary-dark);
+
+    /* Footer / Signatures */
+    .premium-signatures {
+        margin-top: 40px;
+        background: var(--primary);
+        border-radius: 16px;
+        padding: 30px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        color: var(--white);
     }
-    
-    @media (max-width: 768px) {
-        .two-columns-grid {
-            grid-template-columns: 1fr;
-            gap: 1rem;
-        }
+
+    .sig-item { text-align: center; }
+
+    .sig-title {
+        font-size: 0.85rem;
+        color: #a1a5b7;
+        margin-bottom: 40px;
     }
-    
-    /* تنسيق أرقام العملات */
-    .currency-sy {
-        font-family: 'Inter', monospace;
+
+    .sig-line {
+        border-top: 2px dashed rgba(255,255,255,0.2);
+        padding-top: 10px;
+        font-weight: 700;
+        color: var(--accent);
+        font-size: 0.9rem;
+    }
+
+    /* Utilities */
+    .num-val { 
+        font-family: 'Cairo', Arial, sans-serif; 
         font-weight: 700;
     }
-    
+
     .currency-usd {
-        font-family: 'Inter', monospace;
+        color: var(--success);
+        font-weight: 800;
+    }
+
+    .currency-sy {
+        color: var(--primary);
+        font-weight: 800;
+    }
+
+    .highlight-green {
+        color: var(--success) !important;
+        font-weight: 800;
+    }
+    
+    .alert-box {
+        padding: 15px 20px;
+        border-radius: 12px;
         font-weight: 700;
-        color: #059669;
+        font-size: 0.95rem;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid var(--border-color);
     }
-    
-    .badge-status {
-        display: inline-block;
-        padding: 0.2rem 0.6rem;
-        border-radius: 100px;
-        font-size: 0.7rem;
-        font-weight: 700;
+    .alert-success {
+        background: #e8fff3;
+        color: #049f59;
+        border-color: #c7f7db;
     }
-    
-    .status-active {
-        background: rgba(22, 163, 74, 0.1);
-        color: #16a34a;
-    }
-    
-    .status-pending {
-        background: rgba(245, 158, 11, 0.1);
-        color: #f59e0b;
-    }
-    
-    .status-expired {
-        background: rgba(239, 68, 68, 0.1);
-        color: #ef4444;
-    }
-    
-    .table-compact td, .table-compact th {
-        padding: 0.6rem 0.5rem;
+
+    @media print {
+        @page {
+            size: A4 portrait;
+            margin: 5mm; /* Reduce margin as much as possible */
+        }
+        body { 
+            background: white; 
+            padding: 0;
+            margin: 0;
+        }
+        .premium-wrapper { 
+            margin: 5mm auto; /* Tiny margin around the box */
+            box-shadow: none; 
+            border-radius: 24px; /* Keep rounded edges */
+            border: 1px solid var(--border-color); /* Subtle border to show the rounding on white paper */
+            overflow: hidden;
+            width: 100%;
+        }
+        .stat-card { border: 1px solid var(--border-color); box-shadow: none; }
+        .premium-table-wrapper { border: 1px solid var(--border-color); box-shadow: none; }
+        .page-break { page-break-after: always; }
+        .premium-header { 
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact; 
+            padding: 30px 40px; /* Slightly tighter for print */
+        }
     }
 </style>
 {% endblock %}
@@ -93,225 +448,264 @@
 {% endblock %}
 
 {% block report_body %}
+<div class="premium-wrapper">
+    <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" class="watermark" alt="Watermark">
 
-<!-- بطاقات الإحصائيات الرئيسية -->
-<div class="stats-grid">
-    <div class="stat-box">
-        <span class="lbl">💰 إجمالي الإيرادات الرقمية</span>
-        <div class="val currency-usd">{{ total_revenue|default:0|floatformat:2 }} $</div>
-        <span style="font-size: 0.7rem; color: #64748b;">الدولار الأمريكي</span>
-    </div>
-    <div class="stat-box green-border">
-        <span class="lbl">🏦 صندوق الأكواد العام</span>
-        <div class="val currency-sy">{{ general_fund_syp|default:0|floatformat:2|intcomma }} ل.س</div>
-        <span style="font-size: 0.7rem; color: #64748b;">الليرة السورية</span>
-    </div>
-    <div class="stat-box">
-        <span class="lbl">👥 الاشتراكات النشطة</span>
-        <div class="val">{{ active_subs_count|default:0 }}</div>
-        <span style="font-size: 0.7rem; color: #64748b;">مستخدم نشط حالياً</span>
-    </div>
-</div>
+    <!-- Premium Header -->
+    <div class="premium-header">
+        <div class="header-top">
+            <div class="logo-container">
+                <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Mohtarifo Logo" class="logo-img">
+                <div class="platform-name">Mohtarifo Pro</div>
+            </div>
+            <div class="report-meta">
+                <div class="report-badge">وثيقة مالية رسمية</div>
+                <div class="meta-text">تاريخ الإصدار: {% now "Y/m/d - H:i" %}</div>
+            </div>
+        </div>
 
-<!-- 1. التقارير المالية لمراكز المبيعات (أداء الصناديق) -->
-<h3 class="section-title">🏪 التقارير المالية لمراكز المبيعات</h3>
-<div class="section-subtitle" style="margin-bottom: 1rem; font-size: 0.8rem; color: var(--text-muted);">
-    📌 أداء الصناديق – مقارنة بين الصندوق المتوقع والحقيقي بعد الخصومات
-</div>
+        <div class="report-profile">
+            <div class="profile-icon">
+                <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+            </div>
+            <div class="report-details">
+                <h1>البيان المالي والعمليات التجارية الشامل</h1>
+                <div class="report-id">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    رمز الوثيقة: FIN-REPORT-{% now "Ymd" %}
+                </div>
+            </div>
+        </div>
+    </div>
 
-<div style="overflow-x: auto;">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>مركز البيع</th>
-                <th>المعهد التابع</th>
-                <th style="width: 70px;" class="text-center">📦 الأكواد</th>
-                <th style="width: 70px;" class="text-center">✅ المباع</th>
-                <th class="text-center">💰 المتوقع</th>
-                <th class="text-center">📊 الحقيقي (كامل)</th>
-                <th class="text-center" style="background: linear-gradient(135deg, #f0fdf4, #dcfce7);">🏅 الفعلي بعد الخصم</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in centers_report %}
-            <tr>
-                <td style="font-weight: 800;">{{ item.center.name }}</td>
-                <td>{{ item.center.institute.name|default:"—" }}</td>
-                <td class="text-center font-mono">{{ item.total_codes|default:0 }}</td>
-                <td class="text-center font-mono highlight-green">{{ item.sold_codes_count|default:0 }}</td>
-                <td class="text-center font-mono">{{ item.expected_balance|floatformat:0|intcomma|default:"0" }} ل.س</td>
-                <td class="text-center font-mono">{{ item.real_standard|floatformat:0|intcomma|default:"0" }} ل.س</td>
-                <td class="text-center font-mono" style="font-weight: 900; color: #16a34a; background: #f0fdf4;">
-                    {{ item.actual_earned|floatformat:0|intcomma|default:"0" }} ل.س
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="7" class="text-center" style="padding: 2rem;">📭 لا توجد بيانات لمراكز المبيعات</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-        {% if centers_report %}
-        <tfoot>
-            <tr>
-                <td colspan="4" class="text-right" style="font-weight: 800;">📈 إجمالي الإيرادات الفعلية للأكواد:</td>
-                <td colspan="3" class="text-center font-mono" style="font-weight: 900; font-size: 1rem; color: #16a34a;">
-                    {{ total_centers_earned|floatformat:0|intcomma }} ل.س
-                </td>
-            </tr>
-        </tfoot>
+    <!-- Stats Dashboard -->
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-title">💰 إجمالي الإيرادات الرقمية</div>
+            <div class="stat-value num-val currency-usd">{{ total_revenue|default:0|floatformat:2 }} $</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">🏦 صندوق الأكواد العام</div>
+            <div class="stat-value num-val currency-sy">{{ general_fund_syp|default:0|floatformat:2|intcomma }} ل.س</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">🏅 إجمالي الإيرادات الفعلية للأكواد</div>
+            <div class="stat-value num-val gold">{{ total_centers_earned|floatformat:0|intcomma }} ل.س</div>
+        </div>
+        <div class="stat-card" style="border-bottom-color: var(--primary);">
+            <div class="stat-title">👥 الاشتراكات النشطة</div>
+            <div class="stat-value num-val green">{{ active_subs_count|default:0 }}</div>
+        </div>
+    </div>
+
+    <div class="content-area">
+        <!-- 1. التقارير المالية لمراكز المبيعات (أداء الصناديق) -->
+        <h2 class="section-title">🏪 التقارير المالية لمراكز المبيعات</h2>
+        <div class="section-subtitle">📌 أداء الصناديق – مقارنة بين الصندوق المتوقع والحقيقي بعد الخصومات</div>
+        
+        <div class="premium-table-wrapper">
+            <table class="premium-table">
+                <thead>
+                    <tr>
+                        <th>مركز البيع</th>
+                        <th>المعهد التابع</th>
+                        <th style="width: 70px;" class="text-center">📦 الأكواد</th>
+                        <th style="width: 70px;" class="text-center">✅ المباع</th>
+                        <th class="text-center">💰 المتوقع</th>
+                        <th class="text-center">📊 الحقيقي (كامل)</th>
+                        <th class="text-center" style="background: rgba(212, 175, 55, 0.05);">🏅 الفعلي بعد الخصم</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in centers_report %}
+                    <tr>
+                        <td style="font-weight: 800; color: var(--primary);">{{ item.center.name }}</td>
+                        <td>{{ item.center.institute.name|default:"—" }}</td>
+                        <td class="text-center num-val">{{ item.total_codes|default:0 }}</td>
+                        <td class="text-center num-val highlight-green">{{ item.sold_codes_count|default:0 }}</td>
+                        <td class="text-center num-val">{{ item.expected_balance|floatformat:0|intcomma|default:"0" }} ل.س</td>
+                        <td class="text-center num-val">{{ item.real_standard|floatformat:0|intcomma|default:"0" }} ل.س</td>
+                        <td class="text-center num-val" style="font-weight: 900; color: var(--accent-dark); background: rgba(212, 175, 55, 0.03);">
+                            {{ item.actual_earned|floatformat:0|intcomma|default:"0" }} ل.س
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center" style="padding: 2rem; color: var(--text-light);">📭 لا توجد بيانات لمراكز المبيعات</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                {% if centers_report %}
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="text-right" style="font-weight: 800;">📈 إجمالي الإيرادات الفعلية للأكواد:</td>
+                        <td colspan="3" class="text-center num-val" style="font-weight: 900; font-size: 1.05rem; color: var(--accent-dark); background: rgba(212, 175, 55, 0.05);">
+                            {{ total_centers_earned|floatformat:0|intcomma }} ل.س
+                        </td>
+                    </tr>
+                </tfoot>
+                {% endif %}
+            </table>
+        </div>
+
+        <div class="page-break"></div>
+        <div style="height: 20px;"></div>
+
+        <!-- 2. تحليل إيرادات الأكواد حسب الفلاتر والخطوط -->
+        <h2 class="section-title">📊 تحليل إيرادات الأكواد حسب الفلاتر والخطوط</h2>
+        <div class="section-subtitle">🔍 توزيع الأكواد حسب التصنيف – الدورات، الأكواد المباعة، والمفعلة، وصافي القيمة النقدية</div>
+
+        <div class="premium-table-wrapper">
+            <table class="premium-table">
+                <thead>
+                    <tr>
+                        <th>التصنيف / الفلتر</th>
+                        <th style="width: 75px;" class="text-center">📚 الدورات</th>
+                        <th style="width: 75px;" class="text-center">🏷 الأكواد</th>
+                        <th style="width: 75px;" class="text-center">✅ المباعة</th>
+                        <th style="width: 80px;" class="text-center">⚡ المفعلة</th>
+                        <th class="text-center">💵 إجمالي القيمة النقدية</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in filter_reports %}
+                    <tr>
+                        <td style="font-weight: 700; color: var(--primary);">{{ row.label }}</td>
+                        <td class="text-center num-val">{{ row.courses|default:0 }}</td>
+                        <td class="text-center num-val">{{ row.codes|default:0 }}</td>
+                        <td class="text-center num-val highlight-green">{{ row.sold|default:0 }}</td>
+                        <td class="text-center num-val" style="color: var(--accent-dark);">{{ row.activated|default:0 }}</td>
+                        <td class="text-center num-val" style="font-weight: 800;">{{ row.gross|default:0|floatformat:2|intcomma }} ل.س</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center" style="padding: 2rem; color: var(--text-light);">📭 لا توجد بيانات تحليلية للفلاتر</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="5" class="text-right" style="font-weight: 800;">🔻 الإجمالي الكلي لقيمة الأكواد:</td>
+                        <td class="text-center num-val" style="font-weight: 900; font-size: 1.05rem; background: rgba(212, 175, 55, 0.05); color: var(--accent-dark);">
+                            {{ total_filter_gross|default:0|floatformat:2|intcomma }} ل.س
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <!-- 3. المدفوعات والاشتراكات (شبكة ثنائية) -->
+        <div class="dist-grid avoid-break">
+            <!-- الاشتراكات الحديثة -->
+            <div>
+                <h2 class="section-title" style="font-size: 1.15rem;">👨‍🎓 أحدث الاشتراكات المسجلة</h2>
+                <div style="height: 10px;"></div>
+                <div class="premium-table-wrapper">
+                    <table class="premium-table">
+                        <thead>
+                            <tr>
+                                <th>الطالب / المستخدم</th>
+                                <th>الخطة</th>
+                                <th style="width: 70px;" class="text-center">الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sub in subscriptions|slice:":15" %}
+                            <tr>
+                                <td style="font-weight: 600; color: var(--primary);">{{ sub.user.get_full_name|default:sub.user.username|truncatechars:20 }}</td>
+                                <td style="font-size: 0.8rem; color: var(--text-light);">{{ sub.plan.name|default:"—" }}</td>
+                                <td class="text-center">
+                                    <span class="premium-badge 
+                                        {% if sub.status == 'active' %}badge-success
+                                        {% elif sub.status == 'pending' %}badge-warning
+                                        {% elif sub.status == 'expired' %}badge-danger
+                                        {% else %}badge-warning{% endif %}">
+                                        {{ sub.get_status_display|default:sub.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center" style="padding: 1.5rem; color: var(--text-light);">📭 لا توجد اشتراكات</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- المدفوعات الرقمية الحديثة -->
+            <div>
+                <h2 class="section-title" style="font-size: 1.15rem;">💳 أحدث المدفوعات الرقمية</h2>
+                <div style="height: 10px;"></div>
+                <div class="premium-table-wrapper">
+                    <table class="premium-table">
+                        <thead>
+                            <tr>
+                                <th>الطالب</th>
+                                <th style="width: 90px;" class="text-center">المبلغ</th>
+                                <th>وسيلة الدفع</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in payments|slice:":15" %}
+                            <tr>
+                                <td style="font-weight: 600; color: var(--primary);">{{ p.user.get_full_name|default:p.user.username|truncatechars:18 }}</td>
+                                <td class="num-val text-center highlight-green" style="font-weight: 800;">
+                                    {{ p.amount_dollars|floatformat:2|intcomma }} $
+                                </td>
+                                <td style="font-size: 0.75rem; color: var(--text-light);">{{ p.provider|default:"—" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="3" class="text-center" style="padding: 1.5rem; color: var(--text-light);">📭 لا توجد مدفوعات</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ملخص إضافي - أداء الأكواد العام -->
+        {% if general_summary %}
+        <div class="alert-box alert-success" style="justify-content: center; margin-top: 15px;">
+            📊 ملخص الأداء: إجمالي الأكواد المُنشأة <span class="num-val" style="margin: 0 4px;">{{ general_summary.total_codes|default:0 }}</span> 
+            | المباعة <span class="num-val" style="margin: 0 4px;">{{ general_summary.sold_codes|default:0 }}</span> 
+            | نسبة الإنجاز <span class="premium-badge badge-gold num-val" style="margin: 0 4px;">{% widthratio general_summary.sold_codes general_summary.total_codes 100 %}%</span>
+        </div>
         {% endif %}
-    </table>
-</div>
 
-<div class="page-break"></div>
-
-<!-- 2. تحليل إيرادات الأكواد حسب الفلاتر والخطوط -->
-<h3 class="section-title">📊 تحليل إيرادات الأكواد حسب الفلاتر والخطوط</h3>
-<div class="section-subtitle" style="margin-bottom: 1rem; font-size: 0.8rem; color: var(--text-muted);">
-    🔍 توزيع الأكواد حسب التصنيف – الدورات، الأكواد المباعة، والمفعلة، وصافي القيمة النقدية
-</div>
-
-<div style="overflow-x: auto;">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>التصنيف / الفلتر</th>
-                <th style="width: 75px;" class="text-center">📚 الدورات</th>
-                <th style="width: 75px;" class="text-center">🏷 الأكواد</th>
-                <th style="width: 75px;" class="text-center">✅ المباعة</th>
-                <th style="width: 80px;" class="text-center">⚡ المفعلة</th>
-                <th class="text-center">💵 إجمالي القيمة النقدية</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in filter_reports %}
-            <tr>
-                <td style="font-weight: 700;">{{ row.label }}</td>
-                <td class="text-center">{{ row.courses|default:0 }}</td>
-                <td class="text-center">{{ row.codes|default:0 }}</td>
-                <td class="text-center font-mono" style="color: #16a34a; font-weight: 700;">{{ row.sold|default:0 }}</td>
-                <td class="text-center font-mono" style="color: #2563eb; font-weight: 700;">{{ row.activated|default:0 }}</td>
-                <td class="text-center font-mono" style="font-weight: 800;">{{ row.gross|default:0|floatformat:2|intcomma }} ل.س</td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6" class="text-center" style="padding: 2rem;">📭 لا توجد بيانات تحليلية للفلاتر</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="5" class="text-right" style="font-weight: 800;">🔻 الإجمالي الكلي لقيمة الأكواد:</td>
-                <td class="text-center font-mono" style="font-weight: 900; font-size: 1rem; background: rgba(197, 160, 89, 0.1);">
-                    {{ total_filter_gross|default:0|floatformat:2|intcomma }} ل.س
-                </td>
-            </tr>
-        </tfoot>
-    </table>
-</div>
-
-<!-- 3. المدفوعات والاشتراكات (شبكة ثنائية) -->
-<div class="two-columns-grid avoid-break">
-    <!-- الاشتراكات الحديثة -->
-    <div>
-        <div class="sub-section-title">
-            👨‍🎓 أحدث الاشتراكات المسجلة
+        <!-- Official Signatures -->
+        <div class="premium-signatures avoid-break">
+            <div class="sig-item">
+                <div class="sig-title">لجنة التدقيق المالي</div>
+                <div class="sig-line">توقيع المحاسب المعتمد</div>
+            </div>
+            <div class="sig-item">
+                <div class="sig-title">اعتماد الإدارة العامة</div>
+                <div class="sig-line">الختم الرسمي للمنصة</div>
+            </div>
+            <div class="sig-item">
+                <div style="text-align: left; margin-top: -10px;">
+                    <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo" style="height: 40px; opacity: 0.8; margin-bottom: 12px; filter: brightness(0) invert(1);">
+                    <div style="font-size: 0.7rem; color: #a1a5b7; font-family: 'Cairo', Arial, sans-serif;" class="num-val">
+                        Mohtarifo ERP System<br>
+                        Generated Automatically<br>
+                        Date: {% now "Ymd" %}
+                    </div>
+                </div>
+            </div>
         </div>
-        <div style="overflow-x: auto;">
-            <table class="data-table table-compact">
-                <thead>
-                    <tr>
-                        <th>الطالب / المستخدم</th>
-                        <th>الخطة</th>
-                        <th style="width: 70px;" class="text-center">الحالة</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for sub in subscriptions|slice:":15" %}
-                    <tr>
-                        <td style="font-weight: 600;">{{ sub.user.get_full_name|default:sub.user.username|truncatechars:20 }}</td>
-                        <td style="font-size: 0.8rem;">{{ sub.plan.name|default:"—" }}</td>
-                        <td class="text-center">
-                            <span class="badge-status 
-                                {% if sub.status == 'active' %}status-active
-                                {% elif sub.status == 'pending' %}status-pending
-                                {% elif sub.status == 'expired' %}status-expired
-                                {% else %}status-pending{% endif %}">
-                                {{ sub.get_status_display|default:sub.status }}
-                            </span>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="3" class="text-center" style="padding: 1.5rem;">📭 لا توجد اشتراكات</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
 
-    <!-- المدفوعات الرقمية الحديثة -->
-    <div>
-        <div class="sub-section-title">
-            💳 أحدث المدفوعات الرقمية (دولار أمريكي)
-        </div>
-        <div style="overflow-x: auto;">
-            <table class="data-table table-compact">
-                <thead>
-                    <tr>
-                        <th>الطالب</th>
-                        <th style="width: 90px;" class="text-center">المبلغ</th>
-                        <th>وسيلة الدفع</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for p in payments|slice:":15" %}
-                    <tr>
-                        <td style="font-weight: 600;">{{ p.user.get_full_name|default:p.user.username|truncatechars:18 }}</td>
-                        <td class="font-mono" style="font-weight: 800; color: #059669; text-align: center;">
-                            {{ p.amount_dollars|floatformat:2|intcomma }} $
-                        </td>
-                        <td style="font-size: 0.75rem;">{{ p.provider|default:"—" }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="3" class="text-center" style="padding: 1.5rem;">📭 لا توجد مدفوعات</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
     </div>
 </div>
-
-<!-- ملخص إضافي - أداء الأكواد العام -->
-{% if general_summary %}
-<div class="alert-box alert-success" style="margin-top: 1.5rem; justify-content: center;">
-    📊 ملخص الأداء: إجمالي الأكواد المُنشأة {{ general_summary.total_codes|default:0 }} 
-    | المباعة {{ general_summary.sold_codes|default:0 }} 
-    | نسبة الإنجاز {% widthratio general_summary.sold_codes general_summary.total_codes 100 %}%
-</div>
-{% endif %}
-
 {% endblock %}
 
 {% block extra_js %}
 {{ block.super }}
 <script>
-    // فلتر مخصص لجمع قيم الصفات في القوائم (لحساب الإجماليات)
-    if (!Array.prototype.sum_attribute) {
-        Array.prototype.sum_attribute = function(attr) {
-            return this.reduce((sum, item) => {
-                let val = item[attr];
-                if (typeof val === 'number') return sum + val;
-                if (typeof val === 'string') {
-                    let parsed = parseFloat(val);
-                    return sum + (isNaN(parsed) ? 0 : parsed);
-                }
-                return sum;
-            }, 0);
-        };
-    }
-    
-    // إضافة معلومات الطباعة لوحدة التحكم (اختياري)
-    console.log('✅ تقرير البيان المالي الموحد جاهز للطباعة');
+    // إضافة معلومات الطباعة لوحدة التحكم
+    console.log('✅ تقرير البيان المالي الموحد المطور جاهز للطباعة');
 </script>
 {% endblock %}
