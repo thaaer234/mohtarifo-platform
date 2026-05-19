@@ -485,8 +485,8 @@
     <!-- Stats Dashboard -->
     <div class="stats-container">
         <div class="stat-card">
-            <div class="stat-title">💰 إجمالي الإيرادات الرقمية</div>
-            <div class="stat-value num-val currency-usd">{{ total_revenue|currency_format }} $</div>
+            <div class="stat-title">💰 رصيد شام كاش (الإدارة)</div>
+            <div class="stat-value num-val currency-sy">{{ sham_cash_balance|currency_format }} ل.س</div>
         </div>
         <div class="stat-card">
             <div class="stat-title">🏦 صندوق الأكواد العام</div>
@@ -497,8 +497,8 @@
             <div class="stat-value num-val gold">{{ total_centers_earned|currency_format }} ل.س</div>
         </div>
         <div class="stat-card" style="border-bottom-color: var(--primary);">
-            <div class="stat-title">👥 الاشتراكات النشطة</div>
-            <div class="stat-value num-val green">{{ active_subs_count|default:0 }}</div>
+            <div class="stat-title">👥 إجمالي الأكواد المباعة</div>
+            <div class="stat-value num-val green">{{ total_sold_codes|currency_format }}</div>
         </div>
     </div>
 

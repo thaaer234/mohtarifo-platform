@@ -3147,6 +3147,15 @@ def admin_billing(request):
     # Pre-calculate summary totals for print view usage
     total_centers_earned = sum(item["actual_earned"] for item in centers_report)
     total_filter_gross = sum(item["gross"] for item in filter_reports)
+    
+    # Extract Sham Cash balance and total sold codes
+    sham_cash_balance = 0
+    for item in centers_report:
+        if "شام كاش" in item["center"].name or "الإدارة" in item["center"].name:
+            sham_cash_balance = item["actual_earned"]
+            break
+            
+    total_sold_codes = sum(item["sold_codes_count"] for item in centers_report)
 
     context = {
         "subscriptions": subscriptions,
@@ -3160,6 +3169,8 @@ def admin_billing(request):
         "centers_report": centers_report,
         "total_centers_earned": total_centers_earned,
         "total_filter_gross": total_filter_gross,
+        "sham_cash_balance": sham_cash_balance,
+        "total_sold_codes": total_sold_codes,
     }
     return render(request, template_to_render, context)
 
