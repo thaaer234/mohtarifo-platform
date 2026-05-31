@@ -30,7 +30,8 @@ async function connectToWhatsApp() {
         printQRInTerminal: false, 
         logger: logger, 
         browser: Browsers.ubuntu('Chrome'),
-        markOnline: false // Prevent the gateway from marking this session as online to keep mobile notifications active
+        markOnline: false,
+        markOnlineOnConnect: false
     });
 
     sock.ev.on('creds.update', saveCreds);
@@ -65,8 +66,32 @@ async function connectToWhatsApp() {
             connectionStatus = 'connected';
             latestQRData = null; // Safe cleanup
             console.log('CONNECTED');
+            
+            // Set presence to unavailable after a 3-second delay to ensure authentication is finalized
+            setTimeout(async () => {
+                try {
+                    if (sock) {
+                        await sock.sendPresenceUpdate('unavailable');
+                        console.log('Initial presence set to unavailable.');
+                    }
+                } catch (e) {
+                    console.error('Failed to set initial presence:', e);
+                }
+            }, 3000);
         }
     });
+
+    // Start a background heartbeat to keep sending "unavailable" state every 60 seconds.
+    // This overrides WhatsApp's automatic presence tracking and guarantees push notifications on the phone.
+    setInterval(async () => {
+        try {
+            if (connectionStatus === 'connected' && sock) {
+                await sock.sendPresenceUpdate('unavailable');
+            }
+        } catch(e) {
+            // Quietly catch temporary network drop errors
+        }
+    }, 60000);
 }
 
 // ---------------- Middleware & Routes ----------------
