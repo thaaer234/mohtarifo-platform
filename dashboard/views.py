@@ -5163,6 +5163,47 @@ def admin_whatsapp_control(request):
     db_templates = WhatsAppTemplate.objects.all()
     branches = AcademicBranch.objects.filter(is_active=True).order_by("sort_order", "name")
 
+    # Fetch recent students from both profiles and sold codes to list under the VCF hub
+    from billing.models import AccessCode
+    recent_sold_codes = AccessCode.objects.filter(
+        sale_status="sold"
+    ).exclude(
+        assigned_student_phone=""
+    ).exclude(
+        assigned_student_phone__isnull=True
+    ).order_by("-sold_at")[:15]
+    
+    recent_students = []
+    seen_phones = set()
+    
+    for code in recent_sold_codes:
+        phone = code.assigned_student_phone.strip()
+        name = code.assigned_student_name.strip()
+        if phone and phone not in seen_phones:
+            seen_phones.add(phone)
+            recent_students.append({
+                "name": name,
+                "phone": phone,
+                "source": "كود مباع",
+                "date": code.sold_at
+            })
+            
+    recent_profiles = StudentProfile.objects.exclude(phone="").exclude(phone__isnull=True).select_related("user").order_by("-id")[:15]
+    for p in recent_profiles:
+        phone = p.phone.strip()
+        name = p.user.get_full_name() or p.user.username
+        if phone and phone not in seen_phones:
+            seen_phones.add(phone)
+            recent_students.append({
+                "name": name,
+                "phone": phone,
+                "source": "حساب مسجل",
+                "date": p.user.date_joined
+            })
+            
+    recent_students.sort(key=lambda x: x["date"] or timezone.now(), reverse=True)
+    recent_students = recent_students[:12]
+
     return render(request, "dashboard/admin_whatsapp_control.html", {
         "status": status_data.get("status", "offline"),
         "qr": status_data.get("qr"),
@@ -5170,8 +5211,10 @@ def admin_whatsapp_control(request):
         "wa_user": status_data.get("user"),
         "courses": courses,
         "templates": db_templates,
-        "branches": branches
+        "branches": branches,
+        "recent_students": recent_students
     })
+
 
 
 @admin_required
@@ -5208,3 +5251,203 @@ def exit_impersonate(request):
     
     messages.success(request, "✅ تم العودة إلى حساب الإدارة بنجاح.")
     return redirect("dashboard:admin_instructors")
+
+
+@admin_required
+@require_POST
+def admin_whatsapp_send_sold_card(request):
+    from django.http import JsonResponse
+    import json
+    import requests
+    from .whatsapp_utils import WHATSAPP_GATEWAY_URL, WHATSAPP_API_SECRET
+    
+    try:
+        data = json.loads(request.body)
+        phone = data.get("phone", "").strip()
+        message = data.get("message", "").strip()
+        image_base64 = data.get("image", "")  # data:image/png;base64,....
+        
+        if not phone or not message:
+            return JsonResponse({"ok": False, "error": "رقم الهاتف ونص الرسالة مطلوبان."})
+        
+        payload = {
+            "number": phone,
+            "message": message,
+        }
+        if image_base64:
+            payload["image"] = image_base64
+            
+        headers = {
+            "X-API-Secret": WHATSAPP_API_SECRET,
+            "Content-Type": "application/json"
+        }
+        
+        resp = requests.post(f"{WHATSAPP_GATEWAY_URL}/send-message", json=payload, headers=headers, timeout=25)
+        
+        if resp.status_code == 200:
+            return JsonResponse({"ok": True, "message": "تم إرسال بطاقة التفعيل آلياً بنجاح!"})
+        else:
+            return JsonResponse({"ok": False, "error": f"فشل إرسال الرسالة من سيرفر الواتساب: {resp.text}"})
+            
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": f"حدث خطأ أثناء معالجة الطلب: {str(e)}"})
+
+
+@admin_required
+def admin_export_contacts_vcf(request):
+    from django.http import HttpResponse
+    from billing.models import AccessCode
+    from accounts.models import StudentProfile
+    
+    single_phone = request.GET.get("phone", "").strip()
+    single_name = request.GET.get("name", "").strip()
+    
+    contacts = []
+    
+    if single_phone:
+        name = single_name or f"طالب {single_phone}"
+        contacts.append((name, single_phone))
+        filename = f"contact_{single_phone}.vcf"
+    else:
+        # Query all sold codes that have student name and phone
+        sold_codes = AccessCode.objects.filter(
+            sale_status="sold"
+        ).exclude(
+            assigned_student_phone=""
+        ).exclude(
+            assigned_student_phone__isnull=True
+        ).order_by("-sold_at")
+        
+        seen_phones = set()
+        
+        # 1. Add sold codes contacts
+        for code in sold_codes:
+            phone = code.assigned_student_phone.strip()
+            name = code.assigned_student_name.strip()
+            if phone and phone not in seen_phones:
+                seen_phones.add(phone)
+                contacts.append((name, phone))
+                
+        # 2. Add student profiles contacts
+        profiles = StudentProfile.objects.exclude(phone="").exclude(phone__isnull=True).select_related("user")
+        for p in profiles:
+            phone = p.phone.strip()
+            name = p.user.get_full_name() or p.user.username
+            if phone and phone not in seen_phones:
+                seen_phones.add(phone)
+                contacts.append((name, phone))
+        filename = "mohtarifo_contacts.vcf"
+            
+    # Build the multi-contact VCF content
+    vcf_content = ""
+    for name, phone in contacts:
+        # Clean phone
+        clean_phone = ''.join(filter(str.isdigit, str(phone)))
+        if clean_phone.startswith('0') and len(clean_phone) == 10:
+            clean_phone = '963' + clean_phone[1:]
+        elif len(clean_phone) == 9 and clean_phone.startswith('9'):
+            clean_phone = '963' + clean_phone
+            
+        vcf_content += "BEGIN:VCARD\n"
+        vcf_content += "VERSION:3.0\n"
+        vcf_content += f"FN:{name}\n"
+        vcf_content += f"TEL;TYPE=CELL;TYPE=VOICE;waid={clean_phone}:+{clean_phone}\n"
+        vcf_content += "END:VCARD\n"
+        
+    response = HttpResponse(vcf_content, content_type="text/x-vcard")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
+
+@admin_required
+def admin_send_contacts_vcf_whatsapp(request):
+    from django.http import JsonResponse
+    import requests
+    import base64
+    from billing.models import AccessCode
+    from accounts.models import StudentProfile
+    from .whatsapp_utils import WHATSAPP_GATEWAY_URL, WHATSAPP_API_SECRET
+    
+    # Target phone
+    single_phone = request.GET.get("phone", "").strip()
+    single_name = request.GET.get("name", "").strip()
+    
+    contacts = []
+    seen_phones = set()
+    admin_phone = "963983232446"
+    
+    if single_phone:
+        name = single_name or f"طالب {single_phone}"
+        contacts.append((name, single_phone))
+        file_label = f"طالب فردي ({name})"
+        fileName = f"contact_{single_phone}.vcf"
+    else:
+        # Query all sold codes that have student name and phone
+        sold_codes = AccessCode.objects.filter(
+            sale_status="sold"
+        ).exclude(
+            assigned_student_phone=""
+        ).exclude(
+            assigned_student_phone__isnull=True
+        ).order_by("-sold_at")
+        
+        for code in sold_codes:
+            phone = code.assigned_student_phone.strip()
+            name = code.assigned_student_name.strip()
+            if phone and phone not in seen_phones:
+                seen_phones.add(phone)
+                contacts.append((name, phone))
+                
+        profiles = StudentProfile.objects.exclude(phone="").exclude(phone__isnull=True).select_related("user")
+        for p in profiles:
+            phone = p.phone.strip()
+            name = p.user.get_full_name() or p.user.username
+            if phone and phone not in seen_phones:
+                seen_phones.add(phone)
+                contacts.append((name, phone))
+        file_label = "جميع جهات الاتصال بالكامل"
+        fileName = "mohtarifo_contacts.vcf"
+        
+    # Build VCF content
+    vcf_content = ""
+    for name, phone in contacts:
+        clean_phone = ''.join(filter(str.isdigit, str(phone)))
+        if clean_phone.startswith('0') and len(clean_phone) == 10:
+            clean_phone = '963' + clean_phone[1:]
+        elif len(clean_phone) == 9 and clean_phone.startswith('9'):
+            clean_phone = '963' + clean_phone
+            
+        vcf_content += "BEGIN:VCARD\n"
+        vcf_content += "VERSION:3.0\n"
+        vcf_content += f"FN:{name}\n"
+        vcf_content += f"TEL;TYPE=CELL;TYPE=VOICE;waid={clean_phone}:+{clean_phone}\n"
+        vcf_content += "END:VCARD\n"
+        
+    if not vcf_content:
+        return JsonResponse({"ok": False, "error": "لا توجد أسماء لتصديرها."})
+        
+    # Base64 encode
+    vcf_bytes = vcf_content.encode('utf-8')
+    vcf_base64 = "data:text/vcard;base64," + base64.b64encode(vcf_bytes).decode('utf-8')
+    
+    payload = {
+        "number": admin_phone,
+        "document": vcf_base64,
+        "mimetype": "text/vcard",
+        "fileName": fileName,
+        "message": f"تصدير جهات اتصال منصة محترفو التعليم ⚡\nنوع التصدير: {file_label}\nالعدد: {len(contacts)} جهة اتصال."
+    }
+    
+    headers = {
+        "X-API-Secret": WHATSAPP_API_SECRET,
+        "Content-Type": "application/json"
+    }
+    
+    try:
+        resp = requests.post(f"{WHATSAPP_GATEWAY_URL}/send-message", json=payload, headers=headers, timeout=25)
+        if resp.status_code == 200:
+            return JsonResponse({"ok": True, "message": f"تم إرسال {file_label} بنجاح كملف VCF إلى رقم الإدارة 0983232446! 🎉"})
+        else:
+            return JsonResponse({"ok": False, "error": f"فشل إرسال الملف عبر بوابة الواتساب: {resp.text}"})
+    except Exception as e:
+        return JsonResponse({"ok": False, "error": f"حدث خطأ أثناء الاتصال بالبوابة: {str(e)}"})

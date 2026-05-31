@@ -781,7 +781,8 @@
         }
     }
 
-    function sendToWhatsApp() {
+    async function sendToWhatsApp() {
+        const btn = document.getElementById('send-whatsapp-btn');
         const phone = '{{ sold_code.assigned_student_phone }}';
         const text = document.getElementById('wp-msg-preview').innerText;
         
@@ -792,9 +793,98 @@
         } else if (!cleanPhone.startsWith('963') && cleanPhone.length === 9) {
              cleanPhone = '963' + cleanPhone;
         }
-        
-        const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
-        window.open(url, '_blank');
+
+        const fallbackUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(text)}`;
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="lucide-loader"></i> جاري إرسال صورة البطاقة والرسالة...';
+        btn.style.background = '#eab308'; // Amber
+
+        try {
+            // Force card preview layout computation
+            switchModalView('card');
+            await new Promise(r => setTimeout(r, 100));
+
+            // Generate Front Card Base64
+            const frontCardElement = document.getElementById('html-to-image-front');
+            if (!frontCardElement) throw new Error("Front card element not found");
+
+            const clone = frontCardElement.cloneNode(true);
+            clone.style.position = 'fixed';
+            clone.style.top = '0px';
+            clone.style.left = '0px';
+            clone.style.width = '791px';
+            clone.style.height = '374px';
+            clone.style.transform = 'none';
+            clone.style.zIndex = '-999999';
+            clone.style.visibility = 'visible';
+            clone.style.opacity = '1';
+            clone.style.margin = '0';
+            clone.style.border = 'none';
+            
+            document.body.appendChild(clone);
+            await new Promise(r => setTimeout(r, 150));
+
+            const frontDataUrl = await htmlToImage.toPng(clone, {
+                width: 791,
+                height: 374,
+                pixelRatio: 2, // Sharp resolution
+                backgroundColor: '#ffffff',
+                style: {
+                    transform: 'none',
+                    margin: '0',
+                    padding: '0'
+                }
+            });
+            document.body.removeChild(clone);
+
+            // POST to Django Backend
+            const response = await fetch("{% url 'dashboard:admin_whatsapp_send_sold_card' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify({
+                    phone: cleanPhone,
+                    message: text,
+                    image: frontDataUrl
+                })
+            });
+            const result = await response.json();
+
+            if (result.ok) {
+                btn.style.background = '#10b981'; // Green
+                btn.innerHTML = '<i class="lucide-check-circle"></i> تم إرسال البطاقة والرسالة للطالب بنجاح!';
+                setTimeout(() => {
+                    btn.style.background = '#25D366';
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 4000);
+            } else {
+                console.error("WhatsApp gateway error:", result.error);
+                // Fallback to manual send
+                btn.style.background = '#f87171'; // Red
+                btn.innerHTML = '<i class="lucide-alert-triangle"></i> السيرفر مغلق - جاري فتح المنيوال...';
+                setTimeout(() => {
+                    window.open(fallbackUrl, '_blank');
+                    btn.style.background = '#25D366';
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            }
+        } catch (e) {
+            console.error("WhatsApp generation/network error:", e);
+            // Fallback to manual send
+            btn.style.background = '#f87171'; // Red
+            btn.innerHTML = '<i class="lucide-alert-triangle"></i> فشل آلي - جاري فتح المنيوال...';
+            setTimeout(() => {
+                window.open(fallbackUrl, '_blank');
+                btn.style.background = '#25D366';
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }, 2000);
+        }
     }
 
     function switchType(type) {

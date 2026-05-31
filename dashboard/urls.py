@@ -95,6 +95,9 @@ urlpatterns = [
     path("instructor/settings/", views.instructor_settings, name="instructor_settings"),
     path("admin-dashboard/tools/migrate-thair-data/", views.admin_action_migrate_thair, name="admin_action_migrate_thair"),
     path("admin-dashboard/whatsapp/", views.admin_whatsapp_control, name="admin_whatsapp_control"),
+    path("admin-dashboard/whatsapp/send-sold-card/", views.admin_whatsapp_send_sold_card, name="admin_whatsapp_send_sold_card"),
+    path("admin-dashboard/whatsapp/export-contacts/", views.admin_export_contacts_vcf, name="admin_export_contacts_vcf"),
+    path("admin-dashboard/whatsapp/send-contacts-vcf/", views.admin_send_contacts_vcf_whatsapp, name="admin_send_contacts_vcf_whatsapp"),
     path("admin-dashboard/instructors/<int:instructor_id>/impersonate/", views.admin_impersonate_instructor, name="admin_impersonate_instructor"),
     path("impersonate/exit/", views.exit_impersonate, name="exit_impersonate"),
 ]

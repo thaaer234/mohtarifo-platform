@@ -286,6 +286,75 @@
             </article>
             {% endif %}
 
+            <!-- VCF Contacts Management Hub -->
+            <article class="premium-card glass-panel" style="padding: 1.75rem; border: 1px solid rgba(197, 160, 89, 0.25); background: linear-gradient(145deg, rgba(197, 160, 89, 0.04), rgba(0, 0, 0, 0.45)); position: relative; overflow: hidden; border-radius: 24px;">
+                <div style="position: absolute; left: -10px; top: -10px; opacity: 0.03; color: var(--brand-gold);">
+                    <i data-lucide="users" style="width: 100px; height: 100px;"></i>
+                </div>
+                
+                <h4 class="mb-2" style="display: flex; align-items: center; gap: 0.5rem; color: #fff; font-size: 1.1rem; font-weight: 900; margin: 0 0 0.5rem 0;">
+                    <i data-lucide="users-round" style="color: var(--brand-gold); width: 18px; height: 18px;"></i> مركز جهات الاتصال VCF Hub
+                </h4>
+                <p class="text-muted mb-4" style="font-size: 0.8rem; line-height: 1.5; margin: 0 0 1rem 0;">سجل جميع الطلاب على هاتفك المحمول **بكبسة زر واحدة** لتفعيل كشوفات الواتساب والتواصل السريع!</p>
+                
+                <!-- Bulk Actions -->
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.25rem; border-bottom: 1px dashed rgba(255,255,255,0.08); padding-bottom: 1.25rem;">
+                    <a href="{% url 'dashboard:admin_export_contacts_vcf' %}" class="btn btn-secondary btn-sm w-full" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; font-weight: bold; padding: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; color: #fff; text-decoration: none; font-size: 0.82rem;">
+                        <i data-lucide="download-cloud" style="width: 16px; height: 16px;"></i> تحميل ملف الأسماء الموحد (VCF)
+                    </a>
+                    
+                    {% if status == 'connected' %}
+                    <button id="send-bulk-vcf-btn" onclick="sendBulkContactsToAdmin(this)" class="btn w-full" style="background: var(--brand-gold); border: 1px solid var(--brand-gold); color: #000; font-weight: 800; border-radius: 12px; padding: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.82rem; cursor: pointer; box-shadow: 0 4px 12px rgba(197, 160, 89, 0.25);">
+                        <i data-lucide="send" style="width: 16px; height: 16px;"></i> إرسال الأسماء لواتساب الإدارة 📞
+                    </button>
+                    {% else %}
+                    <button class="btn w-full" disabled style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); color: rgba(255,255,255,0.2); font-weight: 800; border-radius: 12px; padding: 0.75rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.82rem; cursor: not-allowed;" title="البوابة غير متصلة حالياً">
+                        <i data-lucide="send" style="width: 16px; height: 16px; opacity: 0.5;"></i> إرسال للواتساب (البوابة مغلقة)
+                    </button>
+                    {% endif %}
+                </div>
+
+                <!-- Recent Students List -->
+                <h5 style="color: var(--brand-gold); font-size: 0.85rem; font-weight: bold; margin: 0 0 0.75rem 0; display: flex; align-items: center; gap: 0.4rem;">
+                    <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i> أحدث الطلاب المسجلين بالمنصة:
+                </h5>
+                
+                <div style="max-height: 280px; overflow-y: auto; padding-right: 0.25rem; display: flex; flex-direction: column; gap: 0.65rem;" class="custom-scroll">
+                    {% for student in recent_students %}
+                        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 10px; padding: 0.65rem 0.85rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; font-size: 0.8rem;">
+                            <div style="min-width: 0; flex: 1; text-align: right;">
+                                <div style="font-weight: bold; color: #fff; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">{{ student.name }}</div>
+                                <div style="color: var(--text-muted); font-size: 0.7rem; display: flex; align-items: center; gap: 0.4rem; margin-top: 2px;">
+                                    <span style="font-family: monospace;">{{ student.phone }}</span>
+                                    <span style="opacity: 0.4;">•</span>
+                                    <span class="badge" style="font-size: 0.6rem; padding: 1px 6px; background: rgba(255,255,255,0.05); color: var(--text-muted); border-radius: 4px;">{{ student.source }}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div style="display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                                <!-- Download Individual VCF -->
+                                <a href="{% url 'dashboard:admin_export_contacts_vcf' %}?phone={{ student.phone }}&name={{ student.name }}" class="btn-icon" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: #cbd5e1; text-decoration: none;" title="تحميل كارت الطالب">
+                                    <i data-lucide="download" style="width: 13px; height: 13px;"></i>
+                                </a>
+                                <!-- Send to Admin WhatsApp -->
+                                {% if status == 'connected' %}
+                                <button onclick="sendIndividualVCF('{{ student.phone }}', '{{ student.name }}', this)" class="btn-icon" style="background: rgba(37, 211, 102, 0.1); border: 1px solid rgba(37, 211, 102, 0.15); border-radius: 8px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: #25D366; cursor: pointer;" title="إرسال لواتساب الإدارة">
+                                    <i data-lucide="send-to-back" style="width: 13px; height: 13px;"></i>
+                                </button>
+                                {% else %}
+                                <button disabled class="btn-icon" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.02); border-radius: 8px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.15); cursor: not-allowed;" title="البوابة مغلقة">
+                                    <i data-lucide="send-to-back" style="width: 13px; height: 13px;"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p style="font-size: 0.75rem; color: var(--text-muted); text-align: center; padding: 1rem 0; margin: 0;">لا توجد جهات اتصال حديثة حالياً.</p>
+                    {% endfor %}
+                </div>
+            </article>
+
             <div class="premium-card glass-panel" style="padding: 1.5rem;">
                 <h4 class="mb-4" style="color: var(--brand-gold); font-size: 1rem; display: flex; align-items: center; gap: 0.5rem;">
                     <i data-lucide="shield-check"></i> إرشادات المراسلة والذكاء
@@ -448,6 +517,92 @@
         });
         
         previewBox.innerHTML = processed || '<em style="color:#666;">أدخل نص الرسالة لعرض المعاينة هنا...</em>';
+    }
+
+    async function sendBulkContactsToAdmin(btn) {
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-gold" style="width: 14px; height: 14px; border-width: 2px; vertical-align: middle; margin-left: 6px; display: inline-block;"></span> جاري معالجة وإرسال جهات الاتصال...';
+        btn.style.background = '#d97706';
+        
+        try {
+            const response = await fetch("{% url 'dashboard:admin_send_contacts_vcf_whatsapp' %}");
+            const result = await response.json();
+            
+            if (result.ok) {
+                btn.style.background = '#10b981';
+                btn.innerHTML = '<i data-lucide="check-circle" style="width: 16px; height: 16px; vertical-align: middle; margin-left: 6px; display: inline-block;"></i> تم إرسال الأسماء بنجاح!';
+                setTimeout(() => {
+                    btn.style.background = '';
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    lucide.createIcons();
+                }, 4000);
+            } else {
+                alert("خطأ: " + result.error);
+                btn.style.background = '#ef4444';
+                btn.innerHTML = '<i data-lucide="alert-triangle" style="width: 16px; height: 16px; vertical-align: middle; margin-left: 6px; display: inline-block;"></i> فشل الإرسال';
+                setTimeout(() => {
+                    btn.style.background = '';
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    lucide.createIcons();
+                }, 4000);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("حدث خطأ غير متوقع أثناء الاتصال بالخادم.");
+            btn.style.background = '';
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+        setTimeout(() => { lucide.createIcons(); }, 15);
+    }
+
+    async function sendIndividualVCF(phone, name, btn) {
+        const originalContent = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-gold" style="width: 10px; height: 10px; border-width: 1px; display: block; border-left-color:#fff;"></span>';
+        
+        try {
+            const url = `{% url 'dashboard:admin_send_contacts_vcf_whatsapp' %}?phone=${phone}&name=${encodeURIComponent(name)}`;
+            const response = await fetch(url);
+            const result = await response.json();
+            
+            if (result.ok) {
+                btn.style.background = '#10b981';
+                btn.style.borderColor = '#10b981';
+                btn.style.color = '#fff';
+                btn.innerHTML = '<i data-lucide="check" style="width: 12px; height: 12px; display: block;"></i>';
+                setTimeout(() => {
+                    btn.style.background = '';
+                    btn.style.borderColor = '';
+                    btn.style.color = '';
+                    btn.innerHTML = originalContent;
+                    btn.disabled = false;
+                    lucide.createIcons();
+                }, 4000);
+            } else {
+                alert("خطأ: " + result.error);
+                btn.style.background = '#ef4444';
+                btn.style.borderColor = '#ef4444';
+                btn.style.color = '#fff';
+                btn.innerHTML = '<i data-lucide="x" style="width: 12px; height: 12px; display: block;"></i>';
+                setTimeout(() => {
+                    btn.style.background = '';
+                    btn.style.borderColor = '';
+                    btn.style.color = '';
+                    btn.innerHTML = originalContent;
+                    btn.disabled = false;
+                    lucide.createIcons();
+                }, 4000);
+            }
+        } catch(e) {
+            console.error(e);
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        }
+        setTimeout(() => { lucide.createIcons(); }, 15);
     }
 </script>
 

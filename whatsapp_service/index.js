@@ -28,8 +28,9 @@ async function connectToWhatsApp() {
     sock = makeWASocket({
         auth: state,
         printQRInTerminal: false, 
-        logger: logger, // Using elevated logger for live diagnostics
-        browser: Browsers.ubuntu('Chrome') // Standard recognized signature
+        logger: logger, 
+        browser: Browsers.ubuntu('Chrome'),
+        markOnline: false // Prevent the gateway from marking this session as online to keep mobile notifications active
     });
 
     sock.ev.on('creds.update', saveCreds);
@@ -112,21 +113,54 @@ function formatNumber(number) {
 }
 
 app.post('/send-message', async (req, res) => {
-    const { number, message } = req.body;
+    const { number, message, image, document, mimetype, fileName } = req.body;
 
     if (connectionStatus !== 'connected' || !sock) {
         return res.status(503).json({ status: 'error', message: 'WhatsApp not connected' });
     }
 
-    if (!number || !message) {
-        return res.status(400).json({ status: 'error', message: 'Missing phone number or message' });
+    if (!number || (!message && !document)) {
+        return res.status(400).json({ status: 'error', message: 'Missing phone number or message/document content' });
     }
 
     try {
         const jid = formatNumber(number);
-        
-        // Send simple text message
-        const sentMsg = await sock.sendMessage(jid, { text: message });
+        let sentMsg;
+
+        if (image) {
+            let buffer;
+            if (image.startsWith('data:')) {
+                // Base64 data URL
+                const base64Data = image.split(',')[1];
+                buffer = Buffer.from(base64Data, 'base64');
+            } else {
+                // Regular URL or path
+                buffer = { url: image };
+            }
+
+            sentMsg = await sock.sendMessage(jid, {
+                image: buffer,
+                caption: message || ''
+            });
+        } else if (document) {
+            let buffer;
+            if (document.startsWith('data:')) {
+                const base64Data = document.split(',')[1];
+                buffer = Buffer.from(base64Data, 'base64');
+            } else {
+                buffer = Buffer.from(document, 'base64');
+            }
+
+            sentMsg = await sock.sendMessage(jid, {
+                document: buffer,
+                mimetype: mimetype || 'application/octet-stream',
+                fileName: fileName || 'file.vcf',
+                caption: message || ''
+            });
+        } else {
+            // Send simple text message
+            sentMsg = await sock.sendMessage(jid, { text: message });
+        }
         
         res.json({ 
             status: 'success', 
