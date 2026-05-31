@@ -5341,9 +5341,11 @@ def admin_export_contacts_vcf(request):
     # Build the multi-contact VCF content
     vcf_content = ""
     for name, phone in contacts:
-        # Clean phone
+        # Robust Syrian phone normalization
         clean_phone = ''.join(filter(str.isdigit, str(phone)))
-        if clean_phone.startswith('0') and len(clean_phone) == 10:
+        if clean_phone.startswith('00963'):
+            clean_phone = '963' + clean_phone[5:]
+        elif clean_phone.startswith('09') and len(clean_phone) == 10:
             clean_phone = '963' + clean_phone[1:]
         elif len(clean_phone) == 9 and clean_phone.startswith('9'):
             clean_phone = '963' + clean_phone
@@ -5411,8 +5413,11 @@ def admin_send_contacts_vcf_whatsapp(request):
     # Build VCF content
     vcf_content = ""
     for name, phone in contacts:
+        # Robust Syrian phone normalization
         clean_phone = ''.join(filter(str.isdigit, str(phone)))
-        if clean_phone.startswith('0') and len(clean_phone) == 10:
+        if clean_phone.startswith('00963'):
+            clean_phone = '963' + clean_phone[5:]
+        elif clean_phone.startswith('09') and len(clean_phone) == 10:
             clean_phone = '963' + clean_phone[1:]
         elif len(clean_phone) == 9 and clean_phone.startswith('9'):
             clean_phone = '963' + clean_phone
