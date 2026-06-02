@@ -177,7 +177,11 @@ def fetch_bunny_video_duration(video_url):
     from urllib.parse import urlparse
     
     api_key = os.environ.get("BUNNY_STREAM_API_KEY", "").strip() or os.environ.get("BUNNY_STREAM_TOKEN_KEY", "").strip()
-    if not api_key or "mediadelivery.net" not in video_url:
+    if not api_key:
+        print("Bunny Sync Debug: Missing API/Token key in environment variables.")
+        return None
+    if "mediadelivery.net" not in video_url:
+        print(f"Bunny Sync Debug: URL '{video_url}' is not a mediadelivery.net URL.")
         return None
         
     try:
@@ -194,12 +198,17 @@ def fetch_bunny_video_duration(video_url):
             library_id = path_parts[0]
             video_id = path_parts[1]
             
+        if not library_id or not video_id:
+            print(f"Bunny Sync Debug: Failed to parse library_id and video_id from URL path: {parsed.path}")
+            return None
+            
         if library_id and video_id:
             url = f"https://video.bunnycdn.com/library/{library_id}/videos/{video_id}"
             headers = {
                 "accept": "application/json",
                 "AccessKey": api_key
             }
+            print(f"Bunny Sync Debug: Requesting details from {url} using AccessKey (length: {len(api_key)})")
             response = requests.get(url, headers=headers, timeout=5)
             if response.status_code == 200:
                 data = response.json()
