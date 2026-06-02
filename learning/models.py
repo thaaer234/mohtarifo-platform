@@ -204,6 +204,8 @@ def fetch_bunny_video_duration(video_url):
             if response.status_code == 200:
                 data = response.json()
                 return data.get("length")  # length is in seconds
+            else:
+                print(f"Bunny API returned status {response.status_code}: {response.text}")
     except Exception as e:
         print(f"Error fetching Bunny video duration: {e}")
     return None
