@@ -127,6 +127,12 @@
                             <textarea name="message" id="broadcast-text-area" rows="5" placeholder="مثال: مرحباً يا {name}، يسعدنا إعلامك بأن..." required style="background: rgba(0,0,0,0.25); border: 1px solid var(--border-strong); padding: 1rem; border-radius: 16px; color: white; width: 100%; font-family: inherit; font-size: 0.95rem; line-height: 1.6; resize: vertical;"></textarea>
                         </div>
 
+                        <!-- Skip Duplicates Option -->
+                        <div class="form-group" style="display: flex; align-items: center; gap: 0.6rem; margin-top: 0.5rem; background: rgba(255,255,255,0.02); padding: 0.75rem 1rem; border-radius: 12px; border: 1px dashed rgba(255,255,255,0.05);">
+                            <input type="checkbox" name="skip_duplicates" id="skip-duplicates" style="width: 18px; height: 18px; accent-color: #25D366; cursor: pointer; border-radius: 4px;">
+                            <label for="skip-duplicates" style="font-size: 0.85rem; color: #cbd5e1; cursor: pointer; user-select: none; margin: 0;">🚫 <strong>تجنب التكرار:</strong> عدم إرسال الرسالة للطلاب الذين تلقوا نفس هذا القالب مسبقاً.</label>
+                        </div>
+
                         <div class="flex-end mt-2">
                             <button type="submit" name="send_broadcast" class="btn btn-primary" style="background: #25D366; border-color: #25D366; color: #000; font-weight: 800; border-radius: 14px; padding: 0.8rem 2rem;" onclick="return confirm('تحذير أمني: هل أنت متأكد من إطلاق هذه الحملة لجميع طلاب الفئة المحددة؟')">
                                 <i data-lucide="rocket" style="margin-left: 0.5rem;"></i> إطلاق حملة المراسلة الذكية

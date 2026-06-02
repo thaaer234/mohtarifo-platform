@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import CatalogSection, StudentNotification, OTPVerificationLog
+from .models import CatalogSection, StudentNotification, OTPVerificationLog, WhatsAppTemplate, WhatsAppMessageLog
 
 
 @admin.register(CatalogSection)
@@ -23,3 +23,17 @@ class OTPVerificationLogAdmin(admin.ModelAdmin):
     list_filter = ("is_verified", "purpose", "created_at")
     search_fields = ("phone", "user__username", "code")
     readonly_fields = ("created_at",)
+
+
+@admin.register(WhatsAppTemplate)
+class WhatsAppTemplateAdmin(admin.ModelAdmin):
+    list_display = ("title", "created_at")
+    search_fields = ("title", "content")
+
+
+@admin.register(WhatsAppMessageLog)
+class WhatsAppMessageLogAdmin(admin.ModelAdmin):
+    list_display = ("phone", "sent_at", "raw_text_hash")
+    search_fields = ("phone", "sent_text")
+    readonly_fields = ("sent_at",)
+

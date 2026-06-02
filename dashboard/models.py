@@ -85,3 +85,19 @@ class OTPVerificationLog(models.Model):
 
     def __str__(self):
         return f"{self.phone} - {self.get_purpose_display()}"
+
+
+class WhatsAppMessageLog(models.Model):
+    phone = models.CharField(max_length=40, db_index=True, verbose_name="رقم الهاتف")
+    raw_text_hash = models.CharField(max_length=64, db_index=True, blank=True, null=True, verbose_name="هاش النص الخام")
+    sent_text = models.TextField(verbose_name="النص المرسل")
+    sent_at = models.DateTimeField(auto_now_add=True, verbose_name="وقت الإرسال")
+
+    class Meta:
+        verbose_name = "سجل إرسال واتساب"
+        verbose_name_plural = "سجلات إرسال الواتساب"
+        ordering = ["-sent_at"]
+
+    def __str__(self):
+        return f"{self.phone} - {self.sent_at.strftime('%Y-%m-%d %H:%M')}"
+

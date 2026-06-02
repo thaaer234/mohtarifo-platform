@@ -150,9 +150,14 @@
                         </span>
                     </td>
                     <td class="print-hidden">
-                        <a href="{% url 'dashboard:admin_student_detail' student.id %}" class="btn btn-icon" title="إدارة الطالب">
-                            <i data-lucide="external-link"></i>
-                        </a>
+                        <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: center;">
+                            <a href="{% url 'dashboard:admin_student_detail' student.id %}" class="btn btn-icon" title="إدارة الطالب" style="width: 32px; height: 32px;">
+                                <i data-lucide="external-link" style="width: 15px; height: 15px;"></i>
+                            </a>
+                            <a href="{% url 'dashboard:admin_impersonate_student' student.id %}" class="btn btn-icon" style="color: var(--brand-gold); background: rgba(197, 160, 89, 0.08); border-color: rgba(197, 160, 89, 0.15); width: 32px; height: 32px;" title="تسجيل الدخول كطالب" onclick="return confirm('هل أنت متأكد من رغبتك في تسجيل الدخول باسم الطالب ({{ student.get_full_name|default:student.username }}) وتصفح حسابه؟')">
+                                <i data-lucide="key-round" style="width: 15px; height: 15px;"></i>
+                            </a>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}

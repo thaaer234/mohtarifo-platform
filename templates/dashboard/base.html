@@ -178,6 +178,15 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
+    {% if request.session.impersonator_admin_id %}
+    <div class="impersonation-warning-bar" style="background: linear-gradient(90deg, #d97706 0%, #ef4444 100%); color: white; text-align: center; padding: 0.8rem 1rem; font-size: 0.92rem; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 1rem; position: sticky; top: 0; z-index: 100000; box-shadow: 0 4px 20px rgba(0,0,0,0.4); direction: rtl; width: 100%;">
+        <span style="display: flex; align-items: center; gap: 0.5rem;">🕵️ أنت تتصفح الموقع حالياً بحساب الطالب: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>. لديك حق الوصول لجميع دروسه ودوراته المفعلة.</span>
+        <a href="{% url 'dashboard:exit_impersonate' %}" style="background: white; color: #dc2626; border: none; font-weight: 800; border-radius: 8px; padding: 0.4rem 1.2rem; font-size: 0.85rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform='scale(1)'">
+            العودة للإدارة ↩️
+        </a>
+    </div>
+    {% endif %}
+
     <!-- Scroll Progress Bar -->
     <div id="scroll-progress-container">
         <div id="scroll-progress-bar"></div>

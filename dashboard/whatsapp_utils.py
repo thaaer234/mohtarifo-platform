@@ -22,7 +22,7 @@ def format_phone_to_intl(phone):
 
     return digits
 
-def send_whatsapp_message(phone_number, message_text):
+def send_whatsapp_message(phone_number, message_text, raw_text=None):
     """
     Sends an automated WhatsApp message through the local microservice.
     Automatically catches exceptions to not interrupt the main application flow.
@@ -51,6 +51,23 @@ def send_whatsapp_message(phone_number, message_text):
         if response.status_code == 200:
             data = response.json()
             logger.info(f"WhatsApp sent successfully to {formatted_number}: {data.get('messageId')}")
+            
+            # Log sent message and its raw hash to avoid duplicates
+            try:
+                from dashboard.models import WhatsAppMessageLog
+                import hashlib
+                text_to_hash = raw_text or message_text
+                normalized = " ".join(text_to_hash.strip().split()) if text_to_hash else ""
+                raw_hash = hashlib.sha256(normalized.encode('utf-8')).hexdigest() if normalized else ""
+                
+                WhatsAppMessageLog.objects.create(
+                    phone=formatted_number,
+                    raw_text_hash=raw_hash,
+                    sent_text=message_text
+                )
+            except Exception as log_err:
+                logger.error(f"Failed to log WhatsApp message to database: {log_err}")
+                
             return True
         else:
             logger.error(f"Failed to send WhatsApp to {formatted_number}: HTTP {response.status_code} - {response.text}")

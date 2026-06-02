@@ -5099,34 +5099,58 @@ def admin_whatsapp_control(request):
     User = get_user_model()
 
     # Helper for background broadcasts with advanced humanized anti-spam throttle & grammar parser
-    def _background_broadcast(student_list, raw_message):
+    def _background_broadcast(student_list, raw_message, skip_duplicates=False):
         import random
+        import hashlib
+        import logging
+        logger = logging.getLogger(__name__)
+        from .whatsapp_utils import format_phone_to_intl
+        from dashboard.models import WhatsAppMessageLog
         
-        sent_count = 0
-        for profile in student_list:
-            if profile and profile.phone:
-                student_user = profile.user
-                student_name = student_user.get_full_name() or student_user.username
+        try:
+            raw_hash = ""
+            if skip_duplicates:
+                normalized = " ".join(raw_message.strip().split())
+                raw_hash = hashlib.sha256(normalized.encode('utf-8')).hexdigest()
                 
-                # 1. Basic personalization ({name})
-                personalized = raw_message.replace("{name}", student_name).replace("{الاسم}", student_name)
-                
-                # 2. Intelligent Grammar Restructuring ({مذكر|مؤنث})
-                student_gender = getattr(profile, 'gender', 'unknown')
-                personalized = parse_gender_grammar(personalized, student_gender)
-                
-                # Trigger immediate message push
-                send_whatsapp_message(profile.phone, personalized)
-                sent_count += 1
-                
-                # 3. Advanced Jitter: Simulate natural typing & thinking gap
-                natural_delay = random.uniform(4.0, 8.0)
-                time.sleep(natural_delay)
-                
-                # 4. Batch Breather: Every 12 messages, take a deep human pause
-                if sent_count % 12 == 0:
-                    deep_pause = random.uniform(20.0, 45.0)
-                    time.sleep(deep_pause)
+            sent_count = 0
+            for profile in student_list:
+                try:
+                    if profile and profile.phone:
+                        # Format phone
+                        clean_phone = format_phone_to_intl(profile.phone)
+                        
+                        # Check for duplicates if requested
+                        if skip_duplicates and raw_hash:
+                            if WhatsAppMessageLog.objects.filter(phone=clean_phone, raw_text_hash=raw_hash).exists():
+                                continue
+                                
+                        student_user = profile.user
+                        student_name = student_user.get_full_name() or student_user.username
+                        
+                        # 1. Basic personalization ({name})
+                        personalized = raw_message.replace("{name}", student_name).replace("{الاسم}", student_name)
+                        
+                        # 2. Intelligent Grammar Restructuring ({مذكر|مؤنث})
+                        student_gender = getattr(profile, 'gender', 'unknown')
+                        personalized = parse_gender_grammar(personalized, student_gender)
+                        
+                        # Trigger immediate message push
+                        send_whatsapp_message(profile.phone, personalized, raw_text=raw_message)
+                        sent_count += 1
+                        
+                        # 3. Advanced Jitter: Simulate natural typing & thinking gap
+                        natural_delay = random.uniform(4.0, 8.0)
+                        time.sleep(natural_delay)
+                        
+                        # 4. Batch Breather: Every 12 messages, take a deep human pause
+                        if sent_count % 12 == 0:
+                            deep_pause = random.uniform(20.0, 45.0)
+                            time.sleep(deep_pause)
+                except Exception as inner_err:
+                    logger.error(f"Error sending message in broadcast loop to profile {profile.id if profile else 'Unknown'}: {inner_err}", exc_info=True)
+        except Exception as outer_err:
+            logger.error(f"Critical error in _background_broadcast task setup: {outer_err}", exc_info=True)
 
     if request.method == "POST":
         # 1. Handle Logout
@@ -5181,11 +5205,12 @@ def admin_whatsapp_control(request):
             message_body = request.POST.get("message", "").strip()
             branch_filter = request.POST.get("branch_filter", "").strip()
             gender_filter = request.POST.get("gender_filter", "").strip()  # 'male', 'female', or empty
+            skip_duplicates = request.POST.get("skip_duplicates") == "on"
             
             if not message_body:
                 messages.warning(request, "لا يمكن إطلاق حملة برسالة فارغة.")
                 return redirect("dashboard:admin_whatsapp_control")
-
+ 
             profiles = []
             msg_segment = ""
             
@@ -5206,7 +5231,7 @@ def admin_whatsapp_control(request):
                             if not gender_filter or p.gender == gender_filter:
                                 profiles.append(p)
                 msg_segment = f"المشتركين في دورة ({course.title})"
-
+ 
             elif target_type == "all_registered":
                 # Everyone with a student profile and phone registered
                 qs = StudentProfile.objects.exclude(phone__isnull=True).exclude(phone="").select_related('user')
@@ -5216,7 +5241,7 @@ def admin_whatsapp_control(request):
                     qs = qs.filter(gender=gender_filter)
                 profiles = list(qs)
                 msg_segment = "جميع المسجلين بالمنصة"
-
+ 
             elif target_type == "subscribed_any":
                 # Active subscribers having at least 1 active access grant
                 active_grants_user_ids = AccessGrant.objects.values_list('user_id', flat=True).distinct()
@@ -5227,7 +5252,7 @@ def admin_whatsapp_control(request):
                     qs = qs.filter(gender=gender_filter)
                 profiles = list(qs)
                 msg_segment = "المشتركون الفعّالون (لديهم اشتراك نشط)"
-
+ 
             elif target_type == "unsubscribed_any":
                 # Registered students who DO NOT have any active access grants yet!
                 active_grants_user_ids = AccessGrant.objects.values_list('user_id', flat=True)
@@ -5256,10 +5281,14 @@ def admin_whatsapp_control(request):
                 # Trigger background broadcasting
                 threading.Thread(
                     target=_background_broadcast,
-                    args=(profiles, message_body),
+                    args=(profiles, message_body, skip_duplicates),
                     daemon=True
                 ).start()
-                messages.success(request, f"🚀 انطلقت حملة الإرسال الذكية لـ ({msg_segment})! سيتم مراسلة {count} طالب في الخلفية.")
+                
+                info_msg = f"🚀 انطلقت حملة الإرسال الذكية لـ ({msg_segment})! سيتم مراسلة {count} طالب في الخلفية."
+                if skip_duplicates:
+                    info_msg += " (مع تجنب المراسلة المكررة)"
+                messages.success(request, info_msg)
             return redirect("dashboard:admin_whatsapp_control")
 
         # 4. Save Custom Template
@@ -5363,12 +5392,28 @@ def admin_impersonate_instructor(request, instructor_id):
         
     # Store original admin ID in session
     request.session["impersonator_admin_id"] = request.user.id
+    request.session["impersonator_type"] = "instructor"
     
     # Authenticate and login as the instructor
     login(request, instructor_user)
     
     messages.success(request, f"✅ تم تسجيل الدخول بصفتك الأستاذ {instructor_user.get_full_name() or instructor_user.username} بنجاح.")
     return redirect("dashboard:instructor_dashboard")
+
+
+@admin_required
+def admin_impersonate_student(request, student_id):
+    student_user = get_object_or_404(User, id=student_id)
+    
+    # Store original admin ID in session
+    request.session["impersonator_admin_id"] = request.user.id
+    request.session["impersonator_type"] = "student"
+    
+    # Authenticate and login as the student
+    login(request, student_user)
+    
+    messages.success(request, f"✅ تم تسجيل الدخول بصفتك الطالب {student_user.get_full_name() or student_user.username} بنجاح.")
+    return redirect("dashboard:my_courses")
 
 
 @login_required
@@ -5379,13 +5424,19 @@ def exit_impersonate(request):
         return redirect("dashboard:home")
         
     admin_user = get_object_or_404(User, id=admin_id)
+    impersonator_type = request.session.pop("impersonator_type", "student")
     
     # Clear impersonation and login back as admin
     request.session.pop("impersonator_admin_id", None)
     login(request, admin_user)
     
     messages.success(request, "✅ تم العودة إلى حساب الإدارة بنجاح.")
-    return redirect("dashboard:admin_instructors")
+    
+    if impersonator_type == "instructor":
+        return redirect("dashboard:admin_instructors")
+    else:
+        return redirect("dashboard:admin_students")
+
 
 
 @admin_required
