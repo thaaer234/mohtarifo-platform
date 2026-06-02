@@ -187,16 +187,21 @@
                                 <summary class="flex-between" style="padding: 1.5rem 2.5rem; cursor: pointer; list-style: none;">
                                     <strong style="font-size: 1.1rem; color: var(--text-primary);">{{ unit.title }}</strong>
                                     <div class="flex-center gap-4 text-muted" style="font-size: 0.9rem;">
-                                        <span>{{ unit.lessons.count }} دروس</span>
+                                        <span>{{ unit.lessons.count }} دروس{% if unit.total_duration %} · {{ unit.total_duration }}{% endif %}</span>
                                         <i data-lucide="chevron-down" style="width: 18px;"></i>
                                     </div>
                                 </summary>
                                 <div style="padding: 0 2.5rem 2rem;">
                                     <div class="flex-column gap-1" style="border-top: 1px solid var(--border-light); padding-top: 1.5rem;">
                                         {% for lesson in unit.lessons.all %}
-                                            <div class="lesson-item-lock">
-                                                <i data-lucide="lock" style="width: 14px;"></i>
-                                                <span>{{ lesson.title }}</span>
+                                            <div class="lesson-item-lock" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                                <div style="display: flex; align-items: center; gap: 1.25rem;">
+                                                    <i data-lucide="lock" style="width: 14px;"></i>
+                                                    <span>{{ lesson.title }}</span>
+                                                </div>
+                                                {% if lesson.duration %}
+                                                    <span class="text-muted" style="font-size: 0.85rem; font-weight: 500; font-family: monospace; padding-left: 0.5rem;">{{ lesson.duration }}</span>
+                                                {% endif %}
                                             </div>
                                         {% endfor %}
                                     </div>

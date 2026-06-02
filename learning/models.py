@@ -120,6 +120,20 @@ class Unit(models.Model):
     def __str__(self):
         return f"{self.course.title} - {self.title}"
 
+    @property
+    def total_duration(self):
+        total_seconds = sum(lesson.duration_seconds or 0 for lesson in self.lessons.all())
+        if not total_seconds:
+            return ""
+        minutes = total_seconds // 60
+        if minutes >= 60:
+            hours = minutes // 60
+            minutes = minutes % 60
+            if minutes:
+                return f"{hours} ساعة و {minutes} دقيقة"
+            return f"{hours} ساعة"
+        return f"{minutes} دقيقة"
+
 
 class Lesson(models.Model):
     TYPE_CHOICES = [
@@ -177,11 +191,7 @@ def fetch_bunny_video_duration(video_url):
     from urllib.parse import urlparse
     
     api_key = os.environ.get("BUNNY_STREAM_API_KEY", "").strip() or os.environ.get("BUNNY_STREAM_TOKEN_KEY", "").strip()
-    if not api_key:
-        print("Bunny Sync Debug: Missing API/Token key in environment variables.")
-        return None
-    if "mediadelivery.net" not in video_url:
-        print(f"Bunny Sync Debug: URL '{video_url}' is not a mediadelivery.net URL.")
+    if not api_key or "mediadelivery.net" not in video_url:
         return None
         
     try:
@@ -198,17 +208,12 @@ def fetch_bunny_video_duration(video_url):
             library_id = path_parts[0]
             video_id = path_parts[1]
             
-        if not library_id or not video_id:
-            print(f"Bunny Sync Debug: Failed to parse library_id and video_id from URL path: {parsed.path}")
-            return None
-            
         if library_id and video_id:
             url = f"https://video.bunnycdn.com/library/{library_id}/videos/{video_id}"
             headers = {
                 "accept": "application/json",
                 "AccessKey": api_key
             }
-            print(f"Bunny Sync Debug: Requesting details from {url} using AccessKey (length: {len(api_key)})")
             response = requests.get(url, headers=headers, timeout=5)
             if response.status_code == 200:
                 data = response.json()

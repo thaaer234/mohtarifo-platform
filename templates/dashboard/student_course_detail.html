@@ -6,7 +6,7 @@
 {% block content %}
 <div class="pro-container animate-up" dir="rtl">
     <!-- 1. Cinematic Course Hero -->
-    <section class="pro-card p-0 mb-12 overflow-hidden" style="min-height: 420px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); position: relative; border: none;">
+    <section class="pro-card p-0 mb-12 overflow-hidden student-course-hero">
         <div style="position: absolute; inset: 0; opacity: 0.4;">
             {% if course.cover %}
                 <img src="{{ course.cover.url }}" alt="{{ course.title }}" style="width: 100%; height: 100%; object-fit: cover; filter: blur(15px); transform: scale(1.1);">
@@ -14,30 +14,30 @@
             <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, transparent 0%, #000 100%);"></div>
         </div>
 
-        <div class="p-5 p-md-10 d-flex justify-content-between align-items-center flex-wrap gap-5" style="position: relative; z-index: 10; height: 100%;">
+        <div class="student-course-hero-content">
             <div style="flex: 1; min-width: 300px;">
-                <div class="d-flex align-items-center gap-3 mb-4">
+                <div class="d-flex align-items-center gap-3 mb-4 header-badges">
                     <span class="badge badge-success p-2 px-3 rounded-pill"><i data-lucide="check-circle" style="width: 14px;" class="ml-1"></i> تم التفعيل</span>
                     <span class="badge bg-white text-dark p-2 px-3 rounded-pill" style="opacity: 0.9;">{{ course.get_kind_display }}</span>
                 </div>
                 <h1 class="display-3 font-weight-bold text-white mb-6 student-course-title" style="line-height: 1.1;">{{ course.title }}</h1>
                 
-                <div class="d-flex align-items-center gap-5 flex-wrap">
-                    <div class="d-flex align-items-center gap-3">
-                        <div style="width: 60px; height: 60px; border-radius: 20px; overflow: hidden; border: 2px solid var(--pro-accent);">
+                <div class="d-flex align-items-center gap-5 flex-wrap hero-metadata-row">
+                    <div class="d-flex align-items-center gap-3 instructor-info-box">
+                        <div style="width: 60px; height: 60px; border-radius: 20px; overflow: hidden; border: 2px solid var(--pro-accent); flex-shrink: 0;">
                             {% if course.instructor.instructor_profile.avatar %}
                                 <img src="{{ course.instructor.instructor_profile.avatar.url }}" alt="Instructor" class="w-100 h-100 object-fit-cover">
                             {% else %}
                                 <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center"><i data-lucide="user" class="text-muted"></i></div>
                             {% endif %}
                         </div>
-                        <div>
+                        <div class="text-right">
                             <span class="text-white-50 small d-block">المحاضر</span>
                             <strong class="text-white font-weight-bold">{{ course.instructor.get_full_name|default:course.instructor.username }}</strong>
                         </div>
                     </div>
                     <div class="vr bg-white opacity-25 desktop-only" style="height: 40px;"></div>
-                    <div class="d-flex align-items-center gap-4 text-white-50">
+                    <div class="d-flex align-items-center gap-4 text-white-50 stats-info-box">
                         <div class="d-flex align-items-center gap-2">
                             <i data-lucide="layers" class="text-success" style="width: 18px;"></i>
                             <span>{{ course.units.count }} وحدات</span>
@@ -50,15 +50,15 @@
                 </div>
             </div>
             
-            <div class="pro-card text-center" style="width: 280px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 35px;">
+            <div class="pro-card text-center student-progress-card">
                 <div style="position: relative; width: 150px; height: 150px; margin: 0 auto 1.5rem;">
                     <svg viewBox="0 0 100 100" style="transform: rotate(-90deg); width: 100%; height: 100%;">
                         <circle cx="50" cy="50" r="45" style="fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 8;"></circle>
                         <circle cx="50" cy="50" r="45" style="fill: none; stroke: var(--pro-accent); stroke-width: 8; stroke-linecap: round; stroke-dasharray: {{ course.progress.first.completion_percent|default:0|floatformat:0 }} 283; transition: stroke-dasharray 1s ease;"></circle>
                     </svg>
-                    <div class="position-absolute inset-0 d-flex flex-column align-items-center justify-content-center" style="top: 0;">
-                        <h2 class="text-white mb-0 font-weight-bold">{{ course.progress.first.completion_percent|default:0|floatformat:0 }}%</h2>
-                        <span class="text-white-50 small">مكتمل</span>
+                    <div class="position-absolute inset-0 d-flex flex-column align-items-center justify-content-center" style="top: 0; left: 0; right: 0; bottom: 0;">
+                        <h2 class="text-white mb-0 font-weight-bold" style="line-height: 1;">{{ course.progress.first.completion_percent|default:0|floatformat:0 }}%</h2>
+                        <span class="text-white-50 small" style="font-size: 0.8rem; margin-top: 4px;">مكتمل</span>
                     </div>
                 </div>
                 {% if course.progress.first.completion_percent >= 100 %}
@@ -187,14 +187,104 @@
     .lesson-row:hover { transform: translateX(-8px); border-color: var(--pro-accent) !important; background: white !important; }
     .vr { width: 1px; }
     
-    @media (max-width: 768px) {
-        .student-course-title {
-            font-size: 2.2rem !important;
+    .student-course-hero {
+        min-height: auto;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        position: relative;
+        border: none;
+        border-radius: 30px !important;
+        overflow: hidden;
+    }
+    .student-course-hero-content {
+        padding: 3rem !important;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 2.5rem;
+        position: relative;
+        z-index: 10;
+        height: 100%;
+        width: 100%;
+    }
+    .student-progress-card {
+        width: 280px;
+        background: rgba(255, 255, 255, 0.08) !important;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 30px !important;
+        padding: 2rem !important;
+        flex-shrink: 0;
+    }
+    
+    @media (max-width: 992px) {
+        .student-course-hero-content {
+            padding: 2rem 1.5rem !important;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .student-course-hero-content > div:first-child {
+            width: 100%;
+        }
+        .student-course-hero-content .d-flex {
+            justify-content: center;
+        }
+        .student-progress-card {
+            width: 100%;
+            max-width: 280px;
+            margin: 0 auto;
+        }
+        .student-course-hero-content .hero-metadata-row {
+            flex-direction: column;
+            gap: 1.25rem !important;
+            align-items: center;
+        }
+        .student-course-hero-content .vr {
+            display: none !important;
         }
     }
+    
     @media (max-width: 576px) {
+        .student-course-hero {
+            border-radius: 20px !important;
+        }
+        .student-course-hero-content {
+            padding: 1.5rem 1rem !important;
+            gap: 2rem;
+        }
         .student-course-title {
             font-size: 1.8rem !important;
+            margin-bottom: 1.25rem !important;
+            line-height: 1.2 !important;
+        }
+        .student-progress-card {
+            padding: 1.5rem !important;
+            border-radius: 24px !important;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .lesson-row {
+            padding: 0.75rem 0.85rem !important;
+            border-radius: 12px !important;
+        }
+        .lesson-row .gap-4 {
+            gap: 0.75rem !important;
+        }
+        .lesson-row .flex-center {
+            width: 36px !important;
+            height: 36px !important;
+            min-width: 36px;
+        }
+        .lesson-row .flex-center svg {
+            width: 16px !important;
+            height: 16px !important;
+        }
+        .lesson-row h5 {
+            font-size: 0.85rem !important;
+            margin-bottom: 2px !important;
         }
     }
 </style>
