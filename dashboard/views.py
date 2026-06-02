@@ -5143,7 +5143,30 @@ def admin_whatsapp_control(request):
             target_phone = request.POST.get("phone", "").strip()
             message_body = request.POST.get("message", "").strip()
             if target_phone and message_body:
-                sent = send_whatsapp_message(target_phone, message_body)
+                from .whatsapp_utils import format_phone_to_intl, parse_gender_grammar
+                
+                clean_phone = format_phone_to_intl(target_phone)
+                last_nine = clean_phone[-9:] if len(clean_phone) >= 9 else clean_phone
+                
+                profile = None
+                if last_nine:
+                    profile = StudentProfile.objects.filter(phone__contains=last_nine).first()
+                
+                student_name = "طالبنا العزيز"
+                student_gender = "unknown"
+                
+                if profile:
+                    student_user = profile.user
+                    student_name = student_user.get_full_name() or student_user.username
+                    student_gender = getattr(profile, 'gender', 'unknown')
+                
+                # 1. Basic personalization ({name})
+                personalized = message_body.replace("{name}", student_name).replace("{الاسم}", student_name)
+                
+                # 2. Intelligent Grammar Restructuring ({مذكر|مؤنث})
+                personalized = parse_gender_grammar(personalized, student_gender)
+                
+                sent = send_whatsapp_message(target_phone, personalized)
                 if sent:
                     messages.success(request, f"✅ تم إرسال الرسالة بنجاح إلى الرقم {target_phone}")
                 else:
