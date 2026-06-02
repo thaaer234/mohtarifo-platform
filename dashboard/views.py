@@ -5104,7 +5104,7 @@ def admin_whatsapp_control(request):
         import hashlib
         import logging
         logger = logging.getLogger(__name__)
-        from .whatsapp_utils import format_phone_to_intl
+        from .whatsapp_utils import format_phone_to_intl, parse_gender_grammar
         from dashboard.models import WhatsAppMessageLog
         
         try:
