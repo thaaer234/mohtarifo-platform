@@ -256,26 +256,42 @@
 </div>
 
 <style>
-    /* Grid & Layout System */
+    /* ═══════════════════════════════════════════════════════════
+       Grid & Layout System — Desktop First 
+       ═══════════════════════════════════════════════════════════ */
     .lesson-layout-grid {
         display: grid;
         grid-template-columns: 1fr 380px;
         gap: 2rem;
+        align-items: start;
     }
-    
+
+    /* Sticky sidebar on desktop so it follows the student while scrolling */
+    .lesson-layout-grid > aside {
+        position: sticky;
+        top: 100px;
+        max-height: calc(100vh - 120px);
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255,255,255,0.08) transparent;
+    }
+    .lesson-layout-grid > aside::-webkit-scrollbar { width: 4px; }
+    .lesson-layout-grid > aside::-webkit-scrollbar-track { background: transparent; }
+    .lesson-layout-grid > aside::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
+
     .lesson-controls-bar {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 1.5rem 2.5rem;
+        padding: 1.25rem 2rem;
         background: linear-gradient(to top, #080808, #000);
         border-radius: 0 0 35px 35px;
         gap: 1.5rem;
     }
     
     .lesson-tabs-card {
-        padding: 3rem;
-        min-height: 250px;
+        padding: 2.5rem;
+        min-height: 220px;
     }
 
     .s-pill { 
@@ -300,14 +316,17 @@
         cursor: pointer; 
         position: relative; 
         transition: 0.3s; 
-        border-bottom: 3px solid transparent; 
+        border-bottom: 3px solid transparent;
+        font-size: 1rem;
     }
     .tab-trigger.active { color: var(--brand-gold); border-bottom-color: var(--brand-gold); }
     
     .tab-pane { display: none; }
     .tab-pane.active { display: block; animation: fadeIn 0.4s ease; }
     
-    /* Focus Mode Styling */
+    /* ═══════════════════════════════════════════════════════════
+       Focus Mode Styling
+       ═══════════════════════════════════════════════════════════ */
     body.focus-mode .navbar, 
     body.focus-mode aside, 
     body.focus-mode .mobile-bottom-nav,
@@ -363,53 +382,138 @@
         text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.45);
     }
     
-    /* Responsive Adaptations */
+    /* ═══════════════════════════════════════════════════════════
+       Responsive — Pixel-Perfect Breakpoints
+       ═══════════════════════════════════════════════════════════ */
+
+    /* ── Breakpoint: ≤1199px — Narrower sidebar ── */
+    @media (max-width: 1199px) {
+        .lesson-layout-grid {
+            grid-template-columns: 1fr 320px;
+            gap: 1.5rem;
+        }
+    }
+
+    /* ── Breakpoint: ≤1024px — Stack to single column ── */
     @media (max-width: 1024px) {
         .lesson-layout-grid {
             grid-template-columns: 1fr;
             gap: 1.5rem;
         }
+        .lesson-layout-grid > aside {
+            position: static;
+            max-height: none;
+            overflow-y: visible;
+        }
+        /* Show the course map as a horizontal scrollable row on tablet */
+        .lesson-layout-grid > aside .premium-card:first-child .flex-column.gap-2 {
+            max-height: 380px;
+        }
     }
     
+    /* ── Breakpoint: ≤768px — Tablet / Small laptop ── */
     @media (max-width: 768px) {
-        #video-wrapper {
-            border-radius: 24px !important;
+        .reveal-up {
+            padding-left: 4px;
+            padding-right: 4px;
         }
-        #lesson-video, #lesson-iframe {
-            border-radius: 24px 24px 0 0 !important;
+        header.flex-between {
+            margin-bottom: 1.5rem !important;
+        }
+        header.flex-between h1 {
+            font-size: 1.4rem !important;
+        }
+        header.flex-between .gold.block {
+            font-size: 0.7rem !important;
+        }
+        #video-wrapper {
+            border-radius: 20px !important;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5) !important;
+        }
+        #secure-video-host, #secure-iframe-host {
+            border-radius: 20px 20px 0 0 !important;
         }
         .lesson-controls-bar {
-            border-radius: 0 0 24px 24px;
-            padding: 1.25rem 1.5rem;
+            border-radius: 0 0 20px 20px;
+            padding: 1rem 1.25rem;
+            gap: 1rem;
         }
         .lesson-tabs-card {
             padding: 1.5rem !important;
-            min-height: 200px;
+            min-height: 180px;
         }
         .tab-trigger {
-            padding-bottom: 0.5rem;
+            padding-bottom: 0.6rem;
             font-size: 0.9rem;
+        }
+        /* PDF viewer adjustments */
+        #inline-pdf-wrapper {
+            border-radius: 20px !important;
+            margin-top: 1.25rem !important;
+        }
+        #inline-pdf-container-viewport {
+            min-height: 380px !important;
+            padding: 1.5rem 1rem 5rem !important;
+        }
+        /* Sidebar cards */
+        .lesson-layout-grid > aside .premium-card {
+            padding: 1.5rem !important;
+        }
+        .lesson-layout-grid > aside .premium-card h3 {
+            font-size: 1.05rem !important;
+        }
+        .lesson-layout-grid > aside .flex-column.gap-2 {
+            max-height: 350px;
         }
     }
     
+    /* ── Breakpoint: ≤576px — Mobile phones ── */
     @media (max-width: 576px) {
         header.flex-between {
             flex-direction: column;
             align-items: flex-start !important;
-            gap: 1.25rem;
+            gap: 1rem;
+            margin-bottom: 1rem !important;
+        }
+        header.flex-between h1 {
+            font-size: 1.2rem !important;
+            line-height: 1.4;
+        }
+        header.flex-between .flex-center.gap-6 > a {
+            width: 40px !important;
+            height: 40px !important;
+            border-radius: 12px !important;
         }
         #focus-mode-toggle {
             width: 100%;
             justify-content: center;
+            padding: 0.6rem 1rem !important;
+            border-radius: 14px !important;
+        }
+        #focus-mode-toggle span {
+            font-size: 0.85rem !important;
+        }
+        #video-wrapper {
+            border-radius: 16px !important;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.4) !important;
+        }
+        #secure-video-host, #secure-iframe-host {
+            border-radius: 16px 16px 0 0 !important;
         }
         .lesson-controls-bar {
             flex-direction: column;
             align-items: stretch;
-            gap: 1.25rem;
+            gap: 1rem;
+            border-radius: 0 0 16px 16px;
+            padding: 0.85rem 1rem;
         }
         .lesson-controls-bar .flex-center {
             width: 100%;
             justify-content: space-between;
+        }
+        .lesson-controls-bar .flex-center .s-pill {
+            padding: 0.35rem 0.75rem;
+            font-size: 0.75rem;
         }
         #complete-form {
             width: 100%;
@@ -417,6 +521,129 @@
         #complete-btn {
             width: 100%;
             justify-content: center;
+            padding: 0.75rem 1rem !important;
+            font-size: 0.85rem !important;
+            border-radius: 12px !important;
+        }
+        /* Tabs */
+        .lesson-tabs-card {
+            padding: 1.25rem !important;
+            min-height: 160px;
+            border-radius: 20px !important;
+        }
+        .tab-trigger {
+            padding-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+        /* PDF viewer */
+        #inline-pdf-wrapper {
+            border-radius: 16px !important;
+            margin-top: 1rem !important;
+        }
+        #inline-pdf-container-viewport {
+            min-height: 320px !important;
+            padding: 1rem 0.5rem 5rem !important;
+        }
+        /* PDF floating control pill */
+        #inline-pdf-wrapper > div:last-child {
+            padding: 0.5rem 1rem !important;
+            gap: 0.75rem !important;
+            border-radius: 50px !important;
+        }
+        /* PDF card header */
+        .premium-card.animate-fade-in {
+            padding: 1.5rem 1.25rem !important;
+            border-radius: 20px !important;
+            gap: 1.25rem !important;
+        }
+        .premium-card.animate-fade-in h2 {
+            font-size: 1.3rem !important;
+        }
+        .premium-card.animate-fade-in > .flex-center:first-child {
+            width: 56px !important;
+            height: 56px !important;
+            border-radius: 16px !important;
+        }
+        .premium-card.animate-fade-in > .flex-center:first-child i {
+            width: 28px !important;
+            height: 28px !important;
+        }
+        /* Sidebar on mobile */
+        .lesson-layout-grid > aside .premium-card {
+            padding: 1.25rem !important;
+            border-radius: 20px !important;
+        }
+        .lesson-layout-grid > aside .premium-card h3 {
+            font-size: 1rem !important;
+        }
+        .lesson-layout-grid > aside .flex-column.gap-2 {
+            max-height: 300px;
+            gap: 0.35rem !important;
+        }
+        .lesson-layout-grid > aside .flex-column.gap-2 > a {
+            padding: 0.7rem 0.85rem !important;
+            border-radius: 14px !important;
+        }
+        .lesson-layout-grid > aside .flex-column.gap-2 > a .font-bold {
+            font-size: 0.85rem !important;
+        }
+        .lesson-layout-grid > aside .flex-column.gap-2 > a .text-muted {
+            font-size: 0.7rem !important;
+        }
+        .lesson-layout-grid > aside .mt-8 {
+            margin-top: 1.25rem !important;
+        }
+        .lesson-layout-grid > aside .mt-8 .premium-card {
+            padding: 1.25rem !important;
+        }
+        .lesson-layout-grid > aside .mt-8 h4 {
+            font-size: 0.95rem !important;
+        }
+        .lesson-layout-grid > aside .mt-8 p {
+            font-size: 0.8rem !important;
+        }
+        /* Description/notes tab content */
+        .mt-12 {
+            margin-top: 1.5rem !important;
+        }
+        .mt-12 .flex-center.gap-8 {
+            gap: 1.5rem !important;
+            padding: 0 0.5rem !important;
+        }
+    }
+
+    /* ── Breakpoint: ≤420px — Small phones ── */
+    @media (max-width: 420px) {
+        header.flex-between h1 {
+            font-size: 1.05rem !important;
+        }
+        header.flex-between .gold.block {
+            font-size: 0.65rem !important;
+            letter-spacing: 0.5px !important;
+        }
+        #video-wrapper {
+            border-radius: 14px !important;
+        }
+        #secure-video-host, #secure-iframe-host {
+            border-radius: 14px 14px 0 0 !important;
+        }
+        .lesson-controls-bar {
+            border-radius: 0 0 14px 14px;
+            padding: 0.75rem 0.85rem;
+        }
+        .lesson-tabs-card {
+            padding: 1rem !important;
+            border-radius: 16px !important;
+        }
+        #inline-pdf-wrapper {
+            border-radius: 14px !important;
+        }
+        .lesson-layout-grid > aside .premium-card {
+            border-radius: 16px !important;
+        }
+        .lesson-layout-grid > aside .flex-column.gap-2 > a {
+            padding: 0.6rem 0.7rem !important;
+            border-radius: 12px !important;
         }
     }
     

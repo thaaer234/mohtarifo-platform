@@ -2827,6 +2827,118 @@ def save_lesson_progress(request, lesson_id):
 
 
 @login_required
+def view_course_pdf(request, course_id):
+    """Serve course PDF inline — only for enrolled students."""
+    current_device = _current_device_fingerprint(request)
+    course = get_object_or_404(Course, id=course_id)
+    if not request.user.is_staff and not _device_grants(request.user, current_device).filter(course=course).exists():
+        raise Http404("PDF not found")
+    if not course.pdf_file:
+        raise Http404("PDF not found")
+    response = FileResponse(course.pdf_file.open("rb"), content_type="application/pdf")
+    response["Content-Disposition"] = f'inline; filename="course-{course_id}.pdf"'
+    response["Cache-Control"] = "no-store"
+    return response
+
+
+@login_required
+def download_course_pdf(request, course_id):
+    """Download course PDF with dynamic watermark (student name + phone) at random positions on every page."""
+    current_device = _current_device_fingerprint(request)
+    course = get_object_or_404(Course, id=course_id)
+
+    # 1. Must be enrolled
+    if not request.user.is_staff and not _device_grants(request.user, current_device).filter(course=course).exists():
+        raise Http404("PDF not found")
+
+    # 2. Must be allowed to download
+    if not course.allow_pdf_download:
+        raise Http404("Download not allowed")
+
+    if not course.pdf_file:
+        raise Http404("PDF not found")
+
+    import random
+    from io import BytesIO as _BytesIO
+    from PyPDF2 import PdfReader, PdfWriter
+    from reportlab.pdfgen import canvas as rl_canvas
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+
+    # Build watermark text
+    student_name = request.user.get_full_name() or request.user.username
+    profile = getattr(request.user, "student_profile", None)
+    student_phone = profile.phone if profile else request.user.username
+    watermark_text = f"{student_name} • {student_phone}"
+
+    # Read original PDF
+    original_pdf = PdfReader(course.pdf_file.open("rb"))
+    writer = PdfWriter()
+
+    for page_index, page in enumerate(original_pdf.pages):
+        page_width = float(page.mediabox.width)
+        page_height = float(page.mediabox.height)
+
+        # Create a transparent watermark overlay for this page
+        wm_buffer = _BytesIO()
+        c = rl_canvas.Canvas(wm_buffer, pagesize=(page_width, page_height))
+
+        # Try to register an Arabic-capable font, fallback to Helvetica
+        font_name = "Helvetica"
+        try:
+            import pathlib
+            # Look for common Arabic fonts on the system
+            for font_path in [
+                pathlib.Path(r"C:\Windows\Fonts\arial.ttf"),
+                pathlib.Path(r"C:\Windows\Fonts\tahoma.ttf"),
+                pathlib.Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+                pathlib.Path("/usr/share/fonts/truetype/freefont/FreeSans.ttf"),
+            ]:
+                if font_path.exists():
+                    pdfmetrics.registerFont(TTFont("WatermarkFont", str(font_path)))
+                    font_name = "WatermarkFont"
+                    break
+        except Exception:
+            pass
+
+        # Place 4-6 watermarks at random positions on the page
+        num_watermarks = random.randint(4, 6)
+        for _ in range(num_watermarks):
+            x = random.uniform(page_width * 0.05, page_width * 0.7)
+            y = random.uniform(page_height * 0.05, page_height * 0.85)
+            rotation = random.uniform(-45, -25)
+            font_size = random.uniform(14, 22)
+
+            c.saveState()
+            c.translate(x, y)
+            c.rotate(rotation)
+            c.setFont(font_name, font_size)
+            c.setFillColorRGB(0.5, 0.5, 0.5, alpha=0.08)
+            c.drawString(0, 0, watermark_text)
+            c.restoreState()
+
+        c.save()
+        wm_buffer.seek(0)
+
+        # Merge watermark overlay onto the original page
+        watermark_page = PdfReader(wm_buffer).pages[0]
+        page.merge_page(watermark_page)
+        writer.add_page(page)
+
+    # Write the final watermarked PDF to a buffer
+    output_buffer = _BytesIO()
+    writer.write(output_buffer)
+    output_buffer.seek(0)
+
+    safe_title = course.title.replace(" ", "_")[:40]
+    response = FileResponse(output_buffer, content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{safe_title}.pdf"'
+    response["Cache-Control"] = "no-store"
+    return response
+
+
+@login_required
 def join_session(request, session_id):
     current_device = _current_device_fingerprint(request)
     session = get_object_or_404(OnlineLessonSession.objects.select_related("lesson", "lesson__unit", "lesson__unit__course"), id=session_id)
