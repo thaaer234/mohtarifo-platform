@@ -89,7 +89,7 @@
 
                     <!-- Playback & Controls Overlay -->
                     <div class="lesson-controls-bar">
-                        <div class="flex-center gap-6">
+                        <div class="flex-center gap-6 speed-controls-row">
                             <span class="text-muted font-bold" style="font-size: 0.8rem;">السرعة:</span>
                             <div class="flex-center gap-2" style="background: rgba(255,255,255,0.03); padding: 0.3rem; border-radius: 12px;">
                                 <button onclick="setSpeed(1.0)" class="s-pill active" data-speed="1.0">1x</button>
@@ -507,11 +507,11 @@
             border-radius: 0 0 16px 16px;
             padding: 0.85rem 1rem;
         }
-        .lesson-controls-bar .flex-center {
+        .lesson-controls-bar .speed-controls-row {
             width: 100%;
             justify-content: space-between;
         }
-        .lesson-controls-bar .flex-center .s-pill {
+        .lesson-controls-bar .speed-controls-row .s-pill {
             padding: 0.35rem 0.75rem;
             font-size: 0.75rem;
         }
@@ -758,8 +758,8 @@
             this.pageIsRendering = true;
 
             this.pdfDoc.getPage(num).then(page => {
-                const container = this.canvas.parentElement;
-                const containerWidth = container.clientWidth - 32;
+                const viewportContainer = document.getElementById('inline-pdf-container-viewport');
+                const containerWidth = (viewportContainer ? viewportContainer.clientWidth : 800) - 32;
                 const unscaledViewport = page.getViewport({ scale: 1.0 });
                 
                 let optimalScale = (containerWidth / unscaledViewport.width) * this.scale;

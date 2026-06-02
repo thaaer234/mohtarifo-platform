@@ -151,6 +151,64 @@ class Lesson(models.Model):
     def __str__(self):
         return self.title
 
+    @property
+    def duration(self):
+        if not self.duration_seconds:
+            return ""
+        minutes = self.duration_seconds // 60
+        seconds = self.duration_seconds % 60
+        if minutes >= 60:
+            hours = minutes // 60
+            minutes = minutes % 60
+            return f"{hours}:{minutes:02d}:{seconds:02d}"
+        return f"{minutes}:{seconds:02d}"
+
+    def save(self, *args, **kwargs):
+        if self.lesson_type == "video" and self.video_url and not self.duration_seconds:
+            fetched_duration = fetch_bunny_video_duration(self.video_url)
+            if fetched_duration:
+                self.duration_seconds = fetched_duration
+        super().save(*args, **kwargs)
+
+
+def fetch_bunny_video_duration(video_url):
+    import os
+    import requests
+    from urllib.parse import urlparse
+    
+    api_key = os.environ.get("BUNNY_STREAM_API_KEY", "").strip() or os.environ.get("BUNNY_STREAM_TOKEN_KEY", "").strip()
+    if not api_key or "mediadelivery.net" not in video_url:
+        return None
+        
+    try:
+        parsed = urlparse(video_url)
+        path_parts = [p for p in parsed.path.split("/") if p]
+        library_id = ""
+        video_id = ""
+        
+        # Paths can be: /play/library_id/video_id or /embed/library_id/video_id
+        if len(path_parts) >= 3:
+            library_id = path_parts[1]
+            video_id = path_parts[2]
+        elif len(path_parts) == 2:
+            library_id = path_parts[0]
+            video_id = path_parts[1]
+            
+        if library_id and video_id:
+            url = f"https://video.bunnycdn.com/library/{library_id}/videos/{video_id}"
+            headers = {
+                "accept": "application/json",
+                "AccessKey": api_key
+            }
+            response = requests.get(url, headers=headers, timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                return data.get("length")  # length is in seconds
+    except Exception as e:
+        print(f"Error fetching Bunny video duration: {e}")
+    return None
+
+
 
 class Topic(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name="topics")

@@ -60,7 +60,7 @@
 {% block content %}
 <div class="public-course-page reveal-up">
     <!-- Hero Section -->
-    <div class="premium-card mb-12" style="padding: 4rem !important; border-radius: 40px !important; background: linear-gradient(135deg, rgba(var(--brand-gold-rgb), 0.1), rgba(0,0,0,0.4)) !important; position: relative;">
+    <div class="premium-card mb-12 public-course-hero-card">
         <div class="public-course-hero-grid">
             <div class="hero-text">
                 <div class="flex-center gap-3 mb-6" style="justify-content: flex-start;">
@@ -91,18 +91,20 @@
             <!-- Floating CTA Card -->
             <div class="public-course-cta-slot">
                 <div class="premium-card cta-card-floating">
-                    <div class="public-course-cover">
+                    <div class="public-course-cover-container" {% if first_lesson and video_embed_url %}onclick="openDemoVideoModal()"{% endif %} style="position: relative; margin-bottom: 2rem; border-radius: 24px; overflow: hidden; border: 1px solid var(--border-light); aspect-ratio: 16/9; {% if first_lesson and video_embed_url %}cursor: pointer;{% endif %}">
                         {% if course.cover %}
-                            <img src="{{ course.cover.url }}" alt="{{ course.title }}">
+                            <img src="{{ course.cover.url }}" alt="{{ course.title }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
                         {% else %}
-                            <img src="{% static course.instructor_cover_static_path %}" alt="{{ course.title }}">
+                            <img src="{% static course.instructor_cover_static_path %}" alt="{{ course.title }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                        {% endif %}
+                        {% if first_lesson and video_embed_url %}
+                            <div class="video-play-overlay" style="position: absolute; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">
+                                <div class="play-btn-circle" style="width: 64px; height: 64px; background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 2px solid #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 25px rgba(0,0,0,0.4); transition: all 0.3s ease; animation: pulsePlay 2s infinite;">
+                                    <i data-lucide="play" fill="#fff" style="width: 28px; height: 28px; color: #fff; margin-right: -3px;"></i>
+                                </div>
+                            </div>
                         {% endif %}
                     </div>
-                    {% if first_lesson and video_embed_url %}
-                    <div style="position: relative; border-radius: 20px; overflow: hidden; aspect-ratio: 16/9; background: #000; margin-bottom: 2rem; border: 1px solid var(--border-light);">
-                        <iframe src="{{ video_embed_url }}" allowfullscreen style="width: 100%; height: 100%; border: none;"></iframe>
-                    </div>
-                    {% endif %}
                     
                     <div class="text-center mb-8">
                         {% load inline_static %}
@@ -442,7 +444,37 @@
         box-shadow: 0 4px 15px rgba(var(--brand-gold-rgb), 0.1);
     }
 
-    /* RESPONSIVE BREAKPOINTS */
+    /* RESPONSIVE BREAKPOINTS & CUSTOM STYLES */
+    .public-course-hero-card {
+        padding: 4rem !important;
+        border-radius: 40px !important;
+        background: linear-gradient(135deg, rgba(var(--brand-gold-rgb), 0.1), rgba(0,0,0,0.4)) !important;
+        position: relative;
+    }
+    
+    @keyframes pulsePlay {
+        0% {
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+            transform: scale(1);
+        }
+        70% {
+            box-shadow: 0 0 0 15px rgba(255, 255, 255, 0);
+            transform: scale(1.05);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+            transform: scale(1);
+        }
+    }
+    .video-play-overlay:hover {
+        background: rgba(0,0,0,0.6) !important;
+    }
+    .video-play-overlay:hover .play-btn-circle {
+        background: var(--brand-gold) !important;
+        border-color: var(--brand-gold) !important;
+        transform: scale(1.1) !important;
+    }
+
     @media (max-width: 1100px) {
         .public-course-hero-grid,
         .public-course-content-grid {
@@ -463,6 +495,37 @@
 
         h1 {
             font-size: 2.5rem !important;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .public-course-hero-card {
+            padding: 2.5rem 1.5rem !important;
+            border-radius: 24px !important;
+        }
+        h1 {
+            font-size: 2.2rem !important;
+        }
+        .hero-text p {
+            font-size: 1.1rem !important;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .public-course-hero-card {
+            padding: 1.75rem 1rem !important;
+            border-radius: 20px !important;
+        }
+        h1 {
+            font-size: 1.8rem !important;
+            line-height: 1.2 !important;
+        }
+        .hero-text p {
+            font-size: 1rem !important;
+        }
+        .hero-text .flex-center.gap-8 {
+            gap: 1.25rem !important;
+            flex-wrap: wrap;
         }
     }
 
@@ -518,5 +581,44 @@
             });
         });
     });
+
+    function openDemoVideoModal() {
+        const modal = document.getElementById("demo-video-modal");
+        const iframe = document.getElementById("demo-video-iframe");
+        if (modal && iframe) {
+            iframe.src = "{{ video_embed_url }}";
+            modal.style.display = "flex";
+            setTimeout(() => {
+                modal.style.opacity = "1";
+            }, 50);
+            document.body.style.overflow = "hidden";
+        }
+    }
+    
+    function closeDemoVideoModal() {
+        const modal = document.getElementById("demo-video-modal");
+        const iframe = document.getElementById("demo-video-iframe");
+        if (modal && iframe) {
+            modal.style.opacity = "0";
+            setTimeout(() => {
+                modal.style.display = "none";
+                iframe.src = "";
+            }, 300);
+            document.body.style.overflow = "";
+        }
+    }
 </script>
+
+{% if first_lesson and video_embed_url %}
+<!-- Demo Video Lightbox Modal -->
+<div id="demo-video-modal" style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 999999; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;">
+    <div style="position: relative; width: 90%; max-width: 960px; aspect-ratio: 16/9; background: #000; border-radius: 24px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+        <button onclick="closeDemoVideoModal()" style="position: absolute; top: 15px; left: 15px; background: rgba(255, 255, 255, 0.15); border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; z-index: 10;" onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'">
+            <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+        </button>
+        <iframe id="demo-video-iframe" src="" allowfullscreen style="width: 100%; height: 100%; border: none;"></iframe>
+    </div>
+</div>
+{% endif %}
+
 {% endblock %}
