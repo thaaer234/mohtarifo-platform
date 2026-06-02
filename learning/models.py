@@ -102,6 +102,10 @@ class Course(models.Model):
             return f"{int(amount):,}"
         return f"{amount:,.2f}"
 
+    @property
+    def total_lessons_count(self):
+        return sum(unit.lessons.count() for unit in self.units.all())
+
 
 class Unit(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="units")

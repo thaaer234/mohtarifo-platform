@@ -79,11 +79,11 @@
                     </div>
                     <div class="flex-center gap-2">
                         <i data-lucide="users" class="gold" style="width: 20px;"></i>
-                        <span class="font-bold">+{{ course.students_enrolled|add:150 }} طالب</span>
+                        <span class="font-bold">{{ course.students_enrolled }} طالب</span>
                     </div>
                     <div class="flex-center gap-2">
                         <i data-lucide="video" class="gold" style="width: 20px;"></i>
-                        <span class="font-bold">{{ course.total_lessons_count|default:"20" }} جلسة</span>
+                        <span class="font-bold">{{ course.total_lessons_count }} جلسة</span>
                     </div>
                 </div>
             </div>
