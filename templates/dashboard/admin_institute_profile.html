@@ -67,11 +67,18 @@
             {% for batch in batches %}
                 <div class="flex-between" style="padding: 1rem; background: rgba(255,255,255,0.03); border-radius: var(--radius-sm); border-right: 3px solid var(--brand-gold);">
                     <div>
-                        <strong style="display:block; color:var(--text-primary); margin-bottom:0.25rem;">{{ batch.course.title }}</strong>
-                        <div style="color:var(--text-secondary); font-size: 0.85rem; margin-bottom:0.25rem;">
-                            <span>👨‍🏫 {{ batch.course.instructor.get_full_name|default:batch.course.instructor.username }}</span> | 
-                            <span style="opacity:0.8">{{ batch.course.get_academic_track_display }}</span>
-                        </div>
+                        {% if batch.course %}
+                            <strong style="display:block; color:var(--text-primary); margin-bottom:0.25rem;">{{ batch.course.title }}</strong>
+                            <div style="color:var(--text-secondary); font-size: 0.85rem; margin-bottom:0.25rem;">
+                                <span>👨‍🏫 {{ batch.course.instructor.get_full_name|default:batch.course.instructor.username }}</span> | 
+                                <span style="opacity:0.8">{{ batch.course.get_academic_track_display }}</span>
+                            </div>
+                        {% elif batch.package %}
+                            <strong style="display:block; color:var(--text-primary); margin-bottom:0.25rem;">{{ batch.package.name }}</strong>
+                            <div style="color:var(--text-secondary); font-size: 0.85rem; margin-bottom:0.25rem;">
+                                <span>📦 باقة باقات</span>
+                            </div>
+                        {% endif %}
                         <span style="color:var(--text-muted); font-size: 0.8rem; opacity: 0.7;">{{ batch.name }}</span>
                     </div>
                     <div class="text-center" style="display:flex; flex-direction:column; gap:0.5rem; align-items:flex-end;">

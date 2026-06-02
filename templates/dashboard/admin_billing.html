@@ -267,8 +267,13 @@
                             <div class="batch-info">
                                 <strong style="display: block; color: var(--text-primary); margin-bottom: 0.25rem; font-size: 0.95rem;">{{ batch.name }}</strong>
                                 <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">
-                                    {{ batch.course.title }} 
-                                    <small style="color:var(--brand-gold);">({{ batch.course.instructor.get_full_name|default:batch.course.instructor.username }})</small>
+                                    {% if batch.course %}
+                                        {{ batch.course.title }} 
+                                        <small style="color:var(--brand-gold);">({{ batch.course.instructor.get_full_name|default:batch.course.instructor.username }})</small>
+                                    {% elif batch.package %}
+                                        {{ batch.package.name }} 
+                                        <small style="color:var(--brand-gold);">(باقة باقات)</small>
+                                    {% endif %}
                                 </span>
                                 <div class="batch-meta mt-2" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
                                     <span class="tag" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 6px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-light); color: var(--text-secondary);"> {% firstof batch.institute.name batch.sales_center.name "مستقل" %} </span>

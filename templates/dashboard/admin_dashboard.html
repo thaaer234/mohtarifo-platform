@@ -366,8 +366,13 @@
                         <div>
                             <strong>{{ batch.name }}</strong>
                             <span>
-                                {{ batch.course.title }} 
-                                <small style="color:var(--brand-gold);">({{ batch.course.instructor.get_full_name|default:batch.course.instructor.username }})</small> 
+                                {% if batch.course %}
+                                    {{ batch.course.title }} 
+                                    <small style="color:var(--brand-gold);">({{ batch.course.instructor.get_full_name|default:batch.course.instructor.username }})</small> 
+                                {% elif batch.package %}
+                                    {{ batch.package.name }} 
+                                    <small style="color:var(--brand-gold);">(باقة باقات)</small> 
+                                {% endif %}
                                 · {% firstof batch.institute.name batch.sales_center.name "مستقل" %}
                             </span>
                         </div>

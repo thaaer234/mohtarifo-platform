@@ -1,22 +1,33 @@
-#!/usr/bin/env python
-"""
-Simple test to verify template syntax is correct
-"""
-from django.template import Template, TemplateSyntaxError
-from django.template.loader import get_template
+import os
+import django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+django.setup()
 
-try:
-    # Try to load the template
-    template = get_template('dashboard/instructor_base.html')
-    print("✓ instructor_base.html template loads successfully")
-    
-    template2 = get_template('dashboard/instructor_courses.html')
-    print("✓ instructor_courses.html template loads successfully")
-    
-    print("\n✓ All templates are syntactically correct!")
-except TemplateSyntaxError as e:
-    print(f"✗ Template Syntax Error: {e}")
-    exit(1)
-except Exception as e:
-    print(f"✗ Error: {e}")
+from django.template.loader import get_template
+from django.template import TemplateSyntaxError
+
+templates_to_test = [
+    'dashboard/admin_dashboard.html',
+    'dashboard/admin_billing.html',
+    'dashboard/admin_sales_center_profile.html',
+    'dashboard/admin_institute_profile.html',
+]
+
+print("--- TESTING MODIFIED TEMPLATES FOR SYNTAX ERRORS ---")
+all_ok = True
+for t in templates_to_test:
+    try:
+        get_template(t)
+        print(f"ok - {t} loaded successfully")
+    except TemplateSyntaxError as e:
+        print(f"error - Template Syntax Error in {t}: {e}")
+        all_ok = False
+    except Exception as e:
+        print(f"error - Error loading {t}: {e}")
+        all_ok = False
+
+if all_ok:
+    print("All modified templates are syntactically correct!")
+else:
+    print("Some templates failed to load!")
     exit(1)

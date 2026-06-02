@@ -825,10 +825,11 @@
             document.body.appendChild(clone);
             await new Promise(r => setTimeout(r, 150));
 
-            const frontDataUrl = await htmlToImage.toPng(clone, {
+            const frontDataUrl = await htmlToImage.toJpeg(clone, {
                 width: 791,
                 height: 374,
-                pixelRatio: 2, // Sharp resolution
+                pixelRatio: 1.2, // Optimized resolution for fast upload
+                quality: 0.8, // 80% Compression
                 backgroundColor: '#ffffff',
                 style: {
                     transform: 'none',

@@ -24,7 +24,14 @@ class SystemDiagnostics:
         try:
             from analytics.models import LandingVisit
             from datetime import timedelta
-            recent_exists = LandingVisit.objects.filter(visited_at__gte=timezone.now() - timedelta(hours=24)).exists()
+            from django.conf import settings
+            
+            now = timezone.now()
+            if not getattr(settings, 'USE_TZ', False) and timezone.is_aware(now):
+                now = timezone.make_naive(now)
+            
+            time_limit = now - timedelta(hours=24)
+            recent_exists = LandingVisit.objects.filter(visited_at__gte=time_limit).exists()
             if recent_exists:
                 return {"status": "healthy", "message": "نظام تتبع الزوار نشط (سجل زيارات خلال الـ 24 ساعة الماضية)."}
             return {"status": "warning", "message": "لا توجد زيارات مسجلة خلال الـ 24 ساعة الماضية."}

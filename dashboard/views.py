@@ -3090,9 +3090,9 @@ def admin_billing(request):
             general_fund_cents += code.sold_price_cents
         else:
             if code.course and code.course.price_cents:
-                general_fund_cents += code.course.price_cents
+                general_fund_cents += code.course.price_cents or 0
             elif code.package and code.package.price_cents:
-                general_fund_cents += code.package.price_cents
+                general_fund_cents += code.package.price_cents or 0
     general_fund_syp = general_fund_cents / 100
 
     # Centers expected funds
@@ -3106,17 +3106,17 @@ def admin_billing(request):
         expected_balance_cents = 0
         for code in codes:
             if code.course and code.course.price_cents:
-                expected_balance_cents += code.course.price_cents
+                expected_balance_cents += code.course.price_cents or 0
             elif code.package and code.package.price_cents:
-                expected_balance_cents += code.package.price_cents
+                expected_balance_cents += code.package.price_cents or 0
                 
         # 2. الصندوق الحقيقي الافتراضي (Standard Real Fund): Sum of standard prices for SOLD codes (gross standard value)
         real_standard_cents = 0
         for code in sold_codes:
             if code.course and code.course.price_cents:
-                real_standard_cents += code.course.price_cents
+                real_standard_cents += code.course.price_cents or 0
             elif code.package and code.package.price_cents:
-                real_standard_cents += code.package.price_cents
+                real_standard_cents += code.package.price_cents or 0
                 
         # 3. الصندوق بعد الحسومات (Fund after discounts): Actual money earned (sold_price_cents with fallback to standard)
         actual_earned_cents = 0
@@ -3125,17 +3125,17 @@ def admin_billing(request):
                 actual_earned_cents += code.sold_price_cents
             else:
                 if code.course and code.course.price_cents:
-                    actual_earned_cents += code.course.price_cents
+                    actual_earned_cents += code.course.price_cents or 0
                 elif code.package and code.package.price_cents:
-                    actual_earned_cents += code.package.price_cents
+                    actual_earned_cents += code.package.price_cents or 0
         
         centers_report.append({
             "center": center,
             "total_codes": codes.count(),
             "sold_codes_count": sold_count,
-            "expected_balance": expected_balance_cents / 100,
-            "real_standard": real_standard_cents / 100,
-            "actual_earned": actual_earned_cents / 100,
+            "expected_balance": (expected_balance_cents or 0) / 100,
+            "real_standard": (real_standard_cents or 0) / 100,
+            "actual_earned": (actual_earned_cents or 0) / 100,
         })
 
     # Total digital payments revenue on unsliced queryset
@@ -3145,17 +3145,17 @@ def admin_billing(request):
     filter_reports = _filter_financial_rows()
     
     # Pre-calculate summary totals for print view usage
-    total_centers_earned = sum(item["actual_earned"] for item in centers_report)
-    total_filter_gross = sum(item["gross"] for item in filter_reports)
+    total_centers_earned = sum((item["actual_earned"] or 0) for item in centers_report)
+    total_filter_gross = sum((item["gross"] or 0) for item in filter_reports)
     
     # Extract Sham Cash balance and total sold codes
     sham_cash_balance = 0
     for item in centers_report:
         if "شام كاش" in item["center"].name or "الإدارة" in item["center"].name:
-            sham_cash_balance = item["actual_earned"]
+            sham_cash_balance = item["actual_earned"] or 0
             break
             
-    total_sold_codes = sum(item["sold_codes_count"] for item in centers_report)
+    total_sold_codes = sum((item["sold_codes_count"] or 0) for item in centers_report)
 
     context = {
         "subscriptions": subscriptions,

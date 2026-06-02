@@ -1,10 +1,12 @@
-with open('dashboard/views.py', 'r', encoding='utf-8') as f:
-    lines = f.readlines()
+import os
+import django
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
+django.setup()
 
-for i, line in enumerate(lines):
-    if 'def _filter_financial_rows' in line:
-        print(f"Line {i+1}: {line}")
-        # print the next 100 lines
-        for j in range(i, min(i+100, len(lines))):
-            print(f"{j+1}: {lines[j]}", end='')
-        break
+from django.db import connection
+with connection.cursor() as cursor:
+    cursor.execute("SELECT datname FROM pg_database WHERE datistemplate = false;")
+    dbs = cursor.fetchall()
+    print("--- POSTGRES DATABASES ---")
+    for db in dbs:
+        print(db[0])
