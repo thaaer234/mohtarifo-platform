@@ -1683,7 +1683,7 @@ def admin_course_control(request, course_id):
                 messages.success(request, "تم تسجيل الدرس بنجاح.")
                 return redirect("dashboard:admin_course_control", course_id=course.id)
         elif action == "create_unit":
-            unit_form = CourseUnitQuickForm(request.POST, prefix="unit")
+            unit_form = CourseUnitQuickForm(request.POST, request.FILES, prefix="unit")
             if unit_form.is_valid():
                 unit = unit_form.save(commit=False)
                 unit.course = course
@@ -2870,7 +2870,16 @@ def download_course_pdf(request, course_id):
     student_name = request.user.get_full_name() or request.user.username
     profile = getattr(request.user, "student_profile", None)
     student_phone = profile.phone if profile else request.user.username
-    watermark_text = f"{student_name} • {student_phone}"
+    watermark_text = f"{student_name} - {student_phone}"
+
+    # Shape and reorder Arabic text for correct PDF rendering
+    try:
+        import arabic_reshaper
+        from bidi.algorithm import get_display
+        reshaped_text = arabic_reshaper.reshape(watermark_text)
+        watermark_text = get_display(reshaped_text)
+    except Exception:
+        pass
 
     # Read original PDF
     original_pdf = PdfReader(course.pdf_file.open("rb"))
@@ -4663,7 +4672,7 @@ def admin_unit_edit(request, unit_id):
     unit = get_object_or_404(Unit, id=unit_id)
     
     if request.method == "POST":
-        form = UnitForm(request.POST, instance=unit)
+        form = UnitForm(request.POST, request.FILES, instance=unit)
         if form.is_valid():
             form.save()
             messages.success(request, f"تم تحديث وحدة {unit.title} بنجاح.")

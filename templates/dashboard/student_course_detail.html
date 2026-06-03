@@ -98,6 +98,23 @@
                     <div id="collapse{{ unit.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ unit.id }}" data-bs-parent="#curriculumAccordion">
                         <div class="accordion-body p-4 pt-0">
                             <div class="d-flex flex-column gap-3">
+                                {% if unit.file1 or unit.file2 %}
+                                <div class="d-flex flex-wrap gap-3 mb-2 p-3 rounded-lg border-dashed" style="border: 1px dashed #e2e8f0; background: #f8fafc;">
+                                    {% if unit.file1 %}
+                                        <a href="{{ unit.file1.url }}" class="btn btn-pro btn-pro-accent d-inline-flex align-items-center gap-2 px-4 py-2" download>
+                                            <i data-lucide="download" style="width: 16px;"></i>
+                                            <span>{{ unit.file1_name|default:"الملف الشامل 1" }}</span>
+                                        </a>
+                                    {% endif %}
+                                    {% if unit.file2 %}
+                                        <a href="{{ unit.file2.url }}" class="btn btn-pro btn-pro-accent d-inline-flex align-items-center gap-2 px-4 py-2" download>
+                                            <i data-lucide="download" style="width: 16px;"></i>
+                                            <span>{{ unit.file2_name|default:"الملف الشامل 2" }}</span>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+
                                 {% for lesson in unit.lessons.all %}
                                 <a href="{% url 'dashboard:student_lesson_detail' lesson.id %}" class="lesson-row d-flex justify-content-between align-items-center p-4 rounded-xl border text-decoration-none transition" style="background: #f8fafc;">
                                     <div class="d-flex align-items-center gap-4">

@@ -112,6 +112,10 @@ class Unit(models.Model):
     title = models.CharField(max_length=180)
     description = models.TextField(blank=True)
     sort_order = models.PositiveIntegerField(default=0)
+    file1 = models.FileField(upload_to="units/files/", blank=True, null=True, verbose_name="الملف الشامل الأول")
+    file1_name = models.CharField(max_length=120, blank=True, verbose_name="اسم الملف الأول")
+    file2 = models.FileField(upload_to="units/files/", blank=True, null=True, verbose_name="الملف الشامل الثاني")
+    file2_name = models.CharField(max_length=120, blank=True, verbose_name="اسم الملف الثاني")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

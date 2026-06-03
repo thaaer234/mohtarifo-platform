@@ -254,7 +254,7 @@
             <article class="premium-card course-panel compact-panel" id="create-unit">
                 <div class="badge badge-gold mb-3">جلسة جديدة</div>
                 <h3>إنشاء جلسة</h3>
-                <form method="post" class="stack-form">
+                <form method="post" class="stack-form" enctype="multipart/form-data">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="create_unit">
                     {% for field in unit_form %}
