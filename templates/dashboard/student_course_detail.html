@@ -98,23 +98,6 @@
                     <div id="collapse{{ unit.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ unit.id }}" data-bs-parent="#curriculumAccordion">
                         <div class="accordion-body p-4 pt-0">
                             <div class="d-flex flex-column gap-3">
-                                {% if unit.file1 or unit.file2 %}
-                                <div class="d-flex flex-wrap gap-3 mb-2 p-3 rounded-lg border-dashed" style="border: 1px dashed #e2e8f0; background: #f8fafc;">
-                                    {% if unit.file1 %}
-                                        <a href="{{ unit.file1.url }}" class="btn btn-pro btn-pro-accent d-inline-flex align-items-center gap-2 px-4 py-2" download>
-                                            <i data-lucide="download" style="width: 16px;"></i>
-                                            <span>{{ unit.file1_name|default:"الملف الشامل 1" }}</span>
-                                        </a>
-                                    {% endif %}
-                                    {% if unit.file2 %}
-                                        <a href="{{ unit.file2.url }}" class="btn btn-pro btn-pro-accent d-inline-flex align-items-center gap-2 px-4 py-2" download>
-                                            <i data-lucide="download" style="width: 16px;"></i>
-                                            <span>{{ unit.file2_name|default:"الملف الشامل 2" }}</span>
-                                        </a>
-                                    {% endif %}
-                                </div>
-                                {% endif %}
-
                                 {% for lesson in unit.lessons.all %}
                                 <a href="{% url 'dashboard:student_lesson_detail' lesson.id %}" class="lesson-row d-flex justify-content-between align-items-center p-4 rounded-xl border text-decoration-none transition" style="background: #f8fafc;">
                                     <div class="d-flex align-items-center gap-4">
@@ -167,30 +150,70 @@
 
             <div class="pro-card">
                 <h4 class="font-weight-bold mb-4"><i data-lucide="file-text" class="text-success ml-2"></i> المصادر والملفات</h4>
-                {% if course.pdf_file %}
-                    <div class="p-4 rounded-xl bg-light border d-flex align-items-center gap-3">
-                        <div class="bg-success rounded-lg p-2 text-white">
-                            <i data-lucide="file-text"></i>
+                {% if course.pdf_file or course.file1 or course.file2 %}
+                    {% if course.pdf_file %}
+                        <div class="p-4 rounded-xl bg-light border d-flex align-items-center gap-3 mb-3">
+                            <div class="bg-success rounded-lg p-2 text-white">
+                                <i data-lucide="file-text"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0 font-weight-bold">ملف المادة الموحد</h6>
+                                <small class="text-muted">PDF - {{ course.pdf_file.size|filesizeformat }}</small>
+                            </div>
                         </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-0 font-weight-bold">ملف المادة الموحد</h6>
-                            <small class="text-muted">PDF - {{ course.pdf_file.size|filesizeformat }}</small>
+                        <div class="d-flex flex-column gap-2 mb-4">
+                             <a href="{% url 'dashboard:view_course_pdf' course.id %}" target="_blank" class="btn btn-pro btn-pro-accent w-100">
+                                 <i data-lucide="eye" style="width: 16px; margin-left: 6px;"></i> عرض الملف
+                             </a>
+                             {% if course.allow_pdf_download %}
+                                <a href="{% url 'dashboard:download_course_pdf' course.id %}" class="btn btn-outline-secondary w-100 rounded-pill">
+                                    <i data-lucide="download" style="width: 16px; margin-left: 6px;"></i> تنزيل مباشر
+                                </a>
+                                <small class="text-muted text-center mt-1" style="font-size: 0.7rem; opacity: 0.7;">
+                                    <i data-lucide="shield-check" style="width: 12px; display: inline;"></i>
+                                    الملف المُحمّل يحتوي علامة مائية باسمك لحماية الحقوق
+                                </small>
+                             {% endif %}
                         </div>
-                    </div>
-                    <div class="d-flex flex-column gap-2 mt-4">
-                         <a href="{% url 'dashboard:view_course_pdf' course.id %}" target="_blank" class="btn btn-pro btn-pro-accent w-100">
-                             <i data-lucide="eye" style="width: 16px; margin-left: 6px;"></i> عرض الملف
-                         </a>
-                         {% if course.allow_pdf_download %}
-                            <a href="{% url 'dashboard:download_course_pdf' course.id %}" class="btn btn-outline-secondary w-100 rounded-pill">
-                                <i data-lucide="download" style="width: 16px; margin-left: 6px;"></i> تنزيل مباشر
-                            </a>
-                            <small class="text-muted text-center mt-1" style="font-size: 0.7rem; opacity: 0.7;">
-                                <i data-lucide="shield-check" style="width: 12px; display: inline;"></i>
-                                الملف المُحمّل يحتوي علامة مائية باسمك لحماية الحقوق
-                            </small>
-                         {% endif %}
-                    </div>
+                    {% endif %}
+
+                    {% if course.file1 or course.file2 %}
+                        <div class="d-flex flex-column gap-3 pt-3 border-top">
+                            <h6 class="font-weight-bold mb-2">الملفات الإضافية:</h6>
+                            {% if course.file1 %}
+                                <div class="d-flex align-items-center justify-content-between p-3 rounded-xl bg-light border">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="bg-primary rounded-lg p-2 text-white" style="opacity: 0.85;">
+                                            <i data-lucide="file" style="width: 20px; height: 20px;"></i>
+                                        </div>
+                                        <div>
+                                            <span class="font-weight-bold text-dark d-block" style="font-size: 0.9rem;">{{ course.file1_name|default:"الملف الإضافي 1" }}</span>
+                                        </div>
+                                    </div>
+                                    <a href="{{ course.file1.url }}" class="btn btn-sm btn-pro btn-pro-accent d-inline-flex align-items-center gap-2" download>
+                                        <i data-lucide="download" style="width: 14px;"></i>
+                                        <span>تحميل</span>
+                                    </a>
+                                </div>
+                            {% endif %}
+                            {% if course.file2 %}
+                                <div class="d-flex align-items-center justify-content-between p-3 rounded-xl bg-light border">
+                                    <div class="d-flex align-items-center gap-3">
+                                        <div class="bg-primary rounded-lg p-2 text-white" style="opacity: 0.85;">
+                                            <i data-lucide="file" style="width: 20px; height: 20px;"></i>
+                                        </div>
+                                        <div>
+                                            <span class="font-weight-bold text-dark d-block" style="font-size: 0.9rem;">{{ course.file2_name|default:"الملف الإضافي 2" }}</span>
+                                        </div>
+                                    </div>
+                                    <a href="{{ course.file2.url }}" class="btn btn-sm btn-pro btn-pro-accent d-inline-flex align-items-center gap-2" download>
+                                        <i data-lucide="download" style="width: 14px;"></i>
+                                        <span>تحميل</span>
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
                 {% else %}
                     <p class="text-muted small text-center py-4">لا توجد ملفات مرفقة.</p>
                 {% endif %}

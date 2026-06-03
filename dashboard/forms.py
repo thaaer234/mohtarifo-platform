@@ -256,16 +256,24 @@ class CourseCreateForm(forms.ModelForm):
 class CourseCardMediaForm(forms.ModelForm):
     class Meta:
         model = Course
-        fields = ["cover", "pdf_file", "allow_pdf_download"]
+        fields = ["cover", "pdf_file", "allow_pdf_download", "file1", "file1_name", "file2", "file2_name"]
         labels = {
             "cover": "غلاف كرت الدورة",
             "pdf_file": "ملف الـ PDF الخاص بالدورة كاملة",
             "allow_pdf_download": "السماح للطلاب بتنزيل الملف (PDF)؟",
+            "file1": "الملف الإضافي الأول",
+            "file1_name": "اسم الملف الأول (على الزر)",
+            "file2": "الملف الإضافي الثاني",
+            "file2_name": "اسم الملف الثاني (على الزر)",
         }
         help_texts = {
             "cover": "اختياري. إذا تركته فارغا سيتم استخدام صورة باسم الأستاذ من static/dashboard/course-covers/.",
             "pdf_file": "قم برفع ملف PDF واحد يشمل كامل الدورة.",
             "allow_pdf_download": "إذا تم التفعيل، سيتمكن الطالب من تحميل الملف على جهازه، وإلا فسيشاهده فقط داخل المنصة بشكل آمن.",
+            "file1": "اختياري. قم برفع الملف الأول الإضافي (مثلا الميكانيك).",
+            "file1_name": "اختياري. الاسم الذي سيظهر للطلاب على زر التحميل.",
+            "file2": "اختياري. قم برفع الملف الثاني الإضافي (مثلا الكهرباء).",
+            "file2_name": "اختياري. الاسم الذي سيظهر للطلاب على زر التحميل.",
         }
 
 
@@ -433,15 +441,11 @@ class CourseCodeSaleForm(forms.Form):
 class CourseUnitQuickForm(forms.ModelForm):
     class Meta:
         model = Unit
-        fields = ["title", "description", "sort_order", "file1", "file1_name", "file2", "file2_name"]
+        fields = ["title", "description", "sort_order"]
         labels = {
             "title": "اسم الجلسة",
             "description": "وصف مختصر",
             "sort_order": "ترتيب الجلسة",
-            "file1": "الملف الشامل الأول",
-            "file1_name": "اسم الملف الأول (مثال: ملف الميكانيك)",
-            "file2": "الملف الشامل الثاني",
-            "file2_name": "اسم الملف الثاني (مثال: ملف الكهرباء)",
         }
         widgets = {
             "description": forms.Textarea(attrs={"rows": 2}),
@@ -451,10 +455,6 @@ class CourseUnitQuickForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["description"].required = False
         self.fields["sort_order"].required = False
-        self.fields["file1"].required = False
-        self.fields["file1_name"].required = False
-        self.fields["file2"].required = False
-        self.fields["file2_name"].required = False
 
 
 class InstituteForm(forms.ModelForm):
@@ -725,16 +725,12 @@ class CatalogSectionForm(forms.ModelForm):
 class UnitForm(forms.ModelForm):
     class Meta:
         model = Unit
-        fields = ["course", "title", "description", "sort_order", "file1", "file1_name", "file2", "file2_name"]
+        fields = ["course", "title", "description", "sort_order"]
         labels = {
             "course": "الدورة التابعة",
             "title": "اسم الوحدة",
             "description": "وصف الوحدة",
             "sort_order": "الترتيب",
-            "file1": "الملف الشامل الأول",
-            "file1_name": "اسم الملف الأول (مثال: ملف الميكانيك)",
-            "file2": "الملف الشامل الثاني",
-            "file2_name": "اسم الملف الثاني (مثال: ملف الكهرباء)",
         }
 
     def __init__(self, *args, **kwargs):
