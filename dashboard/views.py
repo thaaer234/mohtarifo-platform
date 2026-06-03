@@ -2875,9 +2875,7 @@ def download_course_pdf(request, course_id):
     # Shape and reorder Arabic text for correct PDF rendering
     try:
         import arabic_reshaper
-        from bidi.algorithm import get_display
-        reshaped_text = arabic_reshaper.reshape(watermark_text)
-        watermark_text = get_display(reshaped_text)
+        watermark_text = arabic_reshaper.reshape(watermark_text)
     except Exception:
         pass
 
@@ -2963,9 +2961,7 @@ def _apply_pdf_watermark(pdf_file, user, course_title):
 
     try:
         import arabic_reshaper
-        from bidi.algorithm import get_display
-        reshaped_text = arabic_reshaper.reshape(watermark_text)
-        watermark_text = get_display(reshaped_text)
+        watermark_text = arabic_reshaper.reshape(watermark_text)
     except Exception:
         pass
 
