@@ -190,7 +190,7 @@
                                             <span class="font-weight-bold text-dark d-block" style="font-size: 0.9rem;">{{ course.file1_name|default:"الملف الإضافي 1" }}</span>
                                         </div>
                                     </div>
-                                    <a href="{{ course.file1.url }}" class="btn btn-sm btn-pro btn-pro-accent d-inline-flex align-items-center gap-2" download>
+                                    <a href="{% url 'dashboard:download_course_file1' course.id %}" class="btn btn-sm btn-pro btn-pro-accent d-inline-flex align-items-center gap-2">
                                         <i data-lucide="download" style="width: 14px;"></i>
                                         <span>تحميل</span>
                                     </a>
@@ -206,7 +206,7 @@
                                             <span class="font-weight-bold text-dark d-block" style="font-size: 0.9rem;">{{ course.file2_name|default:"الملف الإضافي 2" }}</span>
                                         </div>
                                     </div>
-                                    <a href="{{ course.file2.url }}" class="btn btn-sm btn-pro btn-pro-accent d-inline-flex align-items-center gap-2" download>
+                                    <a href="{% url 'dashboard:download_course_file2' course.id %}" class="btn btn-sm btn-pro btn-pro-accent d-inline-flex align-items-center gap-2">
                                         <i data-lucide="download" style="width: 14px;"></i>
                                         <span>تحميل</span>
                                     </a>

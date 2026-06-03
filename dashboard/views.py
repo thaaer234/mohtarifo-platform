@@ -2947,6 +2947,144 @@ def download_course_pdf(request, course_id):
     return response
 
 
+def _apply_pdf_watermark(pdf_file, user, course_title):
+    import random
+    from io import BytesIO as _BytesIO
+    from PyPDF2 import PdfReader, PdfWriter
+    from reportlab.pdfgen import canvas as rl_canvas
+    from reportlab.lib.pagesizes import A4
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+
+    student_name = user.get_full_name() or user.username
+    profile = getattr(user, "student_profile", None)
+    student_phone = profile.phone if profile else user.username
+    watermark_text = f"{student_name} - {student_phone}"
+
+    try:
+        import arabic_reshaper
+        from bidi.algorithm import get_display
+        reshaped_text = arabic_reshaper.reshape(watermark_text)
+        watermark_text = get_display(reshaped_text)
+    except Exception:
+        pass
+
+    original_pdf = PdfReader(pdf_file.open("rb"))
+    writer = PdfWriter()
+
+    for page_index, page in enumerate(original_pdf.pages):
+        page_width = float(page.mediabox.width)
+        page_height = float(page.mediabox.height)
+
+        wm_buffer = _BytesIO()
+        c = rl_canvas.Canvas(wm_buffer, pagesize=(page_width, page_height))
+
+        font_name = "Helvetica"
+        try:
+            import pathlib
+            for font_path in [
+                pathlib.Path(r"C:\Windows\Fonts\arial.ttf"),
+                pathlib.Path(r"C:\Windows\Fonts\tahoma.ttf"),
+                pathlib.Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
+                pathlib.Path("/usr/share/fonts/truetype/freefont/FreeSans.ttf"),
+            ]:
+                if font_path.exists():
+                    pdfmetrics.registerFont(TTFont("WatermarkFont", str(font_path)))
+                    font_name = "WatermarkFont"
+                    break
+        except Exception:
+            pass
+
+        num_watermarks = random.randint(4, 6)
+        for _ in range(num_watermarks):
+            x = random.uniform(page_width * 0.05, page_width * 0.7)
+            y = random.uniform(page_height * 0.05, page_height * 0.85)
+            rotation = random.uniform(-45, -25)
+            font_size = random.uniform(14, 22)
+
+            c.saveState()
+            c.translate(x, y)
+            c.rotate(rotation)
+            c.setFont(font_name, font_size)
+            c.setFillColorRGB(0.5, 0.5, 0.5, alpha=0.08)
+            c.drawString(0, 0, watermark_text)
+            c.restoreState()
+
+        c.save()
+        wm_buffer.seek(0)
+
+        watermark_page = PdfReader(wm_buffer).pages[0]
+        page.merge_page(watermark_page)
+        writer.add_page(page)
+
+    output_buffer = _BytesIO()
+    writer.write(output_buffer)
+    output_buffer.seek(0)
+    return output_buffer
+
+
+@login_required
+def download_course_file1(request, course_id):
+    """Download course file1 with dynamic watermark (student name + phone) if it's a PDF."""
+    current_device = _current_device_fingerprint(request)
+    course = get_object_or_404(Course, id=course_id)
+
+    if not request.user.is_staff and not _device_grants(request.user, current_device).filter(course=course).exists():
+        raise Http404("File not found")
+
+    if not course.file1:
+        raise Http404("File not found")
+
+    # If the file is a PDF, dynamically watermark it
+    if course.file1.name.lower().endswith('.pdf'):
+        output_buffer = _apply_pdf_watermark(course.file1, request.user, course.title)
+        filename = course.file1_name or "file1"
+        safe_filename = filename.replace(" ", "_")[:40] + ".pdf"
+        response = FileResponse(output_buffer, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{safe_filename}"'
+        response["Cache-Control"] = "no-store"
+        return response
+    else:
+        # Serve it natively if it's not a PDF (e.g. zip, docx, etc.)
+        response = FileResponse(course.file1.open("rb"), content_type="application/octet-stream")
+        filename = course.file1_name or "file1"
+        ext = os.path.splitext(course.file1.name)[1]
+        safe_filename = filename.replace(" ", "_")[:40] + ext
+        response["Content-Disposition"] = f'attachment; filename="{safe_filename}"'
+        return response
+
+
+@login_required
+def download_course_file2(request, course_id):
+    """Download course file2 with dynamic watermark (student name + phone) if it's a PDF."""
+    current_device = _current_device_fingerprint(request)
+    course = get_object_or_404(Course, id=course_id)
+
+    if not request.user.is_staff and not _device_grants(request.user, current_device).filter(course=course).exists():
+        raise Http404("File not found")
+
+    if not course.file2:
+        raise Http404("File not found")
+
+    # If the file is a PDF, dynamically watermark it
+    if course.file2.name.lower().endswith('.pdf'):
+        output_buffer = _apply_pdf_watermark(course.file2, request.user, course.title)
+        filename = course.file2_name or "file2"
+        safe_filename = filename.replace(" ", "_")[:40] + ".pdf"
+        response = FileResponse(output_buffer, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{safe_filename}"'
+        response["Cache-Control"] = "no-store"
+        return response
+    else:
+        # Serve it natively if it's not a PDF (e.g. zip, docx, etc.)
+        response = FileResponse(course.file2.open("rb"), content_type="application/octet-stream")
+        filename = course.file2_name or "file2"
+        ext = os.path.splitext(course.file2.name)[1]
+        safe_filename = filename.replace(" ", "_")[:40] + ext
+        response["Content-Disposition"] = f'attachment; filename="{safe_filename}"'
+        return response
+
+
 @login_required
 def join_session(request, session_id):
     current_device = _current_device_fingerprint(request)
