@@ -11,6 +11,8 @@ templates_to_test = [
     'dashboard/admin_billing.html',
     'dashboard/admin_sales_center_profile.html',
     'dashboard/admin_institute_profile.html',
+    'dashboard/admin_billing_print.html',
+    'dashboard/admin_center_invoice_print.html',
 ]
 
 print("--- TESTING MODIFIED TEMPLATES FOR SYNTAX ERRORS ---")

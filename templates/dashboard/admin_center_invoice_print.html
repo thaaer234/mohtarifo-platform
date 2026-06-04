@@ -1,177 +1,612 @@
 {% extends "accounting_erp/base_print_accounting.html" %}
-{% load humanize inline_static %}
+{% load humanize inline_static static %}
 
-{% block title %}طباعة فاتورة: {{ center.name }}{% endblock %}
-
-{% block report_name %}فاتورة المحاسبة والمطابقة لمركز البيع المعتمد{% endblock %}
+{% block title %}طباعة فاتورة مركز البيع: {{ center.name }}{% endblock %}
 
 {% block extra_css %}
 {{ block.super }}
 <style>
-    .inv-stats {
+    /* =========================================
+       OVERRIDE BASE TEMPLATE COMPONENTS
+       ========================================= */
+    .page-wrapper > header.report-header,
+    .page-wrapper > .report-title-box,
+    .page-wrapper > .signatures-grid {
+        display: none !important;
+    }
+
+    .page-wrapper {
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        margin: 0 auto !important;
+        max-width: 210mm !important;
+    }
+
+    /* =========================================
+       PREMIUM DESIGN SYSTEM
+       ========================================= */
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
+
+    :root {
+        --primary: #1e1e2d;
+        --secondary: #1b1b29;
+        --accent: #d4af37; /* Gold */
+        --accent-glow: rgba(212, 175, 55, 0.15);
+        --accent-dark: #aa8c2c;
+        --text-main: #2b2b36;
+        --text-light: #7e8299;
+        --bg-main: #f4f6f9;
+        --white: #ffffff;
+        --success: #10b981;
+        --danger: #f1416c;
+        --border-color: #e4e6ef;
+        --radius: 20px;
+    }
+
+    body {
+        font-family: 'Cairo', Arial, sans-serif;
+        background-color: #e9ecef;
+        color: var(--text-main);
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .premium-wrapper {
+        background: var(--white);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        border-radius: 24px;
+        overflow: hidden;
+        position: relative;
+        margin: 20px auto;
+        min-height: 290mm;
+    }
+
+    /* Watermark */
+    .watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-15deg);
+        width: 60%;
+        opacity: 0.03;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    /* Modern Header */
+    .premium-header {
+        position: relative;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        padding: 40px 50px;
+        color: var(--white);
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    .premium-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -10%;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+        border-radius: 50%;
+        z-index: -1;
+    }
+
+    .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .logo-container {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .logo-img {
+        height: 50px;
+        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+    }
+
+    .platform-name {
+        font-size: 1.4rem;
+        font-weight: 900;
+        color: var(--accent);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        font-family: 'Cairo', Arial, sans-serif;
+    }
+
+    .report-meta {
+        text-align: right;
+    }
+
+    .report-badge {
+        background: rgba(212, 175, 55, 0.1);
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        padding: 6px 18px;
+        border-radius: 30px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        display: inline-block;
+        margin-bottom: 8px;
+        box-shadow: 0 4px 15px rgba(212, 175, 55, 0.2);
+    }
+
+    .meta-text {
+        font-size: 0.8rem;
+        color: #a1a5b7;
+        font-family: 'Cairo', Arial, sans-serif;
+    }
+
+    /* Report Profile Header Info */
+    .report-profile {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        position: relative;
+    }
+
+    .profile-icon {
+        width: 75px;
+        height: 75px;
+        background: linear-gradient(45deg, var(--accent), var(--accent-dark));
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        flex-shrink: 0;
+        border: 2px solid rgba(212, 175, 55, 0.5);
+    }
+
+    .profile-icon svg {
+        width: 36px;
+        height: 36px;
+        stroke: var(--white);
+    }
+
+    .report-details h1 {
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin: 0 0 5px 0;
+        color: var(--white);
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        white-space: nowrap;
+    }
+
+    .report-id {
+        font-size: 1rem;
+        color: var(--accent);
+        font-weight: 600;
+        font-family: 'Cairo', Arial, sans-serif;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Stats Grid */
+    .stats-container {
+        padding: 0 40px;
+        margin-top: -25px;
+        position: relative;
+        z-index: 10;
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 15px;
-        margin-bottom: 30px;
-        page-break-inside: avoid;
     }
-    .inv-stat-box {
-        border: 1px solid var(--border-color);
-        background: #ffffff;
-        padding: 15px;
-        border-radius: 8px;
-        text-align: center;
+
+    .stat-card {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        border: 1px solid rgba(255,255,255,0.8);
+        border-bottom: 4px solid var(--accent);
+        position: relative;
+        overflow: hidden;
     }
-    .inv-stat-label {
-        font-size: 9pt;
+
+    .stat-title {
+        font-size: 0.8rem;
+        color: var(--text-light);
         font-weight: 700;
-        color: var(--text-muted);
-        display: block;
         margin-bottom: 8px;
+        position: relative;
+        z-index: 1;
     }
-    .inv-stat-val {
-        font-family: 'Inter', monospace;
+
+    .stat-value {
+        font-size: 1.4rem;
         font-weight: 900;
-        font-size: 14pt;
-        color: var(--text-primary);
+        color: var(--primary);
+        font-family: 'Cairo', Arial, sans-serif;
+        line-height: 1.2;
+        position: relative;
+        z-index: 1;
     }
-    .inv-parties {
+
+    .stat-value.gold { color: var(--accent-dark); }
+    .stat-value.green { color: var(--success); }
+
+    /* Parties Section */
+    .parties-container {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 20px;
+        gap: 25px;
         margin-bottom: 30px;
-        page-break-inside: avoid;
     }
-    .party-col {
+
+    .party-card {
+        background: var(--white);
         border: 1px solid var(--border-color);
-        border-radius: 8px;
+        border-radius: 16px;
         padding: 20px;
-        background: #f8fafc;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.02);
     }
-    .party-col h4 {
-        margin: 0 0 15px 0;
-        border-bottom: 2px solid var(--brand-color);
-        padding-bottom: 8px;
-        font-size: 12pt;
+
+    .party-title {
+        font-size: 1rem;
         font-weight: 800;
-        color: var(--primary-color);
+        color: var(--primary);
+        border-bottom: 2px solid var(--accent);
+        padding-bottom: 8px;
+        margin-bottom: 15px;
     }
+
     .party-row {
-        font-size: 10pt;
+        font-size: 0.9rem;
         margin-bottom: 8px;
+        color: var(--text-main);
     }
+
     .party-row strong {
-        color: var(--text-muted);
+        color: var(--text-light);
         display: inline-block;
         width: 100px;
+    }
+
+    /* Main Content Area */
+    .content-area {
+        padding: 30px 40px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .section-title {
+        font-size: 1.3rem;
+        font-weight: 900;
+        color: var(--primary);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .section-title::before {
+        content: '';
+        display: block;
+        width: 6px;
+        height: 24px;
+        background: var(--accent);
+        border-radius: 4px;
+    }
+
+    .section-subtitle {
+        margin-bottom: 20px;
+        font-size: 0.85rem;
+        color: var(--text-light);
+        padding-right: 18px;
+    }
+
+    /* Premium Tables */
+    .premium-table-wrapper {
+        background: var(--white);
+        border-radius: 16px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    table.premium-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: auto;
+    }
+
+    table.premium-table thead {
+        background: var(--bg-main);
+    }
+
+    table.premium-table th {
+        padding: 14px 16px;
+        text-align: right;
+        font-size: 0.85rem;
+        font-weight: 800;
+        color: var(--text-light);
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    table.premium-table td {
+        padding: 14px 16px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-main);
+        vertical-align: middle;
+    }
+
+    table.premium-table tr:last-child td { border-bottom: none; }
+    table.premium-table tr:nth-child(even) { background-color: #fafbfc; }
+
+    table.premium-table th.text-center, 
+    table.premium-table td.text-center { text-align: center !important; }
+    table.premium-table th.text-right, 
+    table.premium-table td.text-right { text-align: right !important; }
+
+    table.premium-table tfoot td {
+        background: var(--bg-main);
+        font-weight: 800;
+        font-size: 0.95rem;
+        color: var(--primary);
+        border-top: 2px solid var(--primary);
+    }
+
+    /* Footer / Signatures */
+    .premium-signatures {
+        margin-top: 40px;
+        background: var(--primary);
+        border-radius: 16px;
+        padding: 30px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        color: var(--white);
+    }
+
+    .sig-item { text-align: center; }
+
+    .sig-title {
+        font-size: 0.85rem;
+        color: #a1a5b7;
+        margin-bottom: 40px;
+    }
+
+    .sig-line {
+        border-top: 2px dashed rgba(255,255,255,0.2);
+        padding-top: 10px;
+        font-weight: 700;
+        color: var(--accent);
+        font-size: 0.9rem;
+    }
+
+    /* Utilities */
+    .num-val { 
+        font-family: 'Cairo', Arial, sans-serif; 
+        font-weight: 700;
+    }
+
+    .currency-sy {
+        color: var(--primary);
+        font-weight: 800;
+    }
+
+    .highlight-green {
+        color: var(--success) !important;
+        font-weight: 800;
+    }
+
+    .avoid-break {
+        page-break-inside: avoid;
+    }
+
+    @media print {
+        @page {
+            size: A4 portrait;
+            margin: 5mm;
+        }
+        body { 
+            background: white; 
+            padding: 0;
+            margin: 0;
+        }
+        .premium-wrapper { 
+            margin: 5mm auto;
+            box-shadow: none; 
+            border-radius: 24px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            width: 100%;
+        }
+        .stat-card { border: 1px solid var(--border-color); box-shadow: none; }
+        .premium-table-wrapper { border: 1px solid var(--border-color); box-shadow: none; }
+        .party-card { border: 1px solid var(--border-color); box-shadow: none; }
+        .page-break { page-break-after: always; }
+        .premium-header { 
+            -webkit-print-color-adjust: exact; 
+            print-color-adjust: exact; 
+            padding: 30px 40px;
+        }
     }
 </style>
 {% endblock %}
 
 {% block report_body %}
-<div class="inv-parties">
-    <div class="party-col">
-        <h4>الطرف الأول: المصدّر</h4>
-        <div class="party-row"><strong>اسم الجهة:</strong> إدارة منصة محترفو التعليم</div>
-        <div class="party-row"><strong>العنوان:</strong> دمشق، سوريا</div>
-        <div class="party-row"><strong>رقم الفاتورة:</strong> <span class="font-mono">{{ invoice_number }}</span></div>
-    </div>
-    <div class="party-col">
-        <h4>الطرف الثاني: مركز البيع</h4>
-        <div class="party-row"><strong>اسم المركز:</strong> {{ center.name }}</div>
-        <div class="party-row"><strong>المعهد:</strong> {{ center.institute.name|default:"مستقل" }}</div>
-        <div class="party-row"><strong>الهاتف:</strong> {{ center.phone|default:"--" }}</div>
-    </div>
-</div>
+<div class="premium-wrapper">
+    <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" class="watermark" alt="Watermark">
 
-<div class="inv-stats">
-    <div class="inv-stat-box">
-        <span class="inv-stat-label">الأكواد المستلمة</span>
-        <div class="inv-stat-val">{{ total_assigned }}</div>
-    </div>
-    <div class="inv-stat-box">
-        <span class="inv-stat-label">الأكواد المباعة</span>
-        <div class="inv-stat-val">{{ total_sold }}</div>
-    </div>
-    <div class="inv-stat-box">
-        <span class="inv-stat-label">الصندوق المتوقع</span>
-        <div class="inv-stat-val" style="font-size: 12pt;">{{ total_potential|currency_format }}</div>
-    </div>
-    <div class="inv-stat-box" style="border-color: #166534; background: #f0fdf4;">
-        <span class="inv-stat-label" style="color: #166534;">التحصيل الفعلي</span>
-        <div class="inv-stat-val" style="color: #166534; font-size: 12pt;">{{ total_earned|currency_format }}</div>
-    </div>
-</div>
-
-<h3 class="section-title">كشف حركة مبيعات الأكواد التفصيلي</h3>
-<div style="overflow-x: auto;">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>المادة / الدفعة</th>
-                <th>المدرس</th>
-                <th style="width: 70px;" class="text-center">الأكواد</th>
-                <th style="width: 70px;" class="text-center">المباع</th>
-                <th class="text-center">السعر</th>
-                <th class="text-center">المتوقع</th>
-                <th class="text-center">الفعلي</th>
-                <th class="text-center">العمولة ({{ commission_percent|floatformat:0 }}%)</th>
-                <th class="text-center">الصافي للمنصة</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in detailed_batches %}
-            <tr>
-                <td style="font-size: 9pt;"><strong>{{ item.batch.name }}</strong><br><small style="color: var(--text-muted);">{{ item.batch.target_title }}</small></td>
-                <td class="text-center" style="font-size: 9pt;">
-                    {% if item.batch.course %}
-                        {{ item.batch.course.instructor.get_full_name|default:item.batch.course.instructor.username }}
-                    {% else %}
-                        --
-                    {% endif %}
-                </td>
-                <td class="text-center font-mono">{{ item.total_codes }}</td>
-                <td class="text-center font-mono">{{ item.sold_count }}</td>
-                <td class="text-center font-mono" style="font-size: 9pt;">{{ item.standard_price|currency_format }}</td>
-                <td class="text-center font-mono">{{ item.potential_value|currency_format }}</td>
-                <td class="text-center font-mono" style="color: #166534; font-weight: 800;">{{ item.actual_earned|currency_format }}</td>
-                <td class="text-center font-mono" style="font-size: 9pt; color: #64748b;">{{ item.center_share|currency_format }}</td>
-                <td class="text-center font-mono" style="background-color: #f8fafc; font-weight: 900;">{{ item.net_share|currency_format }}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="9" class="text-center">لا توجد بيانات</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-<div class="avoid-break" style="display: flex; justify-content: flex-end; margin-top: 2rem;">
-    <div style="width: 380px; border: 2px solid var(--border-color); background: #ffffff; padding: 20px; border-radius: 8px;">
-        <h4 style="margin: 0 0 15px 0; text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; font-weight: 800;">الملخص المالي للتسوية</h4>
-        
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 10pt;">
-            <span>التحصيل الفعلي للمبيعات:</span>
-            <strong class="font-mono">{{ total_earned|currency_format }} ل.س</strong>
+    <!-- Premium Header -->
+    <div class="premium-header">
+        <div class="header-top">
+            <div class="logo-container">
+                <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Mohtarifo Logo" class="logo-img">
+                <div class="platform-name">Mohtarifo Pro</div>
+            </div>
+            <div class="report-meta">
+                <div class="report-badge">فاتورة تسوية مالية</div>
+                <div class="meta-text">تاريخ الإصدار: {% now "Y/m/d - H:i" %}</div>
+            </div>
         </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px dashed var(--border-color); padding-bottom: 10px; font-size: 10pt;">
-            <span>اقتطاع العمولة المكتسبة:</span>
-            <strong class="font-mono" style="color: #991b1b;">- {{ total_center_commission|currency_format }} ل.س</strong>
-        </div>
-        
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; background: #f8fafc; border: 1px solid var(--brand-color); padding: 15px; border-radius: 6px;">
-            <span style="font-weight: 800; font-size: 11pt;">الصافي المستحق:</span>
-            <strong class="font-mono" style="font-size: 14pt; color: var(--primary-color);">{{ total_net_share|currency_format }}</strong>
+
+        <div class="report-profile">
+            <div class="profile-icon">
+                <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+            </div>
+            <div class="report-details">
+                <h1>كشف حساب ومطابقة مبيعات مركز البيع</h1>
+                <div class="report-id">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 7a2 2 0 012 2m-2-2v2m2-2H9a2 2 0 00-2 2v10a2 2 0 002 2h6a2 2 0 002-2V9a2 2 0 00-2-2z"></path>
+                    </svg>
+                    رمز الفاتورة: {{ invoice_number }}
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="avoid-break" style="display: grid; grid-template-columns: 1fr 1fr; gap: 50px; margin-top: 80px; text-align: center;">
-    <div>
-        <div style="border-top: 1px solid var(--border-color); padding-top: 15px; font-weight: 800; width: 60%; margin: 0 auto;">اعتماد مسؤول مركز البيع</div>
+    <!-- Stats Dashboard -->
+    <div class="stats-container">
+        <div class="stat-card">
+            <div class="stat-title">📦 الأكواد المستلمة</div>
+            <div class="stat-value num-val">{{ total_assigned }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">✅ الأكواد المباعة</div>
+            <div class="stat-value num-val green">{{ total_sold }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">💰 الصندوق المتوقع</div>
+            <div class="stat-value num-val currency-sy">{{ total_potential|currency_format }} ل.س</div>
+        </div>
+        <div class="stat-card" style="border-bottom-color: var(--success);">
+            <div class="stat-title">🏅 التحصيل الفعلي للمبيعات</div>
+            <div class="stat-value num-val green">{{ total_earned|currency_format }} ل.س</div>
+        </div>
     </div>
-    <div>
-        <div style="border-top: 1px solid var(--border-color); padding-top: 15px; font-weight: 800; width: 60%; margin: 0 auto;">اعتماد المدير المالي للمنصة</div>
+
+    <div class="content-area">
+        <!-- Parties Information -->
+        <div class="parties-container avoid-break">
+            <div class="party-card">
+                <div class="party-title">👤 الطرف الأول: المصدّر</div>
+                <div class="party-row"><strong>اسم الجهة:</strong> إدارة منصة محترفو التعليم</div>
+                <div class="party-row"><strong>العنوان:</strong> دمشق، سوريا</div>
+                <div class="party-row"><strong>رقم الفاتورة:</strong> <span class="num-val">{{ invoice_number }}</span></div>
+            </div>
+            <div class="party-card">
+                <div class="party-title">🏪 الطرف الثاني: مركز البيع</div>
+                <div class="party-row"><strong>اسم المركز:</strong> {{ center.name }}</div>
+                <div class="party-row"><strong>المعهد المرتبط:</strong> {{ center.institute.name|default:"مستقل" }}</div>
+                <div class="party-row"><strong>رقم الهاتف:</strong> {{ center.phone|default:"--" }}</div>
+            </div>
+        </div>
+
+        <!-- Detailed Batches Table -->
+        <h2 class="section-title">📊 كشف حركة مبيعات الأكواد التفصيلي</h2>
+        <div class="section-subtitle">🔍 كشف تفصيلي يوضح أداء كل دفعة أكواد تم تسليمها لمركز البيع المعتمد</div>
+
+        <div class="premium-table-wrapper">
+            <table class="premium-table">
+                <thead>
+                    <tr>
+                        <th>المادة / الدفعة</th>
+                        <th>المدرس</th>
+                        <th style="width: 70px;" class="text-center">الأكواد</th>
+                        <th style="width: 70px;" class="text-center">المباع</th>
+                        <th class="text-center">السعر</th>
+                        <th class="text-center">المتوقع</th>
+                        <th class="text-center">الفعلي</th>
+                        <th class="text-center">العمولة ({{ commission_percent|floatformat:0 }}%)</th>
+                        <th class="text-center" style="background: rgba(212, 175, 55, 0.05);">الصافي للمنصة</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in detailed_batches %}
+                    <tr>
+                        <td style="font-weight: 700; color: var(--primary);">
+                            {{ item.batch.name }}<br>
+                            <small style="color: var(--text-light);">{{ item.batch.target_title }}</small>
+                        </td>
+                        <td>
+                            {% if item.batch.course %}
+                                {{ item.batch.course.instructor.get_full_name|default:item.batch.course.instructor.username }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td class="text-center num-val">{{ item.total_codes }}</td>
+                        <td class="text-center num-val highlight-green">{{ item.sold_count }}</td>
+                        <td class="text-center num-val">{{ item.standard_price|currency_format }} ل.س</td>
+                        <td class="text-center num-val">{{ item.potential_value|currency_format }} ل.س</td>
+                        <td class="text-center num-val highlight-green">{{ item.actual_earned|currency_format }} ل.س</td>
+                        <td class="text-center num-val" style="color: var(--danger); font-size: 0.85rem;">{{ item.center_share|currency_format }} ل.س</td>
+                        <td class="text-center num-val" style="font-weight: 800; color: var(--accent-dark); background: rgba(212, 175, 55, 0.03);">
+                            {{ item.net_share|currency_format }} ل.س
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center" style="padding: 2rem; color: var(--text-light);">📭 لا توجد دفعات أو مبيعات مسجلة لهذا المركز</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Settlement Summary -->
+        <div class="avoid-break" style="display: flex; justify-content: flex-end; margin-top: 30px;">
+            <div class="summary-card" style="width: 380px; background: var(--white); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border-bottom: 4px solid var(--accent);">
+                <h4 style="margin: 0 0 15px 0; text-align: center; border-bottom: 2px solid var(--border-color); padding-bottom: 10px; font-weight: 800; color: var(--primary); font-size: 1.05rem;">الملخص المالي للتسوية</h4>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.9rem; color: var(--text-main);">
+                    <span>💵 التحصيل الفعلي للمبيعات:</span>
+                    <strong class="num-val">{{ total_earned|currency_format }} ل.س</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 15px; border-bottom: 1px dashed var(--border-color); padding-bottom: 12px; font-size: 0.9rem; color: var(--text-main);">
+                    <span>✂️ اقتطاع العمولة المكتسبة ({{ commission_percent|floatformat:0 }}%):</span>
+                    <strong class="num-val" style="color: var(--danger);">- {{ total_center_commission|currency_format }} ل.س</strong>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; background: #e8fff3; border: 1px solid #c7f7db; padding: 15px; border-radius: 10px;">
+                    <span style="font-weight: 800; font-size: 1rem; color: #049f59;">💎 الصافي المستحق للمنصة:</span>
+                    <strong class="num-val" style="font-size: 1.3rem; color: #049f59;">{{ total_net_share|currency_format }} ل.س</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Official Signatures -->
+        <div class="premium-signatures avoid-break">
+            <div class="sig-item">
+                <div class="sig-title">اعتماد مسؤول مركز البيع</div>
+                <div class="sig-line">توقيع المفوض المعتمد</div>
+            </div>
+            <div class="sig-item">
+                <div class="sig-title">اعتماد المدير المالي للمنصة</div>
+                <div class="sig-line">الختم الرسمي للمنصة</div>
+            </div>
+            <div class="sig-item">
+                <div style="text-align: left; margin-top: -10px;">
+                    <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Logo" style="height: 40px; opacity: 0.8; margin-bottom: 12px; filter: brightness(0) invert(1);">
+                    <div style="font-size: 0.7rem; color: #a1a5b7; font-family: 'Cairo', Arial, sans-serif;" class="num-val">
+                        Mohtarifo ERP System<br>
+                        Invoice: {{ invoice_number }}<br>
+                        Generated: {% now "Ymd" %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
-
 {% endblock %}
