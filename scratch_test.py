@@ -3,10 +3,9 @@ import django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 django.setup()
 
-from django.db import connection
-with connection.cursor() as cursor:
-    cursor.execute("SELECT datname FROM pg_database WHERE datistemplate = false;")
-    dbs = cursor.fetchall()
-    print("--- POSTGRES DATABASES ---")
-    for db in dbs:
-        print(db[0])
+from django.template import loader
+try:
+    loader.get_template("dashboard/admin_student_detail.html")
+    print("TEMPLATE COMPILES OK!")
+except Exception as e:
+    print("TEMPLATE ERROR:", str(e))

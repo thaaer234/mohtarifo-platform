@@ -48,6 +48,7 @@ class StudentProfile(models.Model):
     xp = models.PositiveIntegerField(default=0)
     level = models.PositiveIntegerField(default=1)
     streak_days = models.PositiveIntegerField(default=0)
+    max_daily_otp = models.PositiveIntegerField(default=10, verbose_name="السقف اليومي لطلب الرموز", help_text="الحد الأقصى لرموز التحقق اليومية المسموح بإرسالها للطالب")
     last_activity_date = models.DateField(null=True, blank=True)
     bio = models.TextField(blank=True)
     avatar = models.ImageField(upload_to="students/avatars/", blank=True, null=True)

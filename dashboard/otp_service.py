@@ -77,7 +77,17 @@ def send_otp(phone, purpose="register", request=None):
     # Check daily limit
     daily_key = _otp_daily_key(phone)
     daily_count = int(cache.get(daily_key, 0))
-    if daily_count >= OTP_MAX_DAILY_SENDS:
+    
+    # Get student's custom limit
+    max_daily_sends = OTP_MAX_DAILY_SENDS
+    try:
+        user = User.objects.filter(username=phone).first()
+        if user and hasattr(user, 'student_profile'):
+            max_daily_sends = getattr(user.student_profile, 'max_daily_otp', OTP_MAX_DAILY_SENDS)
+    except Exception:
+        pass
+
+    if daily_count >= max_daily_sends:
         return {
             "success": False,
             "message": "تم تجاوز الحد الأقصى لإرسال رموز التحقق اليوم. حاول غداً.",

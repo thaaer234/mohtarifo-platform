@@ -294,6 +294,12 @@ X_FRAME_OPTIONS = 'DENY'
 CSRF_COOKIE_NAME = 'aws_c_tk' # Generic name resembling AWS/Cloudfront token
 SESSION_COOKIE_NAME = 'site_u_sid' # Generic session identifier
 
+# Session settings for high persistence (10 years)
+SESSION_COOKIE_AGE = 315360000  # 10 years in seconds
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_SAVE_EVERY_REQUEST = True
+
+
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 TESTING = "test" in sys.argv

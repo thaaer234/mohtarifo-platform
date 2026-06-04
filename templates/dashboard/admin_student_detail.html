@@ -195,6 +195,50 @@
             </div>
         </div>
 
+        <!-- OTP and Login Limit Management Widget -->
+        <div class="premium-card mb-6" style="border-color: rgba(var(--brand-gold-rgb), 0.25); background: linear-gradient(180deg, rgba(var(--brand-gold-rgb), 0.02) 0%, rgba(0,0,0,0) 100%);">
+            <h3 class="sidebar-label" style="display: flex; align-items: center; gap: 0.5rem; color: var(--brand-gold);">
+                <i data-lucide="key" style="width: 16px; height: 16px;"></i> إدارة تسجيل الدخول والرموز (OTP)
+            </h3>
+            
+            <div class="info-list mb-4" style="margin-top: 0.5rem;">
+                <div class="info-item">
+                    <span>الرموز المطلوبة اليوم:</span>
+                    <strong style="color: var(--text-primary);">{{ otp_count_today }}</strong>
+                </div>
+                <div class="info-item">
+                    <span>العداد النشط حالياً:</span>
+                    <strong style="color: {% if otp_cache_count >= max_daily_otp %}var(--danger){% else %}var(--success){% endif %};">
+                        {{ otp_cache_count }} / {{ max_daily_otp }}
+                    </strong>
+                </div>
+            </div>
+
+            <!-- Open Access / Reset Limit Form -->
+            <form method="POST" style="margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px dashed var(--border-light);">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="reset_otp_limit">
+                <button type="submit" class="btn btn-secondary w-full" style="min-height: 38px; padding: 0.5rem; font-size: 0.82rem; border-radius: 8px; font-weight: bold; justify-content: center; display: flex; align-items: center; gap: 0.5rem; cursor: pointer;" onclick="return confirm('هل أنت متأكد من تصفير عداد الرموز ومحاولات الدخول لهذا الطالب؟ سيمكنه طلب كود جديد فوراً.')">
+                    <i data-lucide="unlock" style="width: 14px; height: 14px;"></i> تصفير المحاولات وفتح الوصول
+                </button>
+            </form>
+
+            <!-- Update Daily OTP Ceiling Form -->
+            <form method="POST" style="display: grid; gap: 0.5rem;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_otp_ceiling">
+                <div>
+                    <label style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700; display: block; margin-bottom: 0.35rem;">سقف طلب الرموز اليومي:</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="number" name="max_daily_otp" value="{{ max_daily_otp }}" min="1" max="100" class="form-select" style="width: 70px; text-align: center; padding: 0.4rem; font-size: 0.85rem; min-height: 36px; border-radius: 8px;" required>
+                        <button type="submit" class="btn btn-primary" style="flex: 1; min-height: 36px; padding: 0.5rem; font-size: 0.82rem; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                            تحديث السقف
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
         <!-- Direct WhatsApp CRM Widget -->
         <div class="premium-card mb-6" style="border-color: rgba(37, 211, 102, 0.25); background: linear-gradient(180deg, rgba(37, 211, 102, 0.02) 0%, rgba(0,0,0,0) 100%);">
             <h3 class="sidebar-label" style="display: flex; align-items: center; gap: 0.5rem; color: #25D366;">

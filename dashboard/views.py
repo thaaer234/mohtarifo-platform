@@ -4971,6 +4971,40 @@ def admin_student_detail(request, user_id):
                 else:
                     messages.error(request, "❌ فشل الإرسال، تأكد أن البوابة الداخلية للواتساب متصلة حالياً.")
 
+        elif action == "reset_otp_limit":
+            from accounts.models import StudentProfile
+            profile, _ = StudentProfile.objects.get_or_create(user=student)
+            phone = profile.phone or student.username
+            
+            from dashboard.otp_service import _otp_daily_key
+            daily_key = _otp_daily_key(phone)
+            cache.delete(daily_key)
+            
+            for purpose in ["login", "register", "reset_password"]:
+                cache.delete(f"otp_attempts:{purpose}:{phone}")
+                cache.delete(f"otp_resend:{purpose}:{phone}")
+            
+            # Reset login attempts blocks for their recent IP addresses
+            from dashboard.models import OTPVerificationLog
+            ips = OTPVerificationLog.objects.filter(phone=phone).values_list('ip_address', flat=True).distinct()
+            for ip in ips:
+                if ip:
+                    cache.delete(f"login_attempts:{ip}:{student.username}")
+                    cache.delete(f"login_attempts:{ip}:{phone}")
+            
+            messages.success(request, "تم تصفير وفتح إمكانية طلب كود التحقق والدخول للطالب بنجاح.")
+            
+        elif action == "update_otp_ceiling":
+            from accounts.models import StudentProfile
+            profile, _ = StudentProfile.objects.get_or_create(user=student)
+            try:
+                max_daily_otp = int(request.POST.get("max_daily_otp", 10))
+                profile.max_daily_otp = max_daily_otp
+                profile.save()
+                messages.success(request, f"تم تحديث سقف طلب الرموز اليومي إلى {max_daily_otp} بنجاح.")
+            except Exception as e:
+                messages.error(request, f"فشل تحديث سقف الرموز: {str(e)}")
+
         return redirect("dashboard:admin_student_detail", user_id=student.id)
 
     # Context data
@@ -4991,6 +5025,20 @@ def admin_student_detail(request, user_id):
     all_governorates = Governorate.objects.filter(is_active=True).order_by("sort_order", "name")
     all_tracks = AcademicBranch.objects.filter(is_active=True).order_by("sort_order", "name")
 
+    # OTP verification details
+    from dashboard.otp_service import _otp_daily_key
+    from dashboard.models import OTPVerificationLog
+    
+    phone_number = student.student_profile.phone or student.username if hasattr(student, 'student_profile') else student.username
+    otp_count_today = OTPVerificationLog.objects.filter(
+        phone=phone_number,
+        created_at__date=timezone.now().date()
+    ).count()
+    
+    daily_key = _otp_daily_key(phone_number)
+    otp_cache_count = int(cache.get(daily_key, 0))
+    max_daily_otp = student.student_profile.max_daily_otp if hasattr(student, 'student_profile') else 10
+
     context = {
         "student": student,
         "available_courses": available_courses,
@@ -4999,6 +5047,9 @@ def admin_student_detail(request, user_id):
         "devices": devices,
         "all_governorates": all_governorates,
         "all_tracks": all_tracks,
+        "otp_count_today": otp_count_today,
+        "otp_cache_count": otp_cache_count,
+        "max_daily_otp": max_daily_otp,
     }
     return render(request, "dashboard/admin_student_detail.html", context)
 
