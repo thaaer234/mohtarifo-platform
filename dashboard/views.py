@@ -357,6 +357,7 @@ self.addEventListener("fetch", (event) => {
     url.pathname.startsWith("/student/") ||
     url.pathname.startsWith("/api/") ||
     url.pathname === "/device-logged-out/" ||
+    url.pathname === "/device-logged-out" ||
     url.pathname === "/login/" ||
     url.pathname === "/logout/"
   );

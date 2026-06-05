@@ -15,6 +15,7 @@ urlpatterns = [
     path("landing/", views.landing_page, name="landing"),
     path("shop/", views.shop_page, name="shop"),
     path("device-logged-out/", views.device_logged_out_page, name="device_logged_out"),
+    path("device-logged-out", views.device_logged_out_page),
     path("api/device-ping/", views.student_device_ping, name="student_device_ping"),
     path("departments/", views.departments_list, name="departments_list"),
     path("search/", views.search_results, name="search"),

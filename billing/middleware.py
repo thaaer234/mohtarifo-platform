@@ -12,6 +12,10 @@ class ActiveDeviceMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        # Bypass active device check for the logged out warning page
+        if request.path in ("/device-logged-out/", "/device-logged-out"):
+            return self.get_response(request)
+
         if request.user.is_authenticated and not request.user.is_staff:
             # Bypass active device check if an admin is impersonating the student
             if not request.session.get("impersonator_admin_id"):
