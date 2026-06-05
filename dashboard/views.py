@@ -3127,6 +3127,8 @@ def _refresh_course_progress(user, course):
 
 
 def _current_device_fingerprint(request):
+    if request and getattr(request, "session", None) and request.session.get("impersonator_admin_id"):
+        return "impersonation_bypass"
     return device_fingerprint(request)
 
 
@@ -3143,6 +3145,8 @@ def _set_device_cookie(response, request):
 
 
 def _device_grants(user, device_fingerprint):
+    if device_fingerprint == "impersonation_bypass":
+        return _active_access_grants(user)
     return _active_access_grants(user).filter(
         models.Q(device_fingerprint="") | models.Q(device_fingerprint=device_fingerprint)
     )

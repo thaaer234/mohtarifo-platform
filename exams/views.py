@@ -17,6 +17,11 @@ from .serializers import AttemptSerializer, ExamSerializer, QuestionSerializer
 
 def _active_device_grants(request):
     now = timezone.now()
+    if request and getattr(request, "session", None) and request.session.get("impersonator_admin_id"):
+        return AccessGrant.objects.filter(user=request.user).filter(
+            models.Q(starts_at__isnull=True) | models.Q(starts_at__lte=now),
+            models.Q(expires_at__isnull=True) | models.Q(expires_at__gte=now),
+        )
     fingerprint = device_fingerprint(request)
     return AccessGrant.objects.filter(user=request.user).filter(
         models.Q(starts_at__isnull=True) | models.Q(starts_at__lte=now),
