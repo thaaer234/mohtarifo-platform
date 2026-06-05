@@ -27,61 +27,85 @@
     <div class="course-library-grid">
         {% for grant in grants %}
         <div class="premium-card reveal-up{% if not grant.is_on_current_device %} device-locked-card{% endif %}" style="position: relative; padding: 0; overflow: visible; animation-delay: {{ forloop.counter0 }}0ms;">
+            
             {% if not grant.is_on_current_device %}
-            <div style="position: absolute; top: 1rem; left: 1rem; z-index: 5; background: rgba(245, 158, 11, 0.2); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 10px; padding: 4px 10px; font-size: 0.7rem; color: #f59e0b; font-weight: 800; display: flex; align-items: center; gap: 4px; backdrop-filter: blur(8px);">
-                <i data-lucide="lock" style="width: 11px; height: 11px;"></i> مرتبطة بجهاز آخر
+            <!-- Lock Badge - Top Left -->
+            <div style="position: absolute; top: 1rem; left: 1rem; z-index: 10; background: rgba(245, 158, 11, 0.95); border-radius: 10px; padding: 6px 12px; font-size: 0.7rem; color: #000; font-weight: 800; display: flex; align-items: center; gap: 6px; backdrop-filter: blur(4px); box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                <i data-lucide="lock" style="width: 12px; height: 12px;"></i> محظور - جهاز آخر
+            </div>
+            
+            <!-- Transfer Request Button - Top Right -->
+            <div style="position: absolute; top: 1rem; right: 1rem; z-index: 10;">
+                <button class="request-transfer-btn" data-grant-id="{{ grant.id }}" data-course-title="{% if grant.course %}{{ grant.course.title }}{% else %}{{ grant.lesson.title }}{% endif %}" style="background: linear-gradient(135deg, #10b981, #059669); border: none; border-radius: 10px; padding: 6px 12px; font-size: 0.7rem; color: #fff; font-weight: 800; display: flex; align-items: center; gap: 6px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                    <i data-lucide="repeat" style="width: 12px; height: 12px;"></i> طلب النقل
+                </button>
             </div>
             {% endif %}
+            
+            <!-- Course Thumbnail -->
             <div class="library-course-thumb" {% if not grant.is_on_current_device %}style="filter: grayscale(0.6) brightness(0.7);"{% endif %}>
                 {% if grant.course.cover %}
                     <img class="library-cover-img" src="{{ grant.course.cover.url }}" alt="Course">
                 {% else %}
-                    <img class="library-cover-img" src="{% static grant.course.instructor_cover_static_path %}" alt="Course">
+                    <img class="library-cover-img" src="{% static 'images/default-course.jpg' %}" alt="Course">
                 {% endif %}
-                <div class="badge badge-gold" style="position: absolute; top: 1.5rem; right: 1.5rem; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+                
+                <div class="badge badge-gold" style="position: absolute; top: 1.5rem; right: 1.5rem; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 5;">
                     {{ grant.get_source_display }}
                 </div>
+                
                 {% if not grant.is_on_current_device %}
-                <div class="flex-center" style="position: absolute; inset: 0; z-index: 3; background: rgba(0,0,0,0.4);">
-                    <i data-lucide="lock" style="width: 40px; height: 40px; color: #f59e0b; opacity: 0.8;"></i>
+                <div class="flex-center" style="position: absolute; inset: 0; z-index: 3; background: rgba(0,0,0,0.6);">
+                    <i data-lucide="lock" style="width: 48px; height: 48px; color: #f59e0b; opacity: 0.9; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));"></i>
                 </div>
                 {% endif %}
             </div>
             
-            <div style="padding: 2.5rem;">
-                <h3 style="font-size: 1.4rem; font-weight: 900; margin-bottom: 1rem; line-height: 1.4; min-height: 4rem;">
+            <!-- Course Content -->
+            <div style="padding: 2rem;">
+                <h3 style="font-size: 1.3rem; font-weight: 900; margin-bottom: 0.75rem; line-height: 1.4;">
                     {% if grant.course %}{{ grant.course.title }}{% else %}{{ grant.lesson.title }}{% endif %}
                 </h3>
                 
                 {% if grant.course %}
-                <div class="flex-center gap-6 mb-6 text-muted" style="justify-content: flex-start; font-size: 0.85rem; font-weight: 600;">
-                    <div class="flex-center gap-2"><i data-lucide="user" class="gold" style="width: 16px;"></i> {{ grant.course.instructor.get_full_name|default:grant.course.instructor.username }}</div>
-                    <div class="flex-center gap-2"><i data-lucide="layers" class="gold" style="width: 16px;"></i> {{ grant.course.units.count }} وحدات</div>
+                <div class="flex-center gap-4 mb-4 text-muted" style="justify-content: flex-start; font-size: 0.8rem; font-weight: 600; flex-wrap: wrap;">
+                    <div class="flex-center gap-2"><i data-lucide="user" class="gold" style="width: 14px;"></i> {{ grant.course.instructor.get_full_name|default:grant.course.instructor.username }}</div>
+                    <div class="flex-center gap-2"><i data-lucide="layers" class="gold" style="width: 14px;"></i> {{ grant.course.units.count }} وحدات</div>
+                    <div class="flex-center gap-2"><i data-lucide="calendar" class="gold" style="width: 14px;"></i> تم التفعيل: {{ grant.created_at|date:"d/m/Y" }}</div>
                 </div>
 
                 {% if grant.is_on_current_device %}
-                <div class="mb-6">
-                    <div class="flex-between mb-2" style="font-size: 0.85rem; font-weight: 700;">
+                <!-- Progress Bar for Active Device -->
+                <div class="mb-5">
+                    <div class="flex-between mb-2" style="font-size: 0.8rem; font-weight: 700;">
                         <span class="text-muted">التقدم الحالي</span>
-                        <strong class="gold">{{ grant.progress_percent }}%</strong>
+                        <strong class="gold">{{ grant.progress_percent|default:0 }}%</strong>
                     </div>
                     <div class="progress-bar-container">
-                        <div class="progress-bar-fill" style="width: {{ grant.progress_percent }}%;"></div>
+                        <div class="progress-bar-fill" style="width: {{ grant.progress_percent|default:0 }}%;"></div>
                     </div>
                 </div>
 
                 <a href="{% url 'dashboard:student_course_detail' grant.course.id %}" class="btn btn-primary w-full stretched-link">دخول الدورة <i data-lucide="arrow-left" style="width: 16px;"></i></a>
+                
                 {% else %}
-                <div class="mb-6" style="padding: 0.75rem; background: rgba(245, 158, 11, 0.06); border: 1px dashed rgba(245, 158, 11, 0.25); border-radius: 12px;">
-                    <p style="font-size: 0.78rem; color: var(--text-muted); margin: 0; line-height: 1.6;">
-                        <i data-lucide="info" style="width: 12px; height: 12px; vertical-align: middle; color: #f59e0b;"></i>
-                        هذه المادة مفعلة على حسابك لكنها مرتبطة بجهاز آخر. يمكنك طلب نقلها.
+                <!-- Locked Course Message -->
+                <div class="mb-4" style="padding: 0.9rem; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 14px;">
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0 0 0.5rem 0; line-height: 1.6;">
+                        <i data-lucide="alert-triangle" style="width: 14px; height: 14px; vertical-align: middle; color: #f59e0b;"></i>
+                        <strong>هذه المادة مفعلة على جهاز آخر</strong> - لا يمكنك الوصول إليها من هذا الجهاز.
+                    </p>
+                    <p style="font-size: 0.75rem; color: var(--text-muted); margin: 0;">
+                        يمكنك طلب نقل التفعيل إلى هذا الجهاز باستخدام الزر أدناه.
                     </p>
                 </div>
-                <a href="{% url 'dashboard:student_course_detail' grant.course.id %}" class="btn w-full" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); font-weight: 800;">
-                    <i data-lucide="repeat" style="width: 14px;"></i> عرض التفاصيل وطلب النقل
-                </a>
+                
+                <!-- Main Transfer Button -->
+                <button class="request-transfer-btn-main w-full" data-grant-id="{{ grant.id }}" data-course-title="{% if grant.course %}{{ grant.course.title }}{% else %}{{ grant.lesson.title }}{% endif %}" style="background: linear-gradient(135deg, #f59e0b, #d97706); border: none; border-radius: 14px; padding: 0.9rem; font-size: 0.9rem; color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; transition: all 0.2s ease; width: 100%;">
+                    <i data-lucide="repeat" style="width: 18px; height: 18px;"></i> طلب نقل التفعيل إلى هذا الجهاز
+                </button>
                 {% endif %}
+                
                 {% else %}
                 <a href="{% url 'dashboard:student_lesson_detail' grant.lesson.id %}" class="btn btn-primary w-full stretched-link">مشاهدة الدرس <i data-lucide="play" style="width: 16px;"></i></a>
                 {% endif %}
@@ -90,6 +114,7 @@
         {% endfor %}
     </div>
     {% else %}
+    <!-- Empty State -->
     <div class="premium-card text-center" style="padding: 6rem 2rem; border-style: dashed;">
         <div class="flex-center" style="width: 100px; height: 100px; background: rgba(var(--brand-gold-rgb), 0.05); color: var(--text-muted); border-radius: 30px; margin: 0 auto 2rem; font-size: 3rem;">
             <i data-lucide="search-x"></i>
@@ -100,35 +125,237 @@
     </div>
     {% endif %}
 </div>
-{% endblock %}
 
-{% block extra_css %}
+<!-- Transfer Request Modal -->
+<div id="transfer-request-modal" class="transfer-modal" style="display: none;">
+    <div class="transfer-modal-overlay"></div>
+    <div class="transfer-modal-container">
+        <div class="transfer-modal-header">
+            <h3><i data-lucide="repeat"></i> طلب نقل التفعيل</h3>
+            <button class="transfer-modal-close">&times;</button>
+        </div>
+        <div class="transfer-modal-body">
+            <div class="transfer-info-box">
+                <i data-lucide="info"></i>
+                <p>أنت تطلب نقل التفعيل للدورة: <strong id="transfer-course-name"></strong></p>
+            </div>
+            <div class="transfer-warning-box">
+                <i data-lucide="alert-triangle"></i>
+                <p><strong>ملاحظة مهمة:</strong> سيتم إلغاء التفعيل من الجهاز القديم وتفعيله على هذا الجهاز. لا يمكنك التراجع عن هذا الإجراء بعد التأكيد.</p>
+            </div>
+            <form id="transfer-request-form" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="grant_id" id="transfer-grant-id">
+                <div class="transfer-modal-actions">
+                    <button type="button" class="btn btn-secondary cancel-transfer">إلغاء</button>
+                    <button type="submit" class="btn btn-primary confirm-transfer">تأكيد طلب النقل</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <style>
+    /* Toast Notification Style */
+    .transfer-toast {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 100000;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        transform: translateX(400px);
+        transition: transform 0.3s ease;
+        font-weight: 600;
+        font-size: 0.9rem;
+        max-width: 350px;
+    }
+    .transfer-toast.show {
+        transform: translateX(0);
+    }
+    .transfer-toast.error {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+    }
+    
+    /* Modal Styles */
+    .transfer-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 50000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .transfer-modal-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.8);
+        backdrop-filter: blur(8px);
+    }
+    .transfer-modal-container {
+        position: relative;
+        background: var(--bg-surface);
+        border-radius: 28px;
+        width: 90%;
+        max-width: 500px;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        border: 1px solid var(--border-light);
+        z-index: 10;
+        animation: modalSlideIn 0.2s ease;
+    }
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    .transfer-modal-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border-light);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .transfer-modal-header h3 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.3rem;
+        color: var(--brand-gold);
+    }
+    .transfer-modal-close {
+        background: none;
+        border: none;
+        font-size: 28px;
+        cursor: pointer;
+        color: var(--text-muted);
+        transition: color 0.2s;
+        line-height: 1;
+    }
+    .transfer-modal-close:hover {
+        color: var(--text-primary);
+    }
+    .transfer-modal-body {
+        padding: 1.5rem;
+    }
+    .transfer-info-box {
+        background: rgba(16, 185, 129, 0.1);
+        border-right: 3px solid #10b981;
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    .transfer-info-box i {
+        color: #10b981;
+        flex-shrink: 0;
+    }
+    .transfer-info-box p {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+    .transfer-warning-box {
+        background: rgba(245, 158, 11, 0.1);
+        border-right: 3px solid #f59e0b;
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    .transfer-warning-box i {
+        color: #f59e0b;
+        flex-shrink: 0;
+    }
+    .transfer-warning-box p {
+        margin: 0;
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+    .transfer-modal-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 1.5rem;
+    }
+    .transfer-modal-actions .btn {
+        padding: 0.6rem 1.2rem;
+        font-weight: 600;
+    }
+    .confirm-transfer {
+        background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+        border: none !important;
+    }
+    .confirm-transfer:hover {
+        background: linear-gradient(135deg, #d97706, #b45309) !important;
+        transform: translateY(-1px);
+    }
+
+    /* Premium Card Enhancements */
     .premium-card {
         transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s ease, box-shadow 0.25s ease !important;
     }
     .premium-card:hover {
-        transform: none;
+        transform: translateY(-4px);
         border-color: var(--brand-gold-glow) !important;
         box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 0 20px rgba(var(--brand-gold-rgb), 0.1);
     }
-    .library-course-thumb { position: relative; width: 100%; aspect-ratio: 16/9; overflow: visible; isolation: isolate; background: var(--bg-surface-elevated); border-radius: var(--radius-md) var(--radius-md) 0 0; }
     
-    /* Subtle overlay to enhance readability and cover image contrast */
+    .library-course-thumb { 
+        position: relative; 
+        width: 100%; 
+        aspect-ratio: 16/9; 
+        overflow: hidden; 
+        isolation: isolate; 
+        background: var(--bg-surface-elevated); 
+        border-radius: 20px 20px 0 0; 
+    }
+    
     .library-course-thumb::after {
         content: "";
         position: absolute;
         inset: auto 0 0;
         height: 52%;
-        background: linear-gradient(0deg, rgba(0,0,0,.72), transparent);
+        background: linear-gradient(0deg, rgba(0,0,0,.7), transparent);
         z-index: 1;
         border-radius: inherit;
         pointer-events: none;
     }
 
-    .library-cover-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: none; z-index: 0; border-radius: var(--radius-md) var(--radius-md) 0 0; }
+    .library-cover-img { 
+        position: absolute; 
+        inset: 0; 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+        transition: transform 0.3s ease;
+        z-index: 0; 
+        border-radius: 20px 20px 0 0; 
+    }
     
-    .premium-card:hover .library-cover-img { transform: none; filter: none; }
+    .premium-card:hover .library-cover-img { 
+        transform: scale(1.03);
+    }
 
     .stretched-link::after {
         content: "";
@@ -139,12 +366,257 @@
     }
 
     .device-locked-card {
-        border-color: rgba(245, 158, 11, 0.2) !important;
-        opacity: 0.85;
+        border-color: rgba(245, 158, 11, 0.3) !important;
+        opacity: 0.92;
     }
     .device-locked-card:hover {
-        border-color: rgba(245, 158, 11, 0.4) !important;
-        box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 0 20px rgba(245, 158, 11, 0.1) !important;
+        border-color: rgba(245, 158, 11, 0.6) !important;
+        box-shadow: 0 12px 28px rgba(0,0,0,0.35), 0 0 20px rgba(245, 158, 11, 0.15) !important;
+    }
+    
+    .request-transfer-btn:hover,
+    .request-transfer-btn-main:hover {
+        transform: scale(1.02);
+        filter: brightness(1.05);
+    }
+    
+    .request-transfer-btn-main:active,
+    .request-transfer-btn:active {
+        transform: scale(0.98);
+    }
+    
+    /* Course Grid */
+    .course-library-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 2rem;
+        margin-top: 1rem;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 992px) {
+        .course-library-grid {
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 1.5rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .course-library-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        
+        .transfer-modal-container {
+            width: 95%;
+            margin: 1rem;
+        }
+        
+        .transfer-modal-actions {
+            flex-direction: column;
+        }
+        
+        .transfer-modal-actions .btn {
+            width: 100%;
+        }
+        
+        header .flex-center {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        header h1 {
+            font-size: 1.6rem !important;
+        }
+        
+        .glass-card {
+            width: 100%;
+            max-width: 200px;
+            margin: 0 auto;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .premium-card > div:last-child {
+            padding: 1.25rem !important;
+        }
+        
+        h3 {
+            font-size: 1.1rem !important;
+        }
+        
+        .request-transfer-btn-main {
+            padding: 0.7rem !important;
+            font-size: 0.8rem !important;
+        }
+        
+        .transfer-info-box,
+        .transfer-warning-box {
+            flex-direction: column;
+        }
+    }
+    
+    /* Loading Spinner */
+    .btn-loading {
+        opacity: 0.7;
+        cursor: wait !important;
+    }
+    
+    .btn-loading i {
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
     }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Lucide icons if available
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+    
+    // Transfer Request Functionality
+    const modal = document.getElementById('transfer-request-modal');
+    const modalClose = document.querySelector('.transfer-modal-close');
+    const cancelButtons = document.querySelectorAll('.cancel-transfer');
+    const transferButtons = document.querySelectorAll('.request-transfer-btn, .request-transfer-btn-main');
+    const transferCourseName = document.getElementById('transfer-course-name');
+    const transferGrantId = document.getElementById('transfer-grant-id');
+    
+    // Function to show toast notification
+    function showToast(message, isError = false) {
+        // Remove existing toast
+        const existingToast = document.querySelector('.transfer-toast');
+        if (existingToast) existingToast.remove();
+        
+        const toast = document.createElement('div');
+        toast.className = 'transfer-toast' + (isError ? ' error' : '');
+        toast.innerHTML = `
+            <i data-lucide="${isError ? 'alert-circle' : 'check-circle'}" style="width: 20px; height: 20px;"></i>
+            <span>${message}</span>
+        `;
+        document.body.appendChild(toast);
+        
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+        
+        setTimeout(() => toast.classList.add('show'), 10);
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 4000);
+    }
+    
+    // Open modal function
+    function openTransferModal(grantId, courseTitle) {
+        transferGrantId.value = grantId;
+        transferCourseName.textContent = courseTitle;
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    // Close modal function
+    function closeTransferModal() {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+    
+    // Event listeners for transfer buttons
+    transferButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const grantId = this.getAttribute('data-grant-id');
+            const courseTitle = this.getAttribute('data-course-title');
+            openTransferModal(grantId, courseTitle);
+        });
+    });
+    
+    // Close modal events
+    if (modalClose) modalClose.addEventListener('click', closeTransferModal);
+    cancelButtons.forEach(btn => btn.addEventListener('click', closeTransferModal));
+    
+    // Close on overlay click
+    const overlay = document.querySelector('.transfer-modal-overlay');
+    if (overlay) overlay.addEventListener('click', closeTransferModal);
+    
+    // Handle form submission via AJAX
+    const transferForm = document.getElementById('transfer-request-form');
+    if (transferForm) {
+        transferForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(transferForm);
+            const submitBtn = transferForm.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerHTML;
+            const grantId = transferGrantId.value;
+            
+            // Show loading state
+            submitBtn.innerHTML = '<i data-lucide="loader" style="width: 16px; height: 16px;"></i> جاري المعالجة...';
+            submitBtn.classList.add('btn-loading');
+            submitBtn.disabled = true;
+            
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+            
+            try {
+                const response = await fetch('{% url "dashboard:request_transfer" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    showToast(data.message || '✅ تم إرسال طلب النقل بنجاح! سيتم مراجعة طلبك قريباً.');
+                    closeTransferModal();
+                    // Reload page after short delay to show updated status
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    showToast(data.message || '❌ حدث خطأ أثناء إرسال الطلب. يرجى المحاولة مرة أخرى.', true);
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.classList.remove('btn-loading');
+                    submitBtn.disabled = false;
+                    
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('❌ حدث خطأ في الاتصال. يرجى التحقق من اتصالك بالإنترنت.', true);
+                submitBtn.innerHTML = originalBtnText;
+                submitBtn.classList.remove('btn-loading');
+                submitBtn.disabled = false;
+                
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            }
+        });
+    }
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal && modal.style.display === 'flex') {
+            closeTransferModal();
+        }
+    });
+});
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<!-- No additional JS needed - all is included above -->
 {% endblock %}
