@@ -76,8 +76,8 @@
                     <i data-lucide="play-circle" class="gold"></i> متابعة التعلم
                 </h2>
             </div>
-            <div class="premium-card reveal-up mb-12" style="padding: 0; overflow: hidden; display: flex;">
-                <div style="position: relative; width: 300px; flex-shrink: 0;">
+            <div class="premium-card reveal-up mb-12" style="padding: 0; overflow: hidden; display: flex; flex-wrap: wrap;">
+                <div style="position: relative; width: 300px; flex-shrink: 0; min-height: 200px;">
                     {% if continue_learning.lesson.unit.course.cover %}
                         <img src="{{ continue_learning.lesson.unit.course.cover.url }}" alt="Course" style="width: 100%; height: 100%; object-fit: cover;">
                     {% else %}
@@ -104,7 +104,7 @@
             {% endif %}
 
             <!-- My Courses -->
-            <div class="flex-between mb-6 mt-8">
+            <div class="flex-between mb-6 mt-8 flex-wrap gap-3">
                 <h2 class="mb-0" style="font-size: 1.6rem; display: flex; align-items: center; gap: 0.75rem;">
                     <i data-lucide="book-open" class="gold"></i> مكتبتي التعليمية
                 </h2>
@@ -113,7 +113,7 @@
             
             <div class="grid-2">
                 {% for grant in grants|slice:":4" %}
-                <div class="premium-card" style="padding: 1.25rem; display: flex; gap: 1.25rem; align-items: center;">
+                <div class="premium-card" style="padding: 1.25rem; display: flex; gap: 1.25rem; align-items: center; flex-wrap: wrap;">
                     <div style="width: 100px; height: 100px; border-radius: 18px; overflow: hidden; position: relative; flex-shrink: 0;">
                         {% if grant.course.cover %}
                             <img src="{{ grant.course.cover.url }}" alt="{{ grant.course.title }}" style="width: 100%; height: 100%; object-fit: cover;">
@@ -146,7 +146,7 @@
 
             <!-- Courses on Other Devices -->
             {% if other_device_grants %}
-            <div class="flex-between mb-6 mt-10">
+            <div class="flex-between mb-6 mt-10 flex-wrap gap-3">
                 <h2 class="mb-0" style="font-size: 1.4rem; display: flex; align-items: center; gap: 0.75rem;">
                     <i data-lucide="lock" style="color: var(--warning);"></i> مواد مفعلة على جهاز آخر
                 </h2>
@@ -154,7 +154,7 @@
             </div>
             <div class="grid-2">
                 {% for grant in other_device_grants %}
-                <div class="premium-card" style="padding: 1.25rem; display: flex; gap: 1.25rem; align-items: center; opacity: 0.7; border-color: rgba(245, 158, 11, 0.25); position: relative; overflow: hidden;">
+                <div class="premium-card" style="padding: 1.25rem; display: flex; gap: 1.25rem; align-items: center; opacity: 0.7; border-color: rgba(245, 158, 11, 0.25); position: relative; overflow: hidden; flex-wrap: wrap;">
                     <!-- Lock Overlay -->
                     <div style="position: absolute; top: 8px; left: 8px; z-index: 2; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 3px 8px; font-size: 0.65rem; color: #f59e0b; font-weight: 800; display: flex; align-items: center; gap: 3px;">
                         <i data-lucide="lock" style="width: 10px; height: 10px;"></i> جهاز آخر
@@ -171,7 +171,7 @@
                             <i data-lucide="lock" style="width: 24px; height: 24px;"></i>
                         </div>
                     </div>
-                    <div style="flex: 1;">
+                    <div style="flex: 1; min-width: 180px;">
                         <h4 style="font-size: 1rem; margin-bottom: 0.35rem;">{{ grant.course.title }}</h4>
                         <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem;">مفعلة على حسابك لكنها مرتبطة بجهاز آخر.</p>
                         <a href="{% url 'dashboard:student_course_detail' grant.course.id %}" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.75rem; border-radius: 8px;">
@@ -193,10 +193,10 @@
                 <p class="text-muted" style="font-size: 0.85rem; line-height: 1.6; margin-bottom: 1.5rem;">أدخل الكود المكتوب على البطاقة لتفعيل دورتك فوراً.</p>
                 <form method="post" style="margin-bottom: 0.5rem;">
                     {% csrf_token %}
-                    <div class="input-glow-wrapper mb-4">
+                    <div class="input-glow-wrapper mb-4" style="position: relative;">
                         <i data-lucide="hash" class="field-icon"></i>
-                        <input type="text" name="code" id="activation-code-input" placeholder="أدخل الكود هنا..." required>
-                        <button type="button" class="flex-center" id="start-qr-scan" style="width: 45px; height: 45px; margin: 5px; border-radius: 12px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold); border: none; cursor: pointer; position: absolute; left: 0;">
+                        <input type="text" name="code" id="activation-code-input" placeholder="أدخل الكود هنا..." required style="width: 100%; padding-right: 55px;">
+                        <button type="button" class="flex-center" id="start-qr-scan" style="width: 45px; height: 45px; margin: 5px; border-radius: 12px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold); border: none; cursor: pointer; position: absolute; left: 0; top: 0; bottom: 0;">
                             <i data-lucide="qr-code"></i>
                         </button>
                     </div>
@@ -305,12 +305,334 @@
 </div>
 
 <style>
+    /* === RESPONSIVE BREAKPOINTS === */
+    :root {
+        --breakpoint-md: 992px;
+        --breakpoint-sm: 768px;
+        --breakpoint-xs: 480px;
+    }
+
+    /* Dashboard Layout - Desktop First */
+    .student-dashboard-layout {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+
+    /* Course Grid */
+    .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+
+    /* === TABLET (max-width: 992px) === */
+    @media (max-width: 992px) {
+        .student-dashboard-layout {
+            grid-template-columns: 1fr;
+            gap: 2.5rem;
+        }
+        
+        .stats-grid {
+            gap: 1rem;
+        }
+        
+        .grid-2 {
+            gap: 1rem;
+        }
+        
+        .dashboard-banner .flex-between {
+            flex-direction: row !important;
+            flex-wrap: wrap;
+        }
+        
+        .dashboard-banner .flex-center {
+            flex-wrap: wrap;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .dashboard-banner h1 {
+            font-size: 2rem !important;
+        }
+    }
+
+    /* === MOBILE LANDSCAPE & TABLET PORTRAIT (max-width: 768px) === */
+    @media (max-width: 768px) {
+        /* Dashboard Banner */
+        .dashboard-banner {
+            text-align: center;
+        }
+        
+        .dashboard-banner .flex-between {
+            flex-direction: column !important;
+            align-items: center !important;
+            gap: 1.5rem !important;
+        }
+        
+        .dashboard-banner .flex-center {
+            flex-direction: column !important;
+            gap: 1rem !important;
+        }
+        
+        .dashboard-banner h1 {
+            font-size: 1.6rem !important;
+        }
+        
+        .dashboard-banner p {
+            font-size: 0.95rem !important;
+        }
+        
+        /* Stats Grid - becomes vertical on mobile */
+        .stats-grid {
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+        }
+        
+        .stat-card {
+            padding: 1.25rem !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 1rem !important;
+        }
+        
+        .stat-icon {
+            width: 55px !important;
+            height: 55px !important;
+            flex-shrink: 0 !important;
+        }
+        
+        .stat-info {
+            flex: 1 !important;
+        }
+        
+        .stat-info .value {
+            font-size: 1.5rem !important;
+        }
+        
+        /* Course Grid - becomes 1 column on small screens */
+        .grid-2 {
+            grid-template-columns: 1fr !important;
+        }
+        
+        /* Continue Learning Card */
+        .premium-card[style*="display: flex; flex-wrap: wrap;"] {
+            flex-direction: column !important;
+        }
+        
+        .premium-card[style*="display: flex; flex-wrap: wrap;"] > div:first-child {
+            width: 100% !important;
+            min-height: 200px !important;
+        }
+        
+        .premium-card[style*="display: flex; flex-wrap: wrap;"] > div:last-child {
+            padding: 1.5rem !important;
+        }
+        
+        .premium-card[style*="display: flex; flex-wrap: wrap;"] h3 {
+            font-size: 1.4rem !important;
+        }
+        
+        /* Course Cards */
+        .premium-card[style*="display: flex; gap: 1.25rem;"] {
+            flex-direction: column !important;
+            text-align: center !important;
+        }
+        
+        .premium-card[style*="display: flex; gap: 1.25rem;"] > div:first-child {
+            width: 120px !important;
+            height: 120px !important;
+            margin: 0 auto !important;
+        }
+        
+        .premium-card[style*="display: flex; gap: 1.25rem;"] .flex-center.gap-2 {
+            justify-content: center !important;
+        }
+        
+        /* Other Devices Cards */
+        .premium-card[style*="opacity: 0.7;"] {
+            flex-direction: column !important;
+            text-align: center !important;
+            padding-top: 2.5rem !important;
+        }
+        
+        .premium-card[style*="opacity: 0.7;"] > div:first-child {
+            margin: 0 auto !important;
+        }
+        
+        /* Aside Cards */
+        aside .premium-card {
+            padding: 1.25rem !important;
+        }
+        
+        /* Package Selection Modal */
+        .package-course-options {
+            grid-template-columns: 1fr !important;
+            gap: 0.85rem !important;
+        }
+        
+        .package-course-option {
+            grid-template-columns: 70px minmax(0, 1fr) 34px !important;
+            gap: 0.75rem !important;
+            padding: 0.75rem !important;
+        }
+        
+        .package-option-media {
+            width: 70px !important;
+            height: 60px !important;
+        }
+        
+        .package-choice-head h3 {
+            font-size: 1.25rem !important;
+        }
+        
+        .package-choice-actions {
+            flex-direction: column !important;
+            gap: 0.75rem !important;
+        }
+        
+        .package-choice-actions .btn {
+            width: 100% !important;
+        }
+        
+        /* QR Modal */
+        #qr-modal .premium-card {
+            margin: 1rem !important;
+            width: calc(100% - 2rem) !important;
+        }
+        
+        #qr-modal [style*="position: absolute; top: 50%;"] {
+            width: 160px !important;
+            height: 160px !important;
+        }
+    }
+
+    /* === SMALL MOBILE (max-width: 480px) === */
+    @media (max-width: 480px) {
+        /* Avatar section */
+        .avatar-wrapper img, 
+        .avatar-wrapper > div[style*="width: 100px"] {
+            width: 75px !important;
+            height: 75px !important;
+            border-radius: 22px !important;
+        }
+        
+        .avatar-wrapper .badge {
+            font-size: 0.7rem !important;
+            padding: 0.2rem 0.5rem !important;
+            bottom: -5px !important;
+            right: -5px !important;
+        }
+        
+        .dashboard-banner h1 {
+            font-size: 1.3rem !important;
+        }
+        
+        .dashboard-banner .badge-gold {
+            padding: 0.5rem 1rem !important;
+            font-size: 0.8rem !important;
+        }
+        
+        /* Stats */
+        .stat-card {
+            padding: 1rem !important;
+        }
+        
+        .stat-icon {
+            width: 45px !important;
+            height: 45px !important;
+        }
+        
+        .stat-info .value {
+            font-size: 1.3rem !important;
+        }
+        
+        .stat-info .label {
+            font-size: 0.8rem !important;
+        }
+        
+        /* Section Headers */
+        h2[style*="font-size: 1.6rem"] {
+            font-size: 1.3rem !important;
+        }
+        
+        h2[style*="font-size: 1.4rem"] {
+            font-size: 1.2rem !important;
+        }
+        
+        /* Continue Learning */
+        .premium-card[style*="display: flex; flex-wrap: wrap;"] h3 {
+            font-size: 1.2rem !important;
+        }
+        
+        .premium-card[style*="display: flex; flex-wrap: wrap;"] .badge-gold {
+            font-size: 0.65rem !important;
+        }
+        
+        .btn-primary, .btn-secondary {
+            padding: 0.6rem 1rem !important;
+            font-size: 0.85rem !important;
+        }
+        
+        /* Package Modal */
+        .package-choice-card {
+            max-height: 85vh !important;
+        }
+        
+        .package-choice-head {
+            padding: 1rem !important;
+        }
+        
+        .package-steps {
+            padding: 1rem !important;
+        }
+        
+        .package-step-title h4 {
+            font-size: 1rem !important;
+        }
+        
+        .package-course-option-body strong {
+            font-size: 0.85rem !important;
+        }
+        
+        .package-course-option-body small {
+            font-size: 0.7rem !important;
+        }
+        
+        /* Notifications */
+        .premium-card .flex-center.gap-4 {
+            gap: 0.75rem !important;
+            padding: 0.75rem !important;
+        }
+        
+        .premium-card .flex-center.gap-4 > div:first-child {
+            width: 32px !important;
+            height: 32px !important;
+        }
+        
+        .premium-card p[style*="font-size: 0.85rem"] {
+            font-size: 0.75rem !important;
+        }
+    }
+
+    /* Animation */
     @keyframes qr-scan-line {
         0% { top: 0; }
         100% { top: 100%; }
     }
+    
     #qr-modal.active { display: flex !important; }
-
+    
+    /* Package Modal Styles (unchanged, just responsive above) */
     .package-choice-modal {
         position: fixed;
         inset: 0;
@@ -409,31 +731,130 @@
         background: var(--bg-surface);
     }
     
-    @media (max-width: 1200px) {
-        .student-dashboard-layout { grid-template-columns: 1fr !important; gap: 3rem !important; }
-    }
-    @media (max-width: 768px) {
-        .dashboard-banner h1 { font-size: 1.8rem !important; }
+    /* Additional responsive overrides for large tablets */
+    @media (min-width: 769px) and (max-width: 1024px) {
+        .student-dashboard-layout {
+            gap: 1.5rem;
+        }
+        
         .stats-grid {
-            grid-template-columns: 1fr !important;
-            gap: 1rem !important;
+            gap: 1rem;
         }
-        .stat-card {
-            padding: 1.5rem !important;
+        
+        .grid-2 {
+            gap: 1rem;
         }
-        .stat-icon {
-            width: 50px !important;
-            height: 50px !important;
+        
+        .premium-card[style*="display: flex; gap: 1.25rem;"] {
+            flex-direction: column !important;
+            text-align: center !important;
         }
-        .stat-info .value {
-            font-size: 1.6rem !important;
+        
+        .premium-card[style*="display: flex; gap: 1.25rem;"] > div:first-child {
+            margin: 0 auto !important;
         }
-        .student-dashboard-layout > div { order: 1; }
-        .student-dashboard-layout > aside { order: 2; }
-        .package-course-options { grid-template-columns: 1fr; }
-        .package-course-option { grid-template-columns: 74px minmax(0, 1fr) 30px; }
-        .package-option-media { width: 74px; height: 58px; }
-        .package-choice-actions .btn { flex: 1; }
+        
+        .package-course-options {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    /* Ensure all flex layouts wrap properly */
+    .flex-between {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .flex-center {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .flex-wrap {
+        flex-wrap: wrap;
+    }
+    
+    .gap-3 {
+        gap: 0.75rem;
+    }
+    
+    .gap-6 {
+        gap: 1.5rem;
+    }
+    
+    .w-full {
+        width: 100%;
+    }
+    
+    .block {
+        display: block;
+    }
+    
+    .mt-2 {
+        margin-top: 0.5rem;
+    }
+    
+    .mt-4 {
+        margin-top: 1rem;
+    }
+    
+    .mt-6 {
+        margin-top: 1.5rem;
+    }
+    
+    .mt-8 {
+        margin-top: 2rem;
+    }
+    
+    .mt-10 {
+        margin-top: 2.5rem;
+    }
+    
+    .mb-0 {
+        margin-bottom: 0;
+    }
+    
+    .mb-1 {
+        margin-bottom: 0.25rem;
+    }
+    
+    .mb-2 {
+        margin-bottom: 0.5rem;
+    }
+    
+    .mb-4 {
+        margin-bottom: 1rem;
+    }
+    
+    .mb-6 {
+        margin-bottom: 1.5rem;
+    }
+    
+    .mb-8 {
+        margin-bottom: 2rem;
+    }
+    
+    .mb-12 {
+        margin-bottom: 3rem;
+    }
+    
+    .py-4 {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+    
+    .text-center {
+        text-align: center;
+    }
+    
+    .text-muted {
+        color: var(--text-muted);
+    }
+    
+    .gold {
+        color: var(--brand-gold);
     }
 </style>
 {% endblock %}
