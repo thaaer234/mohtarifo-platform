@@ -13,23 +13,25 @@ class ActiveDeviceMiddleware:
 
     def __call__(self, request):
         if request.user.is_authenticated and not request.user.is_staff:
-            fingerprint = self._fingerprint(request)
-            if fingerprint:
-                cache_key = device_cache_key(request.user.id, fingerprint)
-                is_active = cache.get(cache_key)
-                
-                if is_active is None:
-                    # Cache miss, check DB
-                    is_active = UserDevice.objects.filter(
-                        user=request.user,
-                        fingerprint=fingerprint,
-                        is_active=True,
-                    ).exists()
-                    # Cache the result for 5 minutes (300 seconds)
-                    cache.set(cache_key, is_active, DEVICE_CACHE_TTL)
+            # Bypass active device check if an admin is impersonating the student
+            if not request.session.get("impersonator_admin_id"):
+                fingerprint = self._fingerprint(request)
+                if fingerprint:
+                    cache_key = device_cache_key(request.user.id, fingerprint)
+                    is_active = cache.get(cache_key)
                     
-                if not is_active:
-                    logout(request)
+                    if is_active is None:
+                        # Cache miss, check DB
+                        is_active = UserDevice.objects.filter(
+                            user=request.user,
+                            fingerprint=fingerprint,
+                            is_active=True,
+                        ).exists()
+                        # Cache the result for 5 minutes (300 seconds)
+                        cache.set(cache_key, is_active, DEVICE_CACHE_TTL)
+                        
+                    if not is_active:
+                        logout(request)
                     message = (
                         "تم تسجيل خروجك لأن هذا الحساب تم فتحه من جهاز آخر. "
                         "إذا لم تكن أنت من قام بذلك، يرجى التواصل مع الدعم فوراً."

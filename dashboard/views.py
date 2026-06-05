@@ -5584,12 +5584,14 @@ def admin_impersonate_instructor(request, instructor_id):
         messages.error(request, "هذا المستخدم ليس مدرساً.")
         return redirect("dashboard:admin_instructors")
         
-    # Store original admin ID in session
-    request.session["impersonator_admin_id"] = request.user.id
-    request.session["impersonator_type"] = "instructor"
+    admin_id = request.user.id
     
     # Authenticate and login as the instructor
     login(request, instructor_user)
+    
+    # Store original admin ID in session (after login to avoid session flush issues)
+    request.session["impersonator_admin_id"] = admin_id
+    request.session["impersonator_type"] = "instructor"
     
     messages.success(request, f"✅ تم تسجيل الدخول بصفتك الأستاذ {instructor_user.get_full_name() or instructor_user.username} بنجاح.")
     return redirect("dashboard:instructor_dashboard")
@@ -5599,12 +5601,14 @@ def admin_impersonate_instructor(request, instructor_id):
 def admin_impersonate_student(request, student_id):
     student_user = get_object_or_404(User, id=student_id)
     
-    # Store original admin ID in session
-    request.session["impersonator_admin_id"] = request.user.id
-    request.session["impersonator_type"] = "student"
+    admin_id = request.user.id
     
     # Authenticate and login as the student
     login(request, student_user)
+    
+    # Store original admin ID in session (after login to avoid session flush issues)
+    request.session["impersonator_admin_id"] = admin_id
+    request.session["impersonator_type"] = "student"
     
     messages.success(request, f"✅ تم تسجيل الدخول بصفتك الطالب {student_user.get_full_name() or student_user.username} بنجاح.")
     return redirect("dashboard:my_courses")
