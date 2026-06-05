@@ -32,20 +32,20 @@ class ActiveDeviceMiddleware:
                         
                     if not is_active:
                         logout(request)
-                    message = (
-                        "تم تسجيل خروجك لأن هذا الحساب تم فتحه من جهاز آخر. "
-                        "إذا لم تكن أنت من قام بذلك، يرجى التواصل مع الدعم فوراً."
-                    )
-                    if request.path.startswith("/api/"):
-                        return JsonResponse(
-                            {
-                                "detail": message,
-                                "code": "device_logged_out",
-                                "redirect_url": "/device-logged-out/",
-                            },
-                            status=401,
+                        message = (
+                            "تم تسجيل خروجك لأن هذا الحساب تم فتحه من جهاز آخر. "
+                            "إذا لم تكن أنت من قام بذلك، يرجى التواصل مع الدعم فوراً."
                         )
-                    return redirect("dashboard:device_logged_out")
+                        if request.path.startswith("/api/"):
+                            return JsonResponse(
+                                {
+                                    "detail": message,
+                                    "code": "device_logged_out",
+                                    "redirect_url": "/device-logged-out/",
+                                },
+                                status=401,
+                            )
+                        return redirect("dashboard:device_logged_out")
         response = self.get_response(request)
         if request.user.is_authenticated and not request.user.is_staff and request.path.startswith("/student/"):
             response["Cache-Control"] = "no-store"
