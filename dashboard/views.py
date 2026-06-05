@@ -2627,9 +2627,41 @@ def _available_sessions_for_user(user, device_fingerprint=None):
 def student_course_detail(request, course_id):
     current_device = _current_device_fingerprint(request)
     course = get_object_or_404(Course.objects.select_related("subject", "instructor", "instructor__instructor_profile").prefetch_related("units__lessons"), id=course_id)
-    if not _device_grants(request.user, current_device).filter(course=course).exists():
+    
+    is_staff = request.user.is_staff
+    is_impersonation = (current_device == "impersonation_bypass")
+    has_impersonation_bypass = bool(request.session.get("impersonator_admin_id"))
+    
+    # Check if student has active access to this course globally
+    has_global_access = _active_access_grants(request.user).filter(course=course).exists()
+    if not has_global_access:
         raise Http404("Course not found")
-
+        
+    # Check if the active grant allows accessing on this device
+    has_device_access = is_staff or has_impersonation_bypass or is_impersonation or _device_grants(request.user, current_device).filter(course=course).exists()
+    device_locked = not has_device_access
+    
+    active_grant = _active_access_grants(request.user).filter(course=course).first()
+    active_device_fingerprint = active_grant.device_fingerprint if active_grant else ""
+    
+    whatsapp_url = ""
+    if device_locked:
+        import urllib.parse
+        student_name = request.user.get_full_name() or request.user.username
+        student_username = request.user.username
+        profile = getattr(request.user, "student_profile", None)
+        student_phone = profile.phone if (profile and getattr(profile, "phone", None)) else request.user.username
+        
+        whatsapp_text = (
+            f"مرحباً منصة محترفو التعليم، أود طلب نقل تفعيل دورة ({course.title}) إلى جهازي الحالي.\n"
+            f"اسم الطالب: {student_name}\n"
+            f"اسم المستخدم: {student_username}\n"
+            f"رقم الطالب: {student_phone}\n"
+            f"رمز الجهاز الجديد: {current_device}"
+        )
+        whatsapp_url = f"https://wa.me/963984011372?text={urllib.parse.quote(whatsapp_text)}"
+        
+    progress = CourseProgress.objects.filter(user=request.user, course=course).first()
     attempts = Attempt.objects.filter(user=request.user, exam__course=course).select_related("exam").order_by("-created_at")
     completed_lesson_ids = set(
         LessonProgress.objects.filter(
@@ -2641,8 +2673,18 @@ def student_course_detail(request, course_id):
     return render(
         request,
         "dashboard/student_course_detail.html",
-        {"course": course, "attempts": attempts, "completed_lesson_ids": completed_lesson_ids},
+        {
+            "course": course,
+            "attempts": attempts,
+            "completed_lesson_ids": completed_lesson_ids,
+            "progress": progress,
+            "device_locked": device_locked,
+            "current_device": current_device,
+            "active_device_fingerprint": active_device_fingerprint,
+            "whatsapp_url": whatsapp_url,
+        },
     )
+
 
 
 @login_required

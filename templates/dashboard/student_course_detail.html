@@ -5,327 +5,1216 @@
 
 {% block content %}
 <div class="pro-container animate-up" dir="rtl">
-    <!-- 1. Cinematic Course Hero -->
-    <section class="pro-card p-0 mb-12 overflow-hidden student-course-hero">
-        <div style="position: absolute; inset: 0; opacity: 0.4;">
-            {% if course.cover %}
-                <img src="{{ course.cover.url }}" alt="{{ course.title }}" style="width: 100%; height: 100%; object-fit: cover; filter: blur(15px); transform: scale(1.1);">
-            {% endif %}
-            <div style="position: absolute; inset: 0; background: radial-gradient(circle at center, transparent 0%, #000 100%);"></div>
-        </div>
-
-        <div class="student-course-hero-content">
-            <div style="flex: 1; min-width: 300px;">
-                <div class="d-flex align-items-center gap-3 mb-4 header-badges">
-                    <span class="badge badge-success p-2 px-3 rounded-pill"><i data-lucide="check-circle" style="width: 14px;" class="ml-1"></i> تم التفعيل</span>
-                    <span class="badge bg-white text-dark p-2 px-3 rounded-pill" style="opacity: 0.9;">{{ course.get_kind_display }}</span>
+    {% if device_locked %}
+        <!-- 🔒 Device Locked Screen (Premium Lockout UI) -->
+        <div class="reveal-up">
+            <div class="lock-screen-card">
+                <div class="lock-icon-container">
+                    <div class="lock-pulse-ring"></div>
+                    <div class="lock-icon-box">
+                        <i data-lucide="shield-alert" class="lock-icon"></i>
+                    </div>
                 </div>
-                <h1 class="display-3 font-weight-bold text-white mb-6 student-course-title" style="line-height: 1.1;">{{ course.title }}</h1>
                 
-                <div class="d-flex align-items-center gap-5 flex-wrap hero-metadata-row">
-                    <div class="d-flex align-items-center gap-3 instructor-info-box">
-                        <div style="width: 60px; height: 60px; border-radius: 20px; overflow: hidden; border: 2px solid var(--pro-accent); flex-shrink: 0;">
-                            {% if course.instructor.instructor_profile.avatar %}
-                                <img src="{{ course.instructor.instructor_profile.avatar.url }}" alt="Instructor" class="w-100 h-100 object-fit-cover">
-                            {% else %}
-                                <div class="w-100 h-100 bg-light d-flex align-items-center justify-content-center"><i data-lucide="user" class="text-muted"></i></div>
-                            {% endif %}
-                        </div>
-                        <div class="text-right">
-                            <span class="text-white-50 small d-block">المحاضر</span>
-                            <strong class="text-white font-weight-bold">{{ course.instructor.get_full_name|default:course.instructor.username }}</strong>
-                        </div>
+                <h2 class="lock-title">هذه الدورة مفعلة على جهاز آخر</h2>
+                
+                <p class="lock-description">
+                    عزيزي الطالب، أنت مشترك في دورة <strong class="gold-text">({{ course.title }})</strong>، ولكن صلاحية الوصول لمحتوى هذه الدورة مقيدة بجهاز أو متصفح آخر. 
+                    <br>
+                    سياسة المنصة تسمح بتشغيل وتفعيل الدورة على جهاز واحد فقط لكل طالب لحماية الحقوق.
+                </p>
+                
+                <div class="device-details-box">
+                    <div class="device-details-row">
+                        <span class="device-label">جهازك الحالي:</span>
+                        <span class="device-value">{{ current_device|default:"غير معرّف" }}</span>
                     </div>
-                    <div class="vr bg-white opacity-25 desktop-only" style="height: 40px;"></div>
-                    <div class="d-flex align-items-center gap-4 text-white-50 stats-info-box">
-                        <div class="d-flex align-items-center gap-2">
-                            <i data-lucide="layers" class="text-success" style="width: 18px;"></i>
-                            <span>{{ course.units.count }} وحدات</span>
-                        </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <i data-lucide="play-circle" class="text-success" style="width: 18px;"></i>
-                            <span>{{ total_lessons|default:0 }} درساً</span>
-                        </div>
+                    {% if active_device_fingerprint %}
+                    <div class="device-details-row">
+                        <span class="device-label">الجهاز المفعل مسبقاً:</span>
+                        <span class="device-value">{{ active_device_fingerprint|default:"غير معرّف" }}</span>
                     </div>
+                    {% endif %}
                 </div>
+                
+                <div class="lock-actions">
+                    <a href="{{ whatsapp_url }}" target="_blank" class="btn-pro btn-pro-accent lock-btn">
+                        <i data-lucide="message-circle" style="width: 20px; height: 20px; margin-left: 8px;"></i>
+                        طلب نقل التفعيل إلى هذا الجهاز (واتساب)
+                    </a>
+                    <a href="{% url 'dashboard:student_dashboard' %}" class="btn-back-dashboard">
+                        العودة للوحة التحكم الرئيسية
+                    </a>
+                </div>
+                
+                <p class="lock-footer-note">
+                    عند النقر على طلب النقل، سيتم فتح محادثة واتساب مع الدعم الفني للمنصة تحتوي على كود التفعيل وجهازك الجديد لإجراء عملية النقل والمناقلة يدوياً.
+                </p>
             </div>
-            
-            <div class="pro-card text-center student-progress-card">
-                <div style="position: relative; width: 150px; height: 150px; margin: 0 auto 1.5rem;">
-                    <svg viewBox="0 0 100 100" style="transform: rotate(-90deg); width: 100%; height: 100%;">
-                        <circle cx="50" cy="50" r="45" style="fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 8;"></circle>
-                        <circle cx="50" cy="50" r="45" style="fill: none; stroke: var(--pro-accent); stroke-width: 8; stroke-linecap: round; stroke-dasharray: {{ course.progress.first.completion_percent|default:0|floatformat:0 }} 283; transition: stroke-dasharray 1s ease;"></circle>
-                    </svg>
-                    <div class="position-absolute inset-0 d-flex flex-column align-items-center justify-content-center" style="top: 0; left: 0; right: 0; bottom: 0;">
-                        <h2 class="text-white mb-0 font-weight-bold" style="line-height: 1;">{{ course.progress.first.completion_percent|default:0|floatformat:0 }}%</h2>
-                        <span class="text-white-50 small" style="font-size: 0.8rem; margin-top: 4px;">مكتمل</span>
-                    </div>
-                </div>
-                {% if course.progress.first.completion_percent >= 100 %}
-                    <a href="{% url 'dashboard:view_certificate' course.id %}" class="btn btn-pro btn-pro-accent w-100">استلام الشهادة</a>
-                {% else %}
-                    <p class="text-white-50 small mb-0">واصل التعلم للحصول على الشهادة</p>
+        </div>
+    {% else %}
+        <!-- 🎬 Cinematic Course Hero -->
+        <section class="hero-card">
+            <div class="hero-bg-cover">
+                {% if course.cover %}
+                    <img src="{{ course.cover.url }}" alt="{{ course.title }}">
                 {% endif %}
             </div>
-        </div>
-    </section>
+            <div class="hero-radial-overlay"></div>
 
-    <!-- 2. Curriculum & Sidebar -->
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="d-flex align-items-center gap-3 mb-6">
-                <div class="bg-success-soft p-2 rounded-lg">
-                    <i data-lucide="book-open" class="text-success"></i>
-                </div>
-                <h3 class="mb-0 font-weight-bold">منهاج الدورة التدريبية</h3>
-            </div>
-
-            <div class="accordion pro-accordion" id="curriculumAccordion">
-                {% for unit in course.units.all %}
-                <div class="pro-card p-0 mb-4 overflow-hidden border-0 shadow-sm">
-                    <div class="accordion-header" id="heading{{ unit.id }}">
-                        <button class="accordion-button {% if not forloop.first %}collapsed{% endif %} w-100 p-5 d-flex justify-content-between align-items-center bg-transparent border-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ unit.id }}" aria-expanded="{% if forloop.first %}true{% endif %}" aria-controls="collapse{{ unit.id }}">
-                            <div class="d-flex align-items-center gap-4">
-                                <div class="flex-center font-weight-bold text-success" style="width: 40px; height: 40px; border-radius: 12px; background: rgba(16, 185, 129, 0.1);">
-                                    {{ forloop.counter }}
-                                </div>
-                                <h4 class="h5 mb-0 font-weight-bold">{{ unit.title }}</h4>
-                            </div>
-                            <span class="badge bg-light text-muted p-2 px-3">{{ unit.lessons.count }} دروس</span>
-                        </button>
+            <div class="hero-content">
+                <div class="hero-info">
+                    <div class="hero-badges-row">
+                        <span class="badge-activated">
+                            <i data-lucide="check-circle" style="width: 14px; height: 14px;"></i>
+                            تم التفعيل
+                        </span>
+                        <span class="badge-kind">{{ course.get_kind_display }}</span>
                     </div>
-
-                    <div id="collapse{{ unit.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ unit.id }}" data-bs-parent="#curriculumAccordion">
-                        <div class="accordion-body p-4 pt-0">
-                            <div class="d-flex flex-column gap-3">
-                                {% for lesson in unit.lessons.all %}
-                                <a href="{% url 'dashboard:student_lesson_detail' lesson.id %}" class="lesson-row d-flex justify-content-between align-items-center p-4 rounded-xl border text-decoration-none transition" style="background: #f8fafc;">
-                                    <div class="d-flex align-items-center gap-4">
-                                        <div class="flex-center" style="width: 44px; height: 44px; border-radius: 50%; background: {% if lesson.id in completed_lesson_ids %}rgba(16, 185, 129, 0.1){% else %}#fff{% endif %}; color: {% if lesson.id in completed_lesson_ids %}var(--pro-accent){% else %}#94a3b8{% endif %}; border: 1px solid #e2e8f0;">
-                                            {% if lesson.id in completed_lesson_ids %}
-                                                <i data-lucide="check" style="width: 20px;"></i>
-                                            {% else %}
-                                                <i data-lucide="play" style="width: 20px;"></i>
-                                            {% endif %}
-                                        </div>
-                                        <div>
-                                            <h5 class="h6 mb-1 text-dark font-weight-bold">{{ lesson.title }}</h5>
-                                            <span class="text-muted small">{{ lesson.duration|default:"دورة فيديو" }}</span>
-                                        </div>
+                    <h1 class="hero-title">{{ course.title }}</h1>
+                    
+                    <div class="hero-metadata">
+                        <div class="instructor-card">
+                            <div class="instructor-avatar">
+                                {% if course.instructor.instructor_profile.avatar %}
+                                    <img src="{{ course.instructor.instructor_profile.avatar.url }}" alt="Instructor">
+                                {% else %}
+                                    <div class="instructor-avatar-placeholder">
+                                        <i data-lucide="user" style="color: var(--text-muted);"></i>
                                     </div>
-                                    <i data-lucide="chevron-left" class="text-muted" style="width: 18px;"></i>
-                                </a>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <span class="instructor-name-label">المحاضر</span>
+                                <strong class="instructor-name-val">{{ course.instructor.get_full_name|default:course.instructor.username }}</strong>
+                            </div>
+                        </div>
+                        <div class="hero-divider"></div>
+                        <div class="hero-stats">
+                            <div class="hero-stat-item">
+                                <i data-lucide="layers" style="width: 18px; height: 18px;"></i>
+                                <span>{{ course.units.count }} وحدات</span>
+                            </div>
+                            <div class="hero-stat-item">
+                                <i data-lucide="play-circle" style="width: 18px; height: 18px;"></i>
+                                <span>{{ course.total_lessons_count }} درساً</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="hero-progress-ring">
+                    <div style="position: relative; width: 130px; height: 130px; margin-bottom: 1.25rem;">
+                        <svg viewBox="0 0 100 100" style="transform: rotate(-90deg); width: 100%; height: 100%;">
+                            <circle cx="50" cy="50" r="42" style="fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 7;"></circle>
+                            <circle id="progress-circle" cx="50" cy="50" r="42" data-percent="{{ progress.completion_percent|default:0|floatformat:0 }}" style="fill: none; stroke: var(--brand-gold); stroke-width: 7; stroke-linecap: round; stroke-dasharray: 0 263.89; transition: stroke-dasharray 1.2s cubic-bezier(0.4, 0, 0.2, 1);"></circle>
+                        </svg>
+                        <div class="progress-percentage-label">
+                            <h2 class="percent-number">{{ progress.completion_percent|default:0|floatformat:0 }}%</h2>
+                            <span class="percent-text">مكتمل</span>
+                        </div>
+                    </div>
+                    {% if progress.completion_percent >= 100 %}
+                        <a href="{% url 'dashboard:view_certificate' course.id %}" class="btn-pro btn-pro-accent w-full text-center">استلام الشهادة</a>
+                    {% else %}
+                        <p class="progress-tip-text">واصل التعلم للحصول على الشهادة</p>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        <!-- 📚 Course Content Layout (Curriculum & Sidebar) -->
+        <div class="course-layout-grid">
+            <!-- Right / Main: Curriculum -->
+            <main class="curriculum-section">
+                <div class="section-title-row">
+                    <div class="section-title-icon">
+                        <i data-lucide="book-open" style="color: var(--brand-gold);"></i>
+                    </div>
+                    <h3 class="section-title-text">منهاج الدورة التدريبية</h3>
+                </div>
+
+                <div class="units-container">
+                    {% for unit in course.units.all %}
+                        <details class="unit-details" {% if forloop.first %}open{% endif %}>
+                            <summary class="unit-summary">
+                                <div class="unit-summary-left">
+                                    <div class="unit-number">
+                                        {{ forloop.counter }}
+                                    </div>
+                                    <h4 class="unit-title">{{ unit.title }}</h4>
+                                </div>
+                                <div class="unit-summary-right">
+                                    <span class="unit-badge">{{ unit.lessons.count }} دروس</span>
+                                    <span class="unit-chevron">
+                                        <i data-lucide="chevron-left" style="width: 20px; height: 20px;"></i>
+                                    </span>
+                                </div>
+                            </summary>
+                            <div class="unit-lessons">
+                                {% for lesson in unit.lessons.all %}
+                                    <a href="{% url 'dashboard:student_lesson_detail' lesson.id %}" class="lesson-card">
+                                        <div class="lesson-card-left">
+                                            <div class="lesson-status-icon {% if lesson.id in completed_lesson_ids %}completed{% endif %}">
+                                                {% if lesson.id in completed_lesson_ids %}
+                                                    <i data-lucide="check" style="width: 18px; height: 18px;"></i>
+                                                {% else %}
+                                                    <i data-lucide="play" style="width: 16px; height: 16px; margin-right: 2px;"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <h5 class="lesson-card-title">{{ lesson.title }}</h5>
+                                                <span class="lesson-card-duration">{{ lesson.duration|default:"دورة فيديو" }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="lesson-card-right">
+                                            <i data-lucide="chevron-left" style="width: 16px; height: 16px;"></i>
+                                        </div>
+                                    </a>
                                 {% endfor %}
                             </div>
+                        </details>
+                    {% empty %}
+                        <div class="empty-curriculum-card">
+                            <i data-lucide="calendar" style="width: 48px; height: 48px; color: var(--text-muted); margin-bottom: 1rem;"></i>
+                            <p class="empty-text">سيتم إضافة المحتوى الدراسي والدروس قريباً جداً.</p>
                         </div>
-                    </div>
+                    {% endfor %}
                 </div>
-                {% empty %}
-                <div class="pro-card text-center py-12">
-                    <p class="text-muted mb-0">سيتم إضافة المحتوى قريباً جداً.</p>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
+            </main>
 
-        <!-- Sidebar -->
-        <div class="col-lg-4">
-            <div class="pro-card mb-4">
-                <h4 class="font-weight-bold mb-4"><i data-lucide="award" class="text-success ml-2"></i> الإنجازات</h4>
-                {% for attempt in attempts %}
-                <div class="mb-4">
-                    <div class="d-flex justify-content-between small mb-1">
-                        <span class="font-weight-bold">{{ attempt.exam.title }}</span>
-                        <span class="text-success font-weight-bold">{{ attempt.score_percentage|floatformat:0 }}%</span>
+            <!-- Left: Sidebar -->
+            <aside class="sidebar-section">
+                <!-- Achievements -->
+                <div class="sidebar-card">
+                    <h4 class="sidebar-card-title">
+                        <i data-lucide="award" style="color: var(--brand-gold); margin-left: 8px;"></i>
+                        الإنجازات والامتحانات
+                    </h4>
+                    
+                    <div class="attempts-list">
+                        {% for attempt in attempts %}
+                            <div class="attempt-item">
+                                <div class="attempt-header">
+                                    <span class="attempt-title">{{ attempt.exam.title }}</span>
+                                    <span class="attempt-percent">{{ attempt.score_percentage|floatformat:0 }}%</span>
+                                </div>
+                                <div class="attempt-progress-bg">
+                                    <div class="attempt-progress-fill" style="width: {{ attempt.score_percentage }}%;"></div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <p class="empty-sidebar-text">لا توجد نتائج امتحانات بعد.</p>
+                        {% endfor %}
                     </div>
-                    <div class="progress" style="height: 6px; border-radius: 10px;">
-                        <div class="progress-bar bg-success" style="width: {{ attempt.score_percentage }}%;"></div>
-                    </div>
+                    
+                    <button class="btn-sidebar-secondary w-full">
+                        <i data-lucide="help-circle" style="width: 16px; height: 16px; margin-left: 6px;"></i>
+                        بنك الأسئلة الموحد
+                    </button>
                 </div>
-                {% empty %}
-                <p class="text-muted small text-center py-4">لا توجد نتائج امتحانات بعد.</p>
-                {% endfor %}
-                <button class="btn btn-outline-success w-100 mt-4 rounded-pill">بنك الأسئلة الموحد</button>
-            </div>
 
-            <div class="pro-card">
-                <h4 class="font-weight-bold mb-4"><i data-lucide="file-text" class="text-success ml-2"></i> المصادر والملفات</h4>
-                {% if course.pdf_file or course.file1 or course.file2 %}
-                    {% if course.pdf_file %}
-                        <div class="p-4 rounded-xl bg-light border d-flex align-items-center gap-3 mb-3">
-                            <div class="bg-success rounded-lg p-2 text-white">
-                                <i data-lucide="file-text"></i>
+                <!-- Resources & Files -->
+                <div class="sidebar-card mt-6">
+                    <h4 class="sidebar-card-title">
+                        <i data-lucide="folder-open" style="color: var(--brand-gold); margin-left: 8px;"></i>
+                        المصادر والملفات المرفقة
+                    </h4>
+                    
+                    {% if course.pdf_file or course.file1 or course.file2 %}
+                        {% if course.pdf_file %}
+                            <!-- Primary PDF Resource -->
+                            <div class="resource-pdf-box">
+                                <div class="resource-pdf-icon">
+                                    <i data-lucide="file-text"></i>
+                                </div>
+                                <div style="flex: 1;">
+                                    <h5 class="resource-pdf-title">ملف المادة الموحد</h5>
+                                    <small class="resource-pdf-size">PDF - {{ course.pdf_file.size|filesizeformat }}</small>
+                                </div>
                             </div>
-                            <div class="flex-grow-1">
-                                <h6 class="mb-0 font-weight-bold">ملف المادة الموحد</h6>
-                                <small class="text-muted">PDF - {{ course.pdf_file.size|filesizeformat }}</small>
-                            </div>
-                        </div>
-                        <div class="d-flex flex-column gap-2 mb-4">
-                             <a href="{% url 'dashboard:view_course_pdf' course.id %}" target="_blank" class="btn btn-pro btn-pro-accent w-100">
-                                 <i data-lucide="eye" style="width: 16px; margin-left: 6px;"></i> عرض الملف
-                             </a>
-                             {% if course.allow_pdf_download %}
-                                <a href="{% url 'dashboard:download_course_pdf' course.id %}" class="btn btn-outline-secondary w-100 rounded-pill">
-                                    <i data-lucide="download" style="width: 16px; margin-left: 6px;"></i> تنزيل مباشر
+                            
+                            <div class="resource-pdf-actions">
+                                <a href="{% url 'dashboard:view_course_pdf' course.id %}" target="_blank" class="btn-pro btn-pro-accent w-full text-center">
+                                    <i data-lucide="eye" style="width: 16px; height: 16px; margin-left: 6px;"></i>
+                                    عرض الملف بأمان
                                 </a>
-                                <small class="text-muted text-center mt-1" style="font-size: 0.7rem; opacity: 0.7;">
-                                    <i data-lucide="shield-check" style="width: 12px; display: inline;"></i>
-                                    الملف المُحمّل يحتوي علامة مائية باسمك لحماية الحقوق
-                                </small>
-                             {% endif %}
-                        </div>
-                    {% endif %}
+                                {% if course.allow_pdf_download %}
+                                    <a href="{% url 'dashboard:download_course_pdf' course.id %}" class="btn-download-secondary w-full text-center">
+                                        <i data-lucide="download" style="width: 16px; height: 16px; margin-left: 6px;"></i>
+                                        تنزيل مباشر للملف
+                                    </a>
+                                    <p class="watermark-notice-text">
+                                        <i data-lucide="shield-check" style="width: 12px; height: 12px; display: inline; margin-left: 2px; vertical-align: middle;"></i>
+                                        الملف المُحمّل يحتوي علامة مائية باسمك لحماية حقوق النشر.
+                                    </p>
+                                {% endif %}
+                            </div>
+                        {% endif %}
 
-                    {% if course.file1 or course.file2 %}
-                        <div class="d-flex flex-column gap-3 pt-3 border-top">
-                            <h6 class="font-weight-bold mb-2">الملفات الإضافية:</h6>
-                            {% if course.file1 %}
-                                <div class="d-flex align-items-center justify-content-between p-3 rounded-xl bg-light border">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="bg-primary rounded-lg p-2 text-white" style="opacity: 0.85;">
-                                            <i data-lucide="file" style="width: 20px; height: 20px;"></i>
+                        {% if course.file1 or course.file2 %}
+                            <div class="additional-files-section {% if course.pdf_file %}mt-6 pt-6 border-top{% endif %}">
+                                <h6 class="additional-files-heading">ملفات إضافية للتحميل:</h6>
+                                <div class="additional-files-list">
+                                    {% if course.file1 %}
+                                        <div class="additional-file-row">
+                                            <div class="additional-file-info">
+                                                <div class="additional-file-icon">
+                                                    <i data-lucide="paperclip" style="width: 16px; height: 16px;"></i>
+                                                </div>
+                                                <span class="additional-file-name">{{ course.file1_name|default:"الملف الإضافي 1" }}</span>
+                                            </div>
+                                            <a href="{% url 'dashboard:download_course_file1' course.id %}" class="btn-download-icon" title="تحميل">
+                                                <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                                            </a>
                                         </div>
-                                        <div>
-                                            <span class="font-weight-bold text-dark d-block" style="font-size: 0.9rem;">{{ course.file1_name|default:"الملف الإضافي 1" }}</span>
+                                    {% endif %}
+                                    {% if course.file2 %}
+                                        <div class="additional-file-row">
+                                            <div class="additional-file-info">
+                                                <div class="additional-file-icon">
+                                                    <i data-lucide="paperclip" style="width: 16px; height: 16px;"></i>
+                                                </div>
+                                                <span class="additional-file-name">{{ course.file2_name|default:"الملف الإضافي 2" }}</span>
+                                            </div>
+                                            <a href="{% url 'dashboard:download_course_file2' course.id %}" class="btn-download-icon" title="تحميل">
+                                                <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                                            </a>
                                         </div>
-                                    </div>
-                                    <a href="{% url 'dashboard:download_course_file1' course.id %}" class="btn btn-sm btn-pro btn-pro-accent d-inline-flex align-items-center gap-2">
-                                        <i data-lucide="download" style="width: 14px;"></i>
-                                        <span>تحميل</span>
-                                    </a>
+                                    {% endif %}
                                 </div>
-                            {% endif %}
-                            {% if course.file2 %}
-                                <div class="d-flex align-items-center justify-content-between p-3 rounded-xl bg-light border">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="bg-primary rounded-lg p-2 text-white" style="opacity: 0.85;">
-                                            <i data-lucide="file" style="width: 20px; height: 20px;"></i>
-                                        </div>
-                                        <div>
-                                            <span class="font-weight-bold text-dark d-block" style="font-size: 0.9rem;">{{ course.file2_name|default:"الملف الإضافي 2" }}</span>
-                                        </div>
-                                    </div>
-                                    <a href="{% url 'dashboard:download_course_file2' course.id %}" class="btn btn-sm btn-pro btn-pro-accent d-inline-flex align-items-center gap-2">
-                                        <i data-lucide="download" style="width: 14px;"></i>
-                                        <span>تحميل</span>
-                                    </a>
-                                </div>
-                            {% endif %}
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="empty-resources-box">
+                            <i data-lucide="file-warning" style="width: 32px; height: 32px; color: var(--text-muted); margin-bottom: 0.5rem;"></i>
+                            <p class="empty-resources-text">لا توجد ملفات أو مصادر مرفقة حالياً.</p>
                         </div>
                     {% endif %}
-                {% else %}
-                    <p class="text-muted small text-center py-4">لا توجد ملفات مرفقة.</p>
-                {% endif %}
-            </div>
+                </div>
+            </aside>
         </div>
-    </div>
+    {% endif %}
 </div>
 
+<!-- Styles for Premium Student Course Detail Page -->
 <style>
-    .accordion-button::after { display: none; }
-    .lesson-row:hover { transform: translateX(-8px); border-color: var(--pro-accent) !important; background: white !important; }
-    .vr { width: 1px; }
-    
-    .student-course-hero {
-        min-height: auto;
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    /* ═══════════════════════════════════════════════════════════
+       1. GLOBAL UTILITIES & ANIMATIONS
+       ═══════════════════════════════════════════════════════════ */
+    .animate-up {
+        animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .gold-text {
+        color: var(--brand-gold);
+    }
+    .w-full {
+        width: 100%;
+    }
+    .mt-6 {
+        margin-top: 1.5rem;
+    }
+    .pt-6 {
+        padding-top: 1.5rem;
+    }
+    .border-top {
+        border-top: 1px solid var(--border-light);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       2. LOCK SCREEN STYLING (Device Binding Lockout)
+       ═══════════════════════════════════════════════════════════ */
+    .lock-screen-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(var(--glass-blur));
+        -webkit-backdrop-filter: blur(var(--glass-blur));
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-soft);
+        padding: 4.5rem 3rem;
+        text-align: center;
+        max-width: 680px;
+        margin: 3.5rem auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
         position: relative;
-        border: none;
-        border-radius: 30px !important;
         overflow: hidden;
     }
-    .student-course-hero-content {
-        padding: 3rem !important;
+    .lock-icon-container {
+        position: relative;
+        width: 90px;
+        height: 90px;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .lock-pulse-ring {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: rgba(212, 175, 55, 0.15);
+        animation: lock-pulse 2s infinite ease-in-out;
+    }
+    @keyframes lock-pulse {
+        0% { transform: scale(0.95); opacity: 0.8; }
+        50% { transform: scale(1.3); opacity: 0; }
+        100% { transform: scale(0.95); opacity: 0.8; }
+    }
+    .lock-icon-box {
+        width: 64px;
+        height: 64px;
+        background: rgba(212, 175, 55, 0.12);
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--brand-gold);
+        z-index: 2;
+        box-shadow: 0 10px 25px rgba(212, 175, 55, 0.1);
+    }
+    .lock-icon {
+        width: 30px;
+        height: 30px;
+    }
+    .lock-title {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 1.25rem;
+    }
+    .lock-description {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.8;
+        margin-bottom: 2.25rem;
+    }
+    .device-details-box {
+        background: var(--bg-surface-elevated);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-sm);
+        padding: 1rem 1.75rem;
+        width: 100%;
+        max-width: 480px;
+        margin-bottom: 2.25rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    .device-details-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+    .device-label {
+        color: var(--text-muted);
+    }
+    .device-value {
+        color: var(--text-primary);
+        font-family: monospace, sans-serif;
+        direction: ltr;
+    }
+    .lock-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.25rem;
+        width: 100%;
+    }
+    .lock-btn {
+        width: 100%;
+        max-width: 380px;
+        padding: 0.9rem 1.75rem;
+        font-size: 1rem;
+        font-weight: 800;
+        border-radius: 14px;
+        text-align: center;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        text-decoration: none;
+    }
+    .btn-back-dashboard {
+        color: var(--text-muted);
+        font-weight: 700;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: var(--transition-smooth);
+    }
+    .btn-back-dashboard:hover {
+        color: var(--text-primary);
+    }
+    .lock-footer-note {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 2.5rem;
+        line-height: 1.6;
+        max-width: 480px;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       3. CINEMATIC HERO SECTION
+       ═══════════════════════════════════════════════════════════ */
+    .hero-card {
+        position: relative;
+        border-radius: var(--radius-md);
+        background: linear-gradient(135deg, #0e1726 0%, #030712 100%);
+        overflow: hidden;
+        padding: 2.5rem 3rem;
+        margin-bottom: 2.5rem;
+        border: 1px solid var(--border-light);
+        box-shadow: var(--shadow-soft);
+    }
+    .hero-bg-cover {
+        position: absolute;
+        inset: 0;
+        opacity: 0.22;
+        z-index: 1;
+    }
+    .hero-bg-cover img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: blur(25px);
+        transform: scale(1.1);
+    }
+    .hero-radial-overlay {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(circle at center, transparent 20%, #030712 100%);
+        z-index: 2;
+    }
+    .hero-content {
+        position: relative;
+        z-index: 10;
         display: flex;
         justify-content: space-between;
         align-items: center;
         flex-wrap: wrap;
         gap: 2.5rem;
-        position: relative;
-        z-index: 10;
-        height: 100%;
         width: 100%;
     }
-    .student-progress-card {
-        width: 280px;
-        background: rgba(255, 255, 255, 0.08) !important;
+    .hero-info {
+        flex: 1;
+        min-width: 320px;
+    }
+    .hero-badges-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+    }
+    .badge-activated {
+        background: rgba(16, 185, 129, 0.12);
+        color: #10b981;
+        padding: 0.4rem 0.85rem;
+        border-radius: 100px;
+        font-size: 0.8rem;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        border: 1px solid rgba(16, 185, 129, 0.15);
+    }
+    .badge-kind {
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.85);
+        padding: 0.4rem 0.85rem;
+        border-radius: 100px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .hero-title {
+        font-size: 2.2rem;
+        font-weight: 800;
+        color: #ffffff;
+        line-height: 1.3;
+        margin-bottom: 1.75rem;
+        text-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    }
+    .hero-metadata {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.75rem;
+    }
+    .instructor-card {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .instructor-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        overflow: hidden;
+        border: 2px solid var(--brand-gold);
+        background: #111827;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .instructor-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .instructor-avatar-placeholder {
+        width: 100%;
+        height: 100%;
+        background: #1f2937;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .instructor-name-label {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.5);
+        display: block;
+        margin-bottom: 1px;
+    }
+    .instructor-name-val {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #ffffff;
+    }
+    .hero-divider {
+        width: 1px;
+        height: 32px;
+        background: rgba(255, 255, 255, 0.12);
+    }
+    .hero-stats {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+    }
+    .hero-stat-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+    .hero-stat-item i {
+        color: var(--brand-gold);
+    }
+    .hero-progress-ring {
+        width: 210px;
+        background: rgba(255, 255, 255, 0.05);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 30px !important;
-        padding: 2rem !important;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: var(--radius-md);
+        padding: 1.5rem 1.25rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
         flex-shrink: 0;
+    }
+    .progress-percentage-label {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .percent-number {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #ffffff;
+        margin: 0;
+        line-height: 1;
+    }
+    .percent-text {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.55);
+        margin-top: 2px;
+    }
+    .progress-tip-text {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.55);
+        margin: 0;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       4. COURSE LAYOUT GRID (Main curriculum vs Sidebar)
+       ═══════════════════════════════════════════════════════════ */
+    .course-layout-grid {
+        display: grid;
+        grid-template-columns: 2.2fr 1fr;
+        gap: 2rem;
+        align-items: start;
+    }
+    
+    /* ── Main content (Curriculum) ── */
+    .section-title-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+    .section-title-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: rgba(var(--brand-gold-rgb), 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(var(--brand-gold-rgb), 0.15);
+    }
+    .section-title-text {
+        font-size: 1.3rem;
+        font-weight: 800;
+        margin: 0;
+    }
+    
+    /* Native Accordion Details & Summary */
+    .units-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .unit-details {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-sm);
+        margin-bottom: 0.25rem;
+        overflow: hidden;
+        transition: var(--transition-smooth);
+    }
+    .unit-details[open] {
+        border-color: rgba(var(--brand-gold-rgb), 0.3);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.02);
+    }
+    .unit-summary {
+        list-style: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.1rem 1.4rem;
+        cursor: pointer;
+        user-select: none;
+        outline: none;
+    }
+    .unit-summary::-webkit-details-marker {
+        display: none;
+    }
+    .unit-summary-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .unit-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        background: rgba(var(--brand-gold-rgb), 0.1);
+        color: var(--brand-gold);
+        font-size: 0.85rem;
+        border: 1px solid rgba(var(--brand-gold-rgb), 0.12);
+    }
+    .unit-title {
+        font-size: 1rem;
+        font-weight: 800;
+        margin: 0;
+        color: var(--text-primary);
+    }
+    .unit-summary-right {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .unit-badge {
+        background: var(--bg-surface-elevated);
+        color: var(--text-secondary);
+        padding: 0.35rem 0.75rem;
+        border-radius: 100px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        border: 1px solid var(--border-light);
+    }
+    .unit-chevron {
+        color: var(--text-muted);
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex;
+        align-items: center;
+    }
+    .unit-details[open] .unit-chevron {
+        transform: rotate(-90deg); /* Rotates to point down in RTL */
+    }
+    
+    /* Content wrapper inside details */
+    .unit-lessons {
+        padding: 0 1.4rem 1.4rem 1.4rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    /* Lesson card item */
+    .lesson-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.25rem;
+        border-radius: var(--radius-sm);
+        background: var(--bg-surface-elevated);
+        border: 1px solid var(--border-light);
+        text-decoration: none;
+        transition: var(--transition-smooth);
+    }
+    .lesson-card:hover {
+        transform: translateX(-6px);
+        border-color: rgba(var(--brand-gold-rgb), 0.35);
+        background: var(--bg-surface);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.01);
+    }
+    .lesson-card-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .lesson-status-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+        transition: var(--transition-smooth);
+        flex-shrink: 0;
+    }
+    .lesson-status-icon.completed {
+        background: rgba(16, 185, 129, 0.12);
+        color: #10b981;
+        border-color: rgba(16, 185, 129, 0.2);
+    }
+    .lesson-card:hover .lesson-status-icon:not(.completed) {
+        border-color: var(--brand-gold);
+        color: var(--brand-gold);
+        background: rgba(var(--brand-gold-rgb), 0.05);
+    }
+    .lesson-card-title {
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin: 0 0 2px 0;
+        color: var(--text-primary);
+        transition: var(--transition-smooth);
+    }
+    .lesson-card:hover .lesson-card-title {
+        color: var(--brand-gold);
+    }
+    .lesson-card-duration {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+    .lesson-card-right {
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        transition: var(--transition-smooth);
+    }
+    .lesson-card:hover .lesson-card-right {
+        color: var(--brand-gold);
+        transform: translateX(-3px);
+    }
+    
+    /* Empty curriculum card */
+    .empty-curriculum-card {
+        background: var(--bg-surface);
+        border: 1px dashed var(--border-strong);
+        border-radius: var(--radius-sm);
+        padding: 3.5rem 2rem;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .empty-text {
+        font-size: 0.95rem;
+        color: var(--text-secondary);
+        font-weight: 700;
+        margin: 0;
+    }
+
+    /* ── Sidebar Column ── */
+    .sidebar-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    .sidebar-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(var(--glass-blur));
+        -webkit-backdrop-filter: blur(var(--glass-blur));
+        border: 1px solid var(--glass-border);
+        border-radius: var(--radius-sm);
+        box-shadow: var(--shadow-soft);
+        padding: 1.5rem;
+    }
+    .sidebar-card-title {
+        font-size: 1.1rem;
+        font-weight: 800;
+        margin-bottom: 1.25rem;
+        display: flex;
+        align-items: center;
+        color: var(--text-primary);
+        border-bottom: 1px solid var(--border-light);
+        padding-bottom: 0.75rem;
+    }
+    
+    /* Attempts & achievements list */
+    .attempts-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+    }
+    .attempt-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .attempt-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+    .attempt-title {
+        color: var(--text-secondary);
+    }
+    .attempt-percent {
+        color: #10b981;
+    }
+    .attempt-progress-bg {
+        width: 100%;
+        height: 6px;
+        background: var(--bg-surface-elevated);
+        border-radius: 100px;
+        overflow: hidden;
+        border: 1px solid var(--border-light);
+    }
+    .attempt-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        border-radius: 100px;
+    }
+    .btn-sidebar-secondary {
+        background: var(--bg-surface-elevated);
+        border: 1px solid var(--border-strong);
+        color: var(--text-primary);
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: var(--transition-smooth);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+    }
+    .btn-sidebar-secondary:hover {
+        background: rgba(var(--brand-gold-rgb), 0.05);
+        border-color: var(--brand-gold);
+        color: var(--brand-gold);
+    }
+    .empty-sidebar-text {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-align: center;
+        padding: 1rem 0;
+    }
+    
+    /* Resources & PDF Box */
+    .resource-pdf-box {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        border-radius: var(--radius-sm);
+        background: var(--bg-surface-elevated);
+        border: 1px solid var(--border-light);
+        margin-bottom: 1.25rem;
+    }
+    .resource-pdf-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .resource-pdf-title {
+        font-size: 0.85rem;
+        font-weight: 700;
+        margin: 0 0 1px 0;
+        color: var(--text-primary);
+    }
+    .resource-pdf-size {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+    }
+    .resource-pdf-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+    .btn-download-secondary {
+        background: transparent;
+        border: 1px solid var(--border-strong);
+        color: var(--text-secondary);
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: var(--transition-smooth);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+    }
+    .btn-download-secondary:hover {
+        border-color: var(--text-primary);
+        color: var(--text-primary);
+        background: var(--bg-surface-elevated);
+    }
+    .watermark-notice-text {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        text-align: center;
+        margin: 0;
+        line-height: 1.4;
+        opacity: 0.8;
+    }
+    
+    /* Additional files list */
+    .additional-files-section {
+        margin-top: 1.25rem;
+        padding-top: 1.25rem;
+    }
+    .additional-files-heading {
+        font-size: 0.8rem;
+        font-weight: 800;
+        margin-bottom: 0.75rem;
+        color: var(--text-secondary);
+    }
+    .additional-files-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+    .additional-file-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        border-radius: var(--radius-sm);
+        background: var(--bg-surface-elevated);
+        border: 1px solid var(--border-light);
+    }
+    .additional-file-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        overflow: hidden;
+        flex: 1;
+    }
+    .additional-file-icon {
+        color: var(--brand-gold);
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+    }
+    .additional-file-name {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .btn-download-icon {
+        color: var(--text-muted);
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition-smooth);
+        border-radius: 8px;
+        cursor: pointer;
+    }
+    .btn-download-icon:hover {
+        color: var(--brand-gold);
+        background: rgba(var(--brand-gold-rgb), 0.08);
+    }
+    .empty-resources-box {
+        text-align: center;
+        padding: 1.5rem 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .empty-resources-text {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin: 0;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       5. RESPONSIVE BREAKPOINTS
+       ═══════════════════════════════════════════════════════════ */
+    @media (max-width: 1200px) {
+        .hero-card {
+            padding: 2rem;
+        }
+        .hero-title {
+            font-size: 1.9rem;
+        }
     }
     
     @media (max-width: 992px) {
-        .student-course-hero-content {
-            padding: 2rem 1.5rem !important;
+        .hero-content {
             flex-direction: column;
             align-items: center;
             text-align: center;
         }
-        .student-course-hero-content > div:first-child {
-            width: 100%;
-        }
-        .student-course-hero-content .d-flex {
+        .hero-badges-row {
             justify-content: center;
         }
-        .student-progress-card {
+        .hero-metadata {
+            justify-content: center;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+        .hero-divider {
+            display: none;
+        }
+        .hero-info {
             width: 100%;
-            max-width: 280px;
+        }
+        .hero-progress-ring {
+            width: 100%;
+            max-width: 320px;
             margin: 0 auto;
         }
-        .student-course-hero-content .hero-metadata-row {
-            flex-direction: column;
-            gap: 1.25rem !important;
-            align-items: center;
-        }
-        .student-course-hero-content .vr {
-            display: none !important;
-        }
     }
-    
-    @media (max-width: 576px) {
-        .student-course-hero {
-            border-radius: 20px !important;
+
+    @media (max-width: 768px) {
+        .course-layout-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
         }
-        .student-course-hero-content {
-            padding: 1.5rem 1rem !important;
-            gap: 2rem;
+        .hero-title {
+            font-size: 1.6rem;
+            margin-bottom: 1.25rem;
         }
-        .student-course-title {
-            font-size: 1.8rem !important;
-            margin-bottom: 1.25rem !important;
-            line-height: 1.2 !important;
+        .hero-card {
+            border-radius: var(--radius-sm);
+            padding: 1.5rem 1.25rem;
+            margin-bottom: 1.5rem;
         }
-        .student-progress-card {
-            padding: 1.5rem !important;
-            border-radius: 24px !important;
+        .lock-screen-card {
+            padding: 3rem 1.5rem;
+            margin: 1.5rem auto;
+            border-radius: var(--radius-sm);
+        }
+        .lock-title {
+            font-size: 1.4rem;
+        }
+        .lock-description {
+            font-size: 0.85rem;
+            margin-bottom: 1.75rem;
+        }
+        .device-details-box {
+            padding: 0.75rem 1.25rem;
+        }
+        .lock-btn {
+            font-size: 0.9rem;
+            padding: 0.85rem 1.25rem;
         }
     }
 
     @media (max-width: 480px) {
-        .lesson-row {
-            padding: 0.75rem 0.85rem !important;
-            border-radius: 12px !important;
+        .unit-summary {
+            padding: 1rem;
         }
-        .lesson-row .gap-4 {
-            gap: 0.75rem !important;
+        .unit-title {
+            font-size: 0.9rem;
         }
-        .lesson-row .flex-center {
-            width: 36px !important;
-            height: 36px !important;
-            min-width: 36px;
+        .unit-number {
+            width: 28px;
+            height: 28px;
+            font-size: 0.75rem;
         }
-        .lesson-row .flex-center svg {
-            width: 16px !important;
-            height: 16px !important;
+        .unit-badge {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.6rem;
         }
-        .lesson-row h5 {
-            font-size: 0.85rem !important;
-            margin-bottom: 2px !important;
+        .lesson-card {
+            padding: 0.85rem 1rem;
+        }
+        .lesson-card-title {
+            font-size: 0.85rem;
+        }
+        .lesson-status-icon {
+            width: 32px;
+            height: 32px;
         }
     }
 </style>
+
+<!-- Scripts to dynamically draw progress bar path mathematically -->
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // Calculate circle progress mathematically based on radius
+        const circle = document.getElementById("progress-circle");
+        if (circle) {
+            const percent = parseFloat(circle.getAttribute("data-percent")) || 0;
+            const radius = parseFloat(circle.getAttribute("r"));
+            const circumference = 2 * Math.PI * radius;
+            const strokeLength = (percent / 100) * circumference;
+            
+            // Set correct values
+            circle.style.strokeDasharray = `${strokeLength} ${circumference}`;
+        }
+
+        // Initialize Lucide icons
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    });
+</script>
 {% endblock %}

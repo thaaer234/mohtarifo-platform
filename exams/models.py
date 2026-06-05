@@ -132,6 +132,15 @@ class Attempt(models.Model):
     def __str__(self):
         return f"{self.user} - {self.exam}"
 
+    @property
+    def score_percentage(self):
+        if self.accuracy is not None:
+            return float(self.accuracy)
+        if self.max_score > 0:
+            return (self.score / self.max_score) * 100
+        return 0
+
+
 
 class AttemptAnswer(models.Model):
     attempt = models.ForeignKey(Attempt, on_delete=models.CASCADE, related_name="answers")
