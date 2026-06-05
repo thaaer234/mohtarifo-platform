@@ -57,6 +57,22 @@
                             document.cookie = "device_model_hint=" + encodeURIComponent(ua.model) + "; path=/; max-age=31536000; SameSite=Lax";
                         }
                     }).catch(function(e) {});
+                } else if (/iPhone|iPad/.test(navigator.userAgent) && !window.MSStream) {
+                    var w = Math.min(screen.width, screen.height) * window.devicePixelRatio;
+                    var h = Math.max(screen.width, screen.height) * window.devicePixelRatio;
+                    var model = "iPhone";
+                    if (w === 1170 && h === 2532) model = "iPhone 12/13/14";
+                    else if (w === 1284 && h === 2778) model = "iPhone 12 Pro Max/13 Pro Max/14 Plus";
+                    else if (w === 1179 && h === 2556) model = "iPhone 14 Pro/15/15 Pro";
+                    else if (w === 1290 && h === 2796) model = "iPhone 14 Pro Max/15 Pro Max/16 Pro Max";
+                    else if (w === 1125 && h === 2436) model = "iPhone X/XS/11 Pro";
+                    else if (w === 1242 && h === 2688) model = "iPhone XS Max/11 Pro Max";
+                    else if (w === 828 && h === 1792) model = "iPhone XR/11";
+                    else if (w === 750 && h === 1334) model = "iPhone 6/7/8/SE";
+                    else if (w === 1242 && h === 2208) model = "iPhone Plus Series";
+                    else if (w === 640 && h === 1136) model = "iPhone 5/SE";
+                    else if (/iPad/.test(navigator.userAgent)) model = "iPad";
+                    document.cookie = "device_model_hint=" + encodeURIComponent(model) + "; path=/; max-age=31536000; SameSite=Lax";
                 }
             } catch (e) {}
         })();
