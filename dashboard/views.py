@@ -2363,6 +2363,13 @@ def student_dashboard(request):
             return redirect("dashboard:student_dashboard")
 
     grants = _device_grants(request.user, current_device).select_related("course", "lesson", "access_code").order_by("-created_at")
+    
+    # Courses that are activated but on a DIFFERENT device (student should see them with lock icon)
+    device_grant_ids = set(grants.values_list("id", flat=True))
+    other_device_grants = _active_access_grants(request.user).select_related(
+        "course", "course__instructor", "lesson", "access_code"
+    ).exclude(id__in=device_grant_ids).filter(course__isnull=False).order_by("-created_at")
+    
     sessions = _available_sessions_for_user(request.user, current_device)
     unlocked_lessons = (
         Lesson.objects.filter(id__in=_student_lesson_ids_for_device(request.user, current_device))
@@ -2380,6 +2387,7 @@ def student_dashboard(request):
     context = {
         "redeem_form": redeem_form,
         "grants": grants,
+        "other_device_grants": other_device_grants,
         "unlocked_lessons": unlocked_lessons,
         "sessions": sessions[:12],
         "attendances": LessonAttendance.objects.filter(user=request.user).select_related("session").order_by("-created_at")[:12],
@@ -2402,21 +2410,30 @@ def student_device_ping(request):
 @login_required
 def my_courses_page(request):
     current_device = _current_device_fingerprint(request)
-    grants = _device_grants(request.user, current_device).select_related(
+    # Load ALL active access grants for this student (regardless of device)
+    all_grants = _active_access_grants(request.user).select_related(
         "course", "course__subject", "course__instructor", "course__instructor__instructor_profile", "lesson", "access_code"
     ).order_by("-created_at")
+    
+    # Build set of device-specific grant IDs for fast lookup
+    device_grant_ids = set(
+        _device_grants(request.user, current_device).values_list("id", flat=True)
+    )
+    
     progress_map = {}
     for cp in CourseProgress.objects.filter(user=request.user):
         progress_map[cp.course_id] = int(cp.completion_percent)
-    for grant in grants:
+    for grant in all_grants:
         if grant.course:
             grant.progress_percent = progress_map.get(grant.course.id, 0)
         else:
             grant.progress_percent = 0
+        grant.is_on_current_device = (grant.id in device_grant_ids)
     context = {
-        "grants": grants,
+        "grants": all_grants,
     }
     return render(request, "dashboard/my_courses.html", context)
+
 
 
 @login_required
@@ -2636,6 +2653,14 @@ def student_course_detail(request, course_id):
     has_global_access = _active_access_grants(request.user).filter(course=course).exists()
     if not has_global_access:
         raise Http404("Course not found")
+    
+    # Auto-bind device fingerprint for grants that don't have one yet (e.g. admin manual grants)
+    # This ensures the course locks to the FIRST device the student opens it from.
+    if current_device and current_device != "impersonation_bypass" and not is_staff and not has_impersonation_bypass:
+        unbound_grant = _active_access_grants(request.user).filter(course=course, device_fingerprint="").first()
+        if unbound_grant:
+            unbound_grant.device_fingerprint = current_device
+            unbound_grant.save(update_fields=["device_fingerprint"])
         
     # Check if the active grant allows accessing on this device
     has_device_access = is_staff or has_impersonation_bypass or is_impersonation or _device_grants(request.user, current_device).filter(course=course).exists()
@@ -2684,6 +2709,7 @@ def student_course_detail(request, course_id):
             "whatsapp_url": whatsapp_url,
         },
     )
+
 
 
 
