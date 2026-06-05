@@ -336,6 +336,13 @@
                                 <strong style="color: var(--text-primary);">{{ device.last_seen_at|date:"Y-m-d H:i" }}</strong>
                             </div>
 
+                            {% if device.label %}
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem;">
+                                <span style="color: var(--text-muted);"><i data-lucide="smartphone" style="width: 12px; vertical-align: middle; margin-left: 2px;"></i> تعريف الجهاز:</span>
+                                <strong style="color: var(--text-primary); text-align: left; max-width: 65%; word-break: break-all;">{{ device.label }}</strong>
+                            </div>
+                            {% endif %}
+
                             <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem;">
                                 <span style="color: var(--text-muted);"><i data-lucide="info" style="width: 12px; vertical-align: middle; margin-left: 2px;"></i> نظام التشغيل:</span>
                                 <div>
