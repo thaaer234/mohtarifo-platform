@@ -49,6 +49,19 @@
     </script>
     <script>
         (function () {
+            try {
+                if (navigator.userAgentData) {
+                    navigator.userAgentData.getHighEntropyValues(['model']).then(function (ua) {
+                        if (ua && ua.model) {
+                            document.cookie = "device_model_hint=" + encodeURIComponent(ua.model) + "; path=/; max-age=31536000; SameSite=Lax";
+                        }
+                    }).catch(function(e) {});
+                }
+            } catch (e) {}
+        })();
+    </script>
+    <script>
+        (function () {
             document.addEventListener('contextmenu', function (event) { event.preventDefault(); });
             document.addEventListener('keydown', function (event) {
                 var key = (event.key || '').toLowerCase();

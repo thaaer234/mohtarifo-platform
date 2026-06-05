@@ -64,12 +64,81 @@ def activate_user_device(request, user, response=None):
         .values_list("fingerprint", flat=True)
     )
     UserDevice.objects.filter(user=user).exclude(fingerprint=fingerprint).update(is_active=False)
+
+    # Parse device model and name from User-Agent and client hints cookie
+    ua_string = request.META.get("HTTP_USER_AGENT", "")
+    device_model = request.COOKIES.get("device_model_hint")
+    if device_model:
+        import urllib.parse
+        try:
+            device_model = urllib.parse.unquote(device_model).strip()
+        except Exception:
+            pass
+
+    os_name = "Device"
+    browser_name = ""
+    inferred_model = ""
+
+    # 1. Parse using python user_agents library
+    try:
+        import user_agents
+        parsed_ua = user_agents.parse(ua_string)
+        os_name = str(parsed_ua.os.family)
+        browser_name = str(parsed_ua.browser.family)
+        if parsed_ua.device.family and parsed_ua.device.family not in ("Other", "Generic Smartphone", "Generic Feature Phone"):
+            inferred_model = str(parsed_ua.device.family)
+    except Exception:
+        # Fallback if user_agents package fails
+        ua_lower = ua_string.lower()
+        if "windows" in ua_lower:
+            os_name = "Windows"
+        elif "android" in ua_lower:
+            os_name = "Android"
+        elif "iphone" in ua_lower:
+            os_name = "iPhone"
+        elif "ipad" in ua_lower:
+            os_name = "iPad"
+        elif "macintosh" in ua_lower or "mac os" in ua_lower:
+            os_name = "macOS"
+        elif "linux" in ua_lower:
+            os_name = "Linux"
+
+        if "chrome" in ua_lower and "edg" not in ua_lower:
+            browser_name = "Chrome"
+        elif "edg" in ua_lower:
+            browser_name = "Edge"
+        elif "safari" in ua_lower and "chrome" not in ua_lower:
+            browser_name = "Safari"
+        elif "firefox" in ua_lower:
+            browser_name = "Firefox"
+
+    # 2. Regex fallback for Android if model is still not found
+    if not inferred_model and "android" in os_name.lower():
+        import re
+        match = re.search(r'android\s+[^;]+;\s*([^;)]+)', ua_string, re.IGNORECASE)
+        if match:
+            model_candidate = match.group(1).strip()
+            if "Build" in model_candidate:
+                model_candidate = model_candidate.split("Build")[0].strip()
+            if model_candidate and model_candidate not in ("Mobile", "wv", "Tablet"):
+                inferred_model = model_candidate
+
+    # 3. Build the final label
+    model_name = device_model or inferred_model
+    if model_name:
+        label = f"{os_name} ({model_name})"
+    else:
+        label = os_name
+
+    if browser_name:
+        label = f"{label} - {browser_name}"
+
     UserDevice.objects.update_or_create(
         user=user,
         fingerprint=fingerprint,
         defaults={
-            "label": request.META.get("HTTP_USER_AGENT", "")[:110],
-            "user_agent": request.META.get("HTTP_USER_AGENT", ""),
+            "label": label[:115],
+            "user_agent": ua_string,
             "is_active": True,
         },
     )
