@@ -48,7 +48,7 @@ try:
     
     # Create request factory
     factory = RequestFactory()
-    request = factory.get('/admin-dashboard/')
+    request = factory.get('/admin-dashboard/', HTTP_HOST='localhost')
     
     # Process session middleware
     middleware = SessionMiddleware(lambda r: None)

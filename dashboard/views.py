@@ -1017,11 +1017,14 @@ def admin_dashboard(request):
         elif action == "toggle_2fa":
             from .whatsapp_utils import set_2fa_disabled
             disable_otp = request.POST.get("disable_2fa") == "true"
-            set_2fa_disabled(disable_otp)
-            if disable_otp:
-                messages.success(request, "🔓 تم إيقاف التحقق الثنائي بنجاح. يمكن للطلاب تسجيل الدخول وإنشاء حسابات دون إرسال رمز تحقق.")
+            success = set_2fa_disabled(disable_otp)
+            if success:
+                if disable_otp:
+                    messages.success(request, "🔓 تم إيقاف التحقق الثنائي بنجاح. يمكن للطلاب تسجيل الدخول وإنشاء حسابات دون إرسال رمز تحقق.")
+                else:
+                    messages.success(request, "🔒 تم تفعيل التحقق الثنائي بنجاح. سيتم طلب رمز تحقق عبر واتساب عند تسجيل الدخول أو إنشاء حساب.")
             else:
-                messages.success(request, "🔒 تم تفعيل التحقق الثنائي بنجاح. سيتم طلب رمز تحقق عبر واتساب عند تسجيل الدخول أو إنشاء حساب.")
+                messages.error(request, "❌ فشل حفظ الإعدادات. يرجى التحقق من صلاحيات المجلدات على الخادم.")
             return redirect("dashboard:admin_dashboard")
 
     
@@ -5677,11 +5680,14 @@ def admin_whatsapp_control(request):
         elif "toggle_2fa" in request.POST:
             from .whatsapp_utils import set_2fa_disabled
             disable_otp = request.POST.get("disable_2fa") == "true"
-            set_2fa_disabled(disable_otp)
-            if disable_otp:
-                messages.success(request, "🔓 تم إيقاف التحقق الثنائي بنجاح. يمكن للطلاب تسجيل الدخول وإنشاء حسابات دون إرسال رمز تحقق.")
+            success = set_2fa_disabled(disable_otp)
+            if success:
+                if disable_otp:
+                    messages.success(request, "🔓 تم إيقاف التحقق الثنائي بنجاح. يمكن للطلاب تسجيل الدخول وإنشاء حسابات دون إرسال رمز تحقق.")
+                else:
+                    messages.success(request, "🔒 تم تفعيل التحقق الثنائي بنجاح. سيتم طلب رمز تحقق عبر واتساب عند تسجيل الدخول أو إنشاء حساب.")
             else:
-                messages.success(request, "🔒 تم تفعيل التحقق الثنائي بنجاح. سيتم طلب رمز تحقق عبر واتساب عند تسجيل الدخول أو إنشاء حساب.")
+                messages.error(request, "❌ فشل حفظ الإعدادات. يرجى التحقق من صلاحيات المجلدات على الخادم.")
             return redirect("dashboard:admin_whatsapp_control")
 
     status_data = get_whatsapp_status()

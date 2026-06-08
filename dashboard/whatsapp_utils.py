@@ -163,7 +163,7 @@ def is_2fa_disabled():
     """Checks if two-factor authentication (OTP verification) is disabled."""
     import json
     from django.conf import settings
-    config_path = os.path.join(settings.BASE_DIR, 'config', 'otp_config.json')
+    config_path = os.path.join(settings.MEDIA_ROOT, 'otp_config.json')
     if os.path.exists(config_path):
         try:
             with open(config_path, 'r', encoding='utf-8') as f:
@@ -177,7 +177,13 @@ def set_2fa_disabled(disabled):
     """Enables or disables two-factor authentication (OTP verification)."""
     import json
     from django.conf import settings
-    config_path = os.path.join(settings.BASE_DIR, 'config', 'otp_config.json')
+    # Ensure media directory exists
+    if not os.path.exists(settings.MEDIA_ROOT):
+        try:
+            os.makedirs(settings.MEDIA_ROOT, exist_ok=True)
+        except Exception:
+            pass
+    config_path = os.path.join(settings.MEDIA_ROOT, 'otp_config.json')
     try:
         data = {}
         if os.path.exists(config_path):
