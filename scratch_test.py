@@ -36,4 +36,44 @@ except Exception as e:
     print("TEMPLATE ERROR:", str(e))
     exit(1)
 
+# Test 3: View execution
+print("\n--- Testing View Execution ---")
+try:
+    from django.test import RequestFactory
+    from django.contrib.auth.models import User
+    from dashboard.views import admin_dashboard
+    from django.contrib import messages
+    from django.contrib.messages.storage.fallback import FallbackStorage
+    from django.contrib.sessions.middleware import SessionMiddleware
+    
+    # Create request factory
+    factory = RequestFactory()
+    request = factory.get('/admin-dashboard/')
+    
+    # Process session middleware
+    middleware = SessionMiddleware(lambda r: None)
+    middleware.process_request(request)
+    request.session.save()
+    
+    # Add messages middleware storage
+    setattr(request, '_messages', FallbackStorage(request))
+    
+    # Get or create an admin user
+    admin_user = User.objects.filter(is_superuser=True).first()
+    if not admin_user:
+        admin_user = User.objects.create_superuser('testadmin', 'admin@example.com', 'adminpassword')
+        
+    request.user = admin_user
+    
+    # Run view
+    response = admin_dashboard(request)
+    print("VIEW 'admin_dashboard' EXECUTED OK! Status code:", response.status_code)
+    
+except Exception as e:
+    print("VIEW EXECUTION ERROR:", str(e))
+    import traceback
+    traceback.print_exc()
+    exit(1)
+
+
 

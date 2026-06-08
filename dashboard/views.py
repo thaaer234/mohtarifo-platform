@@ -66,7 +66,7 @@ from .forms import (
 from .models import CatalogSection, StudentNotification, WhatsAppTemplate
 from .seo import _site_url
 from .security import sanitize_plain_text, validate_syrian_mobile
-from .whatsapp_utils import get_whatsapp_status, logout_whatsapp, send_whatsapp_message, guess_gender_from_name, parse_gender_grammar
+from .whatsapp_utils import get_whatsapp_status, logout_whatsapp, send_whatsapp_message, guess_gender_from_name, parse_gender_grammar, is_2fa_disabled
 from .otp_service import send_otp, verify_otp, OTP_EXPIRY_SECONDS, OTP_RESEND_COOLDOWN_SECONDS, OTP_LENGTH
 
 
