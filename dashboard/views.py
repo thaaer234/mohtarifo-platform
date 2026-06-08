@@ -546,6 +546,11 @@ def login_view(request):
                 return render(request, "registration/login.html", {"form": AuthenticationForm()}, status=429)
 
             if verify_instructor_password(resolved_user, raw_password):
+                from .whatsapp_utils import is_2fa_disabled
+                if is_2fa_disabled():
+                    login(request, resolved_user)
+                    return redirect("dashboard:home")
+
                 phone = _get_user_phone(resolved_user)
                 request.session["otp_login_user_id"] = resolved_user.id
                 request.session["otp_login_phone"] = phone
@@ -582,6 +587,14 @@ def login_view(request):
         # Resolve the phone number associated with the user
         phone = _get_user_phone(user)
         
+        from .whatsapp_utils import is_2fa_disabled
+        if is_2fa_disabled():
+            login(request, user)
+            response = redirect("dashboard:home")
+            if not user.is_staff:
+                activate_user_device(request, user, response)
+            return response
+
         request.session["otp_login_user_id"] = user.id
         request.session["otp_login_phone"] = phone
         
@@ -681,7 +694,7 @@ def register_view(request):
     if request.method == "POST" and form.is_valid():
         # Store form data in session and send OTP
         phone = form.cleaned_data["username"]
-        request.session["otp_register_data"] = {
+        reg_data = {
             "first_name": form.cleaned_data["first_name"],
             "username": phone,
             "track": form.cleaned_data["track"],
@@ -690,7 +703,67 @@ def register_view(request):
             "email": form.cleaned_data.get("email", ""),
             "password1": form.cleaned_data["password1"],
         }
+        request.session["otp_register_data"] = reg_data
         
+        from .whatsapp_utils import is_2fa_disabled
+        if is_2fa_disabled():
+            from django.db import transaction
+            import threading
+            from .whatsapp_utils import parse_gender_grammar, send_whatsapp_message
+            from django.contrib.auth.models import User
+            from accounts.models import StudentProfile
+            
+            try:
+                with transaction.atomic():
+                    user = User.objects.create_user(
+                        username=reg_data["username"],
+                        password=reg_data["password1"],
+                        first_name=reg_data["first_name"],
+                        last_name="",
+                        email=reg_data.get("email", ""),
+                    )
+                    student_gender = reg_data["gender"]
+                    StudentProfile.objects.update_or_create(
+                        user=user,
+                        defaults={
+                            "grade": "الثالث الثانوي",
+                            "track": reg_data["track"],
+                            "governorate": reg_data["governorate"],
+                            "phone": reg_data["username"],
+                            "gender": student_gender,
+                        },
+                    )
+                    
+                    # Send WhatsApp welcome message
+                    student_phone = reg_data["username"]
+                    student_name = user.get_full_name() or user.username
+                    
+                    welcome_template = (
+                        f"مرحباً بك {student_name} في منصة محترفو التعليم! ✨🎓\n\n"
+                        "يسعدنا جداً {انضمامك|انضمامكِ} إلى عائلتنا التعليمية المتميزة. تم إنشاء حسابك الشخصي بنجاح وأصبح جاهزاً تماماً للاستخدام. 🚀🌟\n\n"
+                        "نتمنى لك مسيرة مليئة بالتفوق والإنجاز، ونؤكد لك بأن كادر المنصة دائماً {بجانبك|بجانبكِ} ويسعى لتقديم أفضل تجربة تعليمية تليق بطموحاتك العالية. 💼💫"
+                    )
+                    
+                    welcome_text = parse_gender_grammar(welcome_template, student_gender)
+                    
+                    transaction.on_commit(lambda: threading.Thread(
+                        target=send_whatsapp_message,
+                        args=(student_phone, welcome_text),
+                        daemon=True
+                    ).start())
+                
+                # Clean up session
+                request.session.pop("otp_register_data", None)
+                
+                login(request, user)
+                messages.success(request, "تم إنشاء حسابك بنجاح. يمكنك الآن إضافة كود المادة.")
+                response = redirect("dashboard:student_dashboard")
+                activate_user_device(request, user, response)
+                return response
+            except Exception as e:
+                messages.error(request, f"حدث خطأ أثناء إنشاء الحساب: {str(e)}")
+                return render(request, "registration/register.html", {"form": form})
+
         # Send OTP
         otp_result = send_otp(phone, purpose="register", request=request)
         if not otp_result["success"]:
@@ -5588,6 +5661,17 @@ def admin_whatsapp_control(request):
             messages.success(request, "تم حذف قالب الرسالة بنجاح.")
             return redirect("dashboard:admin_whatsapp_control")
 
+        # 7. Toggle 2FA verification
+        elif "toggle_2fa" in request.POST:
+            from .whatsapp_utils import set_2fa_disabled
+            disable_otp = request.POST.get("disable_2fa") == "true"
+            set_2fa_disabled(disable_otp)
+            if disable_otp:
+                messages.success(request, "🔓 تم إيقاف التحقق الثنائي بنجاح. يمكن للطلاب تسجيل الدخول وإنشاء حسابات دون إرسال رمز تحقق.")
+            else:
+                messages.success(request, "🔒 تم تفعيل التحقق الثنائي بنجاح. سيتم طلب رمز تحقق عبر واتساب عند تسجيل الدخول أو إنشاء حساب.")
+            return redirect("dashboard:admin_whatsapp_control")
+
     status_data = get_whatsapp_status()
     # Fetch with related instructor information to display instructor name in selection list
     courses = Course.objects.filter(status="published").select_related("instructor").order_by("title")
@@ -5635,6 +5719,7 @@ def admin_whatsapp_control(request):
     recent_students.sort(key=lambda x: x["date"] or timezone.now(), reverse=True)
     recent_students = recent_students[:12]
 
+    from .whatsapp_utils import is_2fa_disabled
     return render(request, "dashboard/admin_whatsapp_control.html", {
         "status": status_data.get("status", "offline"),
         "qr": status_data.get("qr"),
@@ -5643,7 +5728,8 @@ def admin_whatsapp_control(request):
         "courses": courses,
         "templates": db_templates,
         "branches": branches,
-        "recent_students": recent_students
+        "recent_students": recent_students,
+        "otp_2fa_disabled": is_2fa_disabled(),
     })
 
 

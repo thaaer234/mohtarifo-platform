@@ -158,3 +158,36 @@ def parse_gender_grammar(text, gender):
             # Defaults to male for unknown or male
             text = text.replace(original_token, opt_male.strip())
     return text
+
+def is_2fa_disabled():
+    """Checks if two-factor authentication (OTP verification) is disabled."""
+    import json
+    from django.conf import settings
+    config_path = os.path.join(settings.BASE_DIR, 'config', 'otp_config.json')
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get('otp_2fa_disabled', False)
+        except Exception:
+            pass
+    return False
+
+def set_2fa_disabled(disabled):
+    """Enables or disables two-factor authentication (OTP verification)."""
+    import json
+    from django.conf import settings
+    config_path = os.path.join(settings.BASE_DIR, 'config', 'otp_config.json')
+    try:
+        data = {}
+        if os.path.exists(config_path):
+            with open(config_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+        data['otp_2fa_disabled'] = bool(disabled)
+        with open(config_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=4)
+        return True
+    except Exception as e:
+        logger.error(f"Failed to write OTP config file: {e}")
+        return False
+

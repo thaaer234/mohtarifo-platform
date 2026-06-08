@@ -56,6 +56,51 @@
         </div>
     </article>
 
+    <!-- Security / Two-Factor Authentication Control Widget -->
+    <article class="premium-card glass-panel mb-8" style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.45) 0%, rgba(30, 41, 59, 0.25) 100%); border: 1px solid {% if otp_2fa_disabled %}rgba(239, 68, 68, 0.25){% else %}rgba(37, 211, 102, 0.25){% endif %}; border-radius: 24px; padding: 1.5rem 2rem; transition: all 0.3s ease-in-out;">
+        <div class="flex-between align-center" style="flex-wrap: wrap; gap: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <div class="status-orb {% if otp_2fa_disabled %}error{% else %}active{% endif %}" style="width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center;">
+                    <i data-lucide="{% if otp_2fa_disabled %}shield-alert{% else %}shield-check{% endif %}" style="width: 24px; height: 24px; color: {% if otp_2fa_disabled %}#ef4444{% else %}#25D366{% endif %};"></i>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; color: #fff;">
+                        نظام التحقق الثنائي (2FA OTP)
+                        {% if otp_2fa_disabled %}
+                            <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; font-size: 0.75rem; border-radius: 8px; padding: 2px 10px; font-weight: bold; border: 1px solid rgba(239, 68, 68, 0.25);">مُعطّل (دخول مباشر)</span>
+                        {% else %}
+                            <span class="badge" style="background: rgba(37, 211, 102, 0.15); color: #25D366; font-size: 0.75rem; border-radius: 8px; padding: 2px 10px; font-weight: bold; border: 1px solid rgba(37, 211, 102, 0.25);">نشط ومحمي</span>
+                        {% endif %}
+                    </h3>
+                    <p style="margin: 4px 0 0; color: var(--text-muted); font-size: 0.85rem;">
+                        {% if otp_2fa_disabled %}
+                            ⚠️ يتم الآن تسجيل دخول الطلاب وإنشاء الحسابات الجديدة تلقائياً بدون إرسال أو طلب رمز تحقق عبر واتساب.
+                        {% else %}
+                            🔒 يتطلب تسجيل الدخول وإنشاء حساب جديد رمز تحقق فريداً (OTP) يتم إرساله إلى واتساب الطالب.
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            <div>
+                <form method="post" style="margin: 0;">
+                    {% csrf_token %}
+                    <input type="hidden" name="toggle_2fa" value="1">
+                    {% if otp_2fa_disabled %}
+                        <input type="hidden" name="disable_2fa" value="false">
+                        <button type="submit" class="btn" style="background: #25D366; color: #000; font-weight: 800; border-radius: 12px; padding: 0.65rem 1.5rem; border: none; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; box-shadow: 0 4px 14px rgba(37, 211, 102, 0.25);">
+                            <i data-lucide="shield-check" style="width: 16px; height: 16px;"></i> تفعيل التحقق الثنائي
+                        </button>
+                    {% else %}
+                        <input type="hidden" name="disable_2fa" value="true">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('⚠️ تحذير: إيقاف التحقق الثنائي سيلغي إرسال رمز التحقق ويسجل دخول الطلاب الجدد والحاليين مباشرة دون إثبات ملكية الرقم. هل أنت متأكد من رغبتك بإيقافه؟')" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; font-weight: 800; border-radius: 12px; padding: 0.65rem 1.5rem; border: 1px solid rgba(239, 68, 68, 0.3); cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                            <i data-lucide="shield-alert" style="width: 16px; height: 16px;"></i> إيقاف التحقق الثنائي
+                        </button>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </article>
+
     <div class="dashboard-grid" style="display: grid; grid-template-columns: 1fr 360px; gap: 2rem;">
         
         <!-- Left Main Column -->
