@@ -1005,13 +1005,24 @@ def admin_dashboard(request):
     from analytics.services import TrackingService
     TrackingService.log_landing_visit(request)
 
-    if request.method == "POST" and request.POST.get("action") == "clear_system_logs":
-        import os
-        for f in ["landing_error_log.txt", "profile_error_log.txt"]:
-            if os.path.exists(f):
-                os.remove(f)
-        messages.success(request, "تم مسح سجلات الأخطاء بنجاح.")
-        return redirect("dashboard:admin_dashboard")
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "clear_system_logs":
+            import os
+            for f in ["landing_error_log.txt", "profile_error_log.txt"]:
+                if os.path.exists(f):
+                    os.remove(f)
+            messages.success(request, "تم مسح سجلات الأخطاء بنجاح.")
+            return redirect("dashboard:admin_dashboard")
+        elif action == "toggle_2fa":
+            from .whatsapp_utils import set_2fa_disabled
+            disable_otp = request.POST.get("disable_2fa") == "true"
+            set_2fa_disabled(disable_otp)
+            if disable_otp:
+                messages.success(request, "🔓 تم إيقاف التحقق الثنائي بنجاح. يمكن للطلاب تسجيل الدخول وإنشاء حسابات دون إرسال رمز تحقق.")
+            else:
+                messages.success(request, "🔒 تم تفعيل التحقق الثنائي بنجاح. سيتم طلب رمز تحقق عبر واتساب عند تسجيل الدخول أو إنشاء حساب.")
+            return redirect("dashboard:admin_dashboard")
 
     
     from analytics.models import LandingVisit
@@ -1089,7 +1100,8 @@ def admin_dashboard(request):
             "recent": recent_traffic
         },
         "system_logs": system_logs,
-        "health_checks": health_checks
+        "health_checks": health_checks,
+        "otp_2fa_disabled": is_2fa_disabled()
     }
 
 

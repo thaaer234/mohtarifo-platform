@@ -169,6 +169,32 @@
                 <a href="{% url 'dashboard:admin_system_backup' %}"><i data-lucide="archive"></i><span>نسخة احتياطية JSON</span></a>
                 <a href="/admin/" target="_blank"><i data-lucide="settings"></i><span>Django Admin المتقدم</span></a>
             </div>
+            
+            <!-- Beautiful inline toggle control for 2FA -->
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid {% if otp_2fa_disabled %}rgba(239, 68, 68, 0.25){% else %}rgba(37, 211, 102, 0.25){% endif %}; border-radius: 16px; padding: 1.1rem; margin-top: 1.25rem; transition: all 0.3s;">
+                <div class="flex-between align-center" style="gap: 0.75rem;">
+                    <div style="display: flex; align-items: center; gap: 0.65rem;">
+                        <i data-lucide="{% if otp_2fa_disabled %}shield-alert{% else %}shield-check{% endif %}" style="width: 20px; height: 20px; color: {% if otp_2fa_disabled %}#ef4444{% else %}#25D366{% endif %}; flex-shrink: 0;"></i>
+                        <div style="text-align: right;">
+                            <strong style="font-size: 0.85rem; display: block; color: #fff; margin-bottom: 2px;">التحقق الثنائي (2FA OTP)</strong>
+                            <span style="font-size: 0.72rem; color: var(--text-muted);">
+                                {% if otp_2fa_disabled %}مُعطّل (دخول مباشر للأجهزة){% else %}نشط لحماية الحسابات{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    <form method="post" style="margin: 0;">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="toggle_2fa">
+                        {% if otp_2fa_disabled %}
+                            <input type="hidden" name="disable_2fa" value="false">
+                            <button type="submit" class="btn btn-sm" style="background: #25D366; color: #000; font-weight: 800; border-radius: 8px; padding: 0.4rem 0.80rem; border: none; cursor: pointer; font-size: 0.75rem; box-shadow: 0 2px 8px rgba(37, 211, 102, 0.2);">تفعيل</button>
+                        {% else %}
+                            <input type="hidden" name="disable_2fa" value="true">
+                            <button type="submit" class="btn btn-sm" onclick="return confirm('⚠️ تحذير: إيقاف التحقق الثنائي سيلغي إرسال رمز التحقق ويسجل دخول الطلاب الجدد والحاليين مباشرة دون إثبات ملكية الرقم. هل أنت متأكد من رغبتك بإيقافه؟')" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; font-weight: 800; border-radius: 8px; padding: 0.4rem 0.80rem; border: 1px solid rgba(239, 68, 68, 0.3); cursor: pointer; font-size: 0.75rem;">إيقاف</button>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
         </article>
     </section>
 

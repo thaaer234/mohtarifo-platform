@@ -30,7 +30,10 @@ print("\n--- Testing Template Compilation ---")
 try:
     loader.get_template("dashboard/admin_whatsapp_control.html")
     print("TEMPLATE 'admin_whatsapp_control.html' COMPILES OK!")
+    loader.get_template("dashboard/admin_dashboard.html")
+    print("TEMPLATE 'admin_dashboard.html' COMPILES OK!")
 except Exception as e:
     print("TEMPLATE ERROR:", str(e))
     exit(1)
+
 
