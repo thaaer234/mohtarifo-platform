@@ -305,6 +305,12 @@ class AccessGrant(models.Model):
     expires_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    print_password = models.CharField(max_length=40, blank=True, verbose_name="كلمة مرور الطباعة")
+    print_quota = models.PositiveIntegerField(default=2, verbose_name="الحد الأقصى للطباعة")
+    main_pdf_printed = models.PositiveIntegerField(default=0, verbose_name="مرات طباعة ملف المادة")
+    file1_printed = models.PositiveIntegerField(default=0, verbose_name="مرات طباعة الملف الإضافي 1")
+    file2_printed = models.PositiveIntegerField(default=0, verbose_name="مرات طباعة الملف الإضافي 2")
+
     class Meta:
         verbose_name = "صلاحية وصول"
         verbose_name_plural = "صلاحيات الوصول"
@@ -315,6 +321,25 @@ class AccessGrant(models.Model):
     def __str__(self):
         target = self.course or self.lesson
         return f"{self.user} -> {target}"
+
+    @property
+    def print_remaining(self):
+        return max(0, self.print_quota - self.main_pdf_printed)
+
+    @property
+    def file1_remaining(self):
+        return max(0, self.print_quota - self.file1_printed)
+
+    @property
+    def file2_remaining(self):
+        return max(0, self.print_quota - self.file2_printed)
+
+    def save(self, *args, **kwargs):
+        if not self.print_password:
+            import random
+            import string
+            self.print_password = "".join(random.choices(string.digits, k=6))
+        super().save(*args, **kwargs)
 
 
 class UserDevice(models.Model):

@@ -169,7 +169,7 @@ class AccessCodeAdmin(ImportExportModelAdmin):
 
 @admin.register(AccessGrant)
 class AccessGrantAdmin(admin.ModelAdmin):
-    list_display = ("user", "course", "lesson", "source", "access_code", "device_fingerprint", "starts_at", "expires_at", "created_at")
+    list_display = ("user", "course", "lesson", "source", "access_code", "print_password", "print_quota", "main_pdf_printed", "file1_printed", "file2_printed", "device_fingerprint", "starts_at", "expires_at", "created_at")
     list_filter = ("source", "course", "access_code__institute", "access_code__sales_center")
     search_fields = ("user__username", "user__email", "course__title", "lesson__title", "access_code__code", "device_fingerprint")
     autocomplete_fields = ("user", "course", "lesson", "access_code")

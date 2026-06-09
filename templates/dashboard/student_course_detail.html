@@ -240,9 +240,9 @@
                                     عرض الملف بأمان
                                 </a>
                                 {% if course.allow_pdf_download %}
-                                    <a href="{% url 'dashboard:download_course_pdf' course.id %}" class="btn-download-secondary w-full text-center">
+                                    <a href="javascript:void(0)" onclick="openPrintModal('{% url 'dashboard:download_course_pdf' course.id %}', '{{ active_grant.print_remaining|default:2 }}')" class="btn-download-secondary w-full text-center">
                                         <i data-lucide="download" style="width: 16px; height: 16px; margin-left: 6px;"></i>
-                                        تنزيل مباشر للملف
+                                        تنزيل مباشر للملف (متبقي {{ active_grant.print_remaining|default:2 }} تحميلات)
                                     </a>
                                     <p class="watermark-notice-text">
                                         <i data-lucide="shield-check" style="width: 12px; height: 12px; display: inline; margin-left: 2px; vertical-align: middle;"></i>
@@ -262,11 +262,22 @@
                                                 <div class="additional-file-icon">
                                                     <i data-lucide="paperclip" style="width: 16px; height: 16px;"></i>
                                                 </div>
-                                                <span class="additional-file-name">{{ course.file1_name|default:"الملف الإضافي 1" }}</span>
+                                                <span class="additional-file-name">
+                                                    {{ course.file1_name|default:"الملف الإضافي 1" }}
+                                                    {% if ".pdf" in course.file1.name|lower %}
+                                                        <span style="font-size: 0.75rem; color: var(--brand-gold); margin-right: 6px;">(متبقي {{ active_grant.file1_remaining|default:2 }} تحميلات)</span>
+                                                    {% endif %}
+                                                </span>
                                             </div>
-                                            <a href="{% url 'dashboard:download_course_file1' course.id %}" class="btn-download-icon" title="تحميل">
-                                                <i data-lucide="download" style="width: 16px; height: 16px;"></i>
-                                            </a>
+                                            {% if ".pdf" in course.file1.name|lower %}
+                                                <a href="javascript:void(0)" onclick="openPrintModal('{% url 'dashboard:download_course_file1' course.id %}', '{{ active_grant.file1_remaining|default:2 }}')" class="btn-download-icon" title="تحميل">
+                                                    <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                                                </a>
+                                            {% else %}
+                                                <a href="{% url 'dashboard:download_course_file1' course.id %}" class="btn-download-icon" title="تحميل">
+                                                    <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                                                </a>
+                                            {% endif %}
                                         </div>
                                     {% endif %}
                                     {% if course.file2 %}
@@ -275,11 +286,22 @@
                                                 <div class="additional-file-icon">
                                                     <i data-lucide="paperclip" style="width: 16px; height: 16px;"></i>
                                                 </div>
-                                                <span class="additional-file-name">{{ course.file2_name|default:"الملف الإضافي 2" }}</span>
+                                                <span class="additional-file-name">
+                                                    {{ course.file2_name|default:"الملف الإضافي 2" }}
+                                                    {% if ".pdf" in course.file2.name|lower %}
+                                                        <span style="font-size: 0.75rem; color: var(--brand-gold); margin-right: 6px;">(متبقي {{ active_grant.file2_remaining|default:2 }} تحميلات)</span>
+                                                    {% endif %}
+                                                </span>
                                             </div>
-                                            <a href="{% url 'dashboard:download_course_file2' course.id %}" class="btn-download-icon" title="تحميل">
-                                                <i data-lucide="download" style="width: 16px; height: 16px;"></i>
-                                            </a>
+                                            {% if ".pdf" in course.file2.name|lower %}
+                                                <a href="javascript:void(0)" onclick="openPrintModal('{% url 'dashboard:download_course_file2' course.id %}', '{{ active_grant.file2_remaining|default:2 }}')" class="btn-download-icon" title="تحميل">
+                                                    <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                                                </a>
+                                            {% else %}
+                                                <a href="{% url 'dashboard:download_course_file2' course.id %}" class="btn-download-icon" title="تحميل">
+                                                    <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                                                </a>
+                                            {% endif %}
                                         </div>
                                     {% endif %}
                                 </div>
@@ -1216,5 +1238,72 @@
             window.lucide.createIcons();
         }
     });
+
+    function openPrintModal(downloadUrl, remainingUses) {
+        const modal = document.getElementById('print-password-modal');
+        const form = document.getElementById('print-password-form');
+        const input = document.getElementById('print-password-input');
+        const remainingSpan = document.getElementById('print-modal-remaining');
+        
+        form.action = downloadUrl;
+        input.value = '';
+        if (remainingSpan) {
+            remainingSpan.textContent = remainingUses;
+        }
+        
+        modal.style.display = 'flex';
+        setTimeout(() => {
+            modal.style.opacity = '1';
+            input.focus();
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        }, 10);
+    }
+
+    function closePrintModal() {
+        const modal = document.getElementById('print-password-modal');
+        modal.style.opacity = '0';
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+    }
+
+    function submitPrintForm(event) {
+        // Form submits normally to trigger file download.
+        // We close the modal after a short delay so the user interface resets.
+        setTimeout(() => {
+            closePrintModal();
+        }, 800);
+    }
 </script>
+
+<!-- Print Password Modal Overlay -->
+<div id="print-password-modal" style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(12px); z-index: 99999; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease; padding: 1.5rem; direction: rtl;">
+    <div style="background: var(--bg-surface); border: 1px solid rgba(var(--brand-gold-rgb), 0.35); border-radius: 24px; padding: 2.5rem 2rem; max-width: 420px; width: 100%; box-shadow: var(--shadow-glow); text-align: center; position: relative;">
+        <!-- Close button -->
+        <button type="button" onclick="closePrintModal()" style="position: absolute; top: 1.25rem; left: 1.25rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: var(--text-secondary); width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+            <i data-lucide="x" style="width: 18px; height: 18px;"></i>
+        </button>
+        
+        <!-- Icon -->
+        <div style="width: 72px; height: 72px; background: rgba(var(--brand-gold-rgb), 0.1); border: 1px solid rgba(var(--brand-gold-rgb), 0.25); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: var(--brand-gold); box-shadow: 0 0 20px rgba(var(--brand-gold-rgb), 0.15);">
+            <i data-lucide="printer" style="width: 32px; height: 32px;"></i>
+        </div>
+
+        <h3 style="font-family: 'Cairo', sans-serif; font-size: 1.4rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary);">تحميل نسخة الطباعة المؤمنة</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.6;">
+            يرجى إدخال كلمة مرور الطباعة لتشفير وتحميل الملف. <br>
+            المتبقي لديك: <strong style="color: var(--brand-gold);" id="print-modal-remaining">2</strong> تحميلات.
+        </p>
+
+        <form id="print-password-form" method="POST" onsubmit="submitPrintForm(event)">
+            {% csrf_token %}
+            <input type="password" name="print_password" id="print-password-input" placeholder="أدخل كلمة مرور الطباعة" required style="width: 100%; padding: 0.85rem 1rem; border-radius: 12px; border: 1px solid var(--border-strong); background: rgba(0,0,0,0.3); color: white; text-align: center; font-size: 1.25rem; margin-bottom: 1.25rem; font-family: monospace; letter-spacing: 2px;">
+            <button type="submit" class="btn btn-primary w-full" style="padding: 0.9rem; font-weight: 800; font-size: 1rem; border-radius: 12px; cursor: pointer;">
+                فك تشفير وتحميل الملف
+            </button>
+        </form>
+    </div>
+</div>
 {% endblock %}

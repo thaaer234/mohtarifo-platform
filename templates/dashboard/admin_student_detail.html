@@ -72,24 +72,64 @@
 
             <div class="admin-card-list mb-6">
                 {% for grant in student_grants %}
-                    <div class="admin-item-card">
-                        <div class="item-info">
-                            <strong>{{ grant.course.title|default:"صلاحية خاصة" }} - أ. {{ grant.course.instructor.get_full_name|default:grant.course.instructor.username }}</strong>
-                            <span>طريقة التفعيل: 
-                                {% if grant.source == "code" %}تفعيل كود ({{ grant.access_code.code }}){% elif grant.source == "purchase" %}شراء مباشر من الموقع{% elif grant.source == "admin_manual" or grant.source == "admin" %}تفعيل يدوي من الإدارة{% else %}{{ grant.source }}{% endif %} 
-                                | {{ grant.created_at|date:"Y-m-d H:i" }}
-                            </span>
+                    <div class="admin-item-card" style="display: flex; flex-direction: column; align-items: stretch; gap: 0.75rem; padding: 1.25rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="item-info">
+                                <strong>{{ grant.course.title|default:"صلاحية خاصة" }} - أ. {{ grant.course.instructor.get_full_name|default:grant.course.instructor.username }}</strong>
+                                <span>طريقة التفعيل: 
+                                    {% if grant.source == "code" %}تفعيل كود ({{ grant.access_code.code }}){% elif grant.source == "purchase" %}شراء مباشر من الموقع{% elif grant.source == "admin_manual" or grant.source == "admin" %}تفعيل يدوي من الإدارة{% else %}{{ grant.source }}{% endif %} 
+                                    | {{ grant.created_at|date:"Y-m-d H:i" }}
+                                </span>
+                            </div>
+                            <div class="item-actions">
+                                <form method="POST" onsubmit="return confirm('هل أنت متأكد من سحب صلاحية هذه المادة؟')">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="revoke_course">
+                                    <input type="hidden" name="grant_id" value="{{ grant.id }}">
+                                    <button type="submit" class="btn-icon" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.2);" title="سحب الصلاحية">
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
-                        <div class="item-actions">
-                            <form method="POST" onsubmit="return confirm('هل أنت متأكد من سحب صلاحية هذه المادة؟')">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="revoke_course">
-                                <input type="hidden" name="grant_id" value="{{ grant.id }}">
-                                <button type="submit" class="btn-icon" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.2);" title="سحب الصلاحية">
-                                    <i data-lucide="trash-2"></i>
-                                </button>
-                            </form>
+
+                        <!-- Print Quotas and Passwords (Only for Courses) -->
+                        {% if grant.course %}
+                        <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.05); padding: 0.75rem 1rem; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-top: 0.25rem;">
+                            <div style="font-size: 0.82rem; color: var(--brand-gold);">
+                                <i data-lucide="key" style="width: 14px; height: 14px; vertical-align: middle; margin-left: 2px;"></i> 
+                                كلمة مرور الطباعة: <strong style="color: white; font-family: monospace; font-size: 0.95rem;">{{ grant.print_password }}</strong>
+                                <span style="color: var(--text-muted); margin: 0 0.5rem;">|</span>
+                                <span style="color: var(--text-primary);">تحميلات المادة: {{ grant.main_pdf_printed }} / {{ grant.print_quota }}</span>
+                                {% if grant.course.file1 %}
+                                    <span style="color: var(--text-muted); margin: 0 0.25rem;">·</span>
+                                    <span style="color: var(--text-secondary);">ملف 1: {{ grant.file1_printed }}</span>
+                                {% endif %}
+                                {% if grant.course.file2 %}
+                                    <span style="color: var(--text-muted); margin: 0 0.25rem;">·</span>
+                                    <span style="color: var(--text-secondary);">ملف 2: {{ grant.file2_printed }}</span>
+                                {% endif %}
+                            </div>
+                            <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+                                <form method="POST" style="margin: 0; display: inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="reset_print_quota">
+                                    <input type="hidden" name="grant_id" value="{{ grant.id }}">
+                                    <button type="submit" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 4px 10px; min-height: 28px;" onclick="return confirm('هل أنت متأكد من تصفير عدادات الطباعة/التحميل لهذه المادة للطالب؟')">
+                                        تصفير العداد
+                                    </button>
+                                </form>
+                                <form method="POST" style="margin: 0; display: inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="regenerate_print_password">
+                                    <input type="hidden" name="grant_id" value="{{ grant.id }}">
+                                    <button type="submit" class="btn btn-glass btn-sm" style="font-size: 0.75rem; padding: 4px 10px; min-height: 28px;" onclick="return confirm('هل أنت متأكد من تغيير كلمة مرور الطباعة لهذه المادة؟ سيتم توليد رمز عشوائي جديد.')">
+                                        تحديث كلمة المرور
+                                    </button>
+                                </form>
+                            </div>
                         </div>
+                        {% endif %}
                     </div>
                 {% empty %}
                     <p class="text-center p-6 color-muted">لا يوجد مواد مفعلة لهذا الطالب حالياً.</p>

@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.db import models
-
+from django.contrib.auth.hashers import make_password, check_password
 from learning.models import Course, Lesson, Topic, Unit
 
 
