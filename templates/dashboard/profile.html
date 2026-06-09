@@ -101,12 +101,6 @@
                                 {% if grant.course %}{{ grant.course.title }}{% elif grant.lesson %}{{ grant.lesson.title }}{% endif %}
                             </strong>
                             <span class="text-muted" style="font-size: 0.75rem;">{{ grant.get_source_display }} · {{ grant.created_at|date:"Y/m/d" }}</span>
-                            {% if grant.course and grant.print_password %}
-                                <div style="font-size: 0.82rem; margin-top: 6px; color: var(--brand-gold); display: flex; align-items: center; gap: 4px;">
-                                    <i data-lucide="key" style="width: 13px; height: 13px;"></i>
-                                    <span>كلمة مرور الطباعة: <strong style="color: white; font-family: monospace; font-size: 0.95rem; margin-right: 4px;">{{ grant.print_password }}</strong></span>
-                                </div>
-                            {% endif %}
                         </div>
                     </div>
                     <div>
