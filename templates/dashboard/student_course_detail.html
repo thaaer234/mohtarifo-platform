@@ -235,19 +235,36 @@
                             </div>
                             
                             <div class="resource-pdf-actions">
-                                <a href="javascript:void(0)" onclick="openPrintModal('{% url 'dashboard:view_course_pdf' course.id %}', '{{ active_grant.print_remaining|default:2 }}', true)" class="btn-pro btn-pro-accent w-full text-center">
-                                    <i data-lucide="eye" style="width: 16px; height: 16px; margin-left: 6px;"></i>
-                                    عرض الملف بأمان (متبقي {{ active_grant.print_remaining|default:2 }} مشاهدات)
-                                </a>
-                                {% if course.allow_pdf_download %}
-                                    <a href="javascript:void(0)" onclick="openPrintModal('{% url 'dashboard:download_course_pdf' course.id %}', '{{ active_grant.print_remaining|default:2 }}')" class="btn-download-secondary w-full text-center">
-                                        <i data-lucide="download" style="width: 16px; height: 16px; margin-left: 6px;"></i>
-                                        تنزيل مباشر للملف (متبقي {{ active_grant.print_remaining|default:2 }} تحميلات)
+                                {% if course.pdf_protected_enabled %}
+                                    <a href="javascript:void(0)" onclick="openPrintModal('{% url 'dashboard:view_course_pdf' course.id %}', '{{ active_grant.print_remaining|default:2 }}', true)" class="btn-pro btn-pro-accent w-full text-center">
+                                        <i data-lucide="eye" style="width: 16px; height: 16px; margin-left: 6px;"></i>
+                                        عرض الملف بأمان (متبقي {{ active_grant.print_remaining|default:2 }} مشاهدات)
                                     </a>
-                                    <p class="watermark-notice-text">
-                                        <i data-lucide="shield-check" style="width: 12px; height: 12px; display: inline; margin-left: 2px; vertical-align: middle;"></i>
-                                        الملف المُحمّل يحتوي علامة مائية باسمك لحماية حقوق النشر.
-                                    </p>
+                                    {% if course.allow_pdf_download %}
+                                        <a href="javascript:void(0)" onclick="openPrintModal('{% url 'dashboard:download_course_pdf' course.id %}', '{{ active_grant.print_remaining|default:2 }}')" class="btn-download-secondary w-full text-center">
+                                            <i data-lucide="download" style="width: 16px; height: 16px; margin-left: 6px;"></i>
+                                            تنزيل مباشر للملف (متبقي {{ active_grant.print_remaining|default:2 }} تحميلات)
+                                        </a>
+                                        <p class="watermark-notice-text">
+                                            <i data-lucide="shield-check" style="width: 12px; height: 12px; display: inline; margin-left: 2px; vertical-align: middle;"></i>
+                                            الملف المُحمّل يحتوي علامة مائية باسمك لحماية حقوق النشر.
+                                        </p>
+                                    {% endif %}
+                                {% else %}
+                                    <a href="{% url 'dashboard:view_course_pdf' course.id %}" target="_blank" class="btn-pro btn-pro-accent w-full text-center">
+                                        <i data-lucide="eye" style="width: 16px; height: 16px; margin-left: 6px;"></i>
+                                        عرض الملف
+                                    </a>
+                                    {% if course.allow_pdf_download %}
+                                        <a href="{% url 'dashboard:download_course_pdf' course.id %}" class="btn-download-secondary w-full text-center">
+                                            <i data-lucide="download" style="width: 16px; height: 16px; margin-left: 6px;"></i>
+                                            تحميل الملف
+                                        </a>
+                                        <p class="watermark-notice-text">
+                                            <i data-lucide="shield-check" style="width: 12px; height: 12px; display: inline; margin-left: 2px; vertical-align: middle;"></i>
+                                            الملف المُحمّل يحتوي علامة مائية باسمك لحماية حقوق النشر.
+                                        </p>
+                                    {% endif %}
                                 {% endif %}
                             </div>
                         {% endif %}
@@ -265,14 +282,22 @@
                                                 <span class="additional-file-name">
                                                     {{ course.file1_name|default:"الملف الإضافي 1" }}
                                                     {% if ".pdf" in course.file1.name|lower %}
-                                                        <span style="font-size: 0.75rem; color: var(--brand-gold); margin-right: 6px;">(متبقي {{ active_grant.file1_remaining|default:2 }} تحميلات)</span>
+                                                        {% if course.pdf_protected_enabled %}
+                                                            <span style="font-size: 0.75rem; color: var(--brand-gold); margin-right: 6px;">(متبقي {{ active_grant.file1_remaining|default:2 }} تحميلات)</span>
+                                                        {% endif %}
                                                     {% endif %}
                                                 </span>
                                             </div>
                                             {% if ".pdf" in course.file1.name|lower %}
-                                                <a href="javascript:void(0)" onclick="openPrintModal('{% url 'dashboard:download_course_file1' course.id %}', '{{ active_grant.file1_remaining|default:2 }}')" class="btn-download-icon" title="تحميل">
-                                                    <i data-lucide="download" style="width: 16px; height: 16px;"></i>
-                                                </a>
+                                                {% if course.pdf_protected_enabled %}
+                                                    <a href="javascript:void(0)" onclick="openPrintModal('{% url 'dashboard:download_course_file1' course.id %}', '{{ active_grant.file1_remaining|default:2 }}')" class="btn-download-icon" title="تحميل">
+                                                        <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <a href="{% url 'dashboard:download_course_file1' course.id %}" class="btn-download-icon" title="تحميل">
+                                                        <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                                                    </a>
+                                                {% endif %}
                                             {% else %}
                                                 <a href="{% url 'dashboard:download_course_file1' course.id %}" class="btn-download-icon" title="تحميل">
                                                     <i data-lucide="download" style="width: 16px; height: 16px;"></i>
@@ -289,14 +314,22 @@
                                                 <span class="additional-file-name">
                                                     {{ course.file2_name|default:"الملف الإضافي 2" }}
                                                     {% if ".pdf" in course.file2.name|lower %}
-                                                        <span style="font-size: 0.75rem; color: var(--brand-gold); margin-right: 6px;">(متبقي {{ active_grant.file2_remaining|default:2 }} تحميلات)</span>
+                                                        {% if course.pdf_protected_enabled %}
+                                                            <span style="font-size: 0.75rem; color: var(--brand-gold); margin-right: 6px;">(متبقي {{ active_grant.file2_remaining|default:2 }} تحميلات)</span>
+                                                        {% endif %}
                                                     {% endif %}
                                                 </span>
                                             </div>
                                             {% if ".pdf" in course.file2.name|lower %}
-                                                <a href="javascript:void(0)" onclick="openPrintModal('{% url 'dashboard:download_course_file2' course.id %}', '{{ active_grant.file2_remaining|default:2 }}')" class="btn-download-icon" title="تحميل">
-                                                    <i data-lucide="download" style="width: 16px; height: 16px;"></i>
-                                                </a>
+                                                {% if course.pdf_protected_enabled %}
+                                                    <a href="javascript:void(0)" onclick="openPrintModal('{% url 'dashboard:download_course_file2' course.id %}', '{{ active_grant.file2_remaining|default:2 }}')" class="btn-download-icon" title="تحميل">
+                                                        <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <a href="{% url 'dashboard:download_course_file2' course.id %}" class="btn-download-icon" title="تحميل">
+                                                        <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+                                                    </a>
+                                                {% endif %}
                                             {% else %}
                                                 <a href="{% url 'dashboard:download_course_file2' course.id %}" class="btn-download-icon" title="تحميل">
                                                     <i data-lucide="download" style="width: 16px; height: 16px;"></i>

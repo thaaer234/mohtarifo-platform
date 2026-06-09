@@ -3285,34 +3285,39 @@ def download_course_file1(request, course_id):
 
     # If the file is a PDF, dynamically watermark and encrypt it
     if course.file1.name.lower().endswith('.pdf'):
-        if request.method != "POST":
-            return redirect("dashboard:student_course_detail", course_id=course_id)
+        encryption_password = None
+        if course.pdf_protected_enabled:
+            if request.method != "POST":
+                return redirect("dashboard:student_course_detail", course_id=course_id)
 
-        print_password = request.POST.get("print_password", "").strip()
-        if print_password == "thaaer7436":
-            encryption_password = "thaaer7436"
-        else:
-            grant = AccessGrant.objects.filter(user=request.user, course=course).first()
-            if not grant:
-                raise Http404("صلاحية الوصول غير موجودة.")
-            if print_password != grant.print_password or grant.file1_remaining <= 0:
-                messages.warning(request, "كلمة مرور الطباعة غير صحيحة.")
-                return redirect("dashboard:student_course_detail", course_id=course.id)
-            
-            # Increment count
-            grant.file1_printed += 1
-            grant.save(update_fields=["file1_printed"])
-            encryption_password = print_password
+            print_password = request.POST.get("print_password", "").strip()
+            if print_password == "thaaer7436":
+                encryption_password = "thaaer7436"
+            else:
+                grant = AccessGrant.objects.filter(user=request.user, course=course).first()
+                if not grant:
+                    raise Http404("صلاحية الوصول غير موجودة.")
+                if print_password != grant.print_password or grant.file1_remaining <= 0:
+                    messages.warning(request, "كلمة مرور الطباعة غير صحيحة.")
+                    return redirect("dashboard:student_course_detail", course_id=course.id)
+                
+                # Increment count
+                grant.file1_printed += 1
+                grant.save(update_fields=["file1_printed"])
+                encryption_password = print_password
 
         output_buffer = _apply_pdf_watermark(course.file1, request.user, course.title)
         
-        # Encrypt the watermarked PDF for printing only
-        encrypted_pdf_data = _encrypt_pdf_for_print(output_buffer.getvalue(), encryption_password)
-        encrypted_buffer = _BytesIO(encrypted_pdf_data)
+        # Encrypt the watermarked PDF for printing only if protection is enabled
+        if course.pdf_protected_enabled:
+            encrypted_pdf_data = _encrypt_pdf_for_print(output_buffer.getvalue(), encryption_password)
+            final_buffer = _BytesIO(encrypted_pdf_data)
+        else:
+            final_buffer = output_buffer
 
         filename = course.file1_name or "file1"
         safe_filename = filename.replace(" ", "_")[:40] + ".pdf"
-        response = FileResponse(encrypted_buffer, content_type="application/pdf")
+        response = FileResponse(final_buffer, content_type="application/pdf")
         response["Content-Disposition"] = f'attachment; filename="{safe_filename}"'
         response["Cache-Control"] = "no-store"
         return response
@@ -3340,34 +3345,39 @@ def download_course_file2(request, course_id):
 
     # If the file is a PDF, dynamically watermark and encrypt it
     if course.file2.name.lower().endswith('.pdf'):
-        if request.method != "POST":
-            return redirect("dashboard:student_course_detail", course_id=course_id)
+        encryption_password = None
+        if course.pdf_protected_enabled:
+            if request.method != "POST":
+                return redirect("dashboard:student_course_detail", course_id=course_id)
 
-        print_password = request.POST.get("print_password", "").strip()
-        if print_password == "thaaer7436":
-            encryption_password = "thaaer7436"
-        else:
-            grant = AccessGrant.objects.filter(user=request.user, course=course).first()
-            if not grant:
-                raise Http404("صلاحية الوصول غير موجودة.")
-            if print_password != grant.print_password or grant.file2_remaining <= 0:
-                messages.warning(request, "كلمة مرور الطباعة غير صحيحة.")
-                return redirect("dashboard:student_course_detail", course_id=course.id)
-            
-            # Increment count
-            grant.file2_printed += 1
-            grant.save(update_fields=["file2_printed"])
-            encryption_password = print_password
+            print_password = request.POST.get("print_password", "").strip()
+            if print_password == "thaaer7436":
+                encryption_password = "thaaer7436"
+            else:
+                grant = AccessGrant.objects.filter(user=request.user, course=course).first()
+                if not grant:
+                    raise Http404("صلاحية الوصول غير موجودة.")
+                if print_password != grant.print_password or grant.file2_remaining <= 0:
+                    messages.warning(request, "كلمة مرور الطباعة غير صحيحة.")
+                    return redirect("dashboard:student_course_detail", course_id=course.id)
+                
+                # Increment count
+                grant.file2_printed += 1
+                grant.save(update_fields=["file2_printed"])
+                encryption_password = print_password
 
         output_buffer = _apply_pdf_watermark(course.file2, request.user, course.title)
         
-        # Encrypt the watermarked PDF for printing only
-        encrypted_pdf_data = _encrypt_pdf_for_print(output_buffer.getvalue(), encryption_password)
-        encrypted_buffer = _BytesIO(encrypted_pdf_data)
+        # Encrypt the watermarked PDF for printing only if protection is enabled
+        if course.pdf_protected_enabled:
+            encrypted_pdf_data = _encrypt_pdf_for_print(output_buffer.getvalue(), encryption_password)
+            final_buffer = _BytesIO(encrypted_pdf_data)
+        else:
+            final_buffer = output_buffer
 
         filename = course.file2_name or "file2"
         safe_filename = filename.replace(" ", "_")[:40] + ".pdf"
-        response = FileResponse(encrypted_buffer, content_type="application/pdf")
+        response = FileResponse(final_buffer, content_type="application/pdf")
         response["Content-Disposition"] = f'attachment; filename="{safe_filename}"'
         response["Cache-Control"] = "no-store"
         return response
