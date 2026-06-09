@@ -2989,9 +2989,6 @@ def save_lesson_progress(request, lesson_id):
 @login_required
 def view_course_pdf(request, course_id):
     """Serve course PDF. If protection is enabled, apply watermark and password protection with usage limits. If disabled, serve the raw PDF directly."""
-    if request.method != "POST" and not request.user.is_staff:
-        return redirect("dashboard:student_course_detail", course_id=course_id)
-
     current_device = _current_device_fingerprint(request)
     course = get_object_or_404(Course, id=course_id)
     if not request.user.is_staff and not _device_grants(request.user, current_device).filter(course=course).exists():
@@ -3006,6 +3003,9 @@ def view_course_pdf(request, course_id):
         response["Content-Disposition"] = f'inline; filename="course-{course_id}.pdf"'
         response["Cache-Control"] = "no-store"
         return response
+
+    if request.method != "POST" and not request.user.is_staff:
+        return redirect("dashboard:student_course_detail", course_id=course_id)
 
     if request.user.is_staff:
         encryption_password = "thaaer7436"
@@ -3064,11 +3064,12 @@ def _encrypt_pdf_for_print(pdf_data: bytes, owner_password: str) -> bytes:
 @login_required
 def download_course_pdf(request, course_id):
     """Download course PDF with dynamic watermark (student name + phone) at random positions on every page."""
-    if request.method != "POST":
-        return redirect("dashboard:student_course_detail", course_id=course_id)
-
     current_device = _current_device_fingerprint(request)
     course = get_object_or_404(Course, id=course_id)
+
+    if course.pdf_protected_enabled:
+        if request.method != "POST":
+            return redirect("dashboard:student_course_detail", course_id=course_id)
 
     # 1. Must be enrolled
     if not request.user.is_staff and not _device_grants(request.user, current_device).filter(course=course).exists():
