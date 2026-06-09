@@ -256,7 +256,7 @@ class CourseCreateForm(forms.ModelForm):
 class CourseCardMediaForm(forms.ModelForm):
     class Meta:
         model = Course
-        fields = ["cover", "pdf_file", "allow_pdf_download", "file1", "file1_name", "file2", "file2_name"]
+        fields = ["cover", "pdf_file", "allow_pdf_download", "pdf_protected_enabled", "file1", "file1_name", "file2", "file2_name"]
         labels = {
             "cover": "غلاف كرت الدورة",
             "pdf_file": "ملف الـ PDF الخاص بالدورة كاملة",

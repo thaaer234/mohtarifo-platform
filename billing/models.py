@@ -334,6 +334,8 @@ class AccessGrant(models.Model):
     def file2_remaining(self):
         return max(0, self.print_quota - self.file2_printed)
 
+    view_counter = models.PositiveIntegerField(default=0, verbose_name="عدد مرات فتح PDF")
+
     def save(self, *args, **kwargs):
         if not self.print_password:
             import random

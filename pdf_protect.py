@@ -12,13 +12,17 @@ def protect_pdf(input_path: str, output_path: str, password: str):
         writer.write(f)
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print('Usage: python pdf_protect.py <input_pdf> <output_pdf>')
+    if len(sys.argv) not in (3, 4):
+        print('Usage: python pdf_protect.py <input_pdf> <output_pdf> [password]')
         sys.exit(1)
     input_pdf = sys.argv[1]
     output_pdf = sys.argv[2]
-    # generate a 6‑digit numeric password
-    pwd = ''.join(random.choices(string.digits, k=6))
+    if len(sys.argv) == 4:
+        pwd = sys.argv[3]
+    else:
+        # generate a 6‑digit numeric password
+        pwd = ''.join(random.choices(string.digits, k=6))
     protect_pdf(input_pdf, output_pdf, pwd)
     print('Password:', pwd)
     print('Protected PDF saved to', output_pdf)
+

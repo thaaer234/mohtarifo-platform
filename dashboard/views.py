@@ -2988,17 +2988,56 @@ def save_lesson_progress(request, lesson_id):
 
 @login_required
 def view_course_pdf(request, course_id):
-    """Serve course PDF inline — only for enrolled students."""
+    """Serve course PDF. If protection is enabled, apply watermark and password protection with usage limits. If disabled, serve the raw PDF directly."""
+    if request.method != "POST" and not request.user.is_staff:
+        return redirect("dashboard:student_course_detail", course_id=course_id)
+
     current_device = _current_device_fingerprint(request)
     course = get_object_or_404(Course, id=course_id)
     if not request.user.is_staff and not _device_grants(request.user, current_device).filter(course=course).exists():
         raise Http404("PDF not found")
     if not course.pdf_file:
         raise Http404("PDF not found")
-    response = FileResponse(course.pdf_file.open("rb"), content_type="application/pdf")
+
+    # If PDF protection is not enabled for this course, serve raw PDF
+    if not getattr(course, "pdf_protected_enabled", False):
+        raw_pdf = course.pdf_file.open("rb")
+        response = FileResponse(raw_pdf, content_type="application/pdf")
+        response["Content-Disposition"] = f'inline; filename="course-{course_id}.pdf"'
+        response["Cache-Control"] = "no-store"
+        return response
+
+    if request.user.is_staff:
+        encryption_password = "thaaer7436"
+    else:
+        print_password = request.POST.get("print_password", "").strip()
+        if print_password == "thaaer7436":
+            encryption_password = "thaaer7436"
+        else:
+            grant = AccessGrant.objects.filter(user=request.user, course=course).first()
+            if not grant:
+                raise Http404("صلاحية الوصول غير موجودة.")
+            if print_password != grant.print_password or grant.print_remaining <= 0:
+                messages.warning(request, "كلمة مرور الطباعة غير صحيحة.")
+                return redirect("dashboard:student_course_detail", course_id=course.id)
+
+            # Increment count
+            grant.main_pdf_printed += 1
+            grant.save(update_fields=["main_pdf_printed"])
+            encryption_password = print_password
+
+    # Apply watermark and encrypt
+    from io import BytesIO as _BytesIO
+    output_buffer = _apply_pdf_watermark(course.pdf_file, request.user, course.title)
+    encrypted_pdf_data = _encrypt_pdf_for_print(output_buffer.getvalue(), encryption_password)
+    encrypted_buffer = _BytesIO(encrypted_pdf_data)
+
+    response = FileResponse(encrypted_buffer, content_type="application/pdf")
     response["Content-Disposition"] = f'inline; filename="course-{course_id}.pdf"'
     response["Cache-Control"] = "no-store"
     return response
+
+
 
 
 def _encrypt_pdf_for_print(pdf_data: bytes, owner_password: str) -> bytes:
@@ -3042,29 +3081,27 @@ def download_course_pdf(request, course_id):
     if not course.pdf_file:
         raise Http404("PDF not found")
 
-    # 3. Print Password & Quota verification
-    print_password = request.POST.get("print_password", "").strip()
-    
-    if print_password == "thaaer7426":
-        # Admin bypass
-        encryption_password = "thaaer7426"
-    else:
-        grant = AccessGrant.objects.filter(user=request.user, course=course).first()
-        if not grant:
-            raise Http404("صلاحية الوصول غير موجودة.")
-            
-        if print_password != grant.print_password:
-            messages.warning(request, "كلمة مرور الطباعة غير صحيحة.")
-            return redirect("dashboard:student_course_detail", course_id=course.id)
-            
-        if grant.print_remaining <= 0:
-            messages.error(request, "تم تقييد الطباعة لهذا الملف. لقد استنفدت عدد مرات التحميل المسموحة (2 مرات).")
-            return redirect("dashboard:student_course_detail", course_id=course.id)
-            
-        # Increment print count and save
-        grant.main_pdf_printed += 1
-        grant.save(update_fields=["main_pdf_printed"])
-        encryption_password = print_password
+    # 3. Print Password & Quota verification (Only if protection is enabled)
+    encryption_password = None
+    if course.pdf_protected_enabled:
+        print_password = request.POST.get("print_password", "").strip()
+        
+        if print_password == "thaaer7436":
+            # Admin bypass
+            encryption_password = "thaaer7436"
+        else:
+            grant = AccessGrant.objects.filter(user=request.user, course=course).first()
+            if not grant:
+                raise Http404("صلاحية الوصول غير موجودة.")
+                
+            if print_password != grant.print_password or grant.print_remaining <= 0:
+                messages.warning(request, "كلمة مرور الطباعة غير صحيحة.")
+                return redirect("dashboard:student_course_detail", course_id=course.id)
+                
+            # Increment print count and save
+            grant.main_pdf_printed += 1
+            grant.save(update_fields=["main_pdf_printed"])
+            encryption_password = print_password
 
     import random
     from io import BytesIO as _BytesIO
@@ -3146,12 +3183,15 @@ def download_course_pdf(request, course_id):
     writer.write(output_buffer)
     output_buffer.seek(0)
 
-    # Encrypt the watermarked PDF for printing only
-    encrypted_pdf_data = _encrypt_pdf_for_print(output_buffer.getvalue(), encryption_password)
-    encrypted_buffer = _BytesIO(encrypted_pdf_data)
+    # Encrypt the watermarked PDF for printing only if protection is enabled
+    if course.pdf_protected_enabled:
+        encrypted_pdf_data = _encrypt_pdf_for_print(output_buffer.getvalue(), encryption_password)
+        final_buffer = _BytesIO(encrypted_pdf_data)
+    else:
+        final_buffer = output_buffer
 
     safe_title = course.title.replace(" ", "_")[:40]
-    response = FileResponse(encrypted_buffer, content_type="application/pdf")
+    response = FileResponse(final_buffer, content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="{safe_title}.pdf"'
     response["Cache-Control"] = "no-store"
     return response
@@ -3249,17 +3289,14 @@ def download_course_file1(request, course_id):
             return redirect("dashboard:student_course_detail", course_id=course_id)
 
         print_password = request.POST.get("print_password", "").strip()
-        if print_password == "thaaer7426":
-            encryption_password = "thaaer7426"
+        if print_password == "thaaer7436":
+            encryption_password = "thaaer7436"
         else:
             grant = AccessGrant.objects.filter(user=request.user, course=course).first()
             if not grant:
                 raise Http404("صلاحية الوصول غير موجودة.")
-            if print_password != grant.print_password:
+            if print_password != grant.print_password or grant.file1_remaining <= 0:
                 messages.warning(request, "كلمة مرور الطباعة غير صحيحة.")
-                return redirect("dashboard:student_course_detail", course_id=course.id)
-            if grant.file1_remaining <= 0:
-                messages.error(request, "تم تقييد الطباعة لهذا الملف. لقد استنفدت عدد مرات التحميل المسموحة (2 مرات).")
                 return redirect("dashboard:student_course_detail", course_id=course.id)
             
             # Increment count
@@ -3307,17 +3344,14 @@ def download_course_file2(request, course_id):
             return redirect("dashboard:student_course_detail", course_id=course_id)
 
         print_password = request.POST.get("print_password", "").strip()
-        if print_password == "thaaer7426":
-            encryption_password = "thaaer7426"
+        if print_password == "thaaer7436":
+            encryption_password = "thaaer7436"
         else:
             grant = AccessGrant.objects.filter(user=request.user, course=course).first()
             if not grant:
                 raise Http404("صلاحية الوصول غير موجودة.")
-            if print_password != grant.print_password:
+            if print_password != grant.print_password or grant.file2_remaining <= 0:
                 messages.warning(request, "كلمة مرور الطباعة غير صحيحة.")
-                return redirect("dashboard:student_course_detail", course_id=course.id)
-            if grant.file2_remaining <= 0:
-                messages.error(request, "تم تقييد الطباعة لهذا الملف. لقد استنفدت عدد مرات التحميل المسموحة (2 مرات).")
                 return redirect("dashboard:student_course_detail", course_id=course.id)
             
             # Increment count

@@ -235,9 +235,9 @@
                             </div>
                             
                             <div class="resource-pdf-actions">
-                                <a href="{% url 'dashboard:view_course_pdf' course.id %}" target="_blank" class="btn-pro btn-pro-accent w-full text-center">
+                                <a href="javascript:void(0)" onclick="openPrintModal('{% url 'dashboard:view_course_pdf' course.id %}', '{{ active_grant.print_remaining|default:2 }}', true)" class="btn-pro btn-pro-accent w-full text-center">
                                     <i data-lucide="eye" style="width: 16px; height: 16px; margin-left: 6px;"></i>
-                                    عرض الملف بأمان
+                                    عرض الملف بأمان (متبقي {{ active_grant.print_remaining|default:2 }} مشاهدات)
                                 </a>
                                 {% if course.allow_pdf_download %}
                                     <a href="javascript:void(0)" onclick="openPrintModal('{% url 'dashboard:download_course_pdf' course.id %}', '{{ active_grant.print_remaining|default:2 }}')" class="btn-download-secondary w-full text-center">
@@ -1239,16 +1239,35 @@
         }
     });
 
-    function openPrintModal(downloadUrl, remainingUses) {
+    function openPrintModal(downloadUrl, remainingUses, isView = false) {
         const modal = document.getElementById('print-password-modal');
         const form = document.getElementById('print-password-form');
         const input = document.getElementById('print-password-input');
         const remainingSpan = document.getElementById('print-modal-remaining');
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const headerTitle = modal.querySelector('h3');
+        const descriptionPara = modal.querySelector('p');
         
         form.action = downloadUrl;
         input.value = '';
         if (remainingSpan) {
             remainingSpan.textContent = remainingUses;
+        }
+        
+        if (isView) {
+            form.target = '_blank';
+            if (submitBtn) submitBtn.textContent = 'فك التشفير وعرض الملف';
+            if (headerTitle) headerTitle.textContent = 'استعراض النسخة المؤمنة';
+            if (descriptionPara) {
+                descriptionPara.innerHTML = 'يرجى إدخال كلمة مرور الطباعة لفك التشفير وعرض الملف في المتصفح. <br>المتبقي لديك: <strong style="color: var(--brand-gold);">' + remainingUses + '</strong> مشاهدات.';
+            }
+        } else {
+            form.target = '_self';
+            if (submitBtn) submitBtn.textContent = 'فك تشفير وتحميل الملف';
+            if (headerTitle) headerTitle.textContent = 'تحميل نسخة الطباعة المؤمنة';
+            if (descriptionPara) {
+                descriptionPara.innerHTML = 'يرجى إدخال كلمة مرور الطباعة لتشفير وتحميل الملف. <br>المتبقي لديك: <strong style="color: var(--brand-gold);">' + remainingUses + '</strong> تحميلات.';
+            }
         }
         
         modal.style.display = 'flex';

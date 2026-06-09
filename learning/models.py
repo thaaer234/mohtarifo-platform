@@ -66,6 +66,7 @@ class Course(models.Model):
     rating = models.DecimalField(max_digits=3, decimal_places=1, default=5.0)
     pdf_file = models.FileField(upload_to="courses/pdfs/", blank=True, null=True, help_text="ملف الـ PDF الخاص بالدورة كاملة")
     allow_pdf_download = models.BooleanField(default=False, help_text="هل يسمح للطالب بتنزيل ملف الـ PDF؟")
+    pdf_protected_enabled = models.BooleanField(default=False, help_text="Enable PDF protection with 2‑use limit")
     file1 = models.FileField(upload_to="courses/files/", blank=True, null=True, verbose_name="الملف الإضافي الأول")
     file1_name = models.CharField(max_length=120, blank=True, verbose_name="اسم الملف الأول (على الزر)")
     file2 = models.FileField(upload_to="courses/files/", blank=True, null=True, verbose_name="الملف الإضافي الثاني")
