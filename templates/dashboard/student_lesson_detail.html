@@ -87,25 +87,28 @@
                         {% endif %}
                     </div>
 
-                    <!-- Playback & Controls Overlay -->
-                    <div class="lesson-controls-bar">
-                        <div class="flex-center gap-6 speed-controls-row">
-                            <span class="text-muted font-bold" style="font-size: 0.8rem;">السرعة:</span>
-                            <div class="flex-center gap-2" style="background: rgba(255,255,255,0.03); padding: 0.3rem; border-radius: 12px;">
-                                <button onclick="setSpeed(1.0)" class="s-pill active" data-speed="1.0">1x</button>
-                                <button onclick="setSpeed(1.5)" class="s-pill" data-speed="1.5">1.5x</button>
-                                <button onclick="setSpeed(2.0)" class="s-pill" data-speed="2.0">2x</button>
-                            </div>
-                        </div>
-                        <div>
-                            <form method="post" action="{% url 'dashboard:complete_lesson' lesson.id %}" id="complete-form">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-primary" id="complete-btn">
-                                    <i data-lucide="check-circle"></i> تم الإنجاز
-                                </button>
-                            </form>
-                        </div>
-                    </div>
+                                         <!-- Playback & Controls Overlay -->
+                     <div class="lesson-controls-bar">
+                         <div class="flex-center gap-6 speed-controls-row">
+                             <span class="text-muted font-bold" style="font-size: 0.8rem;">السرعة:</span>
+                             <div class="flex-center gap-2" style="background: rgba(255,255,255,0.03); padding: 0.3rem; border-radius: 12px;">
+                                 <button onclick="setSpeed(1.0)" class="s-pill active" data-speed="1.0">1x</button>
+                                 <button onclick="setSpeed(1.5)" class="s-pill" data-speed="1.5">1.5x</button>
+                                 <button onclick="setSpeed(2.0)" class="s-pill" data-speed="2.0">2x</button>
+                             </div>
+                         </div>
+                         <button id="rotate-button" class="btn btn-primary" style="background: rgba(255,255,255,0.03); border-radius: 12px; padding: 0.3rem;">
+                             <i data-lucide="rotate-ccw"></i> تدوير
+                         </button>
+                         <div>
+                             <form method="post" action="{% url 'dashboard:complete_lesson' lesson.id %}" id="complete-form">
+                                 {% csrf_token %}
+                                 <button type="submit" class="btn btn-primary" id="complete-btn">
+                                     <i data-lucide="check-circle"></i> تم الإنجاز
+                                 </button>
+                             </form>
+                         </div>
+                     </div>
                 </div>
             {% endif %}
 
@@ -1154,5 +1157,13 @@
         if (LessonProtection.video) LessonProtection.video.playbackRate = speed;
         document.querySelectorAll('.s-pill').forEach(p => p.classList.toggle('active', parseFloat(p.dataset.speed) === speed));
     }
+
+    // Rotate video wrapper
+    document.getElementById('rotate-button').addEventListener('click', () => {
+        const wrapper = document.getElementById('video-wrapper');
+        if (wrapper) {
+            wrapper.classList.toggle('rotated');
+        }
+    });
 </script>
 {% endblock %}
