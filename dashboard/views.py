@@ -3191,9 +3191,12 @@ def download_course_pdf(request, course_id):
     else:
         final_buffer = output_buffer
 
-    safe_title = course.title.replace(" ", "_")[:40]
-    response = FileResponse(final_buffer, content_type="application/pdf")
-    response["Content-Disposition"] = f'attachment; filename="{safe_title}.pdf"'
+    import re
+    clean_name = re.sub(r'[\\/*?:"<>|]', '', student_name).strip()
+    if not clean_name:
+        clean_name = f"student-{request.user.id}"
+    filename = f"{clean_name}.pdf"
+    response = FileResponse(final_buffer, as_attachment=True, filename=filename)
     response["Cache-Control"] = "no-store"
     return response
 
@@ -3316,10 +3319,13 @@ def download_course_file1(request, course_id):
         else:
             final_buffer = output_buffer
 
-        filename = course.file1_name or "file1"
-        safe_filename = filename.replace(" ", "_")[:40] + ".pdf"
-        response = FileResponse(final_buffer, content_type="application/pdf")
-        response["Content-Disposition"] = f'attachment; filename="{safe_filename}"'
+        student_name = request.user.get_full_name() or request.user.username
+        import re
+        clean_name = re.sub(r'[\\/*?:"<>|]', '', student_name).strip()
+        if not clean_name:
+            clean_name = f"student-{request.user.id}"
+        filename = f"{clean_name}.pdf"
+        response = FileResponse(final_buffer, as_attachment=True, filename=filename)
         response["Cache-Control"] = "no-store"
         return response
     else:
@@ -3376,10 +3382,13 @@ def download_course_file2(request, course_id):
         else:
             final_buffer = output_buffer
 
-        filename = course.file2_name or "file2"
-        safe_filename = filename.replace(" ", "_")[:40] + ".pdf"
-        response = FileResponse(final_buffer, content_type="application/pdf")
-        response["Content-Disposition"] = f'attachment; filename="{safe_filename}"'
+        student_name = request.user.get_full_name() or request.user.username
+        import re
+        clean_name = re.sub(r'[\\/*?:"<>|]', '', student_name).strip()
+        if not clean_name:
+            clean_name = f"student-{request.user.id}"
+        filename = f"{clean_name}.pdf"
+        response = FileResponse(final_buffer, as_attachment=True, filename=filename)
         response["Cache-Control"] = "no-store"
         return response
     else:
