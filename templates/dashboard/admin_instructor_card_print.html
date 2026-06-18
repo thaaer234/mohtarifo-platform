@@ -12,8 +12,8 @@
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
 
         :root {
-            --slot-w: 204mm;
-            --slot-h: 100mm;
+            --slot-w: 100%;
+            --slot-h: 90mm;
             --gold: #8f6f3d;
             --gold-dark: #5d4524;
             --ink: #0b0b0b;
@@ -47,7 +47,7 @@
             width: 210mm;
             height: 297mm;
             margin: 10mm auto;
-            padding: 15mm 3mm;
+            padding: 15mm 10mm;
             background: #fff;
             overflow: hidden;
             display: flex;
@@ -111,9 +111,13 @@
         }
 
         @media print {
+            @page {
+                size: A4 portrait;
+                margin: 0;
+            }
             body { background: #fff; }
             .print-btn { display: none; }
-            .page { margin: 0; padding: 15mm 3mm; border: 0; box-shadow: none; height: 297mm; }
+            .page { margin: 0 !important; padding: 15mm 10mm !important; border: 0 !important; box-shadow: none !important; height: 297mm !important; }
         }
     </style>
 </head>
