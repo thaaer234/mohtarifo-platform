@@ -5112,27 +5112,29 @@ def admin_instructor_report(request, instructor_id):
             except (ValueError, TypeError):
                 comm_pct = 0.0
 
-        # Exclude zero-price codes from sold count and gross value
-        _sold_qs = AccessCode.objects.filter(course__instructor=instructor, sale_status='sold')\
+        # Exclude zero-price codes AND package codes from sold count and gross value
+        _sold_qs = AccessCode.objects.filter(course__instructor=instructor, sale_status='sold') \
+            .filter(package__isnull=True) \
             .exclude(sold_price_cents__isnull=True).exclude(sold_price_cents=0)
 
-        # sold_cnt: always from DB, excluding zero-price codes
+        # sold_cnt: always from DB, excluding zero-price and package codes
         sold_cnt = _sold_qs.count()
 
         try:
             gross_val = int(float(request.GET.get('gross_val')))
         except (ValueError, TypeError):
-            _gross_agg = _sold_qs.aggregate(total=Sum('sold_price_cents'))['total'] or 0
-            gross_val = int(saved_card_data.get('custom_total_gross') or _gross_agg)
+            _gross_cents = _sold_qs.aggregate(total=Sum('sold_price_cents'))['total'] or 0
+            gross_val = int(saved_card_data.get('custom_total_gross') or (_gross_cents // 100))
 
         notes = request.GET.get('notes') or saved_card_data.get('custom_notes') or "حساب مستحقات مبيعات الأكواد"
         creator = request.GET.get('creator') or saved_card_data.get('custom_creator') or "Manager thaaer almasre"
 
         net_share = round(gross_val * (comm_pct / 100))
 
-        # Compute discount codes and total discount value for this instructor (exclude zero-price)
-        discount_qs = AccessCode.objects.filter(course__instructor=instructor, sale_status='sold')\
-            .exclude(sold_price_cents__isnull=True).exclude(sold_price_cents=0)\
+        # Compute discount codes and total discount value (exclude zero-price and package codes)
+        discount_qs = AccessCode.objects.filter(course__instructor=instructor, sale_status='sold') \
+            .filter(package__isnull=True) \
+            .exclude(sold_price_cents__isnull=True).exclude(sold_price_cents=0) \
             .exclude(price_reason='').exclude(price_reason='سعر كامل')
         discount_codes = discount_qs.count()
         discount_val = 0
@@ -5150,6 +5152,8 @@ def admin_instructor_report(request, instructor_id):
                 # Convert Arabic-Indic digits to Western digits before int conversion
                 arabic_to_western = str.maketrans('٠١٢٣٤٥٦٧٨٩', '0123456789')
                 discount_val += int(amt_match.group(1).translate(arabic_to_western))
+        # Also: discount_val is in cents from calculation → convert to L.S.
+        discount_val_ls = int(discount_val // 100)
         # Build a single card dict with all needed fields
         # comm_pct_display: integer if whole number (100 not 100.0), else 1 decimal place
         comm_pct_display = int(comm_pct) if comm_pct % 1 == 0 else round(comm_pct, 1)
@@ -5162,7 +5166,7 @@ def admin_instructor_report(request, instructor_id):
             "sold_cnt": int(sold_cnt),
             "gross_val": int(gross_val),
             "discount_codes": int(discount_codes),
-            "discount_val": int(discount_val),
+            "discount_val": discount_val_ls,
             "notes": notes,
             "creator": creator,
             "net_share": int(round(gross_val * (comm_pct / 100))),
@@ -5183,15 +5187,16 @@ def admin_instructor_report(request, instructor_id):
             "total_activated": total_activated,
             "total_inactive": total_codes - total_activated,
             "total_gross": total_gross,
-            # Nonzero versions: exclude codes with price = 0 or null (for card builder defaults)
+            # Nonzero: exclude zero-price AND package codes (for card builder defaults)
             "total_sold_nonzero": AccessCode.objects.filter(
-                course__instructor=instructor, sale_status='sold'
+                course__instructor=instructor, sale_status='sold', package__isnull=True
             ).exclude(sold_price_cents__isnull=True).exclude(sold_price_cents=0).count(),
             "total_gross_nonzero": int(
-                (AccessCode.objects.filter(course__instructor=instructor, sale_status='sold')
+                (AccessCode.objects.filter(course__instructor=instructor, sale_status='sold', package__isnull=True)
                  .exclude(sold_price_cents__isnull=True).exclude(sold_price_cents=0)
                  .aggregate(total=Sum('sold_price_cents'))['total'] or 0) // 100
             ),
+
             "centers_sales": centers_sales,
             "governorate_sales": governorate_sales,
             "discounts_sales": discounts_sales,
@@ -5222,19 +5227,22 @@ def admin_instructor_print_multi(request):
         profile, _ = InstructorProfile.objects.get_or_create(user=instructor)
         saved_card_data = profile.report_card_data or {}
 
-        # Sold codes excluding zero/null price
+        # Sold codes: exclude zero/null price AND package codes
         _sold_qs = AccessCode.objects.filter(course__instructor=instructor, sale_status='sold') \
+            .filter(package__isnull=True) \
             .exclude(sold_price_cents__isnull=True).exclude(sold_price_cents=0)
 
         sold_cnt = _sold_qs.count()
-        gross_val = int(_sold_qs.aggregate(total=Sum('sold_price_cents'))['total'] or 0)
+        # sold_price_cents is stored in cents → divide by 100 for L.S.
+        gross_val = int((_sold_qs.aggregate(total=Sum('sold_price_cents'))['total'] or 0) // 100)
         comm_pct = global_comm_pct
 
         notes = request.GET.get('notes') or saved_card_data.get('custom_notes') or "حساب مستحقات مبيعات الأكواد"
         creator = request.GET.get('creator') or saved_card_data.get('custom_creator') or "Manager thaaer almasre"
 
-        # Discount codes (exclude zero-price)
+        # Discount codes: exclude zero-price and package codes
         discount_qs = AccessCode.objects.filter(course__instructor=instructor, sale_status='sold') \
+            .filter(package__isnull=True) \
             .exclude(sold_price_cents__isnull=True).exclude(sold_price_cents=0) \
             .exclude(price_reason='').exclude(price_reason='سعر كامل')
         discount_codes = discount_qs.count()
@@ -5253,6 +5261,9 @@ def admin_instructor_print_multi(request):
                 arabic_to_western = str.maketrans('\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668\u0669', '0123456789')
                 discount_val += int(amt_match.group(1).translate(arabic_to_western))
 
+        # discount_val is in cents (from percentage calc) → convert to L.S.
+        discount_val_ls = int(discount_val // 100)
+
         comm_pct_display = int(comm_pct) if comm_pct % 1 == 0 else round(comm_pct, 1)
         net_share = int(round(gross_val * (comm_pct / 100)))
 
@@ -5265,7 +5276,7 @@ def admin_instructor_print_multi(request):
             "sold_cnt": sold_cnt,
             "gross_val": gross_val,
             "discount_codes": discount_codes,
-            "discount_val": int(discount_val),
+            "discount_val": discount_val_ls,
             "notes": notes,
             "creator": creator,
             "net_share": net_share,
