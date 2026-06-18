@@ -121,9 +121,33 @@
         }
 
         @media print {
-            body { background: #fff; }
-            .print-btn { display: none; }
-            .page { margin: 0 !important; padding: 0 !important; border: 0 !important; box-shadow: none !important; height: 297mm !important; width: 210mm !important; }
+            /* Force A4 with no browser-added margins to keep slots aligned on real A4 paper */
+            @page { size: A4 portrait; margin: 0; }
+            html, body { background: #fff !important; margin: 0; padding: 0; }
+            .print-btn { display: none !important; }
+
+            /* Page container fills the full printable A4 area */
+            .page {
+                margin: 0 !important;
+                padding: 0 !important;
+                border: 0 !important;
+                box-shadow: none !important;
+                height: 297mm !important;
+                width: 210mm !important;
+                page-break-after: always;
+                break-after: page;
+            }
+
+            /* Make each slot sit exactly in its region without extra borders/shadows */
+            .slot {
+                box-shadow: none !important;
+                border: 0 !important;
+                width: var(--slot-w) !important;
+                height: var(--slot-h) !important;
+            }
+
+            /* Avoid any unexpected breaks inside card content */
+            .instructor-card-physical, .card-inner { page-break-inside: avoid; break-inside: avoid; }
         }
     </style>
 </head>
