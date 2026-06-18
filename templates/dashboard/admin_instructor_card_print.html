@@ -1,7 +1,7 @@
 {% load static %}
 {% load inline_static %}
 {% load humanize %}
-
+{% load arabic_numbers %}
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -169,11 +169,11 @@
                             </div>
                             <div style="display: flex; justify-content: space-between;">
                                 <span>إجمالي المبيعات:</span>
-                                <strong><span class="font-mono">{{ card.gross_val|intcomma }}</span> ل.س</strong>
+                                <strong><span class="font-mono">{{ card.gross_val|arabic_intcomma }}</span> ل.س</strong>
                             </div>
                             <div style="display: flex; justify-content: space-between;">
                                 <span>قيمة الحسومات:</span>
-                                <strong><span class="font-mono">{{ card.discount_val|intcomma }}</span> ل.س</strong>
+                                <strong><span class="font-mono">{{ card.discount_val|arabic_intcomma }}</span> ل.س</strong>
                             </div>
                             <div style="display: flex; justify-content: space-between; grid-column: 1 / -1; margin-top: 2px; border-top: 1px dashed rgba(0,0,0,0.05); padding-top: 2px;">
                                 <span>نسبة عمولة المدرس:</span>

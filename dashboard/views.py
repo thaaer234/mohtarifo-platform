@@ -5137,9 +5137,11 @@ def admin_instructor_report(request, instructor_id):
                     original = ac.sold_price_cents * 100 // (100 - pct)
                     discount_val += original - ac.sold_price_cents
                 continue
-            amt_match = re.search(r'(\\d+)\\s*ل\\.س', pr)
+            amt_match = re.search(r'([\d٠-٩]+)\s*ل\.س', pr)
             if amt_match:
-                discount_val += int(amt_match.group(1))
+                # Convert Arabic-Indic digits to Western digits before int conversion
+                arabic_to_western = str.maketrans('٠١٢٣٤٥٦٧٨٩', '0123456789')
+                discount_val += int(amt_match.group(1).translate(arabic_to_western))
         # Build a single card dict with all needed fields
         card = {
             "instructor": instructor,
