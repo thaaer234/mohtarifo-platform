@@ -5098,6 +5098,44 @@ def admin_instructor_report(request, instructor_id):
         .order_by("-sold_count")
     )
 
+    if request.GET.get('format') == 'print-card':
+        card_name = request.GET.get('name') or saved_card_data.get('custom_name') or instructor.get_full_name() or instructor.username
+        card_specialty = request.GET.get('specialty') or saved_card_data.get('custom_specialty') or profile.specialty or "مدرس مادة الرياضيات"
+        
+        try:
+            comm_pct = float(request.GET.get('comm_pct'))
+        except (ValueError, TypeError):
+            comm_pct = saved_card_data.get('commission_pct') or default_commission_pct
+            
+        try:
+            sold_cnt = int(request.GET.get('sold_cnt'))
+        except (ValueError, TypeError):
+            sold_cnt = saved_card_data.get('custom_total_codes') or total_sold
+            
+        try:
+            gross_val = float(request.GET.get('gross_val'))
+        except (ValueError, TypeError):
+            gross_val = saved_card_data.get('custom_total_gross') or total_gross
+            
+        notes = request.GET.get('notes') or saved_card_data.get('custom_notes') or "حساب مستحقات مبيعات الأكواد"
+        creator = request.GET.get('creator') or saved_card_data.get('custom_creator') or "Manager thaaer almasre"
+        
+        net_share = round(gross_val * (comm_pct / 100))
+        
+        context = {
+            "instructor": instructor,
+            "profile": profile,
+            "card_name": card_name,
+            "card_specialty": card_specialty,
+            "comm_pct": comm_pct,
+            "sold_cnt": sold_cnt,
+            "gross_val": gross_val,
+            "notes": notes,
+            "creator": creator,
+            "net_share": net_share,
+        }
+        return render(request, "dashboard/admin_instructor_card_print.html", context)
+
     return render(
         request,
         render_tmpl,
