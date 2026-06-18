@@ -75,6 +75,7 @@ urlpatterns = [
     path("admin-dashboard/billing/expenses/", views.admin_expenses, name="admin_expenses"),
     path("admin-dashboard/billing/expenses/add/", views.admin_expense_add, name="admin_expense_add"),
     path("admin-dashboard/billing/expenses/<int:expense_id>/delete/", views.admin_expense_delete, name="admin_expense_delete"),
+    path("admin-dashboard/billing/expenses/<int:expense_id>/disburse/", views.admin_expense_disburse, name="admin_expense_disburse"),
     path("admin-dashboard/reports.xlsx", views.admin_financial_report_export, name="admin_financial_report_export"),
     path("admin-dashboard/packages/report.xlsx", views.admin_packages_report_export, name="admin_packages_report_export"),
     path("admin-dashboard/courses/<int:course_id>/report.xlsx", views.admin_course_report_export, name="admin_course_report_export"),

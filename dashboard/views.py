@@ -3641,9 +3641,29 @@ def _course_financial_rows():
     return rows
 
 
+def get_lirascope_usd_rate():
+    import requests
+    try:
+        response = requests.get("https://lirascope.syria-cloud.sy/api/v1/rates/latest", timeout=3)
+        if response.status_code == 200:
+            data = response.json()
+            rates = data.get("effectiveRates", []) or data.get("marketRates", [])
+            for r in rates:
+                if r.get("currency") == "USD":
+                    buy_rate = float(r.get("buy", 0))
+                    if buy_rate > 0:
+                        if buy_rate < 1000:
+                            return buy_rate * 100
+                        return buy_rate
+    except Exception:
+        pass
+    return 14500.0
+
+
 @admin_required
 @admin_required
 def admin_billing(request):
+    exchange_rate = get_lirascope_usd_rate()
     if request.GET.get('format') == 'print':
         template_to_render = "dashboard/admin_billing_print.html"
     else:
@@ -3722,9 +3742,9 @@ def admin_billing(request):
     
     # Get manual platform expenses
     all_expenses = PlatformExpense.objects.select_related("course").order_by("-created_at")
-    recent_expenses = all_expenses[:50]
-    total_expenses_syp = sum(exp.amount_syp for exp in all_expenses)
-    total_expenses_usd = sum(exp.amount_usd for exp in all_expenses)
+    # Only deduct paid expenses from the net fund
+    total_expenses_syp = sum(exp.amount_syp for exp in all_expenses if exp.status == "paid")
+    total_expenses_usd = sum(exp.amount_usd for exp in all_expenses if exp.status == "paid")
 
     # Load instructor agreements
     agreements = {
@@ -3732,13 +3752,19 @@ def admin_billing(request):
         for rsa in RevenueShareAgreement.objects.filter(is_active=True)
     }
 
-    # Pre-group platform expenses by course for efficiency
+    # Pre-group platform expenses by course for efficiency (paid vs pending)
     course_expenses_map_syp = {}
     course_expenses_map_usd = {}
+    course_pending_expenses_map_syp = {}
+    course_pending_expenses_map_usd = {}
     for exp in all_expenses:
         if exp.course_id:
-            course_expenses_map_syp[exp.course_id] = course_expenses_map_syp.get(exp.course_id, 0) + exp.amount_syp
-            course_expenses_map_usd[exp.course_id] = course_expenses_map_usd.get(exp.course_id, 0.0) + float(exp.amount_usd)
+            if exp.status == "paid":
+                course_expenses_map_syp[exp.course_id] = course_expenses_map_syp.get(exp.course_id, 0) + exp.amount_syp
+                course_expenses_map_usd[exp.course_id] = course_expenses_map_usd.get(exp.course_id, 0.0) + float(exp.amount_usd)
+            else:
+                course_pending_expenses_map_syp[exp.course_id] = course_pending_expenses_map_syp.get(exp.course_id, 0) + exp.amount_syp
+                course_pending_expenses_map_usd[exp.course_id] = course_pending_expenses_map_usd.get(exp.course_id, 0.0) + float(exp.amount_usd)
 
     # Build course profits report
     course_profits_report = []
@@ -3767,11 +3793,13 @@ def admin_billing(request):
         instructor_share = gross * commission_pct
         instructor_due = instructor_share - (course.settled_instructor_share_syp or 0)
         
-        # Expenses for this course from manual platform expenses
+        # Expenses for this course from manual platform expenses (paid vs pending)
         course_exp_syp = course_expenses_map_syp.get(course.id, 0)
         course_exp_usd = course_expenses_map_usd.get(course.id, 0.0)
+        course_pending_exp_syp = course_pending_expenses_map_syp.get(course.id, 0)
+        course_pending_exp_usd = course_pending_expenses_map_usd.get(course.id, 0.0)
         
-        # Remains in the course
+        # Remains in the course (only deduct paid expenses)
         course_remains = gross - instructor_share - course_exp_syp
         
         course_profits_report.append({
@@ -3785,9 +3813,12 @@ def admin_billing(request):
             "instructor_due": instructor_due,
             "course_exp_syp": course_exp_syp,
             "course_exp_usd": course_exp_usd,
+            "course_pending_exp_syp": course_pending_exp_syp,
+            "course_pending_exp_usd": course_pending_exp_usd,
             "course_remains": course_remains,
             "is_closed": course.is_account_closed,
         })
+
 
     # Centers collection report
     centers_collection_report = []
@@ -3855,6 +3886,7 @@ def admin_billing(request):
     # Calculate overall platform net profit
     total_net_share_platform = sum(x["net_share_platform"] for x in centers_collection_report)
     overall_net_profit = total_net_share_platform - total_expenses_syp
+    overall_net_profit_usd = overall_net_profit / exchange_rate if exchange_rate else 0.0
 
     context = {
         "subscriptions": subscriptions,
@@ -3872,13 +3904,13 @@ def admin_billing(request):
         "total_sold_codes": total_sold_codes,
         
         # New context variables
-        "all_expenses": recent_expenses,
         "total_expenses_syp": total_expenses_syp,
         "total_expenses_usd": total_expenses_usd,
         "overall_net_profit": overall_net_profit,
+        "overall_net_profit_usd": overall_net_profit_usd,
+        "exchange_rate": exchange_rate,
         "course_profits_report": course_profits_report,
         "centers_collection_report": centers_collection_report,
-        "courses_dropdown": Course.objects.all().order_by("title"),
     }
     return render(request, template_to_render, context)
 
@@ -3962,6 +3994,8 @@ def admin_expense_add(request):
     amount_usd = request.POST.get("amount_usd", 0)
     course_id = request.POST.get("course_id")
     next_page = request.POST.get("next_page")
+    expense_type = request.POST.get("expense_type", "general")
+    status = request.POST.get("status", "paid")
     
     if not title:
         messages.error(request, "عنوان المصروف مطلوب.")
@@ -3987,7 +4021,9 @@ def admin_expense_add(request):
         title=title,
         amount_syp=amount_syp,
         amount_usd=amount_usd,
-        course=course
+        course=course,
+        expense_type=expense_type,
+        status=status
     )
     messages.success(request, f"تم تسجيل المصروف '{title}' بنجاح.")
     if next_page == "expenses_page":
@@ -4010,11 +4046,43 @@ def admin_expense_delete(request, expense_id):
 
 
 @admin_required
+@require_POST
+def admin_expense_disburse(request, expense_id):
+    from billing.models import PlatformExpense
+    expense = get_object_or_404(PlatformExpense, id=expense_id)
+    expense.status = 'paid'
+    expense.save()
+    messages.success(request, f"تم تخريج وصرف المصروف '{expense.title}' بنجاح.")
+    return redirect("dashboard:admin_expenses")
+
+
+@admin_required
 def admin_expenses(request):
+    from django.db.models import Count
     from billing.models import PlatformExpense
     expenses = PlatformExpense.objects.select_related("course").order_by("-created_at")
-    total_expenses_syp = sum(exp.amount_syp for exp in expenses)
-    total_expenses_usd = sum(exp.amount_usd for exp in expenses)
+    
+    exchange_rate = get_lirascope_usd_rate()
+    
+    # Calculate separate totals for dashboard display
+    total_expenses_syp = sum(exp.amount_syp for exp in expenses if exp.status == 'paid')
+    total_expenses_usd = sum(exp.amount_usd for exp in expenses if exp.status == 'paid')
+    
+    total_printing_paid_syp = sum(exp.amount_syp for exp in expenses if exp.expense_type == 'printing' and exp.status == 'paid')
+    total_printing_paid_usd = sum(exp.amount_usd for exp in expenses if exp.expense_type == 'printing' and exp.status == 'paid')
+    
+    total_printing_pending_syp = sum(exp.amount_syp for exp in expenses if exp.expense_type == 'printing' and exp.status == 'pending')
+    total_printing_pending_usd = sum(exp.amount_usd for exp in expenses if exp.expense_type == 'printing' and exp.status == 'pending')
+    
+    total_general_paid_syp = sum(exp.amount_syp for exp in expenses if exp.expense_type == 'general' and exp.status == 'paid')
+    total_general_paid_usd = sum(exp.amount_usd for exp in expenses if exp.expense_type == 'general' and exp.status == 'paid')
+    
+    total_general_pending_syp = sum(exp.amount_syp for exp in expenses if exp.expense_type == 'general' and exp.status == 'pending')
+    total_general_pending_usd = sum(exp.amount_usd for exp in expenses if exp.expense_type == 'general' and exp.status == 'pending')
+
+    # Courses with access code count annotated
+    courses_dropdown = Course.objects.annotate(total_codes=Count('access_codes')).order_by("title")
+    
     return render(
         request,
         "dashboard/admin_expenses.html",
@@ -4022,9 +4090,22 @@ def admin_expenses(request):
             "expenses": expenses,
             "total_expenses_syp": total_expenses_syp,
             "total_expenses_usd": total_expenses_usd,
-            "courses_dropdown": Course.objects.all().order_by("title"),
+            
+            "total_printing_paid_syp": total_printing_paid_syp,
+            "total_printing_paid_usd": total_printing_paid_usd,
+            "total_printing_pending_syp": total_printing_pending_syp,
+            "total_printing_pending_usd": total_printing_pending_usd,
+            
+            "total_general_paid_syp": total_general_paid_syp,
+            "total_general_paid_usd": total_general_paid_usd,
+            "total_general_pending_syp": total_general_pending_syp,
+            "total_general_pending_usd": total_general_pending_usd,
+            
+            "courses_dropdown": courses_dropdown,
+            "exchange_rate": exchange_rate,
         }
     )
+
 
 
 

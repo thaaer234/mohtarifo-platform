@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 from learning.models import Course, Lesson
 
@@ -420,7 +421,19 @@ class PlatformExpense(models.Model):
         related_name="platform_expenses", 
         verbose_name="الدورة المرتبطة"
     )
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ التسجيل")
+    expense_type = models.CharField(
+        max_length=20, 
+        choices=[('general', 'عام'), ('printing', 'طباعة')], 
+        default='general', 
+        verbose_name="نوع المصروف"
+    )
+    status = models.CharField(
+        max_length=20, 
+        choices=[('pending', 'قيد الانتظار / لم يدفع'), ('paid', 'تم الصرف / مخرّج')], 
+        default='paid', 
+        verbose_name="حالة المصروف"
+    )
+    created_at = models.DateTimeField(default=timezone.now, verbose_name="تاريخ التسجيل")
 
     class Meta:
         verbose_name = "مصروف تشغيلي"

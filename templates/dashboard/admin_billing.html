@@ -13,6 +13,10 @@
                 <h1 class="page-title text-3xl font-black text-glow" style="color: var(--text-primary); font-family: 'Cairo', sans-serif; margin-top: 0.25rem;">المركز المالي والأكواد</h1>
             </div>
             <div class="hub-stats" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                <div class="mini-stat" style="text-align: right; background: rgba(96, 165, 250, 0.03); padding: 0.8rem 1.2rem; border-radius: 16px; border-right: 4px solid #60a5fa; border-left: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                    <span class="label" style="display: block; font-size: 0.72rem; color: var(--text-muted); font-weight: 800; margin-bottom: 0.25rem;">سعر صرف الدولار (LiraScope)</span>
+                    <span class="value" style="font-size: 1.35rem; font-weight: 900; color: #60a5fa; font-family: 'Cairo', sans-serif;">1$ = {{ exchange_rate|floatformat:0|intcomma }} ل.س</span>
+                </div>
                 <div class="mini-stat" style="text-align: right; background: rgba(197, 160, 89, 0.03); padding: 0.8rem 1.2rem; border-radius: 16px; border-right: 4px solid var(--brand-gold); border-left: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
                     <span class="label" style="display: block; font-size: 0.72rem; color: var(--text-muted); font-weight: 800; margin-bottom: 0.25rem;">رصيد شام كاش (الإدارة)</span>
                     <span class="value" style="font-size: 1.35rem; font-weight: 900; color: var(--brand-gold); font-family: 'Cairo', sans-serif;">{{ sham_cash_balance|currency_format }} ل.س</span>
@@ -26,8 +30,12 @@
                     <span class="value" style="font-size: 1.35rem; font-weight: 900; color: #ef4444; font-family: 'Cairo', sans-serif;">{{ total_expenses_syp|currency_format }} ل.س <span style="font-size: 0.85rem; font-weight: 600; color: #f87171;">({{ total_expenses_usd|floatformat:0 }}$)</span></span>
                 </div>
                 <div class="mini-stat" style="text-align: right; background: rgba(16, 185, 129, 0.04); padding: 0.8rem 1.2rem; border-radius: 16px; border-right: 4px solid #10b981; border-left: none; box-shadow: 0 4px 20px rgba(0,0,0,0.2); border: 1px solid rgba(16, 185, 129, 0.15);">
-                    <span class="label" style="display: block; font-size: 0.72rem; color: #10b981; font-weight: 800; margin-bottom: 0.25rem;">صافي الأرباح (الصندوق الأخير)</span>
+                    <span class="label" style="display: block; font-size: 0.72rem; color: #10b981; font-weight: 800; margin-bottom: 0.25rem;">أرباح الصندوق الأخير (ل.س)</span>
                     <span class="value text-glow" style="font-size: 1.45rem; font-weight: 950; color: #10b981; font-family: 'Cairo', sans-serif;">{{ overall_net_profit|currency_format }} ل.س</span>
+                </div>
+                <div class="mini-stat" style="text-align: right; background: rgba(52, 211, 153, 0.04); padding: 0.8rem 1.2rem; border-radius: 16px; border-right: 4px solid #34d399; border-left: none; box-shadow: 0 4px 20px rgba(0,0,0,0.2); border: 1px solid rgba(52, 211, 153, 0.15);">
+                    <span class="label" style="display: block; font-size: 0.72rem; color: #34d399; font-weight: 800; margin-bottom: 0.25rem;">أرباح الصندوق الأخير ($)</span>
+                    <span class="value text-glow" style="font-size: 1.45rem; font-weight: 950; color: #34d399; font-family: 'Cairo', sans-serif;">{{ overall_net_profit_usd|floatformat:2|intcomma }} $</span>
                 </div>
                 
                 <div style="display: flex; gap: 0.75rem; margin-right: 0.5rem; align-items: center; flex-wrap: wrap;">
@@ -51,86 +59,7 @@
     <div class="hub-grid" style="display: grid; grid-template-columns: 1fr 380px; gap: 2rem;">
         <!-- Main Column: Tables -->
         <div class="hub-main" style="display: flex; flex-direction: column; gap: 2rem;">
-            <!-- Platform Expenses Panel -->
-            <section class="premium-card" style="border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-radius: 20px; padding: 1.5rem; background: var(--bg-surface);">
-                <h2 class="section-title text-xl font-bold flex align-center gap-2 mb-6" style="color: var(--text-primary); font-family: 'Cairo', sans-serif; display: flex; align-items: center; gap: 0.5rem; margin-top:0; margin-bottom: 1.5rem;">
-                    <i data-lucide="receipt" style="color: var(--brand-gold);"></i> لوحة تسجيل وإدارة المصاريف التشغيلية والعامة للمنصة
-                </h2>
-                
-                <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem;">
-                    <!-- Record Expense Form -->
-                    <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-light); padding: 1.25rem; border-radius: 12px;">
-                        <h3 style="font-size: 0.95rem; font-weight: 800; margin-top: 0; margin-bottom: 1rem; color: var(--brand-gold); border-bottom: 1px solid var(--border-light); padding-bottom: 0.5rem;">تسجيل مصروف جديد</h3>
-                        <form method="POST" action="{% url 'dashboard:admin_expense_add' %}" style="display: flex; flex-direction: column; gap: 1rem;">
-                            {% csrf_token %}
-                            <div>
-                                <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); font-weight: 800; margin-bottom: 0.4rem;">بيان وعنوان المصروف</label>
-                                <input type="text" name="title" placeholder="مثال: استضافة سيرفر، أوراق كروت، إلخ" class="form-control" style="width: 100%; padding: 0.55rem; border-radius: 8px; border: 1px solid var(--border-light); background: rgba(255,255,255,0.01); color: var(--text-primary); font-weight: 700; font-size: 0.85rem;" required>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-                                <div>
-                                    <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); font-weight: 800; margin-bottom: 0.4rem;">المبلغ بالليرة السورية</label>
-                                    <input type="number" name="amount_syp" value="0" class="form-control" style="width: 100%; padding: 0.55rem; border-radius: 8px; border: 1px solid var(--border-light); background: rgba(255,255,255,0.01); color: var(--text-primary); font-weight: 700; font-size: 0.85rem;" required>
-                                </div>
-                                <div>
-                                    <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); font-weight: 800; margin-bottom: 0.4rem;">المبلغ بالدولار ($)</label>
-                                    <input type="number" name="amount_usd" value="0" step="0.01" class="form-control" style="width: 100%; padding: 0.55rem; border-radius: 8px; border: 1px solid var(--border-light); background: rgba(255,255,255,0.01); color: var(--text-primary); font-weight: 700; font-size: 0.85rem;" required>
-                                </div>
-                            </div>
-                            <div>
-                                <label style="display: block; font-size: 0.78rem; color: var(--text-secondary); font-weight: 800; margin-bottom: 0.4rem;">الدورة المرتبطة (اختياري)</label>
-                                <select name="course_id" class="form-control" style="width: 100%; padding: 0.55rem; border-radius: 8px; border: 1px solid var(--border-light); background: var(--bg-surface); color: var(--text-primary); font-weight: 700; font-size: 0.85rem;">
-                                    <option value="">-- مصروف عام (غير مرتبط بدورة محددة) --</option>
-                                    {% for c in courses_dropdown %}
-                                        <option value="{{ c.id }}">{{ c.title }} ({{ c.instructor.username }})</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-glow" style="background: var(--brand-gold); color: var(--bg-base); font-weight: 800; padding: 0.6rem; border-radius: 8px; border: none; font-size: 0.85rem; width: 100%; cursor: pointer;">تسجيل في الصندوق المالي</button>
-                        </form>
-                    </div>
 
-                    <!-- Expenses Log List -->
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 340px; overflow-y: auto; padding-left: 0.25rem;">
-                        <h3 style="font-size: 0.95rem; font-weight: 800; margin-top: 0; margin-bottom: 0.75rem; color: var(--text-muted); border-bottom: 1px solid var(--border-light); padding-bottom: 0.5rem;">سجل المصاريف الأخيرة</h3>
-                        <div style="display: flex; flex-direction: column; gap: 0.6rem;">
-                            {% for exp in all_expenses %}
-                                <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-light); padding: 0.75rem; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s;">
-                                    <div>
-                                        <strong style="font-size: 0.85rem; display: block; color: var(--text-primary);">{{ exp.title }}</strong>
-                                        <span style="font-size: 0.72rem; color: var(--text-muted);">
-                                            {% if exp.course %}
-                                                الدورة: <span style="color: var(--brand-gold);">{{ exp.course.title }}</span>
-                                            {% else %}
-                                                <span class="text-muted">مصروف عام</span>
-                                            {% endif %}
-                                            · {{ exp.created_at|date:"Y-m-d H:i" }}
-                                        </span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 0.75rem;">
-                                        <div style="text-align: left;">
-                                            {% if exp.amount_syp > 0 %}
-                                                <span style="font-size: 0.85rem; font-weight: 800; color: #ef4444; display: block;">{{ exp.amount_syp|currency_format }} ل.س</span>
-                                            {% endif %}
-                                            {% if exp.amount_usd > 0 %}
-                                                <span style="font-size: 0.75rem; font-weight: 700; color: #f87171; display: block;">{{ exp.amount_usd|floatformat:2 }} $</span>
-                                            {% endif %}
-                                        </div>
-                                        <form method="POST" action="{% url 'dashboard:admin_expense_delete' exp.id %}" onsubmit="return confirm('هل تريد بالتأكيد حذف هذا المصروف؟')" style="margin:0; padding:0;">
-                                            {% csrf_token %}
-                                            <button type="submit" style="background: transparent; border: none; color: #ef4444; cursor: pointer; padding: 0.25rem;" title="حذف">
-                                                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </div>
-                            {% empty %}
-                                <div class="text-center p-6 text-muted" style="font-size: 0.85rem; text-align: center; padding: 1.5rem;">لا توجد مصاريف مسجلة حالياً.</div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-            </section>
 
             <!-- Sales Centers Collection Report -->
             <section class="premium-card" style="border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden; background: var(--bg-surface);">
@@ -206,11 +135,11 @@
                     <table class="admin-table" style="width: 100%; border-collapse: collapse; text-align: right; font-size: 0.85rem;">
                         <thead>
                             <tr style="border-bottom: 2px solid var(--border-light);">
-                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; width: 25%;">الدورة والمدرس</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; width: 22%;">الدورة والمدرس</th>
                                 <th class="text-center" style="padding: 0.5rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-align: center; width: 12%;">الوارد الإجمالي</th>
                                 <th class="text-center" style="padding: 0.5rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-align: center; width: 18%;">حصة المدرس ومناقلاتها</th>
-                                <th class="text-center" style="color: #ef4444; padding: 0.5rem; font-size: 0.8rem; font-weight: 800; text-align: center; width: 12%;">الخرج والمصروف (ل.س)</th>
-                                <th class="text-center" style="color: #f87171; padding: 0.5rem; font-size: 0.8rem; font-weight: 800; text-align: center; width: 10%;">الخرج والمصروف ($)</th>
+                                <th class="text-center" style="color: #ef4444; padding: 0.5rem; font-size: 0.8rem; font-weight: 800; text-align: center; width: 15%;">الخرج والمنصرف المخرّج (ل.س)</th>
+                                <th class="text-center" style="color: #f87171; padding: 0.5rem; font-size: 0.8rem; font-weight: 800; text-align: center; width: 15%;">المصاريف المعلقة (ل.س)</th>
                                 <th class="text-center" style="color: #34d399; padding: 0.5rem; font-size: 0.82rem; font-weight: 800; text-align: center; width: 13%;">ضل فيها (الصافي للمنصة)</th>
                                 <th class="text-center" style="padding: 1rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-align: center; width: 10%;">العمليات</th>
                             </tr>
@@ -236,9 +165,15 @@
                                 </td>
                                 <td class="text-center" style="text-align: center; padding: 1rem 0.5rem; color: #ef4444; font-weight: 700;">
                                     <span>{{ item.course_exp_syp|currency_format }} ل.س</span>
+                                    {% if item.course_exp_usd > 0 %}
+                                        <br><small style="color:#f87171;">({{ item.course_exp_usd|floatformat:2 }} $)</small>
+                                    {% endif %}
                                 </td>
                                 <td class="text-center" style="text-align: center; padding: 1rem 0.5rem; color: #f87171; font-weight: 700;">
-                                    <span>{{ item.course_exp_usd|floatformat:2 }} $</span>
+                                    <span>{{ item.course_pending_exp_syp|currency_format }} ل.س</span>
+                                    {% if item.course_pending_exp_usd > 0 %}
+                                        <br><small style="color:#f87171;">({{ item.course_pending_exp_usd|floatformat:2 }} $)</small>
+                                    {% endif %}
                                 </td>
                                 <td class="text-center" style="text-align: center; padding: 1rem 0.5rem;">
                                     <strong class="text-glow" style="color: {% if item.course_remains >= 0 %}#34d399{% else %}#f1416c{% endif %}; font-size: 1.05rem;">

@@ -224,8 +224,9 @@ class BillingSettingAdmin(admin.ModelAdmin):
 
 @admin.register(PlatformExpense)
 class PlatformExpenseAdmin(admin.ModelAdmin):
-    list_display = ("title", "amount_syp", "amount_usd", "course", "created_at")
-    list_filter = ("course", "created_at")
+    list_display = ("title", "amount_syp", "amount_usd", "course", "expense_type", "status", "created_at")
+    list_filter = ("course", "expense_type", "status", "created_at")
     search_fields = ("title", "course__title")
     autocomplete_fields = ("course",)
+    fields = ("title", "amount_syp", "amount_usd", "course", "expense_type", "status", "created_at")
 

@@ -13,13 +13,25 @@
                 <h1 class="page-title text-3xl font-black text-glow" style="color: var(--text-primary); font-family: 'Cairo', sans-serif; margin-top: 0.25rem;">إدارة المصاريف التشغيلية والعامة</h1>
             </div>
             <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                <div class="mini-stat" style="text-align: right; background: rgba(239, 68, 68, 0.03); padding: 0.8rem 1.2rem; border-radius: 16px; border-right: 4px solid #ef4444; border-left: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-                    <span class="label" style="display: block; font-size: 0.72rem; color: var(--text-muted); font-weight: 800; margin-bottom: 0.25rem;">إجمالي المصاريف (ل.س)</span>
-                    <span class="value" style="font-size: 1.35rem; font-weight: 900; color: #ef4444; font-family: 'Cairo', sans-serif;">{{ total_expenses_syp|currency_format }} ل.س</span>
+                <div class="mini-stat" style="text-align: right; background: rgba(96, 165, 250, 0.03); padding: 0.8rem 1.2rem; border-radius: 16px; border-right: 4px solid #60a5fa; border-left: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                    <span class="label" style="display: block; font-size: 0.72rem; color: var(--text-muted); font-weight: 800; margin-bottom: 0.25rem;">سعر صرف الدولار (LiraScope)</span>
+                    <span class="value" style="font-size: 1.25rem; font-weight: 900; color: #60a5fa; font-family: 'Cairo', sans-serif;">1$ = {{ exchange_rate|floatformat:0|intcomma }} ل.س</span>
                 </div>
-                <div class="mini-stat" style="text-align: right; background: rgba(248, 113, 113, 0.03); padding: 0.8rem 1.2rem; border-radius: 16px; border-right: 4px solid #f87171; border-left: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
-                    <span class="label" style="display: block; font-size: 0.72rem; color: var(--text-muted); font-weight: 800; margin-bottom: 0.25rem;">إجمالي المصاريف ($)</span>
-                    <span class="value" style="font-size: 1.35rem; font-weight: 900; color: #f87171; font-family: 'Cairo', sans-serif;">{{ total_expenses_usd|floatformat:2 }} $</span>
+                <div class="mini-stat" style="text-align: right; background: rgba(239, 68, 68, 0.03); padding: 0.8rem 1.2rem; border-radius: 16px; border-right: 4px solid #ef4444; border-left: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                    <span class="label" style="display: block; font-size: 0.72rem; color: var(--text-muted); font-weight: 800; margin-bottom: 0.25rem;">إجمالي المصاريف المخرّجة (ل.س)</span>
+                    <span class="value" style="font-size: 1.25rem; font-weight: 900; color: #ef4444; font-family: 'Cairo', sans-serif;">{{ total_expenses_syp|currency_format }} ل.س</span>
+                </div>
+                <div class="mini-stat" style="text-align: right; background: rgba(52, 211, 153, 0.03); padding: 0.8rem 1.2rem; border-radius: 16px; border-right: 4px solid #34d399; border-left: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                    <span class="label" style="display: block; font-size: 0.72rem; color: var(--text-muted); font-weight: 800; margin-bottom: 0.25rem;">مصاريف طباعة مخرّجة (ل.س)</span>
+                    <span class="value" style="font-size: 1.25rem; font-weight: 900; color: #34d399; font-family: 'Cairo', sans-serif;">{{ total_printing_paid_syp|currency_format }} ل.س</span>
+                </div>
+                <div class="mini-stat" style="text-align: right; background: rgba(197, 160, 89, 0.03); padding: 0.8rem 1.2rem; border-radius: 16px; border-right: 4px solid var(--brand-gold); border-left: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                    <span class="label" style="display: block; font-size: 0.72rem; color: var(--text-muted); font-weight: 800; margin-bottom: 0.25rem;">مصاريف طباعة معلقة (ل.س)</span>
+                    <span class="value" style="font-size: 1.25rem; font-weight: 900; color: var(--brand-gold); font-family: 'Cairo', sans-serif;">{{ total_printing_pending_syp|currency_format }} ل.س</span>
+                </div>
+                <div class="mini-stat" style="text-align: right; background: rgba(96, 165, 250, 0.03); padding: 0.8rem 1.2rem; border-radius: 16px; border-right: 4px solid #60a5fa; border-left: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
+                    <span class="label" style="display: block; font-size: 0.72rem; color: var(--text-muted); font-weight: 800; margin-bottom: 0.25rem;">المصاريف العامة المخرّجة</span>
+                    <span class="value" style="font-size: 1.25rem; font-weight: 900; color: #60a5fa; font-family: 'Cairo', sans-serif;">{{ total_general_paid_syp|currency_format }} ل.س</span>
                 </div>
                 <a href="{% url 'dashboard:admin_billing' %}" class="btn btn-secondary" style="font-weight: 800; display: flex; align-items: center; gap: 0.5rem; border-radius: 12px; padding: 0.75rem 1.25rem; background: white; color: black; border: 1px solid var(--border-light); text-decoration: none;">
                     <i data-lucide="arrow-right"></i> العودة للمركز المالي
@@ -29,17 +41,71 @@
     </header>
 
     <div class="hub-grid" style="display: grid; grid-template-columns: 360px 1fr; gap: 2rem;">
-        <!-- Left Column: Add New Expense Form -->
-        <div class="hub-sidebar">
+        <!-- Left Column: Sidebars containing forms -->
+        <div class="hub-sidebar" style="display: flex; flex-direction: column; gap: 2rem;">
+            <!-- Form 1: Record Printing Expense -->
+            <section class="premium-card" style="border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-radius: 20px; padding: 1.5rem; background: var(--bg-surface);">
+                <div class="section-title mb-6" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
+                    <i data-lucide="printer" style="color: var(--brand-gold);"></i>
+                    <h2 style="margin: 0; color: var(--text-primary); font-family: 'Cairo', sans-serif; font-size: 1.2rem; font-weight: 800;">تسجيل مصروف طباعة</h2>
+                </div>
+                <form action="{% url 'dashboard:admin_expense_add' %}" method="post" id="printing-expense-form" class="expense-form" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                    {% csrf_token %}
+                    <input type="hidden" name="next_page" value="expenses_page">
+                    <input type="hidden" name="expense_type" value="printing">
+                    
+                    <div class="form-group">
+                        <label for="print_course_id" class="form-label">اختر الدورة</label>
+                        <select id="print_course_id" name="course_id" class="form-control" style="appearance: none; background: rgba(255,255,255,0.02); border: 1px solid var(--border-light); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 12px; font-weight: 700; width: 100%;" required>
+                            <option value="">-- اختر دورة لحساب كلفة الطباعة --</option>
+                            {% for c in courses_dropdown %}
+                                <option value="{{ c.id }}" data-codes="{{ c.total_codes }}" data-title="{{ c.title }}">
+                                    {{ c.title }} ({{ c.total_codes }} كود)
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="print_title" class="form-label">بيان المصروف</label>
+                        <input type="text" id="print_title" name="title" class="form-control" placeholder="مثال: مصروف طباعة كروت دورة..." required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="print_amount_syp" class="form-label">المبلغ بالليرة السورية (ل.س)</label>
+                        <input type="number" id="print_amount_syp" name="amount_syp" class="form-control" value="0" required>
+                        <small id="calc_hint" style="display: block; font-size: 0.75rem; color: var(--brand-gold); margin-top: 0.35rem; font-weight: bold;"></small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="print_amount_usd" class="form-label">المبلغ بالدولار ($) (اختياري)</label>
+                        <input type="number" id="print_amount_usd" name="amount_usd" class="form-control" value="0" step="0.01" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="print_status" class="form-label">حالة مصروف الطباعة</label>
+                        <select id="print_status" name="status" class="form-control" style="appearance: none; background: rgba(255,255,255,0.02); border: 1px solid var(--border-light); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 12px; font-weight: 700; width: 100%;">
+                            <option value="pending">قيد الانتظار / لم يدفع (سيرحل كدين)</option>
+                            <option value="paid">تم الصرف / مخرّج (سيخصم من الصندوق)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-glow w-full" style="background: #10b981; color: white; border: none; font-weight: 800; padding: 0.8rem; border-radius: 12px; font-size: 0.95rem; width: 100%; cursor: pointer;">
+                        <i data-lucide="check-circle-2"></i> موافقة وصرف المصروف
+                    </button>
+                </form>
+            </section>
+
+            <!-- Form 2: Record General Expense -->
             <section class="premium-card" style="border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-radius: 20px; padding: 1.5rem; background: var(--bg-surface);">
                 <div class="section-title mb-6" style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;">
                     <i data-lucide="receipt" style="color: var(--brand-gold);"></i>
-                    <h2 style="margin: 0; color: var(--text-primary); font-family: 'Cairo', sans-serif; font-size: 1.2rem; font-weight: 800;">تسجيل مصروف جديد</h2>
+                    <h2 style="margin: 0; color: var(--text-primary); font-family: 'Cairo', sans-serif; font-size: 1.2rem; font-weight: 800;">تسجيل مصروف عام</h2>
                 </div>
                 <form action="{% url 'dashboard:admin_expense_add' %}" method="post" class="expense-form" style="display: flex; flex-direction: column; gap: 1.25rem;">
                     {% csrf_token %}
-                    <!-- Redirect back to this page after adding -->
                     <input type="hidden" name="next_page" value="expenses_page">
+                    <input type="hidden" name="expense_type" value="general">
                     
                     <div class="form-group">
                         <label for="title" class="form-label">بيان وعنوان المصروف</label>
@@ -66,8 +132,16 @@
                         </select>
                     </div>
 
+                    <div class="form-group">
+                        <label for="status" class="form-label">حالة المصروف</label>
+                        <select id="status" name="status" class="form-control" style="appearance: none; background: rgba(255,255,255,0.02); border: 1px solid var(--border-light); color: var(--text-primary); padding: 0.75rem 1rem; border-radius: 12px; font-weight: 700; width: 100%;">
+                            <option value="paid">تم الصرف / مخرّج</option>
+                            <option value="pending">قيد الانتظار / لم يدفع</option>
+                        </select>
+                    </div>
+
                     <button type="submit" class="btn btn-primary btn-glow w-full" style="background: var(--brand-gold); color: var(--bg-base); font-weight: 800; padding: 0.8rem; border-radius: 12px; border: none; font-size: 0.95rem; width: 100%; cursor: pointer;">
-                        <i data-lucide="plus-circle"></i> تسجيل المصروف
+                        <i data-lucide="plus-circle"></i> تسجيل المصروف العام
                     </button>
                 </form>
             </section>
@@ -81,15 +155,17 @@
                     <h2 style="margin: 0; color: var(--text-primary); font-family: 'Cairo', sans-serif; font-size: 1.2rem; font-weight: 800;">سجل العمليات والمصاريف المسجلة</h2>
                 </div>
                 <div class="table-responsive">
-                    <table class="admin-table" style="width: 100%; border-collapse: collapse; text-align: right;">
+                    <table class="admin-table" style="width: 100%; border-collapse: collapse; text-align: right; font-size: 0.85rem;">
                         <thead>
                             <tr style="border-bottom: 2px solid var(--border-light);">
-                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800;">بيان المصروف</th>
-                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800;">الدورة المرتبطة</th>
-                                <th class="text-center" style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">المبلغ بالليرة (ل.س)</th>
-                                <th class="text-center" style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">المبلغ بالدولار ($)</th>
-                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800;">تاريخ التسجيل</th>
-                                <th class="text-center" style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">الإجراءات</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; width: 22%;">بيان المصروف</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; width: 10%;">نوع المصروف</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; width: 18%;">الدورة المرتبطة</th>
+                                <th class="text-center" style="padding: 1rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-align: center; width: 15%;">المبلغ بالليرة (ل.س)</th>
+                                <th class="text-center" style="padding: 1rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-align: center; width: 10%;">المبلغ ($)</th>
+                                <th class="text-center" style="padding: 1rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-align: center; width: 12%;">الحالة</th>
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; width: 11%;">تاريخ التسجيل</th>
+                                <th class="text-center" style="padding: 1rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-align: center; width: 12%;">الإجراءات</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -97,8 +173,15 @@
                             <tr style="border-bottom: 1px solid var(--border-light); transition: all 0.2s ease;">
                                 <td style="padding: 1.25rem 1rem;"><strong>{{ exp.title }}</strong></td>
                                 <td style="padding: 1.25rem 1rem;">
+                                    {% if exp.expense_type == 'printing' %}
+                                        <span style="color: #34d399; font-weight: 800;"><i data-lucide="printer" style="width:14px; height:14px; vertical-align: middle; margin-left: 2px;"></i>طباعة</span>
+                                    {% else %}
+                                        <span style="color: #60a5fa; font-weight: 800;"><i data-lucide="receipt" style="width:14px; height:14px; vertical-align: middle; margin-left: 2px;"></i>عام</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 1.25rem 1rem;">
                                     {% if exp.course %}
-                                        <span class="status-badge active" style="background: rgba(197, 160, 89, 0.1); color: var(--brand-gold); border: 1px solid rgba(197, 160, 89, 0.2); border-radius: 8px; padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 800;">{{ exp.course.title }}</span>
+                                        <span class="status-badge active" style="background: rgba(197, 160, 89, 0.1); color: var(--brand-gold); border: 1px solid rgba(197, 160, 89, 0.2); border-radius: 8px; padding: 0.35rem 0.5rem; font-size: 0.8rem; font-weight: 800; display: inline-block;">{{ exp.course.title }}</span>
                                     {% else %}
                                         <span style="color: var(--text-muted); font-size: 0.85rem;">مصروف عام للمنصة</span>
                                     {% endif %}
@@ -109,21 +192,37 @@
                                 <td class="text-center cell-numeric-val" style="text-align: center; padding: 1.25rem 1rem; color: #f87171; font-weight: 800;">
                                     {% if exp.amount_usd > 0 %}{{ exp.amount_usd|floatformat:2 }} ${% else %}—{% endif %}
                                 </td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;">
+                                    {% if exp.status == 'paid' %}
+                                        <span class="status-badge paid" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; font-weight: 800; background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.2); border-radius: 8px; color: #34d399;">تم الصرف / مخرّج</span>
+                                    {% else %}
+                                        <span class="status-badge pending" style="padding: 0.35rem 0.6rem; font-size: 0.75rem; font-weight: 800; background: rgba(197, 160, 89, 0.1); border: 1px solid rgba(197, 160, 89, 0.2); border-radius: 8px; color: var(--brand-gold);">معلق / لم يدفع</span>
+                                    {% endif %}
+                                </td>
                                 <td style="padding: 1.25rem 1rem; color: var(--text-muted);">{{ exp.created_at|date:"Y-m-d H:i" }}</td>
                                 <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;">
-                                    <form method="POST" action="{% url 'dashboard:admin_expense_delete' exp.id %}" onsubmit="return confirm('هل أنت متأكد من حذف هذا المصروف؟');" style="display:inline; margin:0; padding:0;">
-                                        {% csrf_token %}
-                                        <!-- Redirect back to this page after deleting -->
-                                        <input type="hidden" name="next_page" value="expenses_page">
-                                        <button type="submit" class="btn btn-glass btn-sm text-danger" style="background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 0; padding: 0.5rem; border-radius: 10px; cursor: pointer;" title="حذف المصروف">
-                                            <i data-lucide="trash-2" style="width:16px;height:16px;"></i>
-                                        </button>
-                                    </form>
+                                    <div style="display: flex; gap: 0.5rem; justify-content: center; align-items: center;">
+                                        {% if exp.status == 'pending' %}
+                                            <form method="POST" action="{% url 'dashboard:admin_expense_disburse' exp.id %}" style="display:inline; margin:0; padding:0;">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-glass btn-sm font-bold" style="padding: 0.4rem 0.6rem; border: 1px solid rgba(52, 211, 153, 0.3); color: #34d399; font-size: 0.75rem; border-radius: 8px; background: rgba(52, 211, 153, 0.05); cursor: pointer;" title="تخريج وصرف المصروف">
+                                                    تخريج المصروف
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                        <form method="POST" action="{% url 'dashboard:admin_expense_delete' exp.id %}" onsubmit="return confirm('هل أنت متأكد من حذف هذا المصروف؟');" style="display:inline; margin:0; padding:0;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="next_page" value="expenses_page">
+                                            <button type="submit" class="btn btn-glass btn-sm text-danger" style="background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 0; padding: 0.5rem; border-radius: 8px; cursor: pointer;" title="حذف المصروف">
+                                                <i data-lucide="trash-2" style="width:16px;height:16px;"></i>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="6" class="text-center p-8 text-muted" style="text-align: center; padding: 3rem;">لا توجد أي مصاريف مسجلة حالياً. سجل مصروفاً من القسم الجانبي!</td>
+                                <td colspan="8" class="text-center p-8 text-muted" style="text-align: center; padding: 3rem;">لا توجد أي مصاريف مسجلة حالياً. سجل مصروفاً من القسم الجانبي!</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -133,6 +232,38 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const selectCourse = document.getElementById("print_course_id");
+        const inputTitle = document.getElementById("print_title");
+        const inputAmountSyp = document.getElementById("print_amount_syp");
+        const calcHint = document.getElementById("calc_hint");
+        
+        if (selectCourse) {
+            selectCourse.addEventListener("change", function() {
+                const selectedOption = selectCourse.options[selectCourse.selectedIndex];
+                if (!selectedOption || !selectedOption.value) {
+                    inputTitle.value = "";
+                    inputAmountSyp.value = 0;
+                    calcHint.textContent = "";
+                    return;
+                }
+                
+                const codesCount = parseInt(selectedOption.getAttribute("data-codes") || "0");
+                const courseTitle = selectedOption.getAttribute("data-title");
+                
+                // Calculate print cost: ceil(codesCount / 3) * 1500
+                const platesCount = Math.ceil(codesCount / 3);
+                const approxCost = platesCount * 1500;
+                
+                inputTitle.value = `مصروف طباعة أكواد دورة: ${courseTitle}`;
+                inputAmountSyp.value = approxCost;
+                calcHint.textContent = `حسبة تلقائية: الدورة بها ${codesCount} كود = ${platesCount} طبق طباعة × 1500 ل.س = ${approxCost} ل.س`;
+            });
+        }
+    });
+</script>
 
 <style>
     .hub-grid { display: grid; grid-template-columns: 360px 1fr; gap: 2rem; }
