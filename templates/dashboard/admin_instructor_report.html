@@ -86,7 +86,7 @@
                             </div>
                             
                             <!-- Gold Highlight Box for Earning -->
-                            <div style="background: linear-gradient(135deg, #8f6f3d 0%, #5d4524 100%); color: #ffffff; border-radius: 8px; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(93, 69, 36, 0.25);">
+                            <div style="background: linear-gradient(135deg, #8f6f3d 0%, #5d4524 100%); color: #ffffff; border-radius: 8px; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(93, 69, 36, 0.25); -webkit-print-color-adjust: exact; print-color-adjust: exact;">
                                 <span style="font-size: 0.85rem; font-weight: bold;">صافي حصة المدرس المستحقة:</span>
                                 <span style="font-size: 1.4rem; font-weight: 900;"><span id="display-net-share" class="font-mono">0</span> ل.س</span>
                             </div>
@@ -195,7 +195,7 @@
                     </div>
                     
                     <!-- Gold Highlight Box for Earning -->
-                    <div style="background: linear-gradient(135deg, #8f6f3d 0%, #5d4524 100%); color: #ffffff; border-radius: 8px; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(93, 69, 36, 0.25);">
+                    <div style="background: linear-gradient(135deg, #8f6f3d 0%, #5d4524 100%); color: #ffffff; border-radius: 8px; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(93, 69, 36, 0.25); -webkit-print-color-adjust: exact; print-color-adjust: exact;">
                         <span style="font-size: 0.85rem; font-weight: bold;">صافي حصة المدرس المستحقة:</span>
                         <span style="font-size: 1.4rem; font-weight: 900;"><span id="print-net-share" class="font-mono">0</span> ل.س</span>
                     </div>
@@ -620,19 +620,35 @@
             display: none !important;
         }
         body.print-card-active .print-only-card-holder {
-            display: block !important;
+            display: flex !important;
             visibility: visible !important;
-            position: absolute !important;
-            left: 50% !important;
-            top: 50% !important;
-            transform: translate(-50%, -50%) !important;
+            position: fixed !important;
+            inset: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: #ffffff !important;
+            justify-content: center !important;
+            align-items: center !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            z-index: 9999999 !important;
+        }
+        body.print-card-active .print-only-card-holder .instructor-card-physical {
+            display: block !important;
             width: 791px !important;
             height: 374px !important;
             border: 2px solid #8f6f3d !important;
+            border-radius: 12px !important;
             box-shadow: none !important;
             background: #ffffff !important;
+            position: relative !important;
+            overflow: hidden !important;
             page-break-inside: avoid !important;
             break-inside: avoid !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
         }
         body.print-card-active .print-only-card-holder .watermark {
             display: block !important;
