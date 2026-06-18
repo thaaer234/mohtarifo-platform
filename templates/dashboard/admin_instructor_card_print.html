@@ -161,11 +161,11 @@
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 15px; margin: 8px 0; font-size: 0.85rem; color: #333;">
                             <div style="display: flex; justify-content: space-between;">
                                 <span>عدد الأكواد المباعة:</span>
-                                <strong><span class="font-mono">{{ card.sold_cnt|intcomma }}</span> كود</strong>
+                                <strong><span class="font-mono">{{ card.sold_cnt|arabic_intcomma }}</span> كود</strong>
                             </div>
                             <div style="display: flex; justify-content: space-between;">
                                 <span>أكواد بحسومات:</span>
-                                <strong><span class="font-mono">{{ card.discount_codes|intcomma }}</span> كود</strong>
+                                <strong><span class="font-mono">{{ card.discount_codes|arabic_intcomma }}</span> كود</strong>
                             </div>
                             <div style="display: flex; justify-content: space-between;">
                                 <span>إجمالي المبيعات:</span>
