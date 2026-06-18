@@ -5118,10 +5118,10 @@ def admin_instructor_report(request, instructor_id):
             sold_cnt = saved_card_data.get('custom_total_codes') or _sold_qs.count()
 
         try:
-            gross_val = float(request.GET.get('gross_val'))
+            gross_val = int(float(request.GET.get('gross_val')))
         except (ValueError, TypeError):
             _gross_agg = _sold_qs.aggregate(total=Sum('sold_price_cents'))['total'] or 0
-            gross_val = saved_card_data.get('custom_total_gross') or _gross_agg
+            gross_val = int(saved_card_data.get('custom_total_gross') or _gross_agg)
 
         notes = request.GET.get('notes') or saved_card_data.get('custom_notes') or "حساب مستحقات مبيعات الأكواد"
         creator = request.GET.get('creator') or saved_card_data.get('custom_creator') or "Manager thaaer almasre"
@@ -5149,19 +5149,21 @@ def admin_instructor_report(request, instructor_id):
                 arabic_to_western = str.maketrans('٠١٢٣٤٥٦٧٨٩', '0123456789')
                 discount_val += int(amt_match.group(1).translate(arabic_to_western))
         # Build a single card dict with all needed fields
+        # Format comm_pct: show as integer if whole number, else 1 decimal place
+        comm_pct_display = int(comm_pct) if comm_pct == int(comm_pct) else round(comm_pct, 1)
         card = {
             "instructor": instructor,
             "profile": profile,
             "card_name": card_name,
             "card_specialty": card_specialty,
-            "comm_pct": comm_pct,
-            "sold_cnt": sold_cnt,
-            "gross_val": gross_val,
-            "discount_codes": discount_codes,
-            "discount_val": discount_val,
+            "comm_pct": comm_pct_display,
+            "sold_cnt": int(sold_cnt),
+            "gross_val": int(gross_val),
+            "discount_codes": int(discount_codes),
+            "discount_val": int(discount_val),
             "notes": notes,
             "creator": creator,
-            "net_share": net_share,
+            "net_share": int(round(gross_val * (comm_pct / 100))),
         }
         # pages_list is a list of pages, each page is a list of cards (slots). Here we put one card per page.
         pages_list = [[card]]

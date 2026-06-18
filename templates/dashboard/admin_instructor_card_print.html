@@ -1,7 +1,7 @@
 {% load static %}
 {% load inline_static %}
-{% load humanize %}
 {% load arabic_numbers %}
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -161,19 +161,19 @@
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px 15px; margin: 8px 0; font-size: 0.85rem; color: #333;">
                             <div style="display: flex; justify-content: space-between;">
                                 <span>عدد الأكواد المباعة:</span>
-                                <strong><span class="font-mono">{{ card.sold_cnt|intcomma }}</span> كود</strong>
+                                <strong><span class="font-mono">{{ card.sold_cnt|format_money }}</span> كود</strong>
                             </div>
                             <div style="display: flex; justify-content: space-between;">
                                 <span>أكواد بحسومات:</span>
-                                <strong><span class="font-mono">{{ card.discount_codes|intcomma }}</span> كود</strong>
+                                <strong><span class="font-mono">{{ card.discount_codes|format_money }}</span> كود</strong>
                             </div>
                             <div style="display: flex; justify-content: space-between;">
                                 <span>إجمالي المبيعات:</span>
-                                <strong><span class="font-mono">{{ card.gross_val|intcomma }}</span> ل.س</strong>
+                                <strong><span class="font-mono">{{ card.gross_val|format_money }}</span> ل.س</strong>
                             </div>
                             <div style="display: flex; justify-content: space-between;">
                                 <span>قيمة الحسومات:</span>
-                                <strong><span class="font-mono">{{ card.discount_val|intcomma }}</span> ل.س</strong>
+                                <strong><span class="font-mono">{{ card.discount_val|format_money }}</span> ل.س</strong>
                             </div>
                             <div style="display: flex; justify-content: space-between; grid-column: 1 / -1; margin-top: 2px; border-top: 1px dashed rgba(0,0,0,0.05); padding-top: 2px;">
                                 <span>نسبة عمولة المدرس:</span>
@@ -184,7 +184,7 @@
                         <!-- Gold Highlight Box for Earning -->
                         <div style="background: linear-gradient(135deg, #8f6f3d 0%, #5d4524 100%); color: #ffffff; border-radius: 8px; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(93, 69, 36, 0.25); -webkit-print-color-adjust: exact; print-color-adjust: exact;">
                             <span style="font-size: 0.82rem; font-weight: bold;">صافي حصة المدرس المستحقة:</span>
-                            <span style="font-size: 1.35rem; font-weight: 900;"><span class="font-mono">{{ card.net_share|intcomma }}</span> ل.س</span>
+                            <span style="font-size: 1.35rem; font-weight: 900;"><span class="font-mono">{{ card.net_share|format_money }}</span> ل.س</span>
                         </div>
                         
                         <!-- Card Footer -->
