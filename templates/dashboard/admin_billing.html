@@ -44,6 +44,187 @@
     <div class="hub-grid" style="display: grid; grid-template-columns: 1fr 380px; gap: 2rem;">
         <!-- Main Column: Tables -->
         <div class="hub-main" style="display: flex; flex-direction: column; gap: 2rem;">
+            <!-- Financial Constants Settings Card -->
+            <section class="premium-card" style="border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-radius: 20px; padding: 1.5rem; background: var(--bg-surface);">
+                <h2 class="section-title text-xl font-bold flex align-center gap-2 mb-6" style="color: var(--text-primary); font-family: 'Cairo', sans-serif; display: flex; align-items: center; gap: 0.5rem; margin-top:0;">
+                    <i data-lucide="settings" style="color: var(--brand-gold);"></i> لوحة الثوابت المالية لإجراء العمليات الحسابية للمصاريف
+                </h2>
+                <form method="POST" action="{% url 'dashboard:admin_billing_settings_update' %}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; align-items: flex-end;">
+                    {% csrf_token %}
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); font-weight: 800; margin-bottom: 0.5rem;">سعر طبق طباعة الأكواد (ل.س)</label>
+                        <input type="number" name="print_sheet_price" value="{{ print_sheet_price|floatformat:0 }}" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-light); background: rgba(255,255,255,0.02); color: var(--text-primary); font-weight: 700;" required>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); font-weight: 800; margin-bottom: 0.5rem;">كلفة استضافة الدورة شهرياً (ل.س)</label>
+                        <input type="number" name="hosting_monthly_syp" value="{{ hosting_monthly_syp|floatformat:0 }}" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-light); background: rgba(255,255,255,0.02); color: var(--text-primary); font-weight: 700;" required>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); font-weight: 800; margin-bottom: 0.5rem;">كلفة استضافة الدورة شهرياً (USD)</label>
+                        <input type="number" name="hosting_monthly_usd" value="{{ hosting_monthly_usd|floatformat:0 }}" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-light); background: rgba(255,255,255,0.02); color: var(--text-primary); font-weight: 700;" required>
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); font-weight: 800; margin-bottom: 0.5rem;">كلفة تشغيل الفيديو للكود الواحد (ل.س)</label>
+                        <input type="number" name="video_cost_per_code" value="{{ video_cost_per_code|floatformat:0 }}" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-light); background: rgba(255,255,255,0.02); color: var(--text-primary); font-weight: 700;" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="background: var(--brand-gold); color: var(--bg-base); font-weight: 800; padding: 0.7rem 1.5rem; border-radius: 8px; border: none; height: 42px;">حفظ الثوابت المالية</button>
+                </form>
+            </section>
+
+            <!-- Sales Centers Collection Report -->
+            <section class="premium-card" style="border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden; background: var(--bg-surface);">
+                <div style="padding: 1.5rem 1.5rem 0 1.5rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 class="section-title text-xl font-bold flex align-center gap-2" style="color: var(--text-primary); font-family: 'Cairo', sans-serif; display: flex; align-items: center; gap: 0.5rem; margin:0;">
+                        <i data-lucide="wallet" style="color: var(--brand-gold);"></i> تقرير التحصيل المالي ومطابقة مراكز البيع
+                    </h2>
+                </div>
+                <div class="table-responsive" style="padding: 0 1.5rem 1.5rem 1.5rem;">
+                    <table class="admin-table" style="width: 100%; border-collapse: collapse; text-align: right;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--border-light);">
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800;">مركز البيع</th>
+                                <th class="text-center" style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">التحصيل الإجمالي</th>
+                                <th class="text-center" style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">عمولة المركز (15%)</th>
+                                <th class="text-center" style="color: var(--brand-gold); padding: 1rem; font-size: 0.85rem; font-weight: 800; text-align: center;">الصافي للمنصة</th>
+                                <th class="text-center" style="color: #34d399; padding: 1rem; font-size: 0.85rem; font-weight: 800; text-align: center;">المحسّم (المستلم فعلياً)</th>
+                                <th class="text-center" style="color: #f1416c; padding: 1rem; font-size: 0.85rem; font-weight: 800; text-align: center;">المتبقي بذمة المركز</th>
+                                <th class="text-center" style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">حالة التسوية</th>
+                                <th class="text-center" style="padding: 1rem; color: var(--text-muted); font-size: 0.85rem; font-weight: 800; text-align: center;">العمليات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in centers_collection_report %}
+                            <tr style="border-bottom: 1px solid var(--border-light); transition: all 0.2s ease;">
+                                <td style="padding: 1.25rem 1rem;">
+                                    <strong>{{ item.center.name }}</strong>
+                                    {% if item.center.institute %}<br><small style="color:var(--text-muted);">{{ item.center.institute.name }}</small>{% endif %}
+                                </td>
+                                <td class="text-center cell-numeric-val" style="text-align: center; padding: 1.25rem 1rem;">{{ item.actual_earned|currency_format }} ل.س</td>
+                                <td class="text-center cell-numeric-val" style="text-align: center; padding: 1.25rem 1rem; color: var(--text-muted);">{{ item.center_share|currency_format }} ل.س</td>
+                                <td class="text-center cell-numeric-val" style="text-align: center; padding: 1.25rem 1rem; color: var(--brand-gold); font-weight: 800;">{{ item.net_share_platform|currency_format }} ل.س</td>
+                                <td class="text-center cell-numeric-val" style="text-align: center; padding: 1.25rem 1rem; color: #34d399; font-weight: 800;">{{ item.collected|currency_format }} ل.س</td>
+                                <td class="text-center cell-numeric-val" style="text-align: center; padding: 1.25rem 1rem; color: {% if item.remaining_due > 0 %}#f1416c{% else %}var(--text-muted){% endif %}; font-weight: 800;">
+                                    {{ item.remaining_due|currency_format }} ل.س
+                                </td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem;">
+                                    {% if item.is_settled %}
+                                        <span class="status-badge paid" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 800; background: rgba(52, 211, 153, 0.1); border: 1px solid rgba(52, 211, 153, 0.2); border-radius: 8px; color: #34d399;">تمت التسوية</span>
+                                    {% else %}
+                                        <span class="status-badge pending" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; font-weight: 800; background: rgba(197, 160, 89, 0.1); border: 1px solid rgba(197, 160, 89, 0.2); border-radius: 8px; color: var(--brand-gold);">معلق</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center" style="text-align: center; padding: 1.25rem 1rem; display: flex; gap: 0.5rem; justify-content: center; align-items: center; border-bottom: none;">
+                                    <button type="button" onclick="openCenterModal('{{ item.center.id }}', '{{ item.center.name }}', '{{ item.collected }}', '{{ item.is_settled|yesno:'true,false' }}')" class="btn btn-glass btn-sm font-bold" style="padding: 0.45rem 0.85rem; border: 1px solid rgba(197, 160, 89, 0.3); color: var(--brand-gold); font-size: 0.8rem; border-radius: 8px; background: rgba(197, 160, 89, 0.03);">
+                                        تعديل التحصيل
+                                    </button>
+                                    <form method="POST" action="{% url 'dashboard:admin_center_billing_update' item.center.id %}" style="display:inline; margin:0; padding:0;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="toggle_settled">
+                                        <button type="submit" class="btn btn-glass btn-sm font-bold" style="padding: 0.45rem 0.85rem; border: 1px solid rgba(96, 165, 250, 0.3); color: #60a5fa; font-size: 0.8rem; border-radius: 8px; background: rgba(96, 165, 250, 0.03);">
+                                            {% if item.is_settled %}فتح الحساب{% else %}تسكير الحساب{% endif %}
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="8" class="text-center p-8 text-muted" style="text-align: center; padding: 2.5rem;">لا توجد مراكز بيع.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Course Profits & Operating Expenses Report -->
+            <section class="premium-card" style="border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden; background: var(--bg-surface);">
+                <div style="padding: 1.5rem 1.5rem 0 1.5rem; display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h2 class="section-title text-xl font-bold flex align-center gap-2" style="color: var(--text-primary); font-family: 'Cairo', sans-serif; display: flex; align-items: center; gap: 0.5rem; margin:0;">
+                        <i data-lucide="calculator" style="color: var(--brand-gold);"></i> مصاريف وأرباح الدورات ومستحقات المدرسين
+                    </h2>
+                </div>
+                <div class="table-responsive" style="padding: 0 1.5rem 1.5rem 1.5rem;">
+                    <table class="admin-table" style="width: 100%; border-collapse: collapse; text-align: right; font-size: 0.85rem;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--border-light);">
+                                <th style="padding: 1rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; width: 22%;">الدورة والمدرس</th>
+                                <th class="text-center" style="padding: 0.5rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-align: center; width: 10%;">مبيعات الأكواد</th>
+                                <th class="text-center" style="padding: 0.5rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-align: center; width: 12%;">مصاريف الطباعة</th>
+                                <th class="text-center" style="padding: 0.5rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-align: center; width: 12%;">مصاريف الفيديو</th>
+                                <th class="text-center" style="padding: 0.5rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-align: center; width: 12%;">مصاريف الاستضافة</th>
+                                <th class="text-center" style="padding: 0.5rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-align: center; width: 10%;">مصاريف أخرى</th>
+                                <th class="text-center" style="padding: 0.5rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-align: center; width: 12%;">حصة المدرس ومناقلاتها</th>
+                                <th class="text-center" style="color: var(--brand-gold); padding: 0.5rem; font-size: 0.8rem; font-weight: 800; text-align: center; width: 12%;">صافي أرباح المنصة</th>
+                                <th class="text-center" style="padding: 1rem; color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-align: center; width: 10%;">العمليات المتاحة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in course_profits_report %}
+                            <tr style="border-bottom: 1px solid var(--border-light); transition: all 0.2s ease; {% if item.is_closed %}opacity: 0.7; background: rgba(0,0,0,0.08);{% endif %}">
+                                <td style="padding: 1rem 0.5rem;">
+                                    <strong>{{ item.course.title }}</strong><br>
+                                    <small style="color:var(--brand-gold);">المدرس: {{ item.course.instructor.get_full_name|default:item.course.instructor.username }}</small>
+                                    {% if item.is_closed %}<br><span class="badge" style="background: rgba(239, 68, 68, 0.1); color: #f1416c; padding: 0.15rem 0.35rem; font-size: 0.7rem; border-radius: 4px; font-weight: 800;">حساب مغلق 🔒</span>{% endif %}
+                                </td>
+                                <td class="text-center" style="text-align: center; padding: 1rem 0.5rem;">
+                                    <strong>{{ item.gross|currency_format }} ل.س</strong><br>
+                                    <small class="text-muted">{{ item.sold_codes }} مباع / {{ item.total_codes }} كلي</small>
+                                </td>
+                                <td class="text-center" style="text-align: center; padding: 1rem 0.5rem;">
+                                    <span>{{ item.print_cost|currency_format }} ل.س</span><br>
+                                    <small class="text-muted">{{ item.print_sheets }} طبق</small>
+                                </td>
+                                <td class="text-center" style="text-align: center; padding: 1rem 0.5rem;">
+                                    <span>{{ item.video_cost|currency_format }} ل.س</span>
+                                </td>
+                                <td class="text-center" style="text-align: center; padding: 1rem 0.5rem;">
+                                    <span style="display:block;">{{ item.hosting_cost_syp|currency_format }} ل.س</span>
+                                    <small class="text-muted" style="color: #60a5fa;">{{ item.hosting_cost_usd|floatformat:0 }} USD</small><br>
+                                    <small class="text-muted">{{ item.hosting_months }} شهر</small>
+                                </td>
+                                <td class="text-center" style="text-align: center; padding: 1rem 0.5rem; color: var(--text-muted);">
+                                    <span>{{ item.custom_expense|currency_format }} ل.س</span>
+                                </td>
+                                <td class="text-center" style="text-align: center; padding: 1rem 0.5rem;">
+                                    <span style="font-weight:700; color:#60a5fa; display:block;">مستحق: {{ item.instructor_share|currency_format }} ل.س</span>
+                                    <span style="color:#34d399; display:block;">مناقل: {{ item.settled_share|currency_format }} ل.س</span>
+                                    <span style="color:{% if item.instructor_due > 0 %}#f1416c{% else %}var(--text-muted){% endif %}; font-weight:800; display:block;">
+                                        باقي: {{ item.instructor_due|currency_format }} ل.س
+                                    </span>
+                                </td>
+                                <td class="text-center" style="text-align: center; padding: 1rem 0.5rem;">
+                                    <strong class="text-glow" style="color: {% if item.platform_net_profit >= 0 %}#34d399{% else %}#f1416c{% endif %}; font-size: 1.05rem;">
+                                        {{ item.platform_net_profit|currency_format }} ل.س
+                                    </strong>
+                                </td>
+                                <td class="text-center" style="text-align: center; padding: 1rem 0.5rem;">
+                                    <div style="display: flex; flex-direction: column; gap: 0.35rem; width: 100%;">
+                                        <button type="button" onclick="openCourseModal('{{ item.course.id }}', '{{ item.course.title }}', '{{ item.settled_share }}', '{{ item.hosting_months }}', '{{ item.custom_expense }}', '{{ item.is_closed|yesno:'true,false' }}')" class="btn btn-glass btn-sm font-bold" style="padding: 0.35rem 0.5rem; border: 1px solid rgba(197, 160, 89, 0.3); color: var(--brand-gold); font-size: 0.75rem; border-radius: 6px; background: rgba(197, 160, 89, 0.02); cursor: pointer;">
+                                            تعديل التكاليف
+                                        </button>
+                                        <form method="POST" action="{% url 'dashboard:admin_course_billing_update' item.course.id %}" onsubmit="return confirm('هل أنت متأكد من تصفير الرصيد ومطابقته؟')" style="margin:0; padding:0;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="quick_settle">
+                                            <button type="submit" class="btn btn-glass btn-sm font-bold" style="width: 100%; padding: 0.35rem 0.5rem; border: 1px solid rgba(52, 211, 153, 0.3); color: #34d399; font-size: 0.75rem; border-radius: 6px; background: rgba(52, 211, 153, 0.02); cursor: pointer;">
+                                                تصفير رصيد المدرس
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{% url 'dashboard:admin_course_billing_update' item.course.id %}" style="margin:0; padding:0;">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="toggle_close">
+                                            <button type="submit" class="btn btn-glass btn-sm font-bold" style="width: 100%; padding: 0.35rem 0.5rem; border: 1px solid rgba(239, 68, 68, 0.3); color: #f1416c; font-size: 0.75rem; border-radius: 6px; background: rgba(239, 68, 68, 0.02); cursor: pointer;">
+                                                {% if item.is_closed %}فتح الحساب{% else %}تسكير حساب الدورة{% endif %}
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="9" class="text-center p-8 text-muted" style="text-align: center; padding: 2rem;">لا توجد دورات مسجلة.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
             <!-- Sales Centers expected Fund Table -->
             <section class="premium-card" style="border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden; background: var(--bg-surface);">
                 <div class="flex-between mb-6" style="padding: 1.5rem 1.5rem 0 1.5rem; display: flex; justify-content: space-between; align-items: center;">
@@ -293,6 +474,101 @@
             </section>
         </aside>
     </div>
+    <!-- Modal for Editing Center Payouts/Collections -->
+    <div id="centerModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px);">
+        <div style="background-color: var(--bg-surface); border: 1px solid var(--border-light); margin: 10% auto; padding: 2rem; border-radius: 18px; width: 450px; max-width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;">
+                <h3 style="margin: 0; color: var(--text-primary); font-family: 'Cairo', sans-serif; font-weight: 800;" id="centerModalTitle">تعديل تحصيلات مركز البيع</h3>
+                <span onclick="closeCenterModal()" style="color: var(--text-muted); font-size: 1.5rem; font-weight: bold; cursor: pointer;">&times;</span>
+            </div>
+            <form id="centerModalForm" method="POST" action="">
+                {% csrf_token %}
+                <div style="margin-bottom: 1.25rem;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); font-weight: 800; margin-bottom: 0.5rem;">المبلغ المحصل فعلياً من المركز (ل.س)</label>
+                    <input type="number" id="centerCollectedInput" name="collected_amount_syp" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-light); background: rgba(255,255,255,0.02); color: var(--text-primary); font-weight: 700;" required>
+                </div>
+                <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" id="centerSettledInput" name="is_settled" value="true">
+                    <label for="centerSettledInput" style="font-size: 0.9rem; color: var(--text-primary); font-weight: 700; cursor: pointer;">تمت التسوية كاملة مع المركز المالي</label>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 1rem; border-top: 1px solid var(--border-light); padding-top: 1rem;">
+                    <button type="button" onclick="closeCenterModal()" class="btn btn-secondary" style="background: transparent; border: 1px solid var(--border-light); color: var(--text-primary); padding: 0.5rem 1rem; border-radius: 8px;">إلغاء</button>
+                    <button type="submit" class="btn btn-primary" style="background: var(--brand-gold); border: none; color: var(--bg-base); padding: 0.5rem 1.5rem; border-radius: 8px; font-weight: 800;">حفظ التعديلات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal for Editing Course Expenses -->
+    <div id="courseModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px);">
+        <div style="background-color: var(--bg-surface); border: 1px solid var(--border-light); margin: 8% auto; padding: 2rem; border-radius: 18px; width: 500px; max-width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-light); padding-bottom: 1rem;">
+                <h3 style="margin: 0; color: var(--text-primary); font-family: 'Cairo', sans-serif; font-weight: 800;" id="courseModalTitle">تعديل تكاليف ومناقلات الدورة</h3>
+                <span onclick="closeCourseModal()" style="color: var(--text-muted); font-size: 1.5rem; font-weight: bold; cursor: pointer;">&times;</span>
+            </div>
+            <form id="courseModalForm" method="POST" action="">
+                {% csrf_token %}
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); font-weight: 800; margin-bottom: 0.5rem;">المبلغ المناقل والمدفوع للمدرس بالفعل (ل.س)</label>
+                    <input type="number" id="courseSettledShareInput" name="settled_instructor_share_syp" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-light); background: rgba(255,255,255,0.02); color: var(--text-primary); font-weight: 700;" required>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); font-weight: 800; margin-bottom: 0.5rem;">عدد أشهر استضافة الدورة</label>
+                    <input type="number" id="courseHostingMonthsInput" name="hosting_months" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-light); background: rgba(255,255,255,0.02); color: var(--text-primary); font-weight: 700;" required>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; font-size: 0.85rem; color: var(--text-secondary); font-weight: 800; margin-bottom: 0.5rem;">مصاريف تشغيل إضافية يدوية (ل.س)</label>
+                    <input type="number" id="courseCustomExpenseInput" name="custom_expense_syp" class="form-control" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-light); background: rgba(255,255,255,0.02); color: var(--text-primary); font-weight: 700;" required>
+                </div>
+                <div style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <input type="checkbox" id="courseClosedInput" name="is_account_closed" value="true">
+                    <label for="courseClosedInput" style="font-size: 0.9rem; color: var(--text-primary); font-weight: 700; cursor: pointer;">تسكير حساب الدورة بشكل نهائي 🔒</label>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 1rem; border-top: 1px solid var(--border-light); padding-top: 1rem;">
+                    <button type="button" onclick="closeCourseModal()" class="btn btn-secondary" style="background: transparent; border: 1px solid var(--border-light); color: var(--text-primary); padding: 0.5rem 1rem; border-radius: 8px;">إلغاء</button>
+                    <button type="submit" class="btn btn-primary" style="background: var(--brand-gold); border: none; color: var(--bg-base); padding: 0.5rem 1.5rem; border-radius: 8px; font-weight: 800;">حفظ التعديلات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modals Javascript Operations -->
+    <script>
+        function openCenterModal(id, name, collected, isSettled) {
+            document.getElementById('centerModalTitle').innerText = 'تعديل تحصيلات: ' + name;
+            document.getElementById('centerCollectedInput').value = collected;
+            document.getElementById('centerSettledInput').checked = (isSettled === 'true');
+            document.getElementById('centerModalForm').action = '/admin-dashboard/billing/centers/' + id + '/update/';
+            document.getElementById('centerModal').style.display = 'block';
+        }
+        function closeCenterModal() {
+            document.getElementById('centerModal').style.display = 'none';
+        }
+        function openCourseModal(id, name, settledShare, hostingMonths, customExpense, isClosed) {
+            document.getElementById('courseModalTitle').innerText = 'تعديل تكاليف دورة: ' + name;
+            document.getElementById('courseSettledShareInput').value = settledShare;
+            document.getElementById('courseHostingMonthsInput').value = hostingMonths;
+            document.getElementById('courseCustomExpenseInput').value = customExpense;
+            document.getElementById('courseClosedInput').checked = (isClosed === 'true');
+            document.getElementById('courseModalForm').action = '/admin-dashboard/billing/courses/' + id + '/update/';
+            document.getElementById('courseModal').style.display = 'block';
+        }
+        function closeCourseModal() {
+            document.getElementById('courseModal').style.display = 'none';
+        }
+        
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const centerModal = document.getElementById('centerModal');
+            const courseModal = document.getElementById('courseModal');
+            if (event.target == centerModal) {
+                closeCenterModal();
+            }
+            if (event.target == courseModal) {
+                closeCourseModal();
+            }
+        }
+    </script>
 </div>
 
 <style>

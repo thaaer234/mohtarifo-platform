@@ -71,6 +71,13 @@ class Course(models.Model):
     file1_name = models.CharField(max_length=120, blank=True, verbose_name="اسم الملف الأول (على الزر)")
     file2 = models.FileField(upload_to="courses/files/", blank=True, null=True, verbose_name="الملف الإضافي الثاني")
     file2_name = models.CharField(max_length=120, blank=True, verbose_name="اسم الملف الثاني (على الزر)")
+    
+    # Financial Settlement & Operating Expenses fields
+    is_account_closed = models.BooleanField(default=False, verbose_name="حساب الدورة مغلق")
+    settled_instructor_share_syp = models.PositiveIntegerField(default=0, verbose_name="المبالغ المناقلة للمدرس (ل.س)")
+    hosting_months = models.PositiveIntegerField(default=1, verbose_name="أشهر الاستضافة")
+    custom_expense_syp = models.PositiveIntegerField(default=0, verbose_name="مصاريف تشغيل إضافية (ل.س)")
+    
     published_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

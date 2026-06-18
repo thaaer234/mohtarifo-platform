@@ -18,6 +18,7 @@ from .models import (
     SalesCenter,
     Subscription,
     UserDevice,
+    BillingSetting,
 )
 from import_export.admin import ImportExportModelAdmin
 from .services import create_codes_from_upload
@@ -212,3 +213,9 @@ class DiscountRuleAdmin(admin.ModelAdmin):
     list_display = ("name", "starts_at", "expires_at", "discount_percent", "is_active")
     list_filter = ("is_active",)
     search_fields = ("name",)
+
+
+@admin.register(BillingSetting)
+class BillingSettingAdmin(admin.ModelAdmin):
+    list_display = ("label", "key", "value_numeric")
+    search_fields = ("label", "key")

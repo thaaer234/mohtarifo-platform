@@ -27,6 +27,11 @@ class SalesCenter(models.Model):
     institute = models.ForeignKey(Institute, on_delete=models.SET_NULL, related_name="sales_centers", null=True, blank=True)
     phone = models.CharField(max_length=40, blank=True)
     address = models.CharField(max_length=255, blank=True)
+    
+    # Collection tracking fields
+    collected_amount_syp = models.PositiveIntegerField(default=0, verbose_name="المبالغ المحصلة (ل.س)")
+    is_settled = models.BooleanField(default=False, verbose_name="تمت التسوية")
+    
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -387,3 +392,17 @@ class DiscountRule(models.Model):
         if self.discount_amount_syp > 0:
             return f"{self.name} ({self.discount_amount_syp} ل.س)"
         return f"{self.name} ({self.discount_percent}%)"
+
+
+class BillingSetting(models.Model):
+    name = models.CharField(max_length=80, unique=True, verbose_name="اسم الإعداد")
+    key = models.CharField(max_length=80, unique=True, verbose_name="مفتاح الإعداد")
+    value_numeric = models.DecimalField(max_digits=12, decimal_places=2, default=0.0, verbose_name="القيمة العددية")
+    label = models.CharField(max_length=120, blank=True, verbose_name="العنوان بالعربي")
+
+    class Meta:
+        verbose_name = "إعداد مالي"
+        verbose_name_plural = "الإعدادات المالية"
+
+    def __str__(self):
+        return f"{self.label or self.name}: {self.value_numeric}"

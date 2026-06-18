@@ -3717,6 +3717,129 @@ def admin_billing(request):
             "actual_earned": (actual_earned_cents or 0) / 100,
         })
 
+    from billing.models import BillingSetting
+    from apps.instructor_finance.models import RevenueShareAgreement
+    
+    # Get financial configuration settings
+    settings_dict = {}
+    for bs in BillingSetting.objects.all():
+        settings_dict[bs.key] = float(bs.value_numeric)
+        
+    print_sheet_price = settings_dict.get("print_sheet_price", 1500.0)
+    hosting_monthly_syp = settings_dict.get("hosting_monthly_syp", 50000.0)
+    hosting_monthly_usd = settings_dict.get("hosting_monthly_usd", 15.0)
+    video_cost_per_code = settings_dict.get("video_cost_per_code", 2000.0)
+
+    # Load instructor agreements
+    agreements = {
+        (rsa.instructor_id, rsa.course_id): rsa.commission_bps / 10000.0
+        for rsa in RevenueShareAgreement.objects.filter(is_active=True)
+    }
+
+    # Build course profits report
+    course_profits_report = []
+    courses = Course.objects.select_related("subject", "instructor").order_by("academic_track", "kind", "subject__name", "title")
+    for course in courses:
+        codes = AccessCode.objects.filter(course=course)
+        sold_codes = codes.filter(sale_status="sold")
+        sold_cnt = sold_codes.count()
+        total_cnt = codes.count()
+        
+        # Calculate actual sales revenue
+        earned_cents = 0
+        for code in sold_codes:
+            if code.sold_price_cents is not None:
+                earned_cents += code.sold_price_cents
+            else:
+                if course.price_cents:
+                    earned_cents += course.price_cents
+        gross = earned_cents / 100
+        
+        # Revenue share commission rate
+        commission_pct = agreements.get((course.instructor.id, course.id))
+        if commission_pct is None:
+            commission_pct = agreements.get((course.instructor.id, None), 0.3)
+            
+        instructor_share = gross * commission_pct
+        instructor_due = instructor_share - (course.settled_instructor_share_syp or 0)
+        
+        # Calculate expenses
+        print_sheets = (total_cnt + 2) // 3
+        print_cost = print_sheets * print_sheet_price
+        
+        video_cost = sold_cnt * video_cost_per_code
+        
+        hosting_cost_syp = (course.hosting_months or 1) * hosting_monthly_syp
+        hosting_cost_usd = (course.hosting_months or 1) * hosting_monthly_usd
+        
+        total_expenses = print_cost + video_cost + hosting_cost_syp + (course.custom_expense_syp or 0)
+        platform_net_profit = gross - instructor_share - total_expenses
+        
+        course_profits_report.append({
+            "course": course,
+            "total_codes": total_cnt,
+            "sold_codes": sold_cnt,
+            "gross": gross,
+            "commission_percent": commission_pct * 100,
+            "instructor_share": instructor_share,
+            "settled_share": course.settled_instructor_share_syp or 0,
+            "instructor_due": instructor_due,
+            "print_sheets": print_sheets,
+            "print_cost": print_cost,
+            "video_cost": video_cost,
+            "hosting_months": course.hosting_months or 1,
+            "hosting_cost_syp": hosting_cost_syp,
+            "hosting_cost_usd": hosting_cost_usd,
+            "custom_expense": course.custom_expense_syp or 0,
+            "total_expenses": total_expenses,
+            "platform_net_profit": platform_net_profit,
+            "is_closed": course.is_account_closed,
+        })
+
+    # Centers collection report
+    centers_collection_report = []
+    for center in SalesCenter.objects.filter(is_active=True).select_related("institute").order_by("name"):
+        codes = AccessCode.objects.filter(sales_center=center)
+        sold_codes = codes.filter(sale_status="sold")
+        
+        # Gross standard value for sold codes
+        sold_gross_std_cents = 0
+        for code in sold_codes:
+            if code.course and code.course.price_cents:
+                sold_gross_std_cents += code.course.price_cents
+            elif code.package and code.package.price_cents:
+                sold_gross_std_cents += code.package.price_cents
+        sold_gross_std = sold_gross_std_cents / 100
+        
+        # Actual collected money
+        earned_cents = 0
+        for code in sold_codes:
+            if code.sold_price_cents is not None:
+                earned_cents += code.sold_price_cents
+            else:
+                if code.course and code.course.price_cents:
+                    earned_cents += code.course.price_cents
+                elif code.package and code.package.price_cents:
+                    earned_cents += code.package.price_cents
+        actual_earned = earned_cents / 100
+        
+        # Assuming standard commission percent of 15%
+        commission_percent = 15.0
+        center_share = sold_gross_std * commission_percent / 100
+        net_share_platform = actual_earned - center_share
+        
+        remaining_due = net_share_platform - (center.collected_amount_syp or 0)
+        
+        centers_collection_report.append({
+            "center": center,
+            "actual_earned": actual_earned,
+            "center_share": center_share,
+            "net_share_platform": net_share_platform,
+            "collected": center.collected_amount_syp or 0,
+            "remaining_due": remaining_due,
+            "is_settled": center.is_settled,
+        })
+
     # Total digital payments revenue on unsliced queryset
     total_revenue_cents = Payment.objects.filter(status="paid").aggregate(total=models.Sum("amount_cents"))["total"] or 0
     total_revenue = total_revenue_cents / 100
@@ -3750,8 +3873,109 @@ def admin_billing(request):
         "total_filter_gross": total_filter_gross,
         "sham_cash_balance": sham_cash_balance,
         "total_sold_codes": total_sold_codes,
+        
+        # New context variables
+        "print_sheet_price": print_sheet_price,
+        "hosting_monthly_syp": hosting_monthly_syp,
+        "hosting_monthly_usd": hosting_monthly_usd,
+        "video_cost_per_code": video_cost_per_code,
+        "course_profits_report": course_profits_report,
+        "centers_collection_report": centers_collection_report,
     }
     return render(request, template_to_render, context)
+
+
+@admin_required
+@require_POST
+def admin_course_billing_update(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    
+    # Handle "تصفير الرصيد" (quick settle) vs manual update
+    action = request.POST.get("action")
+    if action == "quick_settle":
+        # Calculate instructor share automatically
+        from billing.models import AccessCode
+        from apps.instructor_finance.models import RevenueShareAgreement
+        sold_codes = AccessCode.objects.filter(course=course, sale_status="sold")
+        earned_cents = 0
+        for code in sold_codes:
+            if code.sold_price_cents is not None:
+                earned_cents += code.sold_price_cents
+            else:
+                if course.price_cents:
+                    earned_cents += course.price_cents
+        gross = earned_cents / 100
+        
+        # Get agreement
+        agreement = RevenueShareAgreement.objects.filter(instructor=course.instructor, course=course, is_active=True).first()
+        if not agreement:
+            agreement = RevenueShareAgreement.objects.filter(instructor=course.instructor, course=None, is_active=True).first()
+        commission_pct = agreement.commission_bps / 10000.0 if agreement else 0.3
+        
+        course.settled_instructor_share_syp = int(gross * commission_pct)
+        messages.success(request, f"تم تصفير رصيد المدرس لدورة '{course.title}' بنجاح.")
+    elif action == "toggle_close":
+        course.is_account_closed = not course.is_account_closed
+        status_str = "إغلاق" if course.is_account_closed else "فتح"
+        messages.success(request, f"تم {status_str} حساب الدورة '{course.title}' بنجاح.")
+    else:
+        # Manual form update
+        settled_share = request.POST.get("settled_instructor_share_syp", 0)
+        hosting_months = request.POST.get("hosting_months", 1)
+        custom_expense = request.POST.get("custom_expense_syp", 0)
+        is_closed = request.POST.get("is_account_closed") == "true"
+        
+        course.settled_instructor_share_syp = int(settled_share)
+        course.hosting_months = int(hosting_months)
+        course.custom_expense_syp = int(custom_expense)
+        course.is_account_closed = is_closed
+        messages.success(request, f"تم تحديث بيانات دورة '{course.title}' بنجاح.")
+        
+    course.save()
+    return redirect("dashboard:admin_billing")
+
+
+@admin_required
+@require_POST
+def admin_center_billing_update(request, center_id):
+    from billing.models import SalesCenter
+    center = get_object_or_404(SalesCenter, id=center_id)
+    
+    action = request.POST.get("action")
+    if action == "toggle_settled":
+        center.is_settled = not center.is_settled
+        status_str = "تسوية" if center.is_settled else "إلغاء تسوية"
+        messages.success(request, f"تم {status_str} حساب مركز '{center.name}' بنجاح.")
+    else:
+        collected = request.POST.get("collected_amount_syp", 0)
+        is_settled = request.POST.get("is_settled") == "true"
+        
+        center.collected_amount_syp = int(collected)
+        center.is_settled = is_settled
+        messages.success(request, f"تم تحديث تحصيلات مركز '{center.name}' بنجاح.")
+        
+    center.save()
+    return redirect("dashboard:admin_billing")
+
+
+@admin_required
+@require_POST
+def admin_billing_settings_update(request):
+    from billing.models import BillingSetting
+    
+    settings_data = {
+        "print_sheet_price": request.POST.get("print_sheet_price", 1500.0),
+        "hosting_monthly_syp": request.POST.get("hosting_monthly_syp", 50000.0),
+        "hosting_monthly_usd": request.POST.get("hosting_monthly_usd", 15.0),
+        "video_cost_per_code": request.POST.get("video_cost_per_code", 2000.0),
+    }
+    
+    for key, val in settings_data.items():
+        if val is not None:
+            BillingSetting.objects.filter(key=key).update(value_numeric=float(val))
+            
+    messages.success(request, "تم تحديث الثوابت المالية بنجاح.")
+    return redirect("dashboard:admin_billing")
 
 
 @admin_required
@@ -3881,17 +4105,12 @@ def admin_center_invoice(request, center_id):
         total_potential += pot_val
         total_earned += earned_syp
 
-        # Aggregate by course or package
+        # Aggregate by course only
         if batch.course:
             key = f"course_{batch.course.id}"
             item_name = batch.course.title
             item_type = "مادة"
             instructor_name = batch.course.instructor.get_full_name() or batch.course.instructor.username if batch.course.instructor else ""
-        elif batch.package:
-            key = f"package_{batch.package.id}"
-            item_name = batch.package.name
-            item_type = "باقة"
-            instructor_name = "باقة مشتركة"
         else:
             continue
             
