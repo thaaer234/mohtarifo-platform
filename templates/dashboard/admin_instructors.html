@@ -124,6 +124,53 @@
     </section>
 </div>
 
+<!-- ===== Modal: تعديل بيانات البطاقة قبل الطباعة ===== -->
+<div id="printModal" class="pmodal-overlay" onclick="if(event.target===this)closePrintModal()">
+    <div class="pmodal-box">
+        <div class="pmodal-header">
+            <div>
+                <div class="pmodal-badge">طباعة جماعية</div>
+                <h2 class="pmodal-title">
+                    <i data-lucide="printer"></i>
+                    إعدادات بطاقات الحساب المالي
+                </h2>
+                <p class="pmodal-subtitle">ستُطبق هذه الإعدادات على جميع المدرسين المحددين</p>
+            </div>
+            <button class="pmodal-close" onclick="closePrintModal()">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <div class="pmodal-selected-list" id="selectedNamesList"></div>
+
+        <div class="pmodal-fields">
+            <div class="pmodal-field">
+                <label>نسبة عمولة المدرس (%)</label>
+                <input type="number" id="modal-comm-pct" value="100" min="0" max="100" step="0.5" placeholder="100">
+            </div>
+            <div class="pmodal-field">
+                <label>ملاحظة / بيان البطاقة</label>
+                <input type="text" id="modal-notes" value="حساب مستحقات مبيعات الأكواد" placeholder="حساب مستحقات مبيعات الأكواد">
+            </div>
+            <div class="pmodal-field">
+                <label>منظم البطاقة / المسؤول</label>
+                <input type="text" id="modal-creator" value="Manager thaaer almasre" placeholder="Manager thaaer almasre">
+            </div>
+        </div>
+
+        <div class="pmodal-footer">
+            <button class="btn btn-secondary" onclick="closePrintModal()">
+                <i data-lucide="x"></i>
+                إلغاء
+            </button>
+            <button class="btn btn-primary btn-glow pmodal-print-btn" onclick="confirmPrint()">
+                <i data-lucide="printer"></i>
+                طباعة البطاقات
+            </button>
+        </div>
+    </div>
+</div>
+
 <style>
     .admin-instructors-page { padding-bottom: 3rem; }
     .instructors-hero {
@@ -287,6 +334,132 @@
         .status-chip { grid-column: 1 / -1; width: fit-content; }
         .bulk-print-inner { flex-direction: column; align-items: stretch; }
     }
+    /* Modal styles */
+    .pmodal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.65);
+        backdrop-filter: blur(6px);
+        z-index: 9999;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+    }
+    .pmodal-overlay.open { display: flex; }
+    .pmodal-box {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-light);
+        border-radius: 24px;
+        width: 100%;
+        max-width: 520px;
+        box-shadow: 0 30px 80px rgba(0,0,0,.5);
+        overflow: hidden;
+        animation: pmodalIn .25s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes pmodalIn {
+        from { opacity:0; transform:scale(.92) translateY(20px); }
+        to   { opacity:1; transform:scale(1)  translateY(0); }
+    }
+    .pmodal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1.75rem 1.75rem 1.25rem;
+        background: linear-gradient(135deg, rgba(143,111,61,.15), transparent 60%);
+        border-bottom: 1px solid var(--border-light);
+    }
+    .pmodal-badge {
+        display: inline-block;
+        background: rgba(143,111,61,.15);
+        color: var(--brand-gold);
+        font-size: .72rem;
+        font-weight: 900;
+        padding: .25rem .75rem;
+        border-radius: 999px;
+        margin-bottom: .5rem;
+    }
+    .pmodal-title {
+        display: flex;
+        align-items: center;
+        gap: .6rem;
+        margin: 0 0 .3rem;
+        font-size: 1.2rem;
+        color: var(--text-primary);
+    }
+    .pmodal-title i { width: 22px; height: 22px; color: var(--brand-gold); }
+    .pmodal-subtitle { margin: 0; color: var(--text-muted); font-size: .82rem; }
+    .pmodal-close {
+        background: var(--bg-base);
+        border: 1px solid var(--border-light);
+        border-radius: 10px;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--text-muted);
+        flex-shrink: 0;
+    }
+    .pmodal-close:hover { color: var(--text-primary); }
+    .pmodal-selected-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        padding: 1rem 1.75rem;
+        border-bottom: 1px solid var(--border-light);
+        background: rgba(0,0,0,.06);
+        min-height: 52px;
+    }
+    .pmodal-chip {
+        background: rgba(143,111,61,.12);
+        border: 1px solid rgba(143,111,61,.25);
+        color: var(--brand-gold);
+        padding: .3rem .75rem;
+        border-radius: 999px;
+        font-size: .78rem;
+        font-weight: 700;
+    }
+    .pmodal-fields {
+        padding: 1.5rem 1.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.1rem;
+    }
+    .pmodal-field {
+        display: flex;
+        flex-direction: column;
+        gap: .4rem;
+    }
+    .pmodal-field label {
+        font-size: .78rem;
+        font-weight: 900;
+        color: var(--text-muted);
+    }
+    .pmodal-field input {
+        width: 100%;
+        min-height: 44px;
+        padding: .75rem 1rem;
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        background: var(--bg-base);
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: .95rem;
+        transition: border-color .15s;
+    }
+    .pmodal-field input:focus { outline: none; border-color: var(--brand-gold); box-shadow: 0 0 0 3px rgba(143,111,61,.18); }
+    .pmodal-footer {
+        display: flex;
+        gap: .75rem;
+        padding: 1.25rem 1.75rem;
+        border-top: 1px solid var(--border-light);
+        background: rgba(0,0,0,.04);
+        justify-content: flex-end;
+    }
+    .pmodal-print-btn { min-width: 180px; }
 </style>
 
 <script>
@@ -299,13 +472,11 @@ function updateSelection() {
     countEl.textContent = checked.length;
     bar.style.display = checked.length > 0 ? 'block' : 'none';
 
-    // Update card visual state
     checkboxes.forEach(chk => {
         const card = chk.closest('.instructor-admin-card');
         card.classList.toggle('selected', chk.checked);
     });
 
-    // Update select-all checkbox state
     const allChk = document.getElementById('selectAllChk');
     if (checked.length === 0) { allChk.indeterminate = false; allChk.checked = false; }
     else if (checked.length === checkboxes.length) { allChk.indeterminate = false; allChk.checked = true; }
@@ -327,11 +498,50 @@ function clearSelection() {
     updateSelection();
 }
 
+// Show modal before printing
 function printSelected() {
+    const selected = [...document.querySelectorAll('.instructor-chk:checked')];
+    if (selected.length === 0) return;
+
+    // Populate selected names list
+    const listEl = document.getElementById('selectedNamesList');
+    listEl.innerHTML = '';
+    selected.forEach(chk => {
+        const card = chk.closest('.instructor-admin-card');
+        const name = card.querySelector('.instructor-main h3')?.innerText || 'مدرس';
+        const chip = document.createElement('span');
+        chip.className = 'pmodal-chip';
+        chip.textContent = name;
+        listEl.appendChild(chip);
+    });
+
+    document.getElementById('printModal').classList.add('open');
+    if (window.lucide) lucide.createIcons();
+}
+
+function closePrintModal() {
+    document.getElementById('printModal').classList.remove('open');
+}
+
+function confirmPrint() {
     const selected = [...document.querySelectorAll('.instructor-chk:checked')].map(c => c.value);
     if (selected.length === 0) return;
-    const url = '{% url "dashboard:admin_instructor_print_multi" %}?ids=' + selected.join(',') + '&comm_pct=100';
+
+    const commPct = document.getElementById('modal-comm-pct').value || '100';
+    const notes = encodeURIComponent(document.getElementById('modal-notes').value || '');
+    const creator = encodeURIComponent(document.getElementById('modal-creator').value || '');
+
+    const url = '{% url "dashboard:admin_instructor_print_multi" %}'
+        + '?ids=' + selected.join(',')
+        + '&comm_pct=' + commPct
+        + '&notes=' + notes
+        + '&creator=' + creator;
+
+    closePrintModal();
     window.open(url, '_blank');
 }
+
+// Close modal on Escape
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePrintModal(); });
 </script>
 {% endblock %}
