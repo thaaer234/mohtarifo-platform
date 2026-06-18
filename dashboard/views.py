@@ -5108,23 +5108,29 @@ def admin_instructor_report(request, instructor_id):
         except (ValueError, TypeError):
             comm_pct = saved_card_data.get('commission_pct') or default_commission_pct
             
+        # Exclude zero-price codes from sold count and gross value
+        _sold_qs = AccessCode.objects.filter(course__instructor=instructor, sale_status='sold')\
+            .exclude(sold_price_cents__isnull=True).exclude(sold_price_cents=0)
+
         try:
             sold_cnt = int(request.GET.get('sold_cnt'))
         except (ValueError, TypeError):
-            sold_cnt = saved_card_data.get('custom_total_codes') or total_sold
-            
+            sold_cnt = saved_card_data.get('custom_total_codes') or _sold_qs.count()
+
         try:
             gross_val = float(request.GET.get('gross_val'))
         except (ValueError, TypeError):
-            gross_val = saved_card_data.get('custom_total_gross') or total_gross
-            
+            _gross_agg = _sold_qs.aggregate(total=Sum('sold_price_cents'))['total'] or 0
+            gross_val = saved_card_data.get('custom_total_gross') or _gross_agg
+
         notes = request.GET.get('notes') or saved_card_data.get('custom_notes') or "حساب مستحقات مبيعات الأكواد"
         creator = request.GET.get('creator') or saved_card_data.get('custom_creator') or "Manager thaaer almasre"
-        
+
         net_share = round(gross_val * (comm_pct / 100))
-        
-        # Compute discount codes and total discount value for this instructor
+
+        # Compute discount codes and total discount value for this instructor (exclude zero-price)
         discount_qs = AccessCode.objects.filter(course__instructor=instructor, sale_status='sold')\
+            .exclude(sold_price_cents__isnull=True).exclude(sold_price_cents=0)\
             .exclude(price_reason='').exclude(price_reason='سعر كامل')
         discount_codes = discount_qs.count()
         discount_val = 0
