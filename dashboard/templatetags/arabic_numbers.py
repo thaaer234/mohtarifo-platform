@@ -1,5 +1,5 @@
 from django import template
-from django.template.defaultfilters import intcomma
+from django.contrib.humanize.templatetags.humanize import intcomma
 
 register = template.Library()
 
