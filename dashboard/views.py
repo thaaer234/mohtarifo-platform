@@ -9,6 +9,7 @@ from xml.sax.saxutils import escape
 import threading
 import hashlib
 import time
+import re
 
 from django.conf import settings
 from django.contrib import messages
@@ -5123,10 +5124,22 @@ def admin_instructor_report(request, instructor_id):
         net_share = round(gross_val * (comm_pct / 100))
         
         # Compute discount codes and total discount value for this instructor
-        discount_codes = AccessCode.objects.filter(course__instructor=instructor, sale_status='sold')\
-            .exclude(price_reason='').exclude(price_reason='سعر كامل').count()
-        # Placeholder for discount value calculation (set to 0 for now)
+        discount_qs = AccessCode.objects.filter(course__instructor=instructor, sale_status='sold')\
+            .exclude(price_reason='').exclude(price_reason='سعر كامل')
+        discount_codes = discount_qs.count()
         discount_val = 0
+        for ac in discount_qs:
+            pr = ac.price_reason
+            pct_match = re.search(r'(\d+)%', pr)
+            if pct_match:
+                pct = int(pct_match.group(1))
+                if ac.sold_price_cents is not None and pct != 100:
+                    original = ac.sold_price_cents * 100 // (100 - pct)
+                    discount_val += original - ac.sold_price_cents
+                continue
+            amt_match = re.search(r'(\\d+)\\s*ل\\.س', pr)
+            if amt_match:
+                discount_val += int(amt_match.group(1))
         # Build a single card dict with all needed fields
         card = {
             "instructor": instructor,
