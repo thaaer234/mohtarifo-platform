@@ -616,15 +616,12 @@
             padding: 0 !important;
             margin: 0 !important;
         }
-        body.print-card-active * {
+        body.print-card-active .admin-instructor-report-page > *:not(.print-only-card-holder) {
             display: none !important;
         }
-        body.print-card-active .print-only-card-holder,
-        body.print-card-active .print-only-card-holder * {
+        body.print-card-active .print-only-card-holder {
             display: block !important;
             visibility: visible !important;
-        }
-        body.print-card-active .print-only-card-holder {
             position: absolute !important;
             left: 50% !important;
             top: 50% !important;
