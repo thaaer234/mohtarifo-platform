@@ -3839,6 +3839,8 @@ def admin_center_invoice(request, center_id):
     total_potential = 0
     total_earned = 0
     
+    course_summaries_map = {}
+    
     for batch in batches:
         codes = AccessCode.objects.filter(batch=batch)
         sold_codes = codes.filter(sale_status="sold")
@@ -3878,6 +3880,42 @@ def admin_center_invoice(request, center_id):
         total_sold += sold_cnt
         total_potential += pot_val
         total_earned += earned_syp
+
+        # Aggregate by course or package
+        if batch.course:
+            key = f"course_{batch.course.id}"
+            item_name = batch.course.title
+            item_type = "مادة"
+            instructor_name = batch.course.instructor.get_full_name() or batch.course.instructor.username if batch.course.instructor else ""
+        elif batch.package:
+            key = f"package_{batch.package.id}"
+            item_name = batch.package.name
+            item_type = "باقة"
+            instructor_name = "باقة مشتركة"
+        else:
+            continue
+            
+        if key not in course_summaries_map:
+            course_summaries_map[key] = {
+                "name": item_name,
+                "type": item_type,
+                "instructor": instructor_name,
+                "standard_price": std_price,
+                "sold_count": 0,
+                "actual_earned": 0.0,
+            }
+        
+        course_summaries_map[key]["sold_count"] += sold_cnt
+        course_summaries_map[key]["actual_earned"] += earned_syp
+        
+    # Calculate standard total and discount value for each grouped item
+    course_summaries = []
+    for data in course_summaries_map.values():
+        std_total = data["sold_count"] * data["standard_price"]
+        discount_value = std_total - data["actual_earned"]
+        data["standard_total"] = std_total
+        data["discount_value"] = max(0.0, discount_value)
+        course_summaries.append(data)
         
     # Aggregating overall summaries correctly from detail rows
     total_center_commission = sum(x["center_share"] for x in detailed_batches)
@@ -3887,6 +3925,7 @@ def admin_center_invoice(request, center_id):
         "center": center,
         "commission_percent": commission_percent,
         "detailed_batches": detailed_batches,
+        "course_summaries": course_summaries,
         "total_assigned": total_assigned,
         "total_sold": total_sold,
         "total_potential": total_potential,

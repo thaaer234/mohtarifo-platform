@@ -1220,6 +1220,73 @@
             </div>
         </div>
 
+        <!-- Aggregated Course/Package Sales Summary Table -->
+        <h3 class="invoice-table-section-heading">
+            <i data-lucide="book-open" style="width: 22px; height: 22px; color: var(--erp-gold);"></i>
+            <span>تقرير مبيعات المواد والباقات الإجمالي</span>
+        </h3>
+        
+        <div class="invoice-table-container" style="margin-bottom: 2.5rem;">
+            <table class="invoice-accounting-table">
+                <colgroup>
+                    <col style="width: 25%;">
+                    <col style="width: 15%;">
+                    <col style="width: 12%;">
+                    <col style="width: 12%;">
+                    <col style="width: 12%;">
+                    <col style="width: 12%;">
+                    <col style="width: 12%;">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th style="padding-right: 1.25rem;">المادة أو الباقة</th>
+                        <th class="align-center">المدرس</th>
+                        <th class="align-center">السعر الرسمي</th>
+                        <th class="align-center">الأكواد المباعة</th>
+                        <th class="align-left">الإجمالي الرسمي</th>
+                        <th class="align-left">قيمة الخصومات</th>
+                        <th class="align-left" style="padding-left: 1.25rem;">التحصيل الفعلي</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for summary in course_summaries %}
+                    <tr>
+                        <td style="padding-right: 1.25rem;">
+                            <span class="text-primary-emphasis">{{ summary.name }}</span>
+                            <span class="badge-sub-info">{{ summary.type }}</span>
+                        </td>
+                        <td class="align-center">
+                            {% if summary.instructor %}
+                                <span style="font-weight: 700;">{{ summary.instructor }}</span>
+                            {% else %}
+                                <span style="color: var(--erp-text-muted); font-size: 0.75rem;">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="align-center cell-numeric-val">{{ summary.standard_price|currency_format }} ل.س</td>
+                        <td class="align-center">
+                            <span class="badge-sold-pill">{{ summary.sold_count }} مباع</span>
+                        </td>
+                        <td class="align-left cell-numeric-val cell-blue">{{ summary.standard_total|currency_format }} ل.س</td>
+                        <td class="align-left cell-numeric-val" style="color: var(--erp-red);">
+                            {% if summary.discount_value > 0 %}
+                                - {{ summary.discount_value|currency_format }} ل.س
+                            {% else %}
+                                0 ل.س
+                            {% endif %}
+                        </td>
+                        <td class="align-left cell-numeric-val cell-emerald" style="padding-left: 1.25rem;">{{ summary.actual_earned|currency_format }} ل.س</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="align-center" style="padding: 3rem; color: var(--erp-text-muted); font-weight: 700; font-size: 0.9rem;">
+                            لا توجد مبيعات مسجلة لأي مادة حالياً.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
         <!-- Enterprise Financial Accounting Table -->
         <h3 class="invoice-table-section-heading">
             <i data-lucide="list-ordered" style="width: 22px; height: 22px; color: var(--erp-gold);"></i>

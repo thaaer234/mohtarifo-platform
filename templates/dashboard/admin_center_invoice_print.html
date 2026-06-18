@@ -512,6 +512,60 @@
             </div>
         </div>
 
+        <!-- Aggregated Course/Package Sales Summary Table -->
+        <h2 class="section-title">📚 تقرير مبيعات المواد والباقات الإجمالي</h2>
+        <div class="section-subtitle">🔍 كشف إجمالي يوضح أداء ومبيعات كل مادة أو باقة بشكل مجمع في مركز البيع</div>
+        
+        <div class="premium-table-wrapper" style="margin-bottom: 25px;">
+            <table class="premium-table">
+                <thead>
+                    <tr>
+                        <th>المادة / الباقة</th>
+                        <th>المدرس</th>
+                        <th class="text-center">السعر الرسمي</th>
+                        <th class="text-center" style="width: 70px;">المباع</th>
+                        <th class="text-center">الإجمالي الرسمي</th>
+                        <th class="text-center">قيمة الخصومات</th>
+                        <th class="text-center" style="background: rgba(212, 175, 55, 0.05);">التحصيل الفعلي</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for summary in course_summaries %}
+                    <tr>
+                        <td style="font-weight: 700; color: var(--primary);">
+                            {{ summary.name }}<br>
+                            <small style="color: var(--text-light);">{{ summary.type }}</small>
+                        </td>
+                        <td>
+                            {% if summary.instructor %}
+                                {{ summary.instructor }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td class="text-center num-val">{{ summary.standard_price|currency_format }} ل.س</td>
+                        <td class="text-center num-val highlight-green">{{ summary.sold_count }}</td>
+                        <td class="text-center num-val">{{ summary.standard_total|currency_format }} ل.س</td>
+                        <td class="text-center num-val" style="color: var(--danger);">
+                            {% if summary.discount_value > 0 %}
+                                - {{ summary.discount_value|currency_format }} ل.س
+                            {% else %}
+                                0 ل.س
+                            {% endif %}
+                        </td>
+                        <td class="text-center num-val highlight-green" style="font-weight: 800; background: rgba(212, 175, 55, 0.03);">
+                            {{ summary.actual_earned|currency_format }} ل.س
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center" style="padding: 2rem; color: var(--text-light);">📭 لا توجد مبيعات مسجلة لأي مادة حالياً</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
         <!-- Detailed Batches Table -->
         <h2 class="section-title">📊 كشف حركة مبيعات الأكواد التفصيلي</h2>
         <div class="section-subtitle">🔍 كشف تفصيلي يوضح أداء كل دفعة أكواد تم تسليمها لمركز البيع المعتمد</div>
