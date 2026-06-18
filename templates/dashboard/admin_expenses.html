@@ -19,19 +19,19 @@
                 </div>
                 <div class="mini-stat" style="text-align: right; background: rgba(239, 68, 68, 0.03); padding: 0.8rem 1.2rem; border-radius: 16px; border-right: 4px solid #ef4444; border-left: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
                     <span class="label" style="display: block; font-size: 0.72rem; color: var(--text-muted); font-weight: 800; margin-bottom: 0.25rem;">إجمالي المصاريف المخرّجة (ل.س)</span>
-                    <span class="value" style="font-size: 1.25rem; font-weight: 900; color: #ef4444; font-family: 'Cairo', sans-serif;">{{ total_expenses_syp|currency_format }} ل.س</span>
+                    <span class="value" style="font-size: 1.25rem; font-weight: 900; color: #ef4444; font-family: 'Cairo', sans-serif;">{{ total_expenses_syp|currency_format }} ل.س <span style="font-size: 0.85rem; font-weight: 600; color: #f87171;">({{ total_expenses_usd|floatformat:2|intcomma }}$)</span></span>
                 </div>
                 <div class="mini-stat" style="text-align: right; background: rgba(52, 211, 153, 0.03); padding: 0.8rem 1.2rem; border-radius: 16px; border-right: 4px solid #34d399; border-left: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
                     <span class="label" style="display: block; font-size: 0.72rem; color: var(--text-muted); font-weight: 800; margin-bottom: 0.25rem;">مصاريف طباعة مخرّجة (ل.س)</span>
-                    <span class="value" style="font-size: 1.25rem; font-weight: 900; color: #34d399; font-family: 'Cairo', sans-serif;">{{ total_printing_paid_syp|currency_format }} ل.س</span>
+                    <span class="value" style="font-size: 1.25rem; font-weight: 900; color: #34d399; font-family: 'Cairo', sans-serif;">{{ total_printing_paid_syp|currency_format }} ل.س <span style="font-size: 0.85rem; font-weight: 600; color: #6ee7b7;">({{ total_printing_paid_usd|floatformat:2|intcomma }}$)</span></span>
                 </div>
                 <div class="mini-stat" style="text-align: right; background: rgba(197, 160, 89, 0.03); padding: 0.8rem 1.2rem; border-radius: 16px; border-right: 4px solid var(--brand-gold); border-left: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
                     <span class="label" style="display: block; font-size: 0.72rem; color: var(--text-muted); font-weight: 800; margin-bottom: 0.25rem;">مصاريف طباعة معلقة (ل.س)</span>
-                    <span class="value" style="font-size: 1.25rem; font-weight: 900; color: var(--brand-gold); font-family: 'Cairo', sans-serif;">{{ total_printing_pending_syp|currency_format }} ل.س</span>
+                    <span class="value" style="font-size: 1.25rem; font-weight: 900; color: var(--brand-gold); font-family: 'Cairo', sans-serif;">{{ total_printing_pending_syp|currency_format }} ل.س <span style="font-size: 0.85rem; font-weight: 600; color: #c5a059;">({{ total_printing_pending_usd|floatformat:2|intcomma }}$)</span></span>
                 </div>
                 <div class="mini-stat" style="text-align: right; background: rgba(96, 165, 250, 0.03); padding: 0.8rem 1.2rem; border-radius: 16px; border-right: 4px solid #60a5fa; border-left: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15);">
                     <span class="label" style="display: block; font-size: 0.72rem; color: var(--text-muted); font-weight: 800; margin-bottom: 0.25rem;">المصاريف العامة المخرّجة</span>
-                    <span class="value" style="font-size: 1.25rem; font-weight: 900; color: #60a5fa; font-family: 'Cairo', sans-serif;">{{ total_general_paid_syp|currency_format }} ل.س</span>
+                    <span class="value" style="font-size: 1.25rem; font-weight: 900; color: #60a5fa; font-family: 'Cairo', sans-serif;">{{ total_general_paid_syp|currency_format }} ل.س <span style="font-size: 0.85rem; font-weight: 600; color: #93c5fd;">({{ total_general_paid_usd|floatformat:2|intcomma }}$)</span></span>
                 </div>
                 <a href="{% url 'dashboard:admin_billing' %}" class="btn btn-secondary" style="font-weight: 800; display: flex; align-items: center; gap: 0.5rem; border-radius: 12px; padding: 0.75rem 1.25rem; background: white; color: black; border: 1px solid var(--border-light); text-decoration: none;">
                     <i data-lucide="arrow-right"></i> العودة للمركز المالي

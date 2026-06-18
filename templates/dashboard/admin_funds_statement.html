@@ -1,0 +1,246 @@
+{% extends "accounting_erp/base_print_accounting.html" %}
+{% load humanize inline_static static %}
+
+{% block title %}كشف حساب الصناديق والمطابقة المالية - محترفو التعليم{% endblock %}
+
+{% block report_name %}كشف حساب الصناديق والمطابقة المالية الموحد{% endblock %}
+
+{% block report_date %}
+    تاريخ الاستخراج: {{ now|date:"Y-m-d H:i" }} &nbsp;|&nbsp; سعر صرف الدولار (LiraScope): 1$ = {{ exchange_rate|floatformat:0|intcomma }} ل.س
+{% endblock %}
+
+{% block report_body %}
+<style>
+    /* Premium style overrides for statement preview */
+    .funds-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.25rem;
+        margin-bottom: 2rem;
+    }
+    
+    .fund-card {
+        background: var(--bg-light);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.25rem;
+        text-align: right;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+    }
+    
+    .fund-card.accent {
+        border: 2px solid #d4af37;
+        background: rgba(212, 175, 55, 0.02);
+    }
+    
+    .fund-card .title {
+        font-size: 0.82rem;
+        font-weight: 800;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+    }
+    
+    .fund-card .amount-syp {
+        font-size: 1.45rem;
+        font-weight: 900;
+        color: var(--primary-dark);
+        line-height: 1.2;
+    }
+    
+    .fund-card.accent .amount-syp {
+        color: #aa8c2c;
+    }
+    
+    .fund-card .amount-usd {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #10b981;
+        margin-top: 0.25rem;
+    }
+    
+    .section-title {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--primary-dark);
+        margin: 2rem 0 1rem 0;
+        border-right: 4px solid #d4af37;
+        padding-right: 0.75rem;
+    }
+    
+    .badge-status {
+        display: inline-block;
+        padding: 0.2rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-align: center;
+    }
+    .badge-status.paid {
+        background: rgba(16,185,129,0.1);
+        color: #10b981;
+        border: 1px solid rgba(16,185,129,0.2);
+    }
+    .badge-status.pending {
+        background: rgba(212,175,55,0.1);
+        color: #aa8c2c;
+        border: 1px solid rgba(212,175,55,0.2);
+    }
+    
+    .cell-num {
+        font-family: Arial, sans-serif;
+        font-weight: 700;
+    }
+    
+    @media print {
+        .fund-card {
+            border: 1px solid #9ca3af !important;
+            background: none !important;
+        }
+        .fund-card.accent {
+            border: 2px solid #000 !important;
+        }
+        .badge-status {
+            border: 1px solid #000 !important;
+            color: #000 !important;
+            background: none !important;
+        }
+        .funds-grid {
+            gap: 0.5cm;
+        }
+    }
+</style>
+
+<!-- Top Funds Summary Row -->
+<div class="funds-grid">
+    <div class="fund-card">
+        <div class="title">رصيد شام كاش (الإدارة)</div>
+        <div class="amount-syp">{{ sham_cash_balance|currency_format }} ل.س</div>
+        <div class="amount-usd">{{ sham_cash_balance_usd|floatformat:2|intcomma }} $</div>
+    </div>
+    <div class="fund-card">
+        <div class="title">صندوق الأكواد العام</div>
+        <div class="amount-syp">{{ general_fund_syp|currency_format }} ل.س</div>
+        <div class="amount-usd">{{ general_fund_usd|floatformat:2|intcomma }} $</div>
+    </div>
+    <div class="fund-card">
+        <div class="title">إجمالي المصاريف المخرّجة</div>
+        <div class="amount-syp">{{ total_expenses_syp|currency_format }} ل.س</div>
+        <div class="amount-usd">{{ total_expenses_usd|floatformat:2|intcomma }} $</div>
+    </div>
+    <div class="fund-card accent">
+        <div class="title">صافي أرباح الصندوق الأخير</div>
+        <div class="amount-syp">{{ overall_net_profit|currency_format }} ل.س</div>
+        <div class="amount-usd">{{ overall_net_profit_usd|floatformat:2|intcomma }} $</div>
+    </div>
+</div>
+
+<!-- Sales Centers Table -->
+<h3 class="section-title">أولاً: مطابقة أرصدة مراكز البيع</h3>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>مركز البيع</th>
+            <th class="text-center">الوارد الإجمالي (ل.س)</th>
+            <th class="text-center">عمولة المركز (15%)</th>
+            <th class="text-center">الصافي للمنصة (ل.س)</th>
+            <th class="text-center">المستلم فعلياً (ل.س)</th>
+            <th class="text-center">المتبقي بذمة المركز</th>
+            <th class="text-center">حالة التسوية</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in centers_collection_report %}
+            <tr>
+                <td>
+                    <strong>{{ item.center.name }}</strong>
+                    {% if item.center.institute %}<br><small style="color:var(--text-muted);">{{ item.center.institute.name }}</small>{% endif %}
+                </td>
+                <td class="text-center cell-num">{{ item.actual_earned|currency_format }}</td>
+                <td class="text-center cell-num" style="color: var(--text-muted);">{{ item.center_share|currency_format }}</td>
+                <td class="text-center cell-num" style="font-weight:800; color:#aa8c2c;">{{ item.net_share_platform|currency_format }}</td>
+                <td class="text-center cell-num" style="color: #10b981;">{{ item.collected|currency_format }}</td>
+                <td class="text-center cell-num" style="font-weight: 800; color: {% if item.remaining_due > 0 %}var(--danger){% else %}var(--text-muted){% endif %};">
+                    {{ item.remaining_due|currency_format }}
+                </td>
+                <td class="text-center">
+                    {% if item.is_settled %}
+                        <span class="badge-status paid">تمت التسوية</span>
+                    {% else %}
+                        <span class="badge-status pending">معلق / بذمته</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="7" class="text-center text-muted" style="padding:2rem;">لا توجد سجلات مراكز بيع.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Operating Expenses Table -->
+<h3 class="section-title">ثانياً: سجل المصاريف التشغيلية للمنصة</h3>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th style="width: 15%;">التاريخ</th>
+            <th style="width: 25%;">بيان المصروف</th>
+            <th style="width: 15%;">نوع المصروف</th>
+            <th>الدورة المرتبطة</th>
+            <th class="text-center" style="width: 15%;">المبلغ (ل.س)</th>
+            <th class="text-center" style="width: 10%;">المبلغ ($)</th>
+            <th class="text-center" style="width: 12%;">الحالة</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for exp in all_expenses %}
+            <tr>
+                <td>{{ exp.created_at|date:"Y-m-d" }}</td>
+                <td><strong>{{ exp.title }}</strong></td>
+                <td>
+                    {% if exp.expense_type == 'printing' %}
+                        <span style="color: #10b981; font-weight: bold;">طباعة كروت</span>
+                    {% else %}
+                        <span>مصروف عام</span>
+                    {% endif %}
+                </td>
+                <td>{{ exp.course.title|default:"- مصروف عام منصة -" }}</td>
+                <td class="text-center cell-num">{{ exp.amount_syp|currency_format }}</td>
+                <td class="text-center cell-num">${{ exp.amount_usd|floatformat:2|intcomma }}</td>
+                <td class="text-center">
+                    {% if exp.status == 'paid' %}
+                        <span class="badge-status paid">مخرّج / مدفوع</span>
+                    {% else %}
+                        <span class="badge-status pending">معلق</span>
+                    {% endif %}
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="7" class="text-center text-muted" style="padding:2rem;">لا توجد مصاريف مسجلة بعد.</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- Mathematical Proof of Boxes -->
+<h3 class="section-title">ثالثاً: معادلة تسوية الصندوق وصافي الربح</h3>
+<div style="background: var(--bg-light); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-top: 1rem; line-height: 1.8;">
+    <p>تعتمد المعادلة المالية لحساب صافي أرباح الصندوق الأخير على مطابقة المبيعات وحسم المصاريف الفعلية المنصرفة فقط كما يلي:</p>
+    <hr style="border-top: 1px solid var(--border-color); margin: 0.75rem 0;">
+    <div style="font-size: 1.1rem;">
+        <strong>1. إجمالي الصافي المستحق للمنصة من المبيعات:</strong>
+        <span class="font-mono text-glow" style="color:#aa8c2c; font-size:1.2rem; margin-right: 1rem;">{{ total_net_share_platform|currency_format }} ل.س</span>
+    </div>
+    <div style="font-size: 1.1rem; margin-top: 0.5rem;">
+        <strong>2. يطرح منه المصاريف المخرّجة المخصومة:</strong>
+        <span class="font-mono" style="color:var(--danger); font-size:1.2rem; margin-right: 1rem;">(-) {{ total_expenses_syp|currency_format }} ل.س</span>
+    </div>
+    <hr style="border-top: 1px dashed var(--border-color); margin: 0.75rem 0;">
+    <div style="font-size: 1.3rem; font-weight: 900;">
+        <strong>صافي أرباح الصندوق الأخير الفعلي:</strong>
+        <span class="font-mono text-glow" style="color:#10b981; font-size:1.4rem; margin-right: 1.5rem;">{{ overall_net_profit|currency_format }} ل.س</span>
+        <span class="text-muted" style="font-size: 1rem; font-weight: 700; margin-right: 0.5rem;">({{ overall_net_profit_usd|floatformat:2|intcomma }} $)</span>
+    </div>
+</div>
+{% endblock %}

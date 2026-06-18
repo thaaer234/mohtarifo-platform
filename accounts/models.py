@@ -77,6 +77,7 @@ class InstructorProfile(models.Model):
     avatar = models.ImageField(upload_to="instructors/avatars/", blank=True, null=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
     force_password_change = models.BooleanField(default=True, verbose_name="إجبار تغيير كلمة المرور", help_text="إذا كان صحيحاً، سيطلب من المدرس تغيير كلمة المرور عند أول دخول")
+    report_card_data = models.JSONField(default=dict, blank=True, null=True, verbose_name="بيانات بطاقة التقرير المحفوظة")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

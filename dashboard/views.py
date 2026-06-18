@@ -3882,6 +3882,8 @@ def admin_billing(request):
             break
             
     total_sold_codes = sum((item["sold_codes_count"] or 0) for item in centers_report)
+    sham_cash_balance_usd = sham_cash_balance / exchange_rate if exchange_rate else 0.0
+    general_fund_usd = general_fund_syp / exchange_rate if exchange_rate else 0.0
 
     # Calculate overall platform net profit
     total_net_share_platform = sum(x["net_share_platform"] for x in centers_collection_report)
@@ -3897,10 +3899,12 @@ def admin_billing(request):
         "filter_reports": filter_reports,
         "course_reports": _course_financial_rows()[:30],
         "general_fund_syp": general_fund_syp,
+        "general_fund_usd": general_fund_usd,
         "centers_report": centers_report,
         "total_centers_earned": total_centers_earned,
         "total_filter_gross": total_filter_gross,
         "sham_cash_balance": sham_cash_balance,
+        "sham_cash_balance_usd": sham_cash_balance_usd,
         "total_sold_codes": total_sold_codes,
         
         # New context variables
@@ -4107,7 +4111,149 @@ def admin_expenses(request):
     )
 
 
+@admin_required
+def admin_funds_statement(request):
+    from django.db.models import Sum, Count
+    from billing.models import AccessCode, SalesCenter, PlatformExpense
+    
+    exchange_rate = get_lirascope_usd_rate()
+    
+    # Calculate General Codes Fund
+    general_fund_cents = 0
+    for code in AccessCode.objects.filter(sale_status="sold").select_related("course", "package"):
+        if code.sold_price_cents is not None:
+            general_fund_cents += code.sold_price_cents
+        else:
+            if code.course and code.course.price_cents:
+                general_fund_cents += code.course.price_cents
+            elif code.package and code.package.price_cents:
+                general_fund_cents += code.package.price_cents
+    general_fund_syp = general_fund_cents / 100
+    general_fund_usd = general_fund_syp / exchange_rate if exchange_rate else 0.0
+    
+    # Centers Expected & Real & Platform Net Share
+    centers_report = []
+    centers_collection_report = []
+    
+    for center in SalesCenter.objects.filter(is_active=True).select_related("institute").order_by("name"):
+        codes = AccessCode.objects.filter(sales_center=center).select_related("course", "package")
+        sold_codes = codes.filter(sale_status="sold")
+        sold_count = sold_codes.count()
+        
+        expected_balance_cents = 0
+        for code in codes:
+            if code.course and code.course.price_cents:
+                expected_balance_cents += code.course.price_cents
+            elif code.package and code.package.price_cents:
+                expected_balance_cents += code.package.price_cents
+                
+        real_standard_cents = 0
+        for code in sold_codes:
+            if code.course and code.course.price_cents:
+                real_standard_cents += code.course.price_cents
+            elif code.package and code.package.price_cents:
+                real_standard_cents += code.package.price_cents
+                
+        actual_earned_cents = 0
+        for code in sold_codes:
+            if code.sold_price_cents is not None:
+                actual_earned_cents += code.sold_price_cents
+            else:
+                if code.course and code.course.price_cents:
+                    actual_earned_cents += code.course.price_cents
+                elif code.package and code.package.price_cents:
+                    actual_earned_cents += code.package.price_cents
+        
+        actual_earned = actual_earned_cents / 100
+        sold_gross_std = real_standard_cents / 100
+        
+        commission_percent = 15.0
+        center_share = sold_gross_std * commission_percent / 100
+        net_share_platform = actual_earned - center_share
+        remaining_due = net_share_platform - (center.collected_amount_syp or 0)
+        
+        centers_report.append({
+            "center": center,
+            "total_codes": codes.count(),
+            "sold_codes_count": sold_count,
+            "expected_balance": expected_balance_cents / 100,
+            "real_standard": sold_gross_std,
+            "actual_earned": actual_earned,
+        })
+        
+        centers_collection_report.append({
+            "center": center,
+            "actual_earned": actual_earned,
+            "center_share": center_share,
+            "net_share_platform": net_share_platform,
+            "collected": center.collected_amount_syp or 0,
+            "remaining_due": remaining_due,
+            "is_settled": center.is_settled,
+        })
+        
+    sham_cash_balance = 0
+    for item in centers_report:
+        if "شام كاش" in item["center"].name or "الإدارة" in item["center"].name:
+            sham_cash_balance = item["actual_earned"] or 0
+            break
+            
+    sham_cash_balance_usd = sham_cash_balance / exchange_rate if exchange_rate else 0.0
+    
+    # Platform Expenses
+    all_expenses = PlatformExpense.objects.select_related("course").order_by("-created_at")
+    total_expenses_syp = sum(exp.amount_syp for exp in all_expenses if exp.status == "paid")
+    total_expenses_usd = sum(exp.amount_usd for exp in all_expenses if exp.status == "paid")
+    
+    # Calculate overall platform net profit
+    total_net_share_platform = sum(x["net_share_platform"] for x in centers_collection_report)
+    overall_net_profit = total_net_share_platform - total_expenses_syp
+    overall_net_profit_usd = overall_net_profit / exchange_rate if exchange_rate else 0.0
+    
+    context = {
+        "exchange_rate": exchange_rate,
+        "general_fund_syp": general_fund_syp,
+        "general_fund_usd": general_fund_usd,
+        "sham_cash_balance": sham_cash_balance,
+        "sham_cash_balance_usd": sham_cash_balance_usd,
+        "total_expenses_syp": total_expenses_syp,
+        "total_expenses_usd": total_expenses_usd,
+        "overall_net_profit": overall_net_profit,
+        "overall_net_profit_usd": overall_net_profit_usd,
+        "centers_collection_report": centers_collection_report,
+        "all_expenses": all_expenses,
+        "now": timezone.now(),
+    }
+    
+    return render(request, "dashboard/admin_funds_statement.html", context)
 
+
+@admin_required
+@require_POST
+def admin_instructor_report_save_card(request, instructor_id):
+    import json
+    instructor = get_object_or_404(User, id=instructor_id)
+    profile, created = InstructorProfile.objects.get_or_create(user=instructor)
+    
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"status": "error", "message": "بيانات غير صالحة"}, status=400)
+        
+    commission_pct = data.get("commission_pct")
+    custom_total_codes = data.get("custom_total_codes")
+    custom_total_gross = data.get("custom_total_gross")
+    custom_notes = data.get("custom_notes", "")
+    
+    report_card_data = profile.report_card_data or {}
+    report_card_data["commission_pct"] = commission_pct
+    report_card_data["custom_total_codes"] = custom_total_codes
+    report_card_data["custom_total_gross"] = custom_total_gross
+    report_card_data["custom_notes"] = custom_notes
+    
+    profile.report_card_data = report_card_data
+    profile.save()
+    
+    return JsonResponse({"status": "success", "message": "تم حفظ تفاصيل البطاقة بنجاح في بروفايل المدرس."})
 
 
 @admin_required
@@ -4866,7 +5012,19 @@ def admin_instructor_report(request, instructor_id):
         render_tmpl = "dashboard/admin_instructor_report.html"
     from django.db.models import Sum, Count
     from billing.models import AccessCode
+    from accounts.models import InstructorProfile
+    from apps.instructor_finance.models import RevenueShareAgreement
+    
     instructor = get_object_or_404(User, id=instructor_id)
+    profile, created = InstructorProfile.objects.get_or_create(user=instructor)
+    saved_card_data = profile.report_card_data or {}
+    
+    # Get active agreement or default (None course) commission percentage
+    agreement = RevenueShareAgreement.objects.filter(instructor=instructor, course=None, is_active=True).first()
+    if not agreement:
+        agreement = RevenueShareAgreement.objects.filter(instructor=instructor, is_active=True).first()
+    default_commission_pct = (agreement.commission_bps / 100.0) if agreement else 50.0
+
     courses = Course.objects.filter(instructor=instructor).select_related("subject")
     
     total_codes = 0
@@ -4939,6 +5097,7 @@ def admin_instructor_report(request, instructor_id):
         render_tmpl,
         {
             "instructor": instructor,
+            "profile": profile,
             "course_data": course_data,
             "total_codes": total_codes,
             "total_sold": total_sold,
@@ -4948,6 +5107,8 @@ def admin_instructor_report(request, instructor_id):
             "centers_sales": centers_sales,
             "governorate_sales": governorate_sales,
             "discounts_sales": discounts_sales,
+            "saved_card_data": saved_card_data,
+            "default_commission_pct": default_commission_pct,
         }
     )
 
