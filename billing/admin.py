@@ -19,6 +19,7 @@ from .models import (
     Subscription,
     UserDevice,
     BillingSetting,
+    PlatformExpense,
 )
 from import_export.admin import ImportExportModelAdmin
 from .services import create_codes_from_upload
@@ -219,3 +220,12 @@ class DiscountRuleAdmin(admin.ModelAdmin):
 class BillingSettingAdmin(admin.ModelAdmin):
     list_display = ("label", "key", "value_numeric")
     search_fields = ("label", "key")
+
+
+@admin.register(PlatformExpense)
+class PlatformExpenseAdmin(admin.ModelAdmin):
+    list_display = ("title", "amount_syp", "amount_usd", "course", "created_at")
+    list_filter = ("course", "created_at")
+    search_fields = ("title", "course__title")
+    autocomplete_fields = ("course",)
+

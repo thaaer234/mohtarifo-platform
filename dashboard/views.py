@@ -3717,24 +3717,28 @@ def admin_billing(request):
             "actual_earned": (actual_earned_cents or 0) / 100,
         })
 
-    from billing.models import BillingSetting
+    from billing.models import PlatformExpense
     from apps.instructor_finance.models import RevenueShareAgreement
     
-    # Get financial configuration settings
-    settings_dict = {}
-    for bs in BillingSetting.objects.all():
-        settings_dict[bs.key] = float(bs.value_numeric)
-        
-    print_sheet_price = settings_dict.get("print_sheet_price", 1500.0)
-    hosting_monthly_syp = settings_dict.get("hosting_monthly_syp", 50000.0)
-    hosting_monthly_usd = settings_dict.get("hosting_monthly_usd", 15.0)
-    video_cost_per_code = settings_dict.get("video_cost_per_code", 2000.0)
+    # Get manual platform expenses
+    all_expenses = PlatformExpense.objects.select_related("course").order_by("-created_at")
+    recent_expenses = all_expenses[:50]
+    total_expenses_syp = sum(exp.amount_syp for exp in all_expenses)
+    total_expenses_usd = sum(exp.amount_usd for exp in all_expenses)
 
     # Load instructor agreements
     agreements = {
         (rsa.instructor_id, rsa.course_id): rsa.commission_bps / 10000.0
         for rsa in RevenueShareAgreement.objects.filter(is_active=True)
     }
+
+    # Pre-group platform expenses by course for efficiency
+    course_expenses_map_syp = {}
+    course_expenses_map_usd = {}
+    for exp in all_expenses:
+        if exp.course_id:
+            course_expenses_map_syp[exp.course_id] = course_expenses_map_syp.get(exp.course_id, 0) + exp.amount_syp
+            course_expenses_map_usd[exp.course_id] = course_expenses_map_usd.get(exp.course_id, 0.0) + float(exp.amount_usd)
 
     # Build course profits report
     course_profits_report = []
@@ -3763,17 +3767,12 @@ def admin_billing(request):
         instructor_share = gross * commission_pct
         instructor_due = instructor_share - (course.settled_instructor_share_syp or 0)
         
-        # Calculate expenses
-        print_sheets = (total_cnt + 2) // 3
-        print_cost = print_sheets * print_sheet_price
+        # Expenses for this course from manual platform expenses
+        course_exp_syp = course_expenses_map_syp.get(course.id, 0)
+        course_exp_usd = course_expenses_map_usd.get(course.id, 0.0)
         
-        video_cost = sold_cnt * video_cost_per_code
-        
-        hosting_cost_syp = (course.hosting_months or 1) * hosting_monthly_syp
-        hosting_cost_usd = (course.hosting_months or 1) * hosting_monthly_usd
-        
-        total_expenses = print_cost + video_cost + hosting_cost_syp + (course.custom_expense_syp or 0)
-        platform_net_profit = gross - instructor_share - total_expenses
+        # Remains in the course
+        course_remains = gross - instructor_share - course_exp_syp
         
         course_profits_report.append({
             "course": course,
@@ -3784,15 +3783,9 @@ def admin_billing(request):
             "instructor_share": instructor_share,
             "settled_share": course.settled_instructor_share_syp or 0,
             "instructor_due": instructor_due,
-            "print_sheets": print_sheets,
-            "print_cost": print_cost,
-            "video_cost": video_cost,
-            "hosting_months": course.hosting_months or 1,
-            "hosting_cost_syp": hosting_cost_syp,
-            "hosting_cost_usd": hosting_cost_usd,
-            "custom_expense": course.custom_expense_syp or 0,
-            "total_expenses": total_expenses,
-            "platform_net_profit": platform_net_profit,
+            "course_exp_syp": course_exp_syp,
+            "course_exp_usd": course_exp_usd,
+            "course_remains": course_remains,
             "is_closed": course.is_account_closed,
         })
 
@@ -3859,6 +3852,10 @@ def admin_billing(request):
             
     total_sold_codes = sum((item["sold_codes_count"] or 0) for item in centers_report)
 
+    # Calculate overall platform net profit
+    total_net_share_platform = sum(x["net_share_platform"] for x in centers_collection_report)
+    overall_net_profit = total_net_share_platform - total_expenses_syp
+
     context = {
         "subscriptions": subscriptions,
         "payments": payments,
@@ -3875,14 +3872,16 @@ def admin_billing(request):
         "total_sold_codes": total_sold_codes,
         
         # New context variables
-        "print_sheet_price": print_sheet_price,
-        "hosting_monthly_syp": hosting_monthly_syp,
-        "hosting_monthly_usd": hosting_monthly_usd,
-        "video_cost_per_code": video_cost_per_code,
+        "all_expenses": recent_expenses,
+        "total_expenses_syp": total_expenses_syp,
+        "total_expenses_usd": total_expenses_usd,
+        "overall_net_profit": overall_net_profit,
         "course_profits_report": course_profits_report,
         "centers_collection_report": centers_collection_report,
+        "courses_dropdown": Course.objects.all().order_by("title"),
     }
     return render(request, template_to_render, context)
+
 
 
 @admin_required
@@ -3921,13 +3920,9 @@ def admin_course_billing_update(request, course_id):
     else:
         # Manual form update
         settled_share = request.POST.get("settled_instructor_share_syp", 0)
-        hosting_months = request.POST.get("hosting_months", 1)
-        custom_expense = request.POST.get("custom_expense_syp", 0)
         is_closed = request.POST.get("is_account_closed") == "true"
         
         course.settled_instructor_share_syp = int(settled_share)
-        course.hosting_months = int(hosting_months)
-        course.custom_expense_syp = int(custom_expense)
         course.is_account_closed = is_closed
         messages.success(request, f"تم تحديث بيانات دورة '{course.title}' بنجاح.")
         
@@ -3960,22 +3955,78 @@ def admin_center_billing_update(request, center_id):
 
 @admin_required
 @require_POST
-def admin_billing_settings_update(request):
-    from billing.models import BillingSetting
+def admin_expense_add(request):
+    from billing.models import PlatformExpense
+    title = request.POST.get("title")
+    amount_syp = request.POST.get("amount_syp", 0)
+    amount_usd = request.POST.get("amount_usd", 0)
+    course_id = request.POST.get("course_id")
+    next_page = request.POST.get("next_page")
     
-    settings_data = {
-        "print_sheet_price": request.POST.get("print_sheet_price", 1500.0),
-        "hosting_monthly_syp": request.POST.get("hosting_monthly_syp", 50000.0),
-        "hosting_monthly_usd": request.POST.get("hosting_monthly_usd", 15.0),
-        "video_cost_per_code": request.POST.get("video_cost_per_code", 2000.0),
-    }
-    
-    for key, val in settings_data.items():
-        if val is not None:
-            BillingSetting.objects.filter(key=key).update(value_numeric=float(val))
-            
-    messages.success(request, "تم تحديث الثوابت المالية بنجاح.")
+    if not title:
+        messages.error(request, "عنوان المصروف مطلوب.")
+        if next_page == "expenses_page":
+            return redirect("dashboard:admin_expenses")
+        return redirect("dashboard:admin_billing")
+        
+    try:
+        amount_syp = int(amount_syp or 0)
+    except ValueError:
+        amount_syp = 0
+        
+    try:
+        amount_usd = float(amount_usd or 0)
+    except ValueError:
+        amount_usd = 0.0
+        
+    course = None
+    if course_id:
+        course = get_object_or_404(Course, id=course_id)
+        
+    PlatformExpense.objects.create(
+        title=title,
+        amount_syp=amount_syp,
+        amount_usd=amount_usd,
+        course=course
+    )
+    messages.success(request, f"تم تسجيل المصروف '{title}' بنجاح.")
+    if next_page == "expenses_page":
+        return redirect("dashboard:admin_expenses")
     return redirect("dashboard:admin_billing")
+
+
+@admin_required
+@require_POST
+def admin_expense_delete(request, expense_id):
+    from billing.models import PlatformExpense
+    expense = get_object_or_404(PlatformExpense, id=expense_id)
+    title = expense.title
+    expense.delete()
+    messages.success(request, f"تم حذف المصروف '{title}' بنجاح.")
+    next_page = request.POST.get("next_page")
+    if next_page == "expenses_page":
+        return redirect("dashboard:admin_expenses")
+    return redirect("dashboard:admin_billing")
+
+
+@admin_required
+def admin_expenses(request):
+    from billing.models import PlatformExpense
+    expenses = PlatformExpense.objects.select_related("course").order_by("-created_at")
+    total_expenses_syp = sum(exp.amount_syp for exp in expenses)
+    total_expenses_usd = sum(exp.amount_usd for exp in expenses)
+    return render(
+        request,
+        "dashboard/admin_expenses.html",
+        {
+            "expenses": expenses,
+            "total_expenses_syp": total_expenses_syp,
+            "total_expenses_usd": total_expenses_usd,
+            "courses_dropdown": Course.objects.all().order_by("title"),
+        }
+    )
+
+
 
 
 @admin_required

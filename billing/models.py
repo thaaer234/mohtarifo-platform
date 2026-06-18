@@ -406,3 +406,27 @@ class BillingSetting(models.Model):
 
     def __str__(self):
         return f"{self.label or self.name}: {self.value_numeric}"
+
+
+class PlatformExpense(models.Model):
+    title = models.CharField(max_length=255, verbose_name="عنوان المصروف")
+    amount_syp = models.PositiveIntegerField(default=0, verbose_name="المبلغ بالليرة السورية")
+    amount_usd = models.DecimalField(max_digits=12, decimal_places=2, default=0.0, verbose_name="المبلغ بالدولار")
+    course = models.ForeignKey(
+        'learning.Course', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        related_name="platform_expenses", 
+        verbose_name="الدورة المرتبطة"
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ التسجيل")
+
+    class Meta:
+        verbose_name = "مصروف تشغيلي"
+        verbose_name_plural = "المصاريف التشغيلية"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.title}: {self.amount_syp} ل.س / {self.amount_usd} $"
+
