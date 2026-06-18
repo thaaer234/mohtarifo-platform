@@ -5122,7 +5122,13 @@ def admin_instructor_report(request, instructor_id):
         
         net_share = round(gross_val * (comm_pct / 100))
         
-        context = {
+        # Compute discount codes and total discount value for this instructor
+        discount_codes = AccessCode.objects.filter(course__instructor=instructor, sale_status='sold')\
+            .exclude(price_reason='').exclude(price_reason='سعر كامل').count()
+        # Placeholder for discount value calculation (set to 0 for now)
+        discount_val = 0
+        # Build a single card dict with all needed fields
+        card = {
             "instructor": instructor,
             "profile": profile,
             "card_name": card_name,
@@ -5130,11 +5136,15 @@ def admin_instructor_report(request, instructor_id):
             "comm_pct": comm_pct,
             "sold_cnt": sold_cnt,
             "gross_val": gross_val,
+            "discount_codes": discount_codes,
+            "discount_val": discount_val,
             "notes": notes,
             "creator": creator,
             "net_share": net_share,
         }
-        return render(request, "dashboard/admin_instructor_card_print.html", context)
+        # pages_list is a list of pages, each page is a list of cards (slots). Here we put one card per page.
+        pages_list = [[card]]
+        return render(request, "dashboard/admin_instructor_card_print.html", {"pages_list": pages_list})
 
     return render(
         request,
@@ -5156,6 +5166,54 @@ def admin_instructor_report(request, instructor_id):
         }
     )
 
+
+@admin_required
+def admin_instructor_print_multi(request):
+    """Render printable cards for multiple instructors (comma‑separated ids)."""
+    ids_param = request.GET.get('ids') or ''
+    instructor_ids = [int(i) for i in ids_param.split(',') if i.strip().isdigit()]
+    cards = []
+    for instructor_id in instructor_ids:
+        instructor = get_object_or_404(User, id=instructor_id)
+        profile, _ = InstructorProfile.objects.get_or_create(user=instructor)
+        saved_card_data = profile.report_card_data or {}
+        # commission
+        agreement = RevenueShareAgreement.objects.filter(instructor=instructor, course=None, is_active=True).first()
+        if not agreement:
+            agreement = RevenueShareAgreement.objects.filter(instructor=instructor, is_active=True).first()
+        default_commission_pct = (agreement.commission_bps / 100.0) if agreement else 50.0
+        # totals
+        sold_cnt = AccessCode.objects.filter(course__instructor=instructor, sale_status='sold').count()
+        gross_val = (AccessCode.objects.filter(course__instructor=instructor, sale_status='sold')
+                     .aggregate(total=Sum('sold_price_cents'))['total'] or 0) // 100
+        try:
+            comm_pct = float(request.GET.get('comm_pct'))
+        except (ValueError, TypeError):
+            comm_pct = saved_card_data.get('commission_pct') or default_commission_pct
+        notes = request.GET.get('notes') or saved_card_data.get('custom_notes') or "حساب مستحقات مبيعات الأكواد"
+        creator = request.GET.get('creator') or saved_card_data.get('custom_creator') or "Manager thaaer almasre"
+        # discount calculations
+        discount_codes = AccessCode.objects.filter(course__instructor=instructor, sale_status='sold')\
+            .exclude(price_reason='').exclude(price_reason='سعر كامل').count()
+        discount_val = 0  # placeholder, can be refined later
+        net_share = round(gross_val * (comm_pct / 100))
+        card = {
+            "instructor": instructor,
+            "profile": profile,
+            "card_name": saved_card_data.get('custom_name') or instructor.get_full_name() or instructor.username,
+            "card_specialty": saved_card_data.get('custom_specialty') or profile.specialty or "مدرس مادة الرياضيات",
+            "comm_pct": comm_pct,
+            "sold_cnt": sold_cnt,
+            "gross_val": gross_val,
+            "discount_codes": discount_codes,
+            "discount_val": discount_val,
+            "notes": notes,
+            "creator": creator,
+            "net_share": net_share,
+        }
+        cards.append(card)
+    pages_list = [cards]
+    return render(request, "dashboard/admin_instructor_card_print.html", {"pages_list": pages_list})
 
 @admin_required
 def admin_instructor_report_export(request, instructor_id):
