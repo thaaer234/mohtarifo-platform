@@ -5183,6 +5183,15 @@ def admin_instructor_report(request, instructor_id):
             "total_activated": total_activated,
             "total_inactive": total_codes - total_activated,
             "total_gross": total_gross,
+            # Nonzero versions: exclude codes with price = 0 or null (for card builder defaults)
+            "total_sold_nonzero": AccessCode.objects.filter(
+                course__instructor=instructor, sale_status='sold'
+            ).exclude(sold_price_cents__isnull=True).exclude(sold_price_cents=0).count(),
+            "total_gross_nonzero": int(
+                (AccessCode.objects.filter(course__instructor=instructor, sale_status='sold')
+                 .exclude(sold_price_cents__isnull=True).exclude(sold_price_cents=0)
+                 .aggregate(total=Sum('sold_price_cents'))['total'] or 0) // 100
+            ),
             "centers_sales": centers_sales,
             "governorate_sales": governorate_sales,
             "discounts_sales": discounts_sales,

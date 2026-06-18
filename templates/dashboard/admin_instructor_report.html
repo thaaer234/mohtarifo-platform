@@ -28,8 +28,8 @@
 
     <!-- Get dynamic values from saved_card_data or default context -->
     {% firstof saved_card_data.commission_pct default_commission_pct 50.0 as comm_pct %}
-    {% firstof saved_card_data.custom_total_codes total_sold as card_sold_cnt %}
-    {% firstof saved_card_data.custom_total_gross total_gross as card_gross_val %}
+    {% firstof saved_card_data.custom_total_codes total_sold_nonzero as card_sold_cnt %}
+    {% firstof saved_card_data.custom_total_gross total_gross_nonzero as card_gross_val %}
     {% firstof saved_card_data.custom_notes "حساب مستحقات مبيعات الأكواد" as card_notes_val %}
     {% firstof saved_card_data.custom_name instructor.get_full_name|default:instructor.username as card_name_val %}
     {% firstof saved_card_data.custom_specialty profile.specialty "مدرس مادة الرياضيات" as card_specialty_val %}
