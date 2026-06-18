@@ -4243,12 +4243,18 @@ def admin_instructor_report_save_card(request, instructor_id):
     custom_total_codes = data.get("custom_total_codes")
     custom_total_gross = data.get("custom_total_gross")
     custom_notes = data.get("custom_notes", "")
+    custom_name = data.get("custom_name", "")
+    custom_specialty = data.get("custom_specialty", "")
+    custom_creator = data.get("custom_creator", "")
     
     report_card_data = profile.report_card_data or {}
     report_card_data["commission_pct"] = commission_pct
     report_card_data["custom_total_codes"] = custom_total_codes
     report_card_data["custom_total_gross"] = custom_total_gross
     report_card_data["custom_notes"] = custom_notes
+    report_card_data["custom_name"] = custom_name
+    report_card_data["custom_specialty"] = custom_specialty
+    report_card_data["custom_creator"] = custom_creator
     
     profile.report_card_data = report_card_data
     profile.save()
