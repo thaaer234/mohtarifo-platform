@@ -5106,16 +5106,18 @@ def admin_instructor_report(request, instructor_id):
         try:
             comm_pct = float(request.GET.get('comm_pct'))
         except (ValueError, TypeError):
-            comm_pct = saved_card_data.get('commission_pct') or default_commission_pct
-            
+            _fallback = saved_card_data.get('commission_pct') or default_commission_pct
+            try:
+                comm_pct = float(_fallback)
+            except (ValueError, TypeError):
+                comm_pct = 0.0
+
         # Exclude zero-price codes from sold count and gross value
         _sold_qs = AccessCode.objects.filter(course__instructor=instructor, sale_status='sold')\
             .exclude(sold_price_cents__isnull=True).exclude(sold_price_cents=0)
 
-        try:
-            sold_cnt = int(request.GET.get('sold_cnt'))
-        except (ValueError, TypeError):
-            sold_cnt = saved_card_data.get('custom_total_codes') or _sold_qs.count()
+        # sold_cnt: always from DB, excluding zero-price codes
+        sold_cnt = _sold_qs.count()
 
         try:
             gross_val = int(float(request.GET.get('gross_val')))
@@ -5149,8 +5151,8 @@ def admin_instructor_report(request, instructor_id):
                 arabic_to_western = str.maketrans('٠١٢٣٤٥٦٧٨٩', '0123456789')
                 discount_val += int(amt_match.group(1).translate(arabic_to_western))
         # Build a single card dict with all needed fields
-        # Format comm_pct: show as integer if whole number, else 1 decimal place
-        comm_pct_display = int(comm_pct) if comm_pct == int(comm_pct) else round(comm_pct, 1)
+        # comm_pct_display: integer if whole number (100 not 100.0), else 1 decimal place
+        comm_pct_display = int(comm_pct) if comm_pct % 1 == 0 else round(comm_pct, 1)
         card = {
             "instructor": instructor,
             "profile": profile,
@@ -5192,51 +5194,79 @@ def admin_instructor_report(request, instructor_id):
 
 @admin_required
 def admin_instructor_print_multi(request):
-    """Render printable cards for multiple instructors (comma‑separated ids)."""
-    ids_param = request.GET.get('ids') or ''
+    """Render printable cards for multiple instructors (comma-separated ids in ?ids=)."""
+    ids_param = request.GET.get('ids', '')
     instructor_ids = [int(i) for i in ids_param.split(',') if i.strip().isdigit()]
+    if not instructor_ids:
+        from django.http import HttpResponseBadRequest
+        return HttpResponseBadRequest("لم يتم تحديد أي مدرس")
+
+    # Global comm_pct override from URL, default 100%
+    try:
+        global_comm_pct = float(request.GET.get('comm_pct', 100))
+    except (ValueError, TypeError):
+        global_comm_pct = 100.0
+
     cards = []
     for instructor_id in instructor_ids:
         instructor = get_object_or_404(User, id=instructor_id)
         profile, _ = InstructorProfile.objects.get_or_create(user=instructor)
         saved_card_data = profile.report_card_data or {}
-        # commission
-        agreement = RevenueShareAgreement.objects.filter(instructor=instructor, course=None, is_active=True).first()
-        if not agreement:
-            agreement = RevenueShareAgreement.objects.filter(instructor=instructor, is_active=True).first()
-        default_commission_pct = (agreement.commission_bps / 100.0) if agreement else 50.0
-        # totals
-        sold_cnt = AccessCode.objects.filter(course__instructor=instructor, sale_status='sold').count()
-        gross_val = (AccessCode.objects.filter(course__instructor=instructor, sale_status='sold')
-                     .aggregate(total=Sum('sold_price_cents'))['total'] or 0) // 100
-        try:
-            comm_pct = float(request.GET.get('comm_pct'))
-        except (ValueError, TypeError):
-            comm_pct = saved_card_data.get('commission_pct') or default_commission_pct
+
+        # Sold codes excluding zero/null price
+        _sold_qs = AccessCode.objects.filter(course__instructor=instructor, sale_status='sold') \
+            .exclude(sold_price_cents__isnull=True).exclude(sold_price_cents=0)
+
+        sold_cnt = _sold_qs.count()
+        gross_val = int(_sold_qs.aggregate(total=Sum('sold_price_cents'))['total'] or 0)
+        comm_pct = global_comm_pct
+
         notes = request.GET.get('notes') or saved_card_data.get('custom_notes') or "حساب مستحقات مبيعات الأكواد"
         creator = request.GET.get('creator') or saved_card_data.get('custom_creator') or "Manager thaaer almasre"
-        # discount calculations
-        discount_codes = AccessCode.objects.filter(course__instructor=instructor, sale_status='sold')\
-            .exclude(price_reason='').exclude(price_reason='سعر كامل').count()
-        discount_val = 0  # placeholder, can be refined later
-        net_share = round(gross_val * (comm_pct / 100))
-        card = {
+
+        # Discount codes (exclude zero-price)
+        discount_qs = AccessCode.objects.filter(course__instructor=instructor, sale_status='sold') \
+            .exclude(sold_price_cents__isnull=True).exclude(sold_price_cents=0) \
+            .exclude(price_reason='').exclude(price_reason='سعر كامل')
+        discount_codes = discount_qs.count()
+        discount_val = 0
+        for ac in discount_qs:
+            pr = ac.price_reason
+            pct_match = re.search(r'(\d+)%', pr)
+            if pct_match:
+                pct = int(pct_match.group(1))
+                if ac.sold_price_cents is not None and pct != 100:
+                    original = ac.sold_price_cents * 100 // (100 - pct)
+                    discount_val += original - ac.sold_price_cents
+                continue
+            amt_match = re.search(r'([\d\u0660-\u0669]+)\s*\u0644\.\u0633', pr)
+            if amt_match:
+                arabic_to_western = str.maketrans('\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667\u0668\u0669', '0123456789')
+                discount_val += int(amt_match.group(1).translate(arabic_to_western))
+
+        comm_pct_display = int(comm_pct) if comm_pct % 1 == 0 else round(comm_pct, 1)
+        net_share = int(round(gross_val * (comm_pct / 100)))
+
+        cards.append({
             "instructor": instructor,
             "profile": profile,
             "card_name": saved_card_data.get('custom_name') or instructor.get_full_name() or instructor.username,
-            "card_specialty": saved_card_data.get('custom_specialty') or profile.specialty or "مدرس مادة الرياضيات",
-            "comm_pct": comm_pct,
+            "card_specialty": saved_card_data.get('custom_specialty') or profile.specialty or "مدرس متخصص",
+            "comm_pct": comm_pct_display,
             "sold_cnt": sold_cnt,
             "gross_val": gross_val,
             "discount_codes": discount_codes,
-            "discount_val": discount_val,
+            "discount_val": int(discount_val),
             "notes": notes,
             "creator": creator,
             "net_share": net_share,
-        }
-        cards.append(card)
-    pages_list = [cards]
+        })
+
+    # Distribute cards: 3 per page (matches slot layout)
+    CARDS_PER_PAGE = 3
+    pages_list = [cards[i:i + CARDS_PER_PAGE] for i in range(0, len(cards), CARDS_PER_PAGE)]
     return render(request, "dashboard/admin_instructor_card_print.html", {"pages_list": pages_list})
+
 
 @admin_required
 def admin_instructor_report_export(request, instructor_id):
