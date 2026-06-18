@@ -9,23 +9,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>بطاقة حساب مالي - {{ card_name }}</title>
     <style>
-        @font-face {
-            font-family: "AlJazeera";
-            src: url("{% static 'dashboard/img/card_assets/FONT/ArbFONTS-Al-Jazeera-Arabic-Regular.ttf' %}") format("truetype");
-            font-weight: 400;
-        }
-        @font-face {
-            font-family: "AlJazeera";
-            src: url("{% static 'dashboard/img/card_assets/FONT/ArbFONTS-Al-Jazeera-Arabic-Bold.ttf' %}") format("truetype");
-            font-weight: 700;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
 
         :root {
             --slot-w: 204mm;
-            --slot-h: 97mm;
-            --card-w: 791px;
-            --card-h: 374px;
-            --scale: calc(771.0236 / 791);
+            --slot-h: 100mm;
             --gold: #8f6f3d;
             --gold-dark: #5d4524;
             --ink: #0b0b0b;
@@ -35,7 +23,7 @@
         html, body { margin: 0; padding: 0; }
         body {
             background: #e7e7e7;
-            font-family: "AlJazeera", Tahoma, Arial, sans-serif;
+            font-family: "Cairo", Tahoma, Arial, sans-serif;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
@@ -50,7 +38,7 @@
             padding: 14px 28px;
             color: #fff;
             background: var(--gold);
-            font: 700 16px "AlJazeera", sans-serif;
+            font: 700 16px "Cairo", sans-serif;
             cursor: pointer;
             box-shadow: 0 12px 30px rgba(0, 0, 0, .25);
         }
@@ -59,11 +47,12 @@
             width: 210mm;
             height: 297mm;
             margin: 10mm auto;
-            padding: 10mm 3mm;
+            padding: 15mm 3mm;
             background: #fff;
             overflow: hidden;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            justify-content: flex-start;
             align-items: center;
             box-shadow: 0 0 16px rgba(0, 0, 0, .14);
         }
@@ -79,15 +68,13 @@
             position: absolute;
             left: 0;
             top: 0;
-            width: var(--card-w);
-            height: var(--card-h);
+            width: 100% !important;
+            height: 100% !important;
             overflow: hidden;
             background: #fff;
             border: 2px solid #8f6f3d;
-            border-radius: 12px;
+            border-radius: 0 !important;
             color: var(--ink);
-            transform: scale(var(--scale));
-            transform-origin: top left;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
@@ -126,7 +113,7 @@
         @media print {
             body { background: #fff; }
             .print-btn { display: none; }
-            .page { margin: 0; padding: 10mm 3mm; border: 0; box-shadow: none; height: 297mm; }
+            .page { margin: 0; padding: 15mm 3mm; border: 0; box-shadow: none; height: 297mm; }
         }
     </style>
 </head>
@@ -152,13 +139,13 @@
                     
                     <!-- Earning Section -->
                     <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
-                        <!-- Top header on card -->
+                        <!-- Bottom Header on Card -->
                         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(0, 0, 0, 0.1); padding-bottom: 8px;">
                             <span style="font-size: 1.05rem; font-weight: 700; color: #0b0b0b;">منصة محترفو التعليم</span>
                             <span style="font-size: 0.78rem; font-weight: bold; color: #8f6f3d; background: rgba(143, 111, 61, 0.1); padding: 2px 10px; border-radius: 4px;">بطاقة حساب مالي</span>
                         </div>
                         
-                        <!-- Calculations info -->
+                        <!-- Calculations Info -->
                         <div style="display: flex; flex-direction: column; gap: 8px; margin: 12px 0;">
                             <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #333;">
                                 <span>عدد الأكواد المباعة:</span>
