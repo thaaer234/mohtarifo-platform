@@ -5209,6 +5209,51 @@ def admin_instructor_report(request, instructor_id):
 @admin_required
 def admin_instructor_print_multi(request):
     """Render printable cards for multiple instructors (comma-separated ids in ?ids=)."""
+    if request.method == 'POST':
+        import json
+        cards_data_json = request.POST.get('cards_data', '')
+        if cards_data_json:
+            try:
+                cards_raw = json.loads(cards_data_json)
+                cards = []
+                for cr in cards_raw:
+                    inst_id = cr.get('instructor_id')
+                    instructor = None
+                    profile = None
+                    if inst_id:
+                        try:
+                            instructor = User.objects.get(id=int(inst_id))
+                            profile = getattr(instructor, 'instructor_profile', None)
+                        except (User.DoesNotExist, ValueError):
+                            pass
+                    
+                    try:
+                        comm_pct = float(cr.get('comm_pct', 100.0))
+                    except (ValueError, TypeError):
+                        comm_pct = 100.0
+                    comm_pct_display = int(comm_pct) if comm_pct % 1 == 0 else round(comm_pct, 1)
+
+                    cards.append({
+                        "instructor": instructor,
+                        "profile": profile,
+                        "card_name": cr.get('card_name') or (instructor.get_full_name() if instructor else ''),
+                        "card_specialty": cr.get('card_specialty') or (profile.specialty if profile else ''),
+                        "comm_pct": comm_pct_display,
+                        "sold_cnt": int(cr.get('sold_cnt', 0)),
+                        "gross_val": int(cr.get('gross_val', 0)),
+                        "discount_codes": int(cr.get('discount_codes', 0)),
+                        "discount_val": int(cr.get('discount_val', 0)),
+                        "notes": cr.get('notes', ''),
+                        "creator": cr.get('creator', ''),
+                        "net_share": int(cr.get('net_share', 0)),
+                    })
+                CARDS_PER_PAGE = 3
+                pages_list = [cards[i:i + CARDS_PER_PAGE] for i in range(0, len(cards), CARDS_PER_PAGE)]
+                return render(request, "dashboard/admin_instructor_card_print.html", {"pages_list": pages_list})
+            except Exception as e:
+                from django.http import HttpResponseBadRequest
+                return HttpResponseBadRequest(f"خطأ في معالجة البيانات المرسلة: {str(e)}")
+
     ids_param = request.GET.get('ids', '')
     instructor_ids = [int(i) for i in ids_param.split(',') if i.strip().isdigit()]
     if not instructor_ids:

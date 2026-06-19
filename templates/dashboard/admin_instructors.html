@@ -124,6 +124,11 @@
     </section>
 </div>
 
+<form id="printPostForm" action="{% url 'dashboard:admin_instructor_print_multi' %}" method="POST" target="_blank" style="display:none;">
+    {% csrf_token %}
+    <input type="hidden" name="cards_data" id="printPostData">
+</form>
+
 <!-- ===== Modal: تعديل بيانات البطاقة قبل الطباعة ===== -->
 <div id="printModal" class="pmodal-overlay" onclick="if(event.target===this)closePrintModal()">
     <div class="pmodal-box">
@@ -547,11 +552,10 @@
         background: var(--bg-base);
         border: 1px solid var(--border-light);
         border-radius: 16px;
-        padding: 1rem;
+        padding: 1rem 1.25rem;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
-        gap: .75rem;
+        gap: 0.75rem;
         transition: transform .2s, border-color .2s;
     }
     .preview-card-item:hover {
@@ -560,55 +564,95 @@
     }
     .preview-card-header {
         border-bottom: 1px dashed var(--border-light);
-        padding-bottom: .5rem;
-    }
-    .preview-card-name {
-        margin: 0;
-        font-size: .95rem;
-        font-weight: 700;
-        color: var(--text-primary);
-    }
-    .preview-card-spec {
-        font-size: .78rem;
-        color: var(--brand-gold);
-        margin: .15rem 0 0;
-        font-weight: 700;
-    }
-    .preview-card-stats {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: .5rem;
-        font-size: .78rem;
-    }
-    .preview-stat-row {
+        padding-bottom: 0.5rem;
         display: flex;
         flex-direction: column;
-        gap: .15rem;
+        gap: 0.25rem;
     }
-    .preview-stat-label {
-        color: var(--text-muted);
-    }
-    .preview-stat-val {
-        font-weight: 700;
+    .preview-card-header input {
+        background: transparent;
+        border: 1px solid transparent;
         color: var(--text-primary);
+        font-family: inherit;
+        width: 100%;
+        padding: 0.15rem 0.3rem;
+        border-radius: 6px;
+        transition: all 0.15s;
     }
-    .preview-card-net {
+    .preview-card-header input:focus {
+        background: var(--bg-surface-elevated);
+        border-color: var(--border-light);
+        outline: none;
+    }
+    .preview-card-header input.edit-card-name {
+        font-size: 0.95rem;
+        font-weight: 800;
+    }
+    .preview-card-header input.edit-card-spec {
+        font-size: 0.78rem;
+        color: var(--brand-gold);
+        font-weight: 700;
+    }
+    .preview-card-fields-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.6rem;
+    }
+    .preview-field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    .preview-field-group label {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        font-weight: 800;
+    }
+    .preview-field-group input {
+        background: var(--bg-surface-elevated);
+        border: 1px solid var(--border-light);
+        color: var(--text-primary);
+        font-family: inherit;
+        border-radius: 8px;
+        padding: 0.35rem 0.5rem;
+        font-size: 0.82rem;
+        width: 100%;
+        transition: border-color 0.15s;
+    }
+    .preview-field-group input:focus {
+        outline: none;
+        border-color: var(--brand-gold);
+    }
+    .preview-card-net-wrapper {
         background: linear-gradient(135deg, #8f6f3d, #5d4524);
         color: #fff;
-        padding: .5rem .75rem;
+        padding: 0.5rem 0.75rem;
         border-radius: 10px;
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-size: .82rem;
-        margin-top: .25rem;
+        font-size: 0.82rem;
+        margin-top: 0.25rem;
+        gap: 0.5rem;
     }
-    .preview-card-net span {
+    .preview-card-net-wrapper span {
         font-weight: bold;
+        white-space: nowrap;
     }
-    .preview-card-net strong {
-        font-size: 1.05rem;
+    .preview-card-net-wrapper input {
+        background: transparent;
+        border: 0;
+        color: #fff;
         font-weight: 900;
+        font-size: 1.05rem;
+        text-align: left;
+        width: 100%;
+        padding: 0;
+        font-family: inherit;
+    }
+    .preview-card-net-wrapper input:focus {
+        outline: none;
+        border-bottom: 1px dashed rgba(255,255,255,0.5);
     }
     @media (max-width: 680px) {
         .preview-container { grid-template-columns: 1fr; }
@@ -652,6 +696,7 @@ function clearSelection() {
 }
 
 let previewTimeout = null;
+window.currentCardsData = [];
 
 function loadPrintPreview() {
     const selected = [...document.querySelectorAll('.instructor-chk:checked')].map(c => c.value);
@@ -685,41 +730,10 @@ function loadPrintPreview() {
         .then(data => {
             container.innerHTML = '';
             if (data.cards && data.cards.length > 0) {
-                data.cards.forEach(card => {
-                    const formatMoney = (val) => Number(val).toLocaleString('ar-SY') || val;
-                    const itemHtml = `
-                        <div class="preview-card-item">
-                            <div class="preview-card-header">
-                                <h4 class="preview-card-name">${card.card_name}</h4>
-                                <p class="preview-card-spec">${card.card_specialty}</p>
-                            </div>
-                            <div class="preview-card-stats">
-                                <div class="preview-stat-row">
-                                    <span class="preview-stat-label">الأكواد المباعة:</span>
-                                    <span class="preview-stat-val">${formatMoney(card.sold_cnt)} كود</span>
-                                </div>
-                                <div class="preview-stat-row">
-                                    <span class="preview-stat-label">أكواد بحسومات:</span>
-                                    <span class="preview-stat-val">${formatMoney(card.discount_codes)} كود</span>
-                                </div>
-                                <div class="preview-stat-row">
-                                    <span class="preview-stat-label">إجمالي المبيعات:</span>
-                                    <span class="preview-stat-val">${formatMoney(card.gross_val)} ل.س</span>
-                                </div>
-                                <div class="preview-stat-row">
-                                    <span class="preview-stat-label">قيمة الحسومات:</span>
-                                    <span class="preview-stat-val">${formatMoney(card.discount_val)} ل.س</span>
-                                </div>
-                            </div>
-                            <div class="preview-card-net">
-                                <span>الصافي المستحق (${card.comm_pct}%):</span>
-                                <strong>${formatMoney(card.net_share)} ل.س</strong>
-                            </div>
-                        </div>
-                    `;
-                    container.insertAdjacentHTML('beforeend', itemHtml);
-                });
+                window.currentCardsData = data.cards;
+                renderCardsPreviews();
             } else {
+                window.currentCardsData = [];
                 container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--text-muted);">لا توجد بيانات متاحة</div>';
             }
             loader.style.display = 'none';
@@ -730,6 +744,100 @@ function loadPrintPreview() {
             loader.style.display = 'none';
             errorEl.style.display = 'block';
         });
+}
+
+function renderCardsPreviews() {
+    const container = document.getElementById('previewContainer');
+    container.innerHTML = '';
+    
+    window.currentCardsData.forEach((card, idx) => {
+        const itemHtml = `
+            <div class="preview-card-item" data-index="${idx}">
+                <div class="preview-card-header">
+                    <input type="text" class="edit-card-name" value="${card.card_name}" oninput="updateCardField(${idx}, 'card_name', this.value)">
+                    <input type="text" class="edit-card-spec" value="${card.card_specialty}" oninput="updateCardField(${idx}, 'card_specialty', this.value)">
+                </div>
+                <div class="preview-card-fields-grid">
+                    <div class="preview-field-group">
+                        <label>الأكواد المباعة</label>
+                        <input type="number" class="edit-sold-cnt" value="${card.sold_cnt}" oninput="updateCardField(${idx}, 'sold_cnt', parseInt(this.value) || 0)">
+                    </div>
+                    <div class="preview-field-group">
+                        <label>أكواد بحسومات</label>
+                        <input type="number" class="edit-discount-codes" value="${card.discount_codes}" oninput="updateCardField(${idx}, 'discount_codes', parseInt(this.value) || 0)">
+                    </div>
+                    <div class="preview-field-group">
+                        <label>إجمالي المبيعات (ل.س)</label>
+                        <input type="number" class="edit-gross-val" value="${card.gross_val}" oninput="updateCardField(${idx}, 'gross_val', parseInt(this.value) || 0); recalcNetShare(${idx});">
+                    </div>
+                    <div class="preview-field-group">
+                        <label>قيمة الحسومات (ل.س)</label>
+                        <input type="number" class="edit-discount-val" value="${card.discount_val}" oninput="updateCardField(${idx}, 'discount_val', parseInt(this.value) || 0)">
+                    </div>
+                    <div class="preview-field-group">
+                        <label>نسبة العمولة (%)</label>
+                        <input type="number" step="0.5" class="edit-comm-pct" value="${card.comm_pct}" oninput="updateCardField(${idx}, 'comm_pct', parseFloat(this.value) || 0); recalcNetShare(${idx});">
+                    </div>
+                    <div class="preview-field-group">
+                        <label>المنظم / المسؤول</label>
+                        <input type="text" class="edit-creator" value="${card.creator}" oninput="updateCardField(${idx}, 'creator', this.value)">
+                    </div>
+                    <div class="preview-field-group" style="grid-column: 1 / -1;">
+                        <label>بيان / ملاحظة البطاقة</label>
+                        <input type="text" class="edit-notes" value="${card.notes}" oninput="updateCardField(${idx}, 'notes', this.value)">
+                    </div>
+                </div>
+                <div class="preview-card-net-wrapper">
+                    <span>الصافي المستحق (ل.س):</span>
+                    <input type="number" class="edit-net-share" value="${card.net_share}" oninput="updateCardField(${idx}, 'net_share', parseInt(this.value) || 0)">
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', itemHtml);
+    });
+}
+
+function updateCardField(index, field, value) {
+    if (window.currentCardsData[index]) {
+        window.currentCardsData[index][field] = value;
+    }
+}
+
+function recalcNetShare(index) {
+    const card = window.currentCardsData[index];
+    if (card) {
+        const netShare = Math.round(card.gross_val * (card.comm_pct / 100));
+        card.net_share = netShare;
+        
+        const cardEl = document.querySelector(`.preview-card-item[data-index="${index}"]`);
+        if (cardEl) {
+            const netInput = cardEl.querySelector('.edit-net-share');
+            if (netInput) netInput.value = netShare;
+        }
+    }
+}
+
+function handleGlobalCommPctChange(val) {
+    const commPct = parseFloat(val) || 0;
+    document.querySelectorAll('.edit-comm-pct').forEach((input, idx) => {
+        input.value = commPct;
+        updateCardField(idx, 'comm_pct', commPct);
+        recalcNetShare(idx);
+    });
+}
+
+function handleGlobalNotesChange(val) {
+    document.querySelectorAll('.edit-notes').forEach((input, idx) => {
+        input.value = val;
+        updateCardField(idx, 'notes', val);
+    });
+}
+
+function handleGlobalCreatorChange(val) {
+    document.querySelectorAll('.edit-creator').forEach((input, idx) => {
+        input.value = val;
+        updateCardField(idx, 'creator', val);
+    });
 }
 
 function debouncedLoadPrintPreview() {
@@ -766,21 +874,13 @@ function closePrintModal() {
 }
 
 function confirmPrint() {
-    const selected = [...document.querySelectorAll('.instructor-chk:checked')].map(c => c.value);
-    if (selected.length === 0) return;
+    if (window.currentCardsData.length === 0) return;
 
-    const commPct = document.getElementById('modal-comm-pct').value || '100';
-    const notes = encodeURIComponent(document.getElementById('modal-notes').value || '');
-    const creator = encodeURIComponent(document.getElementById('modal-creator').value || '');
-
-    const url = '{% url "dashboard:admin_instructor_print_multi" %}'
-        + '?ids=' + selected.join(',')
-        + '&comm_pct=' + commPct
-        + '&notes=' + notes
-        + '&creator=' + creator;
+    const dataStr = JSON.stringify(window.currentCardsData);
+    document.getElementById('printPostData').value = dataStr;
 
     closePrintModal();
-    window.open(url, '_blank');
+    document.getElementById('printPostForm').submit();
 }
 
 // Close modal on Escape
@@ -791,9 +891,21 @@ document.addEventListener("DOMContentLoaded", function() {
     const notesInput = document.getElementById('modal-notes');
     const creatorInput = document.getElementById('modal-creator');
 
-    if (commPctInput) commPctInput.addEventListener('input', debouncedLoadPrintPreview);
-    if (notesInput) notesInput.addEventListener('input', debouncedLoadPrintPreview);
-    if (creatorInput) creatorInput.addEventListener('input', debouncedLoadPrintPreview);
+    if (commPctInput) {
+        commPctInput.addEventListener('input', function() {
+            handleGlobalCommPctChange(this.value);
+        });
+    }
+    if (notesInput) {
+        notesInput.addEventListener('input', function() {
+            handleGlobalNotesChange(this.value);
+        });
+    }
+    if (creatorInput) {
+        creatorInput.addEventListener('input', function() {
+            handleGlobalCreatorChange(this.value);
+        });
+    }
 });
 </script>
 {% endblock %}
