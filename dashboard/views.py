@@ -5282,6 +5282,24 @@ def admin_instructor_print_multi(request):
             "net_share": net_share,
         })
 
+    if request.GET.get('preview') == '1':
+        preview_data = []
+        for c in cards:
+            preview_data.append({
+                "instructor_id": c["instructor"].id,
+                "card_name": c["card_name"],
+                "card_specialty": c["card_specialty"],
+                "comm_pct": c["comm_pct"],
+                "sold_cnt": c["sold_cnt"],
+                "gross_val": c["gross_val"],
+                "discount_codes": c["discount_codes"],
+                "discount_val": c["discount_val"],
+                "notes": c["notes"],
+                "creator": c["creator"],
+                "net_share": c["net_share"],
+            })
+        return JsonResponse({"cards": preview_data})
+
     # Distribute cards: 3 per page (matches slot layout)
     CARDS_PER_PAGE = 3
     pages_list = [cards[i:i + CARDS_PER_PAGE] for i in range(0, len(cards), CARDS_PER_PAGE)]

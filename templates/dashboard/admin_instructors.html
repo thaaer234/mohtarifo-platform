@@ -158,6 +158,24 @@
             </div>
         </div>
 
+        <!-- Preview Section -->
+        <div class="pmodal-preview-section">
+            <h3 class="preview-section-title">
+                <i data-lucide="eye"></i>
+                معاينة تفاصيل البطاقات
+            </h3>
+            <div id="previewLoader" class="preview-loader" style="display: none;">
+                <span class="spinner"></span>
+                <span>جاري تحميل بيانات المعاينة...</span>
+            </div>
+            <div id="previewError" class="preview-error" style="display: none;">
+                حدث خطأ أثناء تحميل المعاينة. يرجى المحاولة مرة أخرى.
+            </div>
+            <div id="previewContainer" class="preview-container">
+                <!-- Previews will be dynamically injected here -->
+            </div>
+        </div>
+
         <div class="pmodal-footer">
             <button class="btn btn-secondary" onclick="closePrintModal()">
                 <i data-lucide="x"></i>
@@ -352,10 +370,13 @@
         border: 1px solid var(--border-light);
         border-radius: 24px;
         width: 100%;
-        max-width: 520px;
+        max-width: 760px;
         box-shadow: 0 30px 80px rgba(0,0,0,.5);
         overflow: hidden;
         animation: pmodalIn .25s cubic-bezier(.34,1.56,.64,1);
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
     }
     @keyframes pmodalIn {
         from { opacity:0; transform:scale(.92) translateY(20px); }
@@ -460,6 +481,138 @@
         justify-content: flex-end;
     }
     .pmodal-print-btn { min-width: 180px; }
+
+    /* Preview Section Styles */
+    .pmodal-preview-section {
+        padding: 1.25rem 1.75rem 1.75rem;
+        border-top: 1px solid var(--border-light);
+        background: rgba(143, 111, 61, 0.03);
+    }
+    .preview-section-title {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        font-size: .95rem;
+        color: var(--brand-gold);
+        margin: 0 0 1rem;
+        font-weight: 800;
+    }
+    .preview-section-title i { width: 18px; height: 18px; }
+    .preview-loader {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: .75rem;
+        padding: 2rem;
+        color: var(--text-muted);
+        font-size: .9rem;
+    }
+    .preview-loader .spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid rgba(143, 111, 61, 0.2);
+        border-top-color: var(--brand-gold);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .preview-error {
+        padding: 1rem;
+        border-radius: 12px;
+        background: var(--danger-bg);
+        color: var(--danger);
+        font-size: .88rem;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    .preview-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        max-height: 240px;
+        overflow-y: auto;
+        padding-right: .25rem;
+    }
+    .preview-container::-webkit-scrollbar {
+        width: 6px;
+    }
+    .preview-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .preview-container::-webkit-scrollbar-thumb {
+        background: var(--border-light);
+        border-radius: 10px;
+    }
+    .preview-card-item {
+        background: var(--bg-base);
+        border: 1px solid var(--border-light);
+        border-radius: 16px;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: .75rem;
+        transition: transform .2s, border-color .2s;
+    }
+    .preview-card-item:hover {
+        transform: translateY(-2px);
+        border-color: rgba(143, 111, 61, 0.3);
+    }
+    .preview-card-header {
+        border-bottom: 1px dashed var(--border-light);
+        padding-bottom: .5rem;
+    }
+    .preview-card-name {
+        margin: 0;
+        font-size: .95rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    .preview-card-spec {
+        font-size: .78rem;
+        color: var(--brand-gold);
+        margin: .15rem 0 0;
+        font-weight: 700;
+    }
+    .preview-card-stats {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: .5rem;
+        font-size: .78rem;
+    }
+    .preview-stat-row {
+        display: flex;
+        flex-direction: column;
+        gap: .15rem;
+    }
+    .preview-stat-label {
+        color: var(--text-muted);
+    }
+    .preview-stat-val {
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+    .preview-card-net {
+        background: linear-gradient(135deg, #8f6f3d, #5d4524);
+        color: #fff;
+        padding: .5rem .75rem;
+        border-radius: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: .82rem;
+        margin-top: .25rem;
+    }
+    .preview-card-net span {
+        font-weight: bold;
+    }
+    .preview-card-net strong {
+        font-size: 1.05rem;
+        font-weight: 900;
+    }
+    @media (max-width: 680px) {
+        .preview-container { grid-template-columns: 1fr; }
+    }
 </style>
 
 <script>
@@ -498,6 +651,92 @@ function clearSelection() {
     updateSelection();
 }
 
+let previewTimeout = null;
+
+function loadPrintPreview() {
+    const selected = [...document.querySelectorAll('.instructor-chk:checked')].map(c => c.value);
+    if (selected.length === 0) return;
+
+    const commPct = document.getElementById('modal-comm-pct').value || '100';
+    const notes = encodeURIComponent(document.getElementById('modal-notes').value || '');
+    const creator = encodeURIComponent(document.getElementById('modal-creator').value || '');
+
+    const loader = document.getElementById('previewLoader');
+    const container = document.getElementById('previewContainer');
+    const errorEl = document.getElementById('previewError');
+
+    // Show loading state
+    loader.style.display = 'flex';
+    container.style.display = 'none';
+    errorEl.style.display = 'none';
+
+    const url = '{% url "dashboard:admin_instructor_print_multi" %}'
+        + '?ids=' + selected.join(',')
+        + '&comm_pct=' + commPct
+        + '&notes=' + notes
+        + '&creator=' + creator
+        + '&preview=1';
+
+    fetch(url)
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
+        .then(data => {
+            container.innerHTML = '';
+            if (data.cards && data.cards.length > 0) {
+                data.cards.forEach(card => {
+                    const formatMoney = (val) => Number(val).toLocaleString('ar-SY') || val;
+                    const itemHtml = `
+                        <div class="preview-card-item">
+                            <div class="preview-card-header">
+                                <h4 class="preview-card-name">${card.card_name}</h4>
+                                <p class="preview-card-spec">${card.card_specialty}</p>
+                            </div>
+                            <div class="preview-card-stats">
+                                <div class="preview-stat-row">
+                                    <span class="preview-stat-label">الأكواد المباعة:</span>
+                                    <span class="preview-stat-val">${formatMoney(card.sold_cnt)} كود</span>
+                                </div>
+                                <div class="preview-stat-row">
+                                    <span class="preview-stat-label">أكواد بحسومات:</span>
+                                    <span class="preview-stat-val">${formatMoney(card.discount_codes)} كود</span>
+                                </div>
+                                <div class="preview-stat-row">
+                                    <span class="preview-stat-label">إجمالي المبيعات:</span>
+                                    <span class="preview-stat-val">${formatMoney(card.gross_val)} ل.س</span>
+                                </div>
+                                <div class="preview-stat-row">
+                                    <span class="preview-stat-label">قيمة الحسومات:</span>
+                                    <span class="preview-stat-val">${formatMoney(card.discount_val)} ل.س</span>
+                                </div>
+                            </div>
+                            <div class="preview-card-net">
+                                <span>الصافي المستحق (${card.comm_pct}%):</span>
+                                <strong>${formatMoney(card.net_share)} ل.س</strong>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                });
+            } else {
+                container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--text-muted);">لا توجد بيانات متاحة</div>';
+            }
+            loader.style.display = 'none';
+            container.style.display = 'grid';
+        })
+        .catch(err => {
+            console.error('Error fetching print preview:', err);
+            loader.style.display = 'none';
+            errorEl.style.display = 'block';
+        });
+}
+
+function debouncedLoadPrintPreview() {
+    clearTimeout(previewTimeout);
+    previewTimeout = setTimeout(loadPrintPreview, 300);
+}
+
 // Show modal before printing
 function printSelected() {
     const selected = [...document.querySelectorAll('.instructor-chk:checked')];
@@ -517,6 +756,9 @@ function printSelected() {
 
     document.getElementById('printModal').classList.add('open');
     if (window.lucide) lucide.createIcons();
+    
+    // Load dynamic preview
+    loadPrintPreview();
 }
 
 function closePrintModal() {
@@ -543,5 +785,15 @@ function confirmPrint() {
 
 // Close modal on Escape
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closePrintModal(); });
+
+document.addEventListener("DOMContentLoaded", function() {
+    const commPctInput = document.getElementById('modal-comm-pct');
+    const notesInput = document.getElementById('modal-notes');
+    const creatorInput = document.getElementById('modal-creator');
+
+    if (commPctInput) commPctInput.addEventListener('input', debouncedLoadPrintPreview);
+    if (notesInput) notesInput.addEventListener('input', debouncedLoadPrintPreview);
+    if (creatorInput) creatorInput.addEventListener('input', debouncedLoadPrintPreview);
+});
 </script>
 {% endblock %}
