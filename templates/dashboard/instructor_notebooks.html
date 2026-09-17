@@ -1,0 +1,175 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% block title %}نوطي ومطبوعاتي | محترفو التعليم{% endblock %}
+{% block content %}
+<div class="instructor-notebooks-dashboard reveal-up">
+    <header class="teacher-notes-head">
+        <div>
+            <span class="kicker"><i data-lucide="notebook-tabs"></i> لوحة الأستاذ</span>
+            <h1>نوطي ومطبوعاتي وطلبات الطلاب</h1>
+            <p>عرض تفصيلي لجميع نوطك المضافة، رصيد المخزون، الأسعار، والاختبارات التفاعلية الملحقة بكل نوطة.</p>
+        </div>
+        <div class="header-action">
+            <a href="{% url 'dashboard:notebook_market' %}?instructor={{ request.user.id }}" class="btn btn-secondary" target="_blank">
+                <i data-lucide="external-link"></i> معاينة نوطي في السوق
+            </a>
+        </div>
+    </header>
+
+    <!-- Notebooks Grid for Instructor -->
+    <section class="mb-10">
+        <div class="section-title-bar">
+            <i data-lucide="book-open"></i>
+            <h2>النوط المنشورة الخاصة بك</h2>
+        </div>
+        <div class="teacher-products-grid">
+            {% for product in products %}
+            <div class="teacher-nb-card">
+                <div class="nb-card-top">
+                    <div class="nb-mini-cover">
+                        {% if product.cover %}
+                            <img src="{{ product.cover.url }}" alt="{{ product.title }}">
+                        {% else %}
+                            <img src="{% static 'dashboard/notebooks/social-studies-grade9.png' %}" alt="{{ product.title }}">
+                        {% endif %}
+                    </div>
+                    <div class="nb-top-details">
+                        <h3>{{ product.title }}</h3>
+                        <span class="nb-price-badge">{{ product.price_syp }} ل.س</span>
+                        <div class="nb-stock-stat">
+                            {% if product.stock > 0 %}
+                                <span class="stock-ok"><i data-lucide="check"></i> {{ product.stock }} نسخة في المستودع</span>
+                            {% else %}
+                                <span class="stock-empty"><i data-lucide="alert-circle"></i> نفدت الكمية</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="nb-content-preview">
+                    {% if product.material_summary %}
+                        <div class="preview-item">
+                            <strong class="item-lbl"><i data-lucide="file-text"></i> ملخص المادة:</strong>
+                            <p>{{ product.material_summary|truncatewords:18 }}</p>
+                        </div>
+                    {% endif %}
+                    {% if product.free_quizzes_overview %}
+                        <div class="preview-item highlight">
+                            <strong class="item-lbl"><i data-lucide="sparkles"></i> اختبارات مجانية ملحقة:</strong>
+                            <p>{{ product.free_quizzes_overview|truncatewords:18 }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="nb-card-footer">
+                    <span><i data-lucide="shopping-cart"></i> {{ product.orders_total }} طلب شراء</span>
+                    <a href="{% url 'dashboard:notebook_detail' product.id %}" class="btn btn-sm btn-secondary" target="_blank">
+                        صفحة النوطة <i data-lucide="arrow-left"></i>
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-dashboard-state full-grid">
+                <i data-lucide="book-dashed"></i>
+                <p>لم تقم الإدارة بربط نوط بحسابك بعد. عند إضافتها ستظهر هنا مع جميع الاختبارات والشروحات الخاصة بها.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Orders Section -->
+    <section class="teacher-orders-section">
+        <div class="section-title-bar">
+            <i data-lucide="package-search"></i>
+            <h2>طلبات الطلاب الواردة</h2>
+        </div>
+        <div class="orders-table-wrapper">
+            {% for order in orders %}
+            <article class="order-row-card">
+                <div class="order-col-main">
+                    <span class="ord-num">#{{ order.id }}</span>
+                    <strong>{{ order.product.title }}</strong>
+                    <small>{{ order.recipient_name }} · {{ order.governorate }}</small>
+                </div>
+                <div class="order-col">
+                    <small>طريقة الدفع</small>
+                    {% if order.payment_method == 'shamcash' %}
+                        <b style="color: #10b981;"><i data-lucide="check-circle" style="width: 14px; height: 14px; vertical-align: middle;"></i> شام كاش</b>
+                    {% else %}
+                        <b>عند الاستلام</b>
+                    {% endif %}
+                </div>
+                <div class="order-col">
+                    <small>الكمية</small>
+                    <b>{{ order.quantity }} نسخة</b>
+                </div>
+                <div class="order-col">
+                    <small>الحالة</small>
+                    <b class="status-{{ order.status }}">{{ order.get_status_display }}</b>
+                </div>
+                <div class="order-col">
+                    <small>موعد التسليم</small>
+                    <b>{% if order.delivery_scheduled_at %}{{ order.delivery_scheduled_at|date:"Y/m/d - g:i A" }}{% else %}قيد المراجعة والتأكيد{% endif %}</b>
+                </div>
+            </article>
+            {% empty %}
+            <div class="empty-dashboard-state">
+                <p>لا توجد طلبات توصيل مسجلة حتى الآن.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+<style>
+.instructor-notebooks-dashboard { max-width: 1200px; margin: 0 auto; padding: 2rem 1rem 5rem; }
+.teacher-notes-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border-light); margin-bottom: 2.5rem; }
+.teacher-notes-head .kicker { display: flex; align-items: center; gap: .4rem; color: var(--brand-gold); font-weight: 900; font-size: .88rem; }
+.teacher-notes-head h1 { font-size: 2.2rem; margin: .5rem 0 .4rem; font-weight: 900; color: #fff; }
+.teacher-notes-head p { color: var(--text-muted); margin: 0; max-width: 680px; line-height: 1.6; }
+.section-title-bar { display: flex; align-items: center; gap: .6rem; margin-bottom: 1.25rem; }
+.section-title-bar i { color: var(--brand-gold); width: 22px; height: 22px; }
+.section-title-bar h2 { font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0; }
+
+.teacher-products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem; }
+.teacher-nb-card { background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; transition: border-color .2s; }
+.teacher-nb-card:hover { border-color: rgba(199, 149, 59, 0.5); }
+.nb-card-top { display: flex; gap: 1rem; align-items: flex-start; }
+.nb-mini-cover { width: 70px; height: 105px; border-radius: 6px; overflow: hidden; background: #0f172a; flex-shrink: 0; box-shadow: -2px 4px 10px rgba(0,0,0,0.5); }
+.nb-mini-cover img { width: 100%; height: 100%; object-fit: cover; }
+.nb-top-details { display: flex; flex-direction: column; gap: .35rem; flex: 1; }
+.nb-top-details h3 { font-size: 1.05rem; font-weight: 800; color: #fff; margin: 0; line-height: 1.35; }
+.nb-price-badge { font-size: .95rem; font-weight: 900; color: var(--brand-gold); }
+.nb-stock-stat { font-size: .8rem; font-weight: 700; margin-top: .2rem; }
+.stock-ok { color: #10b981; display: inline-flex; align-items: center; gap: .25rem; }
+.stock-empty { color: #ef4444; display: inline-flex; align-items: center; gap: .25rem; }
+
+.nb-content-preview { background: rgba(255,255,255,0.02); border: 1px solid var(--border-light); border-radius: 10px; padding: .85rem; display: flex; flex-direction: column; gap: .6rem; }
+.preview-item p { font-size: .82rem; color: var(--text-secondary); margin: .2rem 0 0; line-height: 1.5; }
+.preview-item.highlight p { color: #10b981; }
+.item-lbl { font-size: .78rem; color: var(--brand-gold); display: flex; align-items: center; gap: .3rem; }
+.item-lbl i { width: 13px; height: 13px; }
+.nb-card-footer { display: flex; align-items: center; justify-content: space-between; padding-top: .75rem; border-top: 1px solid var(--border-light); font-size: .85rem; color: var(--text-muted); }
+.nb-card-footer span { display: flex; align-items: center; gap: .4rem; }
+.nb-card-footer i { width: 15px; height: 15px; color: var(--brand-gold); }
+
+.orders-table-wrapper { display: flex; flex-direction: column; gap: .75rem; }
+.order-row-card { display: grid; grid-template-columns: 2fr 1fr .8fr 1fr 1.4fr; gap: 1rem; align-items: center; padding: 1.1rem 1.4rem; background: var(--bg-surface); border: 1px solid var(--border-light); border-radius: 12px; }
+.order-col-main { display: flex; flex-direction: column; gap: .2rem; }
+.ord-num { color: var(--brand-gold); font-size: .78rem; font-weight: 900; }
+.order-col { display: flex; flex-direction: column; gap: .25rem; }
+.order-col small { color: var(--text-muted); font-size: .75rem; }
+.order-col b { font-size: .88rem; color: #fff; }
+.status-confirmed, .status-delivered { color: #10b981 !important; }
+.status-pending { color: #f59e0b !important; }
+.status-cancelled { color: #ef4444 !important; }
+
+.full-grid { grid-column: 1 / -1; }
+
+@media(max-width: 860px) {
+    .teacher-notes-head { flex-direction: column; align-items: flex-start; }
+    .order-row-card { grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .order-col-main { grid-column: 1 / -1; }
+}
+</style>
+{% endblock %}

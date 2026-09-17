@@ -1,0 +1,1097 @@
+{% extends "dashboard/base.html" %}
+{% load static l10n %}
+{% block title %}تتبع توصيل الطلب #{{ order.id }} | محترفو التعليم{% endblock %}
+
+{% block extra_css %}
+<!-- Leaflet & Routing CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+<style>
+/* ==========================================================================
+   BeeOrder Immersive Live Tracking Engine - Mobile & Desktop Responsive
+   ========================================================================== */
+
+/* Full Viewport App Container */
+.bee-viewport-wrapper {
+    position: relative;
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    height: calc(100dvh - 72px);
+    min-height: 580px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: #090d16;
+    font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 768px) {
+    .bee-viewport-wrapper {
+        height: calc(100dvh - 65px - 60px); /* Account for top navbar and mobile bottom nav */
+        min-height: 520px;
+    }
+}
+
+/* Fullscreen Background Live Leaflet Map */
+#beeorder-live-map {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    background: #0f172a;
+}
+
+/* Floating Top Control Bar */
+.bee-top-bar {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    z-index: 500;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+}
+.bee-top-bar > * {
+    pointer-events: auto;
+}
+
+.btn-bee-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: #f8fafc;
+    padding: 8px 14px;
+    border-radius: 999px;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.82rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 40px;
+}
+.btn-bee-back:hover {
+    background: rgba(30, 41, 59, 0.95);
+    color: #38bdf8;
+    transform: translateY(-1px);
+}
+
+.bee-live-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    color: #10b981;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 0.78rem;
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    min-height: 40px;
+}
+
+.bee-pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: beePulseRing 1.6s infinite ease-out;
+}
+@keyframes beePulseRing {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8); }
+    70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Floating Map Tools (Recenter & Zoom) */
+.bee-map-floating-tools {
+    position: absolute;
+    right: 16px;
+    bottom: calc(260px + env(safe-area-inset-bottom, 0px));
+    z-index: 450;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: bottom 0.3s ease;
+}
+.bee-fab-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(15, 23, 42, 0.9);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #f1f5f9;
+    display: grid;
+    place-items: center;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+.bee-fab-btn:hover {
+    background: #0284c7;
+    color: #fff;
+    transform: scale(1.05);
+}
+
+/* BeeOrder Modern Floating Bottom Sheet */
+.bee-bottom-sheet {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(calc(100% - 24px), 640px);
+    z-index: 500;
+    background: rgba(15, 23, 42, 0.94);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 24px;
+    padding: 1.15rem 1.25rem;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    box-sizing: border-box;
+    transition: transform 0.3s ease, max-height 0.3s ease;
+}
+
+/* Mobile Pull Handle Indicator */
+.bee-sheet-drag-handle {
+    width: 38px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 99px;
+    margin: -4px auto 2px;
+    display: block;
+}
+
+/* Sheet Top Row: Order Title & ETA Pill */
+.bee-sheet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+.bee-order-info {
+    min-width: 0;
+    flex: 1;
+}
+.bee-order-info h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #f8fafc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+.bee-order-info p {
+    margin: 3px 0 0;
+    color: #94a3b8;
+    font-size: 0.78rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ETA Highlight Badge */
+.bee-eta-badge {
+    background: linear-gradient(135deg, #0284c7, #06b6d4);
+    padding: 6px 12px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 6px 18px rgba(6, 182, 212, 0.35);
+    flex-shrink: 0;
+}
+.bee-eta-badge small {
+    display: block;
+    font-size: 0.65rem;
+    opacity: 0.92;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+.bee-eta-badge strong {
+    font-size: 1rem;
+    font-weight: 900;
+    white-space: nowrap;
+    line-height: 1.1;
+    display: block;
+}
+
+/* ==========================================================================
+   BeeOrder 4-Stage Stepper Track & Animated Micro-Interactions
+   ========================================================================== */
+.bee-stepper-wrapper {
+    position: relative;
+    padding: 0.35rem 0 0.15rem;
+}
+.bee-stepper-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    position: relative;
+    align-items: flex-start;
+}
+
+/* Background progress track line */
+.bee-stepper-bar-bg {
+    position: absolute;
+    top: 16px;
+    left: 12.5%;
+    right: 12.5%;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 1;
+    border-radius: 2px;
+}
+.bee-stepper-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #06b6d4);
+    border-radius: 2px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bee-step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 5px;
+    position: relative;
+    z-index: 2;
+}
+
+.bee-step-circle {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #1e293b;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+.bee-step-circle i,
+.bee-step-circle svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2.3;
+    display: inline-block;
+    transform-origin: center center;
+}
+
+/* ==========================================================================
+   Animated Motor GIF-Style Component (Pure Animated SVG/CSS)
+   ========================================================================== */
+.bee-motor-gif-anim {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+.bee-motor-gif-anim svg {
+    width: 20px;
+    height: 20px;
+    overflow: visible;
+}
+
+/* Scooter Wheel Spin Animation */
+@keyframes beeWheelSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Scooter Body Bumping & Accelerating Motion */
+@keyframes beeScooterRide {
+    0% { transform: translateY(0) rotate(0deg); }
+    20% { transform: translateY(-1.5px) rotate(-1.5deg); }
+    40% { transform: translateY(0.5px) rotate(1deg); }
+    60% { transform: translateY(-1px) rotate(-1deg); }
+    80% { transform: translateY(1px) rotate(0.5deg); }
+    100% { transform: translateY(0) rotate(0deg); }
+}
+
+/* Exhaust Smoke Puff */
+@keyframes beeSmokePuff {
+    0% { transform: scale(0.3) translateX(0); opacity: 0.8; }
+    50% { transform: scale(1) translateX(4px); opacity: 0.5; }
+    100% { transform: scale(1.6) translateX(8px); opacity: 0; }
+}
+
+/* Rider Head Bob */
+@keyframes beeRiderBob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-1px); }
+}
+
+.bee-step-item.active .bee-motor-gif-anim,
+.custom-driver-pin .bee-motor-gif-anim {
+    animation: beeScooterRide 0.6s infinite ease-in-out;
+}
+
+.bee-step-item.active .bee-motor-gif-anim .scooter-wheel,
+.custom-driver-pin .bee-motor-gif-anim .scooter-wheel {
+    animation: beeWheelSpin 0.5s infinite linear;
+    transform-origin: center;
+}
+
+.bee-step-item.active .bee-motor-gif-anim .exhaust-smoke,
+.custom-driver-pin .bee-motor-gif-anim .exhaust-smoke {
+    animation: beeSmokePuff 0.7s infinite ease-out;
+    transform-origin: left center;
+}
+
+.bee-step-item.active .bee-motor-gif-anim .rider-head,
+.custom-driver-pin .bee-motor-gif-anim .rider-head {
+    animation: beeRiderBob 0.6s infinite ease-in-out;
+}
+
+.bee-step-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #64748b;
+    white-space: nowrap;
+    letter-spacing: -0.2px;
+    transition: color 0.3s ease;
+}
+
+/* --------------------------------------------------------------------------
+   Lively Keyframe Micro-Animations for Each Stage
+   -------------------------------------------------------------------------- */
+
+/* 1. Confirmed Stamp / Pulse Animation */
+@keyframes beeStampPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.18) rotate(-6deg); }
+}
+
+/* 2. Preparing / Packaging Bounce & Float */
+@keyframes beePackageFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-2.5px) rotate(-4deg); }
+    75% { transform: translateY(-1.5px) rotate(4deg); }
+}
+
+/* 4. Delivered Success Celebration Pulse */
+@keyframes beeSuccessPop {
+    0%, 100% { transform: scale(1); }
+    40% { transform: scale(1.22); filter: drop-shadow(0 0 4px #34d399); }
+    70% { transform: scale(0.95); }
+}
+
+/* Stepper Wave Rings */
+@keyframes stepRingGlow {
+    0% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.8), 0 0 12px rgba(6, 182, 212, 0.6); }
+    70% { box-shadow: 0 0 0 8px rgba(6, 182, 212, 0), 0 0 16px rgba(6, 182, 212, 0.4); }
+    100% { box-shadow: 0 0 0 0 rgba(6, 182, 212, 0), 0 0 12px rgba(6, 182, 212, 0.6); }
+}
+
+/* Active & Done Stepper States */
+.bee-step-item.active .bee-step-circle {
+    background: #0284c7;
+    border-color: #38bdf8;
+    color: #fff;
+    transform: scale(1.12);
+    animation: stepRingGlow 2s infinite ease-out;
+}
+.bee-step-item.active .bee-step-label {
+    color: #38bdf8;
+    font-weight: 800;
+}
+
+/* Specific Active Animations */
+#step-confirmed.active .bee-step-circle svg,
+#step-confirmed.active .bee-step-circle i {
+    animation: beeStampPulse 1.8s infinite ease-in-out;
+}
+
+#step-preparing.active .bee-step-circle svg,
+#step-preparing.active .bee-step-circle i {
+    animation: beePackageFloat 1.6s infinite ease-in-out;
+}
+
+#step-delivered.active .bee-step-circle svg,
+#step-delivered.active .bee-step-circle i {
+    animation: beeSuccessPop 1.8s infinite ease-in-out;
+}
+
+/* Done State */
+.bee-step-item.done .bee-step-circle {
+    background: #10b981;
+    border-color: #34d399;
+    color: #fff;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+.bee-step-item.done .bee-step-label {
+    color: #34d399;
+}
+
+/* ==========================================================================
+   Driver Profile & Action Bar
+   ========================================================================== */
+.bee-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.bee-driver-col {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1;
+}
+.bee-driver-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(6, 182, 212, 0.15);
+    color: #38bdf8;
+    border: 1.5px solid rgba(56, 189, 248, 0.4);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+}
+.bee-driver-avatar .bee-motor-gif-anim svg {
+    width: 24px;
+    height: 24px;
+}
+.bee-driver-text {
+    min-width: 0;
+    flex: 1;
+}
+.bee-driver-text small {
+    display: block;
+    font-size: 0.68rem;
+    color: #94a3b8;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+.bee-driver-text strong {
+    font-size: 0.88rem;
+    color: #f1f5f9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.bee-driver-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.bee-btn-call {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #10b981;
+    color: #fff;
+    font-weight: 800;
+    padding: 7px 12px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: 0.78rem;
+    min-height: 36px;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    transition: all 0.2s ease;
+}
+.bee-btn-call:hover {
+    background: #059669;
+    transform: translateY(-1px);
+}
+.bee-btn-call svg {
+    width: 14px;
+    height: 14px;
+}
+
+.bee-payment-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-size: 0.78rem;
+    flex-shrink: 0;
+}
+.bee-payment-pill small {
+    color: #94a3b8;
+    font-size: 0.65rem;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+.bee-payment-pill strong {
+    color: #f59e0b;
+    font-size: 0.98rem;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+/* ==========================================================================
+   Map Custom Markers (BeeOrder Motor GIF & Home Pins)
+   ========================================================================== */
+.custom-driver-pin {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    background: linear-gradient(135deg, #0284c7, #06b6d4);
+    border: 2.5px solid #ffffff;
+    border-radius: 50%;
+    color: #ffffff;
+    box-shadow: 0 6px 18px rgba(6, 182, 212, 0.85);
+    animation: beePulseRing 2s infinite;
+}
+.custom-driver-pin .bee-motor-gif-anim svg {
+    width: 26px;
+    height: 26px;
+}
+
+.custom-home-pin {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border: 2.5px solid #ffffff;
+    border-radius: 50%;
+    color: #ffffff;
+    box-shadow: 0 6px 14px rgba(239, 68, 68, 0.65);
+}
+.custom-home-pin svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Hide leaflet default controls and routing text table */
+.leaflet-routing-container { display: none !important; }
+.leaflet-control-zoom {
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4) !important;
+}
+.leaflet-control-zoom a {
+    background: rgba(15, 23, 42, 0.9) !important;
+    color: #f1f5f9 !important;
+    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+    backdrop-filter: blur(12px);
+    width: 34px !important;
+    height: 34px !important;
+    line-height: 34px !important;
+}
+.leaflet-control-zoom a:hover {
+    background: #0284c7 !important;
+    color: #fff !important;
+}
+
+/* ==========================================================================
+   Mobile Precision Adjustments (360px - 430px screens)
+   ========================================================================== */
+@media (max-width: 480px) {
+    .bee-top-bar {
+        top: 10px;
+        left: 10px;
+        right: 10px;
+    }
+    .btn-bee-back {
+        padding: 6px 10px;
+        font-size: 0.74rem;
+        min-height: 36px;
+    }
+    .bee-live-pill {
+        padding: 6px 10px;
+        font-size: 0.72rem;
+        min-height: 36px;
+    }
+    .bee-bottom-sheet {
+        width: calc(100% - 16px);
+        bottom: 8px;
+        padding: 0.9rem 1rem;
+        border-radius: 20px;
+        gap: 0.75rem;
+    }
+    .bee-order-info h2 {
+        font-size: 0.92rem;
+    }
+    .bee-order-info p {
+        font-size: 0.72rem;
+    }
+    .bee-eta-badge {
+        padding: 5px 9px;
+    }
+    .bee-eta-badge strong {
+        font-size: 0.86rem;
+    }
+    .bee-step-circle {
+        width: 30px;
+        height: 30px;
+    }
+    .bee-step-circle i,
+    .bee-step-circle svg {
+        width: 14px;
+        height: 14px;
+    }
+    .bee-motor-gif-anim svg {
+        width: 17px;
+        height: 17px;
+    }
+    .bee-step-label {
+        font-size: 0.62rem;
+    }
+    .bee-stepper-bar-bg {
+        top: 15px;
+    }
+    .bee-map-floating-tools {
+        right: 10px;
+        bottom: calc(230px + env(safe-area-inset-bottom, 0px));
+    }
+    .bee-card-footer {
+        flex-direction: row;
+        gap: 6px;
+        padding-top: 0.6rem;
+    }
+    .bee-driver-avatar {
+        width: 36px;
+        height: 36px;
+    }
+    .bee-driver-avatar .bee-motor-gif-anim svg {
+        width: 20px;
+        height: 20px;
+    }
+    .bee-driver-text strong {
+        font-size: 0.8rem;
+    }
+    .bee-btn-call {
+        padding: 5px 9px;
+        font-size: 0.72rem;
+        min-height: 32px;
+    }
+    .bee-payment-pill strong {
+        font-size: 0.86rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bee-viewport-wrapper">
+    <!-- Live Map in Fullscreen Background -->
+    <div id="beeorder-live-map"></div>
+
+    <!-- Floating Top Bar -->
+    <div class="bee-top-bar">
+        <a href="{% url 'dashboard:notebook_orders' %}" class="btn-bee-back">
+            <i data-lucide="arrow-right" style="width: 15px; height: 15px;"></i>
+            <span>العودة للطلبات</span>
+        </a>
+        <div class="bee-live-pill">
+            <span class="bee-pulse-dot"></span>
+            <span id="bee-status-pill">تتبع حي GPS</span>
+        </div>
+    </div>
+
+    <!-- Floating Map Control Tools -->
+    <div class="bee-map-floating-tools">
+        <button type="button" class="bee-fab-btn" id="btn-recenter" title="إعادة التوسيط">
+            <i data-lucide="crosshair" style="width: 18px; height: 18px;"></i>
+        </button>
+    </div>
+
+    <!-- Floating Bottom Sheet (BeeOrder Experience) -->
+    <div class="bee-bottom-sheet" id="beeBottomSheet">
+        <span class="bee-sheet-drag-handle"></span>
+
+        <!-- Order Header & ETA -->
+        <div class="bee-sheet-header">
+            <div class="bee-order-info">
+                <h2>نوطة: {{ order.product.title }}</h2>
+                <p>
+                    <i data-lucide="map-pin" style="width:13px; height:13px; color:#f59e0b; flex-shrink:0;"></i>
+                    <span>{{ order.governorate }}، {{ order.address }}</span>
+                </p>
+            </div>
+            <div class="bee-eta-badge">
+                <small>الوقت المقدر</small>
+                <strong id="bee-eta-display">-- دقيقة</strong>
+            </div>
+        </div>
+
+        <!-- BeeOrder 4-Stage Stepper -->
+        <div class="bee-stepper-wrapper">
+            <div class="bee-stepper-steps">
+                <div class="bee-stepper-bar-bg">
+                    <div class="bee-stepper-bar-fill" id="bee-stepper-fill" style="width: 66%;"></div>
+                </div>
+
+                <!-- Step 1: Confirmed -->
+                <div class="bee-step-item {% if order.status in 'confirmed,preparing,out_for_delivery,delivered' %}done{% endif %}" id="step-confirmed">
+                    <div class="bee-step-circle">
+                        <i data-lucide="file-check"></i>
+                    </div>
+                    <span class="bee-step-label">تم التأكيد</span>
+                </div>
+
+                <!-- Step 2: Preparing -->
+                <div class="bee-step-item {% if order.status in 'preparing,out_for_delivery,delivered' %}{% if order.status == 'preparing' %}active{% else %}done{% endif %}{% endif %}" id="step-preparing">
+                    <div class="bee-step-circle">
+                        <i data-lucide="package"></i>
+                    </div>
+                    <span class="bee-step-label">تجهيز النوطة</span>
+                </div>
+
+                <!-- Step 3: Out for delivery (Animated Scooter / Motor GIF Style) -->
+                <div class="bee-step-item {% if order.status == 'out_for_delivery' %}active{% elif order.status == 'delivered' %}done{% endif %}" id="step-out">
+                    <div class="bee-step-circle">
+                        <div class="bee-motor-gif-anim">
+                            <svg viewBox="0 0 32 32" fill="currentColor">
+                                <!-- Smoke Exhaust Puffs -->
+                                <circle class="exhaust-smoke" cx="3" cy="22" r="1.5" fill="rgba(255,255,255,0.7)"/>
+                                <circle class="exhaust-smoke" cx="1" cy="20" r="1.2" fill="rgba(255,255,255,0.5)"/>
+                                
+                                <!-- Rider Head / Helmet -->
+                                <circle class="rider-head" cx="15" cy="9" r="3.2" fill="#fff"/>
+                                
+                                <!-- Rider Body & Box Backpack -->
+                                <path d="M12 12 C12 12, 16 12, 17 15 L20 19 L15 19 Z" fill="#fff"/>
+                                <rect x="9" y="11" width="4.5" height="6" rx="1" fill="#f59e0b"/>
+                                
+                                <!-- Scooter Chassis -->
+                                <path d="M7 23 L18 23 L22 17 L25 17" stroke="#fff" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+                                
+                                <!-- Scooter Front Handlebar -->
+                                <line x1="22" y1="17" x2="23" y2="13" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+                                
+                                <!-- Back Wheel (Animated Spin) -->
+                                <g class="scooter-wheel" style="transform-origin: 8px 24px;">
+                                    <circle cx="8" cy="24" r="4" fill="none" stroke="#fff" stroke-width="2"/>
+                                    <line x1="8" y1="21" x2="8" y2="27" stroke="#38bdf8" stroke-width="1.2"/>
+                                    <line x1="5" y1="24" x2="11" y2="24" stroke="#38bdf8" stroke-width="1.2"/>
+                                </g>
+                                
+                                <!-- Front Wheel (Animated Spin) -->
+                                <g class="scooter-wheel" style="transform-origin: 24px 24px;">
+                                    <circle cx="24" cy="24" r="4" fill="none" stroke="#fff" stroke-width="2"/>
+                                    <line x1="24" y1="21" x2="24" y2="27" stroke="#38bdf8" stroke-width="1.2"/>
+                                    <line x1="21" y1="24" x2="27" y2="24" stroke="#38bdf8" stroke-width="1.2"/>
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
+                    <span class="bee-step-label">المندوب بالطريق</span>
+                </div>
+
+                <!-- Step 4: Delivered -->
+                <div class="bee-step-item {% if order.status == 'delivered' %}done active{% endif %}" id="step-delivered">
+                    <div class="bee-step-circle">
+                        <i data-lucide="check-circle-2"></i>
+                    </div>
+                    <span class="bee-step-label">تم التسليم</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Driver Details & Payment Info -->
+        <div class="bee-card-footer">
+            <div class="bee-driver-col">
+                <div class="bee-driver-avatar">
+                    <div class="bee-motor-gif-anim">
+                        <svg viewBox="0 0 32 32" fill="currentColor">
+                            <circle class="rider-head" cx="15" cy="9" r="3.2" fill="#fff"/>
+                            <path d="M12 12 C12 12, 16 12, 17 15 L20 19 L15 19 Z" fill="#fff"/>
+                            <rect x="9" y="11" width="4.5" height="6" rx="1" fill="#f59e0b"/>
+                            <path d="M7 23 L18 23 L22 17 L25 17" stroke="#fff" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+                            <g class="scooter-wheel" style="transform-origin: 8px 24px;">
+                                <circle cx="8" cy="24" r="4" fill="none" stroke="#fff" stroke-width="2"/>
+                            </g>
+                            <g class="scooter-wheel" style="transform-origin: 24px 24px;">
+                                <circle cx="24" cy="24" r="4" fill="none" stroke="#fff" stroke-width="2"/>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+                <div class="bee-driver-text">
+                    <small>مندوب التوصيل المعتمد:</small>
+                    <strong id="bee-driver-name">
+                        {% if order.driver %}
+                            {{ order.driver.get_full_name|default:order.driver.username }}
+                        {% else %}
+                            جاري تعيين الكابتن
+                        {% endif %}
+                    </strong>
+                </div>
+            </div>
+
+            <div class="bee-driver-actions">
+                {% if order.driver and order.driver.delivery_profile.phone %}
+                <a href="tel:{{ order.driver.delivery_profile.phone }}" class="bee-btn-call" title="اتصال بالمندوب">
+                    <i data-lucide="phone-call"></i>
+                    <span>اتصال</span>
+                </a>
+                {% elif order.driver and order.driver.username %}
+                <a href="tel:{{ order.driver.username }}" class="bee-btn-call" title="اتصال بالمندوب">
+                    <i data-lucide="phone-call"></i>
+                    <span>اتصال</span>
+                </a>
+                {% endif %}
+
+                <div class="bee-payment-pill">
+                    <small>المطلوب:</small>
+                    {% if order.payment_method == 'shamcash' %}
+                        <strong style="color:#10b981;">شام كاش</strong>
+                    {% else %}
+                        <strong>{{ order.total_syp }} ل.س</strong>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leaflet Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.min.js"></script>
+
+<script>
+(function() {
+    const orderId = "{{ order.id }}";
+    const clientLat = parseFloat("{{ order.location_latitude|unlocalize }}");
+    const clientLng = parseFloat("{{ order.location_longitude|unlocalize }}");
+    
+    let driverLat = {% if order.driver_latitude %}{{ order.driver_latitude|unlocalize }}{% else %}{{ hub_lat|unlocalize }}{% endif %};
+    let driverLng = {% if order.driver_longitude %}{{ order.driver_longitude|unlocalize }}{% else %}{{ hub_lng|unlocalize }}{% endif %};
+
+    // Initialize Map with clean modern viewport settings
+    const map = L.map('beeorder-live-map', {
+        center: [clientLat, clientLng],
+        zoom: 14,
+        zoomControl: false,
+        attributionControl: false
+    });
+
+    // Dark/Clean OpenStreetMap Carto Style
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19
+    }).addTo(map);
+
+    // Zoom control at top right (desktop friendly)
+    if (window.innerWidth > 640) {
+        L.control.zoom({ position: 'topright' }).addTo(map);
+    }
+
+    // Custom Driver Marker with Animated Motor GIF
+    const driverSvgHtml = `
+        <div class="custom-driver-pin">
+            <div class="bee-motor-gif-anim">
+                <svg viewBox="0 0 32 32" fill="currentColor">
+                    <circle class="exhaust-smoke" cx="3" cy="22" r="1.5" fill="rgba(255,255,255,0.7)"/>
+                    <circle class="rider-head" cx="15" cy="9" r="3.2" fill="#fff"/>
+                    <path d="M12 12 C12 12, 16 12, 17 15 L20 19 L15 19 Z" fill="#fff"/>
+                    <rect x="9" y="11" width="4.5" height="6" rx="1" fill="#f59e0b"/>
+                    <path d="M7 23 L18 23 L22 17 L25 17" stroke="#fff" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+                    <line x1="22" y1="17" x2="23" y2="13" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+                    <g class="scooter-wheel" style="transform-origin: 8px 24px;">
+                        <circle cx="8" cy="24" r="4" fill="none" stroke="#fff" stroke-width="2"/>
+                        <line x1="8" y1="21" x2="8" y2="27" stroke="#38bdf8" stroke-width="1.2"/>
+                        <line x1="5" y1="24" x2="11" y2="24" stroke="#38bdf8" stroke-width="1.2"/>
+                    </g>
+                    <g class="scooter-wheel" style="transform-origin: 24px 24px;">
+                        <circle cx="24" cy="24" r="4" fill="none" stroke="#fff" stroke-width="2"/>
+                        <line x1="24" y1="21" x2="24" y2="27" stroke="#38bdf8" stroke-width="1.2"/>
+                        <line x1="21" y1="24" x2="27" y2="24" stroke="#38bdf8" stroke-width="1.2"/>
+                    </g>
+                </svg>
+            </div>
+        </div>
+    `;
+    const driverIcon = L.divIcon({
+        className: 'custom-driver-wrapper',
+        html: driverSvgHtml,
+        iconSize: [46, 46],
+        iconAnchor: [23, 23]
+    });
+
+    // Custom Student Home Marker with Lucide SVG
+    const homeSvgHtml = `
+        <div class="custom-home-pin">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+    `;
+    const homeIcon = L.divIcon({
+        className: 'custom-home-wrapper',
+        html: homeSvgHtml,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+    });
+
+    const homeMarker = L.marker([clientLat, clientLng], { icon: homeIcon }).addTo(map)
+        .bindPopup('<strong>موقع استلامك</strong><br>{{ order.address }}');
+
+    const driverMarker = L.marker([driverLat, driverLng], { icon: driverIcon }).addTo(map)
+        .bindPopup('<strong>كابتن التوصيل 🛵</strong>');
+
+    // Routing Control
+    const routingControl = L.Routing.control({
+        waypoints: [
+            L.latLng(driverLat, driverLng),
+            L.latLng(clientLat, clientLng)
+        ],
+        lineOptions: {
+            styles: [
+                { color: '#090d16', opacity: 0.5, weight: 8 },
+                { color: '#0284c7', opacity: 0.95, weight: 5 }
+            ]
+        },
+        createMarker: function() { return null; },
+        show: false,
+        addWaypoints: false,
+        draggableWaypoints: false,
+        fitSelectedRoutes: false
+    }).addTo(map);
+
+    function fitBothPoints() {
+        const bounds = L.latLngBounds([
+            [driverLat, driverLng],
+            [clientLat, clientLng]
+        ]);
+        const pad = window.innerWidth < 640 ? [40, 40] : [80, 80];
+        map.fitBounds(bounds, { padding: pad, maxZoom: 16 });
+    }
+
+    fitBothPoints();
+
+    // Recenter Button
+    const btnRecenter = document.getElementById('btn-recenter');
+    if (btnRecenter) {
+        btnRecenter.addEventListener('click', function() {
+            fitBothPoints();
+        });
+    }
+
+    // ETA calculation
+    routingControl.on('routesfound', function(e) {
+        const routes = e.routes;
+        if (routes && routes.length > 0) {
+            const summary = routes[0].summary;
+            const km = (summary.totalDistance / 1000).toFixed(1);
+            const minutes = Math.max(1, Math.round(summary.totalTime / 60));
+
+            const etaEl = document.getElementById('bee-eta-display');
+            if (etaEl) etaEl.textContent = `${minutes} د (${km} كم)`;
+        }
+    });
+
+    // Update stepper status dynamically
+    function updateStepperUI(status) {
+        const fill = document.getElementById('bee-stepper-fill');
+        const stepConfirmed = document.getElementById('step-confirmed');
+        const stepPreparing = document.getElementById('step-preparing');
+        const stepOut = document.getElementById('step-out');
+        const stepDelivered = document.getElementById('step-delivered');
+
+        // Reset
+        [stepConfirmed, stepPreparing, stepOut, stepDelivered].forEach(el => {
+            if (el) el.className = 'bee-step-item';
+        });
+
+        if (status === 'confirmed') {
+            if (fill) fill.style.width = '10%';
+            if (stepConfirmed) stepConfirmed.className = 'bee-step-item done active';
+        } else if (status === 'preparing') {
+            if (fill) fill.style.width = '35%';
+            if (stepConfirmed) stepConfirmed.className = 'bee-step-item done';
+            if (stepPreparing) stepPreparing.className = 'bee-step-item active';
+        } else if (status === 'out_for_delivery') {
+            if (fill) fill.style.width = '70%';
+            if (stepConfirmed) stepConfirmed.className = 'bee-step-item done';
+            if (stepPreparing) stepPreparing.className = 'bee-step-item done';
+            if (stepOut) stepOut.className = 'bee-step-item active';
+        } else if (status === 'delivered') {
+            if (fill) fill.style.width = '100%';
+            if (stepConfirmed) stepConfirmed.className = 'bee-step-item done';
+            if (stepPreparing) stepPreparing.className = 'bee-step-item done';
+            if (stepOut) stepOut.className = 'bee-step-item done';
+            if (stepDelivered) stepDelivered.className = 'bee-step-item done active';
+            const etaEl = document.getElementById('bee-eta-display');
+            if (etaEl) etaEl.textContent = 'تم التسليم';
+        }
+
+        // Re-initialize lucide icons if DOM changes
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    }
+
+    // Live Polling every 3.5s
+    let pollInterval = setInterval(function() {
+        fetch(`/api/delivery/orders/${orderId}/live-location/`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    const driver = data.driver;
+                    if (driver && driver.lat && driver.lng) {
+                        driverLat = driver.lat;
+                        driverLng = driver.lng;
+                        driverMarker.setLatLng([driverLat, driverLng]);
+                        routingControl.setWaypoints([
+                            L.latLng(driverLat, driverLng),
+                            L.latLng(clientLat, clientLng)
+                        ]);
+                    }
+                    if (driver && driver.info && driver.info.name) {
+                        const nameEl = document.getElementById('bee-driver-name');
+                        if (nameEl) nameEl.textContent = driver.info.name;
+                    }
+                    if (data.order_status) {
+                        updateStepperUI(data.order_status);
+                    }
+                    if (data.order_status === 'delivered') {
+                        clearInterval(pollInterval);
+                    }
+                }
+            })
+            .catch(err => console.error("Live GPS fetch error:", err));
+    }, 3500);
+
+    setTimeout(() => { 
+        map.invalidateSize();
+        if (window.lucide) window.lucide.createIcons();
+    }, 300);
+})();
+</script>
+{% endblock %}
+

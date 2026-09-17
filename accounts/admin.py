@@ -1,9 +1,17 @@
 from django.contrib import admin
 
-from .models import AcademicBranch, Governorate, InstructorProfile, StudentProfile
+from .models import AcademicBranch, Governorate, InstructorProfile, StudentProfile, DeliveryAgentProfile
+
+
+@admin.register(DeliveryAgentProfile)
+class DeliveryAgentProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "phone", "vehicle_type", "is_active", "is_available", "last_location_update")
+    search_fields = ("user__username", "user__first_name", "user__last_name", "phone")
+    list_filter = ("vehicle_type", "is_active", "is_available")
 
 
 @admin.register(AcademicBranch)
+
 class AcademicBranchAdmin(admin.ModelAdmin):
     list_display = ("name", "is_active", "sort_order")
     list_editable = ("is_active", "sort_order")

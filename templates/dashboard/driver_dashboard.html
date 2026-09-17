@@ -1,0 +1,370 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% block title %}لوحة مندوب التوصيل | محترفو التعليم{% endblock %}
+
+{% block extra_css %}
+<style>
+.driver-panel {
+    padding: 1.5rem 0 4rem;
+}
+.dp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: 2rem;
+}
+.dp-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    background: rgba(6, 182, 212, 0.12);
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    color: #06b6d4;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: .82rem;
+    margin-bottom: .5rem;
+}
+.dp-header h1 {
+    font-size: 1.9rem;
+    margin: 0 0 .3rem;
+}
+.dp-header p {
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* Stats Cards */
+.dp-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.2rem;
+    margin-bottom: 2.2rem;
+}
+.dp-stat-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+}
+.dp-stat-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    font-size: 1.3rem;
+}
+.dp-stat-icon.active { background: rgba(6, 182, 212, 0.15); color: #06b6d4; }
+.dp-stat-icon.done { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.dp-stat-icon.gps { background: rgba(var(--brand-gold-rgb), 0.15); color: var(--brand-gold); }
+.dp-stat-info small { color: var(--text-muted); font-size: .8rem; display: block; }
+.dp-stat-info strong { font-size: 1.6rem; font-weight: 900; }
+
+/* GPS Transmitter Widget */
+.gps-beacon-widget {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.08), rgba(16, 185, 129, 0.05));
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    border-radius: 14px;
+    padding: 1.4rem;
+    margin-bottom: 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+.gbw-info {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+.gbw-icon-pulse {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(6, 182, 212, 0.2);
+    color: #06b6d4;
+    display: grid;
+    place-items: center;
+    position: relative;
+}
+.gbw-icon-pulse.broadcasting::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid #06b6d4;
+    animation: beaconWave 1.8s infinite;
+}
+@keyframes beaconWave {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(1.5); opacity: 0; }
+}
+
+.gbw-text h3 { margin: 0 0 .25rem; font-size: 1.1rem; }
+.gbw-text p { margin: 0; color: var(--text-muted); font-size: .85rem; }
+
+.btn-gps-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .75rem 1.4rem;
+    border-radius: 8px;
+    font-weight: 800;
+    cursor: pointer;
+    border: none;
+    font-size: .92rem;
+    transition: all .2s;
+}
+.btn-gps-toggle.start { background: #06b6d4; color: #fff; }
+.btn-gps-toggle.stop { background: #ef4444; color: #fff; }
+
+/* Orders List */
+.dp-orders-section h2 {
+    font-size: 1.35rem;
+    margin: 0 0 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+.dp-order-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    display: grid;
+    grid-template-columns: minmax(200px, 1.5fr) 1.5fr 1fr auto;
+    gap: 1.2rem;
+    align-items: center;
+}
+.doc-product small { color: var(--text-muted); display: block; font-size: .78rem; }
+.doc-product h3 { margin: .2rem 0; font-size: 1.05rem; }
+.doc-product span { font-size: .82rem; color: var(--brand-gold); font-weight: 800; }
+
+.doc-client {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    font-size: .88rem;
+}
+.doc-client strong { color: var(--text-primary); }
+.doc-client span { color: var(--text-secondary); }
+
+.doc-status-col {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+}
+.doc-status-badge {
+    display: inline-flex;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 800;
+    font-size: .8rem;
+    width: fit-content;
+}
+.doc-status-badge.out_for_delivery { background: rgba(6, 182, 212, 0.15); color: #06b6d4; }
+.doc-status-badge.confirmed { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.doc-status-badge.preparing { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+
+.doc-actions {
+    display: flex;
+    gap: .6rem;
+    align-items: center;
+}
+
+@media (max-width: 900px) {
+    .dp-order-card { grid-template-columns: 1fr; }
+    .doc-actions { justify-content: flex-start; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="driver-panel">
+    <header class="dp-header">
+        <div>
+            <div class="dp-badge">
+                <i data-lucide="bike"></i>
+                <span>بوابة مندوب التوصيل الميداني</span>
+            </div>
+            <h1>مرحباً، <span>{{ request.user.get_full_name|default:request.user.username }}</span></h1>
+            <p>لوحة التحكم بإرسال إحداثيات الـ GPS ومتابعة تسليم النوط للطلاب.</p>
+        </div>
+        <div>
+            <a href="{% url 'dashboard:driver_orders' %}" class="btn btn-secondary">
+                <i data-lucide="archive"></i> سجل كل طلباتي
+            </a>
+        </div>
+    </header>
+
+    <!-- Stats -->
+    <div class="dp-stats-grid">
+        <div class="dp-stat-card">
+            <div class="dp-stat-icon active"><i data-lucide="package"></i></div>
+            <div class="dp-stat-info">
+                <small>طلبات جارية للتوصيل</small>
+                <strong>{{ active_orders|length }}</strong>
+            </div>
+        </div>
+        <div class="dp-stat-card">
+            <div class="dp-stat-icon done"><i data-lucide="check-circle-2"></i></div>
+            <div class="dp-stat-info">
+                <small>طلبات تم تسليمها بنجاح</small>
+                <strong>{{ delivered_count }}</strong>
+            </div>
+        </div>
+        <div class="dp-stat-card">
+            <div class="dp-stat-icon gps"><i data-lucide="satellite"></i></div>
+            <div class="dp-stat-info">
+                <small>وسيلة النقل</small>
+                <strong>{{ delivery_profile.get_vehicle_type_display|default:"دراجة نارية" }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- GPS Beacon Widget -->
+    <div class="gps-beacon-widget">
+        <div class="gbw-info">
+            <div class="gbw-icon-pulse" id="gps-pulse-icon">
+                <i data-lucide="navigation"></i>
+            </div>
+            <div class="gbw-text">
+                <h3 id="gps-status-title">بث الموقع الحي للطلاب (GPS Beacon)</h3>
+                <p id="gps-status-desc">قم بتشغيل البث أثناء القيادة ليتمكن الطالب من رؤية حركتك المباشرة على الخريطة.</p>
+            </div>
+        </div>
+        <div>
+            <button type="button" class="btn-gps-toggle start" id="btn-toggle-beacon">
+                <i data-lucide="radio"></i>
+                <span id="btn-beacon-label">تفعيل بث الـ GPS الحي</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Active Orders -->
+    <section class="dp-orders-section">
+        <h2><i data-lucide="truck"></i> الطلبات النشطة حالياً</h2>
+
+        {% for order in active_orders %}
+        <article class="dp-order-card">
+            <div class="doc-product">
+                <small>طلب #{{ order.id }}</small>
+                <h3>{{ order.product.title }}</h3>
+                <span>{{ order.quantity }} نسخة · {{ order.total_syp }} ل.س</span>
+            </div>
+            <div class="doc-client">
+                <strong><i data-lucide="user" style="width:14px;display:inline-block;vertical-align:middle;"></i> {{ order.recipient_name }}</strong>
+                <span><i data-lucide="map-pin" style="width:14px;display:inline-block;vertical-align:middle;"></i> {{ order.governorate }}، {{ order.address }}</span>
+                <span><i data-lucide="phone" style="width:14px;display:inline-block;vertical-align:middle;"></i> {{ order.phone }}</span>
+            </div>
+            <div class="doc-status-col">
+                <span class="doc-status-badge {{ order.status }}">{{ order.get_status_display }}</span>
+                <small style="color:var(--text-muted);">
+                    {% if order.payment_method == 'shamcash' %}شام كاش (مدفوع){% else %}الدفع عند الاستلام{% endif %}
+                </small>
+            </div>
+            <div class="doc-actions">
+                <a href="{% url 'dashboard:driver_order_route' order.id %}" class="btn btn-primary btn-sm">
+                    <i data-lucide="route"></i> فتح خط السير والملاحة
+                </a>
+                <a href="tel:{{ order.phone }}" class="btn btn-secondary btn-sm" title="اتصال">
+                    <i data-lucide="phone-call"></i>
+                </a>
+            </div>
+        </article>
+        {% empty %}
+        <div class="empty-dashboard-state">
+            <i data-lucide="package-check"></i>
+            <p>لا توجد طلبات جارية مسندة إليك حالياً.</p>
+        </div>
+        {% endfor %}
+    </section>
+</div>
+
+<script>
+(function() {
+    let watchId = null;
+    let isBroadcasting = false;
+
+    const btnToggle = document.getElementById('btn-toggle-beacon');
+    const pulseIcon = document.getElementById('gps-pulse-icon');
+    const statusTitle = document.getElementById('gps-status-title');
+    const statusDesc = document.getElementById('gps-status-desc');
+    const btnLabel = document.getElementById('btn-beacon-label');
+
+    function sendLocationUpdate(lat, lng, heading, speed) {
+        fetch('/api/delivery/driver/update-location/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                latitude: lat,
+                longitude: lng,
+                heading: heading || null,
+                speed: speed || null
+            })
+        }).catch(err => console.error("GPS send error:", err));
+    }
+
+    if (btnToggle) {
+        btnToggle.addEventListener('click', function() {
+            if (!isBroadcasting) {
+                if (!navigator.geolocation) {
+                    alert('جهازك أو متصفحك لا يدعم خاصية تحديد الموقع الجغرافي.');
+                    return;
+                }
+
+                statusTitle.textContent = 'جارٍ تشغيل البث المباشر...';
+                
+                watchId = navigator.geolocation.watchPosition(
+                    function(pos) {
+                        isBroadcasting = true;
+                        pulseIcon.classList.add('broadcasting');
+                        btnToggle.className = 'btn-gps-toggle stop';
+                        btnLabel.textContent = 'إيقاف بث الـ GPS';
+                        statusTitle.textContent = '🟢 البث المباشر نشط (يتم إرسال إحداثياتك للطلاب)';
+                        statusDesc.textContent = `الإحداثيات الحالية: ${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+
+                        sendLocationUpdate(
+                            pos.coords.latitude,
+                            pos.coords.longitude,
+                            pos.coords.heading,
+                            pos.coords.speed
+                        );
+                    },
+                    function(err) {
+                        console.error(err);
+                        alert('يرجى السماح بصلاحية الموقع الجغرافي (GPS) في المتصفح لتفعيل التتبع.');
+                    },
+                    { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 }
+                );
+            } else {
+                if (watchId) {
+                    navigator.geolocation.clearWatch(watchId);
+                    watchId = null;
+                }
+                isBroadcasting = false;
+                pulseIcon.classList.remove('broadcasting');
+                btnToggle.className = 'btn-gps-toggle start';
+                btnLabel.textContent = 'تفعيل بث الـ GPS الحي';
+                statusTitle.textContent = 'بث الموقع الحي للطلاب (GPS Beacon)';
+                statusDesc.textContent = 'قم بتشغيل البث أثناء القيادة ليتمكن الطالب من رؤية حركتك المباشرة على الخريطة.';
+            }
+        });
+    }
+})();
+</script>
+{% endblock %}

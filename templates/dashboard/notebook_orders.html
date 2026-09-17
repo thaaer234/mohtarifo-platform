@@ -1,0 +1,39 @@
+{% extends "dashboard/base.html" %}
+{% block title %}طلبات النوط | محترفو التعليم{% endblock %}
+{% block content %}
+<header class="orders-head"><div><span>متابعة التوصيل</span><h1>طلبات النوط</h1><p>موعد التسليم المعتمد من المنصة يظهر هنا فور تحديده.</p></div><a href="{% url 'dashboard:notebook_market' %}" class="btn btn-primary"><i data-lucide="notebook-tabs"></i> تصفح السوق</a></header>
+<section class="orders-list">
+{% for order in orders %}<article class="order-row">
+ <div class="order-main"><div class="order-icon"><i data-lucide="package"></i></div><div><small>طلب #{{ order.id }}</small><h2>{{ order.product.title }}</h2><span>الأستاذ {{ order.product.instructor.get_full_name|default:order.product.instructor.username }} · {{ order.quantity }} نسخة</span></div></div>
+ <div class="order-status status-{{ order.status }}">
+   <span>{{ order.get_status_display }}</span>
+   {% if order.payment_method == 'shamcash' %}
+     <small style="color:#10b981;font-weight:700;"><i data-lucide="check-circle" style="width:12px;height:12px;display:inline-block;vertical-align:middle;"></i> شام كاش</small>
+   {% else %}
+     <small>الدفع عند الاستلام</small>
+   {% endif %}
+   <small>{{ order.created_at|date:"Y/m/d" }}</small>
+ </div>
+  <div class="delivery-time">
+    <small>موعد التسليم</small>
+    {% if order.delivery_scheduled_at %}
+      <strong>{{ order.delivery_scheduled_at|date:"Y/m/d" }}</strong><span>{{ order.delivery_scheduled_at|time:"g:i A" }}</span>
+    {% else %}
+      <strong>بانتظار تحديد المنصة</strong>
+    {% endif %}
+    {% if order.status == 'out_for_delivery' or order.driver %}
+      <a href="{% url 'dashboard:student_order_tracking' order.id %}" class="live-track-badge">
+        <span class="live-pulse"></span>
+        <i data-lucide="navigation"></i> تتبع المندوب لحظياً
+      </a>
+    {% endif %}
+  </div>
+ <div class="order-total"><small>الإجمالي</small><strong>{{ order.total_syp }} ل.س</strong><a href="{{ order.maps_url }}" target="_blank" rel="noopener"><i data-lucide="map-pin"></i> موقع التوصيل</a></div>
+</article>{% empty %}<div class="empty-dashboard-state"><i data-lucide="package-open"></i><p>ليس لديك طلبات نوط بعد.</p></div>{% endfor %}
+</section>
+<style>
+.orders-head{display:flex;justify-content:space-between;align-items:end;gap:1.5rem;padding:2rem 0;border-bottom:1px solid var(--border-light)}.orders-head>div>span{color:var(--brand-gold);font-weight:900}.orders-head h1{font-size:2rem;margin:.4rem 0}.orders-head p{color:var(--text-muted);margin:0}.orders-list{display:grid;gap:.75rem;padding:1.5rem 0 4rem}.order-row{display:grid;grid-template-columns:minmax(220px,2fr) 1fr 1.2fr 1fr;align-items:center;gap:1rem;padding:1.15rem;border:1px solid var(--border-light);border-radius:8px;background:var(--bg-surface)}.order-main{display:flex;gap:.8rem;align-items:center}.order-icon{width:46px;height:46px;display:grid;place-items:center;border-radius:7px;background:rgba(var(--brand-gold-rgb),.1);color:var(--brand-gold);flex:none}.order-main small,.delivery-time small,.order-total small{color:var(--text-muted)}.order-main h2{font-size:1rem;margin:.2rem 0}.order-main span{font-size:.8rem;color:var(--text-muted)}.order-status,.delivery-time,.order-total{display:flex;flex-direction:column;gap:.25rem}.order-status>span{font-weight:900}.status-delivered>span{color:#10b981}.status-cancelled>span{color:#ef4444}.status-out_for_delivery>span{color:#3b82f6}.delivery-time strong,.order-total strong{font-size:.9rem}.order-total a{display:flex;align-items:center;gap:.3rem;color:var(--brand-gold);font-size:.8rem;text-decoration:none}.order-total a i{width:14px}@media(max-width:820px){.orders-head{align-items:start;flex-direction:column}.order-row{grid-template-columns:1fr 1fr}.order-main{grid-column:1/-1}.order-total{align-items:end}}@media(max-width:460px){.order-row{grid-template-columns:1fr}.order-main{grid-column:auto}.order-total{align-items:start}}
+.live-track-badge{display:inline-flex;align-items:center;gap:.4rem;background:linear-gradient(135deg,rgba(16,185,129,.15),rgba(6,182,212,.15));color:#10b981;padding:.35rem .7rem;border-radius:6px;font-weight:800;font-size:.78rem;text-decoration:none;border:1px solid rgba(16,185,129,.3);margin-top:.35rem;transition:all .2s ease}.live-track-badge:hover{background:rgba(16,185,129,.25);transform:translateY(-1px);box-shadow:0 3px 10px rgba(16,185,129,.2)}.live-pulse{width:8px;height:8px;background:#10b981;border-radius:50%;box-shadow:0 0 0 rgba(16,185,129,.6);animation:livePulse 1.8s infinite}@keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(16,185,129,.7)}70%{box-shadow:0 0 0 8px rgba(16,185,129,0)}100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}}
+</style>
+{% endblock %}
+

@@ -88,4 +88,30 @@ class InstructorProfile(models.Model):
     def __str__(self):
         return f"{self.user.get_full_name() or self.user.username} - {self.specialty}"
 
-# Create your models here.
+
+class DeliveryAgentProfile(models.Model):
+    VEHICLE_CHOICES = [
+        ("motorcycle", "دراجة نارية"),
+        ("car", "سيارة"),
+        ("bicycle", "دراجة هوائية / مشياً"),
+        ("van", "شاحنة خفيفة / فان"),
+    ]
+
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="delivery_profile", verbose_name="المستخدم")
+    phone = models.CharField(max_length=40, blank=True, verbose_name="رقم الهاتف")
+    vehicle_type = models.CharField(max_length=20, choices=VEHICLE_CHOICES, default="motorcycle", verbose_name="وسيلة النقل")
+    is_active = models.BooleanField(default=True, verbose_name="حساب نشط")
+    is_available = models.BooleanField(default=True, verbose_name="متاح لاستلام الطلبات")
+    current_latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, verbose_name="خط العرض الحالي")
+    current_longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, verbose_name="خط الطول الحالي")
+    last_location_update = models.DateTimeField(null=True, blank=True, verbose_name="وقت آخر تحديث للموقع")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "مندوب توصيل"
+        verbose_name_plural = "مندوبو التوصيل"
+
+    def __str__(self):
+        return f"{self.user.get_full_name() or self.user.username} - مندوب ({self.get_vehicle_type_display()})"
+

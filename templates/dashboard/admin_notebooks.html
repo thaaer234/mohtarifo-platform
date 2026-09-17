@@ -1,0 +1,65 @@
+{% extends "dashboard/base.html" %}
+{% block title %}إدارة سوق النوط | محترفو التعليم{% endblock %}
+{% block content %}
+<header class="market-admin-head"><div><span><i data-lucide="store"></i> إدارة المتجر</span><h1>سوق النوط والتوصيل</h1><p>أضف نوطة للمدرّس، راقب المخزون، وحدد موعد تسليم كل طلب.</p></div><div class="admin-metrics"><div><strong>{{ products|length }}</strong><span>نوطة</span></div><div><strong>{{ pending_count }}</strong><span>بانتظار التأكيد</span></div></div></header>
+
+<section class="admin-market-layout">
+ <div class="product-create">
+  <div class="section-heading"><i data-lucide="book-plus"></i><div><h2>إضافة نوطة</h2><p>اربطها بمدرّس ودورة وحدد السعر والمخزون.</p></div></div>
+  <form method="post" enctype="multipart/form-data">{% csrf_token %}<input type="hidden" name="action" value="create_product">
+   {% for field in product_form %}<div class="admin-field {% if field.name == 'description' %}wide{% endif %}"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<small>{{ error }}</small>{% endfor %}</div>{% endfor %}
+   <button class="btn btn-primary" type="submit"><i data-lucide="plus"></i> إضافة إلى السوق</button>
+  </form>
+ </div>
+ <div class="inventory-list">
+  <div class="section-heading"><i data-lucide="boxes"></i><div><h2>المخزون الحالي</h2><p>المنتجات المضافة وحركة الطلب عليها.</p></div></div>
+  {% for product in products %}<form method="post" class="inventory-row">{% csrf_token %}<input type="hidden" name="action" value="update_inventory"><input type="hidden" name="product_id" value="{{ product.id }}"><div><strong>{{ product.title }}</strong><span>{{ product.instructor.get_full_name|default:product.instructor.username }} · {{ product.orders_total }} طلب</span></div><label><small>المخزون</small><input type="number" name="stock" value="{{ product.stock }}" min="0" required></label><label><small>السعر</small><input type="number" name="price_syp" value="{{ product.price_syp }}" min="0" required></label><label class="visible-check"><input type="checkbox" name="is_active" {% if product.is_active %}checked{% endif %}><small>ظاهر</small></label><button class="icon-save" type="submit" title="حفظ التعديلات"><i data-lucide="save"></i></button></form>{% empty %}<div class="empty-dashboard-state"><p>لم تتم إضافة نوط بعد.</p></div>{% endfor %}
+ </div>
+</section>
+
+<section class="delivery-section">
+ <div class="section-heading"><i data-lucide="truck"></i><div><h2>طلبات التوصيل</h2><p>الموعد الذي تختاره هنا يظهر للطالب فوراً مع تنبيه داخل المنصة.</p></div></div>
+ <div class="delivery-list">
+ {% for row in order_rows %}{% with order=row.order form=row.form %}<article class="delivery-order">
+   <div class="delivery-order-head">
+    <div>
+      <span class="order-number">#{{ order.id }}</span>
+      <strong>{{ order.product.title }}</strong>
+      <small>{{ order.recipient_name }} · {{ order.phone }}</small>
+      {% if order.payment_method == 'shamcash' %}
+        <span style="display:inline-flex;align-items:center;gap:.3rem;background:rgba(16,185,129,0.15);color:#10b981;padding:.2rem .6rem;border-radius:6px;font-weight:800;font-size:.78rem;border:1px solid rgba(16,185,129,0.3);">
+          <i data-lucide="check-circle" style="width:13px;height:13px;"></i> شام كاش: {{ order.payment_reference|default:"بدون مرجع" }}
+        </span>
+      {% else %}
+        <span style="display:inline-flex;align-items:center;gap:.3rem;background:rgba(255,255,255,0.05);color:var(--text-muted);padding:.2rem .6rem;border-radius:6px;font-weight:700;font-size:.78rem;">
+          الدفع عند الاستلام
+        </span>
+      {% endif %}
+    </div>
+    <div class="delivery-actions">
+      <a href="{% url 'dashboard:admin_notebook_order_route' order.id %}" class="btn btn-primary btn-sm"><i data-lucide="route"></i> خط سير التوصيل</a>
+      <a href="{{ order.maps_url }}" target="_blank" rel="noopener" class="btn btn-secondary btn-sm"><i data-lucide="map-pin"></i> فتح الخريطة</a>
+    </div>
+   </div>
+   <div class="address-line"><i data-lucide="navigation"></i><span>{{ order.governorate }}، {{ order.address }}</span></div>
+   <div class="order-facts">
+    <span>{{ order.quantity }} نسخة</span>
+    <span>{{ order.total_syp }} ل.س</span>
+    <span>طريقة الدفع: {{ order.get_payment_method_display }}</span>
+    <span>{{ order.created_at|date:"Y/m/d - g:i A" }}</span>
+   </div>
+    <form method="post" class="delivery-form">{% csrf_token %}<input type="hidden" name="action" value="update_order"><input type="hidden" name="order_id" value="{{ order.id }}">
+      <div><label>{{ form.status.label }}</label>{{ form.status }}</div>
+      <div><label>{{ form.driver.label }}</label>{{ form.driver }}</div>
+      <div><label>{{ form.delivery_scheduled_at.label }}</label>{{ form.delivery_scheduled_at }}</div>
+      <div class="notes"><label>{{ form.admin_notes.label }}</label>{{ form.admin_notes }}</div>
+      <button class="btn btn-primary" type="submit"><i data-lucide="save"></i> حفظ</button>
+    </form>
+
+ </article>{% endwith %}{% empty %}<div class="empty-dashboard-state"><i data-lucide="package-open"></i><p>لا توجد طلبات توصيل بعد.</p></div>{% endfor %}
+ </div>
+</section>
+<style>
+.market-admin-head{display:flex;align-items:end;justify-content:space-between;gap:2rem;padding:2rem 0;border-bottom:1px solid var(--border-light)}.market-admin-head>div>span{display:flex;align-items:center;gap:.4rem;color:var(--brand-gold);font-weight:900}.market-admin-head h1{font-size:2rem;margin:.4rem 0}.market-admin-head p,.section-heading p{color:var(--text-muted);margin:0}.admin-metrics{display:flex;gap:1.5rem}.admin-metrics div{display:flex;flex-direction:column;text-align:center}.admin-metrics strong{font-size:1.6rem;color:var(--brand-gold)}.admin-metrics span{font-size:.78rem;color:var(--text-muted)}.admin-market-layout{display:grid;grid-template-columns:minmax(300px,.8fr) minmax(0,1.2fr);gap:2.5rem;padding:2rem 0;border-bottom:1px solid var(--border-light)}.section-heading{display:flex;gap:.7rem;align-items:center;margin-bottom:1.2rem}.section-heading>i{color:var(--brand-gold);width:28px}.section-heading h2{font-size:1.2rem;margin:0 0 .2rem}.product-create form{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}.admin-field{display:flex;flex-direction:column;gap:.35rem}.admin-field.wide,.product-create form>.btn{grid-column:1/-1}.admin-field label,.delivery-form label{font-size:.8rem;font-weight:800}.admin-field input,.admin-field select,.admin-field textarea,.delivery-form input,.delivery-form select,.delivery-form textarea{width:100%;padding:.72rem;border:1px solid var(--border-light);border-radius:7px;background:var(--bg-surface);color:var(--text-primary);font:inherit}.admin-field input[type=checkbox]{width:auto}.admin-field small{color:#ef4444}.inventory-list{min-width:0}.inventory-row{display:grid;grid-template-columns:minmax(0,1fr) 70px 105px 50px 36px;gap:.55rem;align-items:end;padding:.75rem 0;border-bottom:1px solid var(--border-light)}.inventory-row>div,.inventory-row>label{display:flex;flex-direction:column;min-width:0;gap:.25rem}.inventory-row>div:first-child strong,.inventory-row>div:first-child span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.inventory-row span,.inventory-row small{color:var(--text-muted);font-size:.72rem}.inventory-row input[type=number]{width:100%;padding:.48rem;border:1px solid var(--border-light);border-radius:6px;background:var(--bg-surface);color:var(--text-primary)}.visible-check{align-items:center}.visible-check input{width:18px;height:18px}.icon-save{width:36px;height:36px;display:grid;place-items:center;border:0;border-radius:6px;background:var(--brand-gold);color:#111;cursor:pointer}.icon-save i{width:17px}.delivery-section{padding:2rem 0 4rem}.delivery-list{display:grid;gap:1rem}.delivery-order{border:1px solid var(--border-light);border-radius:8px;padding:1rem;background:var(--bg-surface)}.delivery-order-head{display:flex;justify-content:space-between;gap:1rem;align-items:center}.delivery-order-head>div{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}.delivery-order-head small{color:var(--text-muted)}.order-number{color:var(--brand-gold);font-weight:900}.address-line{display:flex;gap:.5rem;align-items:start;padding:.8rem 0;color:var(--text-secondary);font-size:.88rem}.address-line i{width:17px;color:var(--brand-gold);flex:none}.order-facts{display:flex;gap:1.5rem;padding:.65rem 0;border-top:1px solid var(--border-light);color:var(--text-muted);font-size:.8rem}.delivery-form{display:grid;grid-template-columns:1fr 1fr 1.5fr auto;gap:.7rem;align-items:end;margin-top:.8rem}.delivery-form>div{display:flex;flex-direction:column;gap:.3rem}.delivery-form textarea{height:43px;resize:vertical}.delivery-form .btn{height:43px}@media(max-width:950px){.admin-market-layout{grid-template-columns:1fr}.delivery-form{grid-template-columns:1fr 1fr}.delivery-form .notes{grid-column:1/-1}}@media(max-width:620px){.market-admin-head{align-items:start;flex-direction:column}.product-create form,.delivery-form{grid-template-columns:1fr}.admin-field.wide,.product-create form>.btn,.delivery-form .notes{grid-column:auto}.delivery-order-head{align-items:start;flex-direction:column}.inventory-row{grid-template-columns:minmax(0,1fr) 60px 85px 36px}.visible-check{display:none}}
+</style>
+{% endblock %}

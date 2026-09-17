@@ -1,0 +1,20 @@
+{
+  "name": "pro-academy-unified-app",
+  "version": "1.0.0",
+  "description": "تطبيق منصة محترفو التعليم الموحد لكافة المنصات (iOS, Android, Windows, macOS)",
+  "main": "index.js",
+  "scripts": {
+    "sync": "npx cap sync",
+    "add:android": "npx cap add android",
+    "add:ios": "npx cap add ios",
+    "open:android": "npx cap open android",
+    "open:ios": "npx cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.1",
+    "@capacitor/cli": "^7.0.1",
+    "@capacitor/core": "^7.0.1",
+    "@capacitor/ios": "^7.0.1",
+    "@capacitor-community/privacy-screen": "^6.1.0"
+  }
+}

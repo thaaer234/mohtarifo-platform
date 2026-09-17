@@ -7,7 +7,7 @@ from django.utils.text import slugify
 from accounts.models import AcademicBranch, Governorate, InstructorProfile
 from billing.models import AccessCode, AccessCodeBatch, CoursePackage, Institute, SalesCenter
 from learning.models import Course, Lesson, Subject, Unit
-from .models import CatalogSection
+from .models import CatalogSection, NotebookOrder, NotebookProduct
 from .security import sanitize_plain_text, validate_syrian_mobile
 
 
@@ -772,3 +772,116 @@ class SetNewPasswordForm(forms.Form):
         if p1 and p2 and p1 != p2:
             raise ValidationError("كلمات المرور غير متطابقة.")
         return cleaned
+
+
+class NotebookOrderForm(forms.ModelForm):
+    class Meta:
+        model = NotebookOrder
+        fields = ["recipient_name", "phone", "governorate", "address", "location_latitude", "location_longitude", "quantity", "payment_method", "payment_reference"]
+        labels = {
+            "recipient_name": "اسم المستلم",
+            "phone": "رقم الهاتف للتواصل",
+            "governorate": "المحافظة",
+            "address": "العنوان التفصيلي",
+            "location_latitude": "خط العرض",
+            "location_longitude": "خط الطول",
+            "quantity": "الكمية",
+            "payment_method": "طريقة الدفع",
+            "payment_reference": "رمز / رقم عملية التحويل (في حال الدفع بشام كاش)",
+        }
+        widgets = {
+            "address": forms.Textarea(attrs={"rows": 3, "placeholder": "المدينة، الحي، الشارع، وأقرب نقطة دالة"}),
+            "payment_reference": forms.TextInput(attrs={"placeholder": "أدخل رقم عملية التحويل أو رقم الحساب"}),
+            "location_latitude": forms.HiddenInput(),
+            "location_longitude": forms.HiddenInput(),
+            "quantity": forms.NumberInput(attrs={"min": 1, "max": 10}),
+        }
+
+    def clean_location_latitude(self):
+        value = self.cleaned_data["location_latitude"]
+        if not -90 <= value <= 90:
+            raise ValidationError("إحداثيات الموقع غير صحيحة.")
+        return value
+
+    def clean_phone(self):
+        return validate_syrian_mobile(self.cleaned_data["phone"], require_unique=False)
+
+    def clean_location_longitude(self):
+        value = self.cleaned_data["location_longitude"]
+        if not -180 <= value <= 180:
+            raise ValidationError("إحداثيات الموقع غير صحيحة.")
+        return value
+
+    def clean_quantity(self):
+        value = self.cleaned_data["quantity"]
+        if value < 1 or value > 10:
+            raise ValidationError("الكمية يجب أن تكون بين 1 و10.")
+        return value
+
+
+class NotebookProductForm(forms.ModelForm):
+    class Meta:
+        model = NotebookProduct
+        fields = ["title", "instructor", "course", "description", "material_summary", "free_quizzes_overview", "cover", "price_syp", "pages_count", "stock", "is_active"]
+        labels = {
+            "title": "اسم النوطة",
+            "instructor": "المدرس",
+            "course": "الدورة المرتبطة (اختياري)",
+            "description": "وصف ومقدمة النوطة",
+            "material_summary": "شرح وملخص محتوى المادة",
+            "free_quizzes_overview": "تفاصيل الاختبارات والأسئلة المجانية الملحقة",
+            "cover": "صورة الغلاف",
+            "price_syp": "السعر (ل.س)",
+            "pages_count": "عدد الصفحات",
+            "stock": "الكمية المتوفرة",
+            "is_active": "إظهارها في السوق",
+        }
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 3}),
+            "material_summary": forms.Textarea(attrs={"rows": 4, "placeholder": "اكتب ملخصاً وشرحاً لأهم محاور وأبواب المادة التي تغطيها النوطة..."}),
+            "free_quizzes_overview": forms.Textarea(attrs={"rows": 4, "placeholder": "اكتب تفاصيل الاختبارات وبنوك الأسئلة والسلالم المجانية المرفقة مع النوطة..."}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["instructor"].queryset = User.objects.filter(instructor_profile__status="active").order_by("first_name", "username")
+        self.fields["course"].queryset = Course.objects.filter(status="published").select_related("instructor").order_by("title")
+
+    def clean(self):
+        cleaned = super().clean()
+        course = cleaned.get("course")
+        instructor = cleaned.get("instructor")
+        if course and instructor and course.instructor_id != instructor.id:
+            self.add_error("course", "الدورة المختارة لا تتبع لهذا المدرس.")
+        return cleaned
+
+
+class NotebookOrderAdminForm(forms.ModelForm):
+    class Meta:
+        model = NotebookOrder
+        fields = ["status", "driver", "delivery_scheduled_at", "admin_notes"]
+        labels = {
+            "status": "حالة الطلب",
+            "driver": "مندوب التوصيل المكلف",
+            "delivery_scheduled_at": "موعد التسليم",
+            "admin_notes": "ملاحظات للإدارة",
+        }
+        widgets = {
+            "delivery_scheduled_at": forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"),
+            "admin_notes": forms.Textarea(attrs={"rows": 2}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["delivery_scheduled_at"].input_formats = ["%Y-%m-%dT%H:%M"]
+        self.fields["driver"].queryset = User.objects.filter(delivery_profile__is_active=True).order_by("first_name", "username")
+        self.fields["driver"].required = False
+        self.fields["driver"].empty_label = "بدون مندوب (تحديد لاحقاً)"
+
+    def clean(self):
+        cleaned = super().clean()
+        scheduled_statuses = {"confirmed", "preparing", "out_for_delivery", "delivered"}
+        if cleaned.get("status") in scheduled_statuses and not cleaned.get("delivery_scheduled_at"):
+            self.add_error("delivery_scheduled_at", "حدد موعد التسليم قبل اعتماد هذه الحالة.")
+        return cleaned
+

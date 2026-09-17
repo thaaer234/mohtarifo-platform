@@ -41,9 +41,11 @@ if not DEBUG and SECRET_KEY.startswith('django-insecure-'):
 
 ALLOWED_HOSTS = [
     host.strip()
-    for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver').split(',')
+    for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver,172.16.0.214').split(',')
     if host.strip()
 ]
+if DEBUG:
+    ALLOWED_HOSTS.extend(['*', '172.16.0.214'])
 if not DEBUG and (not ALLOWED_HOSTS or '*' in ALLOWED_HOSTS):
     raise ImproperlyConfigured('DJANGO_ALLOWED_HOSTS must list explicit production hostnames.')
 
@@ -63,10 +65,13 @@ CSRF_TRUSTED_ORIGINS = [
     for origin in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000').split(',')
     if origin.strip()
 ]
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS.extend(['https://*.loca.lt', 'http://*.loca.lt', 'https://*.lhr.life', 'http://*.lhr.life', 'http://172.16.0.214:8000'])
 
 # Application definition
 
 INSTALLED_APPS = [
+    'sslserver',
     'corsheaders',
     'rest_framework',
     'import_export',
@@ -337,3 +342,8 @@ LOGGING = {
         'level': LOG_LEVEL,
     },
 }
+
+# Sham Cash API Settings
+SHAMCASH_API_KEY = os.environ.get('SHAMCASH_API_KEY', '')
+SHAMCASH_BASE_URL = os.environ.get('SHAMCASH_BASE_URL', 'https://api-shamcash.com/api')
+SHAMCASH_DEFAULT_WALLET = os.environ.get('SHAMCASH_DEFAULT_WALLET', '')

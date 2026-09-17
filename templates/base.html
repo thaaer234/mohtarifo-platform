@@ -216,6 +216,10 @@
             <div class="navbar-center desktop-only">
                 <a href="{% url 'dashboard:landing' %}" class="nav-menu-link">الرئيسية</a>
                 <a href="{% url 'dashboard:shop' %}" class="nav-menu-link">المتجر التعليمي</a>
+                <a href="{% url 'dashboard:notebook_market' %}" class="nav-menu-link">سوق النوط</a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'dashboard:notebook_orders' %}" class="nav-menu-link">طلباتي</a>
+                {% endif %}
                 <a href="{% url 'dashboard:instructors_list' %}" class="nav-menu-link">نخبة الأساتذة</a>
                 <a href="{% url 'dashboard:about' %}" class="nav-menu-link">من نحن</a>
                 <a href="{% url 'dashboard:contact' %}" class="nav-menu-link">اتصل بنا</a>

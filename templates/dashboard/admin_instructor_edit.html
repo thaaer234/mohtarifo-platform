@@ -69,27 +69,86 @@
             </form>
         </section>
 
-        <aside class="premium-card courses-side">
-            <div class="section-title">
-                <i data-lucide="book-open"></i>
-                <h2>دورات المدرس</h2>
+        <aside class="side-column">
+            <div class="premium-card courses-side mb-3">
+                <div class="section-title">
+                    <i data-lucide="book-open"></i>
+                    <h2>دورات المدرس</h2>
+                </div>
+                <div class="teacher-courses-list">
+                    {% for course in courses %}
+                        <a class="teacher-course-row" href="{% url 'dashboard:admin_course_control' course.id %}">
+                            <span>
+                                <strong>{{ course.title }}</strong>
+                                <small>{{ course.subject.name|default:"بدون مادة" }} · {{ course.get_status_display }}</small>
+                            </span>
+                            <i data-lucide="chevron-left"></i>
+                        </a>
+                    {% empty %}
+                        <div class="empty-side">
+                            <i data-lucide="book-plus"></i>
+                            <p>لا توجد دورات مرتبطة بهذا المدرس بعد.</p>
+                            <a href="{% url 'dashboard:admin_course_create' %}" class="btn btn-secondary btn-sm">إضافة دورة</a>
+                        </div>
+                    {% endfor %}
+                </div>
             </div>
-            <div class="teacher-courses-list">
-                {% for course in courses %}
-                    <a class="teacher-course-row" href="{% url 'dashboard:admin_course_control' course.id %}">
-                        <span>
-                            <strong>{{ course.title }}</strong>
-                            <small>{{ course.subject.name|default:"بدون مادة" }} · {{ course.get_status_display }}</small>
-                        </span>
-                        <i data-lucide="chevron-left"></i>
-                    </a>
-                {% empty %}
-                    <div class="empty-side">
-                        <i data-lucide="book-plus"></i>
-                        <p>لا توجد دورات مرتبطة بهذا المدرس بعد.</p>
-                        <a href="{% url 'dashboard:admin_course_create' %}" class="btn btn-secondary btn-sm">إضافة دورة</a>
+
+            <div class="premium-card notebooks-side">
+                <div class="section-header-flex">
+                    <div class="section-title" style="margin-bottom:0;">
+                        <i data-lucide="library" class="gold"></i>
+                        <h2>نوط ومطبوعات المدرس ({{ notebooks|length }})</h2>
                     </div>
-                {% endfor %}
+                    <a href="{% url 'dashboard:admin_instructor_notebook_add' instructor.id %}" class="btn btn-primary btn-sm">
+                        <i data-lucide="plus"></i>
+                        إضافة نوطة جديدة
+                    </a>
+                </div>
+                <p class="section-subtitle">يمكنك إضافة نوطة وتحديد السعر والمخزون وكتابة الشرح والاختبارات المجانية لكل نوطة برابط مستقل.</p>
+
+                <div class="teacher-courses-list" style="margin-top: 1rem;">
+                    {% for nb in notebooks %}
+                        <div class="teacher-notebook-row">
+                            <div class="notebook-mini-info">
+                                <div class="notebook-mini-thumb">
+                                    {% if nb.cover_image %}
+                                        <img src="{{ nb.cover_image.url }}" alt="{{ nb.title }}">
+                                    {% else %}
+                                        <i data-lucide="book" class="gold"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="notebook-mini-details">
+                                    <strong>{{ nb.title }}</strong>
+                                    <div class="notebook-mini-meta">
+                                        <span class="gold">{{ nb.price }} ل.س</span>
+                                        <span>• المخزون: {{ nb.stock }}</span>
+                                        <span>• {% if nb.is_active %}<span class="text-success">مفعلة بالمكتبة</span>{% else %}<span class="text-danger">مخفية</span>{% endif %}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="notebook-mini-actions">
+                                <a href="{% url 'dashboard:notebook_detail' nb.id %}" target="_blank" class="btn btn-secondary btn-xs" title="فتح صفحة النوطة المستقلة">
+                                    <i data-lucide="external-link"></i>
+                                    رابط النوطة
+                                </a>
+                                <a href="{% url 'dashboard:admin_notebook_edit' nb.id %}" class="btn btn-primary btn-xs" title="تعديل النوطة والمحتوى">
+                                    <i data-lucide="edit-3"></i>
+                                    تعديل
+                                </a>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="empty-side">
+                            <i data-lucide="book-plus"></i>
+                            <p>لا توجد نوط مضافة لهذا المدرس حتى الآن.</p>
+                            <a href="{% url 'dashboard:admin_instructor_notebook_add' instructor.id %}" class="btn btn-primary btn-sm">
+                                <i data-lucide="plus"></i>
+                                إضافة أول نوطة للمدرس
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
             </div>
         </aside>
     </div>
@@ -175,6 +234,44 @@
     .teacher-course-row i { color: var(--brand-gold); flex: 0 0 auto; }
     .empty-side { text-align: center; padding: 2rem 1rem; color: var(--text-muted); }
     .empty-side i { width: 42px; height: 42px; color: var(--brand-gold); }
+    .side-column { display: flex; flex-direction: column; gap: 1.2rem; }
+    .mb-3 { margin-bottom: 1.2rem; }
+    .section-header-flex { display: flex; align-items: center; justify-content: space-between; gap: .8rem; margin-bottom: .4rem; }
+    .section-subtitle { margin: 0 0 1rem; color: var(--text-muted); font-size: .8rem; line-height: 1.5; }
+    .teacher-notebook-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .8rem;
+        padding: .85rem;
+        border: 1px solid var(--border-light);
+        border-radius: 14px;
+        background: var(--bg-surface-elevated);
+        transition: border-color .18s ease;
+    }
+    .teacher-notebook-row:hover { border-color: var(--brand-gold-glow); }
+    .notebook-mini-info { display: flex; align-items: center; gap: .75rem; min-width: 0; }
+    .notebook-mini-thumb {
+        width: 44px;
+        height: 60px;
+        border-radius: 8px;
+        overflow: hidden;
+        background: rgba(var(--brand-gold-rgb), 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(212, 175, 55, 0.25);
+        flex: 0 0 auto;
+    }
+    .notebook-mini-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .notebook-mini-details strong { display: block; font-size: .92rem; color: var(--text-primary); margin-bottom: .2rem; }
+    .notebook-mini-meta { display: flex; flex-wrap: wrap; gap: .4rem; font-size: .75rem; color: var(--text-muted); font-weight: 700; }
+    .notebook-mini-actions { display: flex; gap: .4rem; flex-shrink: 0; }
+    .btn-xs { padding: .4rem .65rem; font-size: .75rem; border-radius: 8px; gap: .35rem; display: inline-flex; align-items: center; text-decoration: none; }
+    .btn-xs i { width: 14px; height: 14px; }
+    .text-success { color: #10b981; }
+    .text-danger { color: #ef4444; }
+    .gold { color: var(--brand-gold); }
     @media (max-width: 980px) {
         .edit-layout { grid-template-columns: 1fr; }
         .edit-hero { align-items: flex-start; flex-direction: column; }

@@ -58,6 +58,9 @@ from .forms import (
     InstructorAddForm,
     InstructorEditForm,
     InstituteForm,
+    NotebookOrderAdminForm,
+    NotebookOrderForm,
+    NotebookProductForm,
     PartnerBatchForm,
     PartnerInstituteImportForm,
     RedeemCodeForm,
@@ -66,7 +69,7 @@ from .forms import (
     PasswordResetRequestForm,
     SetNewPasswordForm,
 )
-from .models import CatalogSection, StudentNotification, WhatsAppTemplate
+from .models import CatalogSection, NotebookOrder, NotebookProduct, StudentNotification, WhatsAppTemplate
 from .seo import _site_url
 from .security import sanitize_plain_text, validate_syrian_mobile
 from .whatsapp_utils import get_whatsapp_status, logout_whatsapp, send_whatsapp_message, guess_gender_from_name, parse_gender_grammar, is_2fa_disabled
@@ -80,6 +83,16 @@ def _is_admin_user(user):
 def _is_active_instructor(user):
     profile = getattr(user, "instructor_profile", None)
     return user.is_authenticated and user.is_active and profile is not None and profile.status == "active"
+
+
+def _is_delivery_agent_user(user):
+    if not user.is_authenticated or not user.is_active:
+        return False
+    if user.is_superuser or user.is_staff:
+        return True
+    from accounts.auth_utils import is_delivery_agent
+    return is_delivery_agent(user)
+
 
 
 def _role_required(test_func, login_url="dashboard:login"):
@@ -99,6 +112,7 @@ def _role_required(test_func, login_url="dashboard:login"):
 
 admin_required = _role_required(_is_admin_user)
 instructor_required = _role_required(_is_active_instructor)
+delivery_agent_required = _role_required(_is_delivery_agent_user)
 
 
 def home(request):
@@ -109,9 +123,12 @@ def home(request):
         return redirect("dashboard:landing")
     if _is_admin_user(request.user):
         return admin_dashboard(request)
+    if _is_delivery_agent_user(request.user):
+        return redirect("dashboard:driver_dashboard")
     if _is_active_instructor(request.user):
         return instructor_dashboard(request)
     return student_dashboard(request)
+
 
 
 def landing_page(request):
@@ -201,6 +218,447 @@ def shop_page(request):
             "selected_track": selected_track,
         },
     )
+
+
+def notebook_market(request):
+    instructor_id = request.GET.get("instructor", "")
+    products = NotebookProduct.objects.filter(is_active=True).select_related("instructor", "course")
+    if instructor_id.isdigit():
+        products = products.filter(instructor_id=instructor_id)
+    instructors = User.objects.filter(notebook_products__is_active=True).distinct().order_by("first_name", "username")
+    orders = []
+    if request.user.is_authenticated and not _is_admin_user(request.user) and not _is_active_instructor(request.user):
+        orders = NotebookOrder.objects.filter(student=request.user).select_related("product")[:5]
+    return render(request, "dashboard/notebook_market.html", {
+        "products": products,
+        "instructors": instructors,
+        "selected_instructor": instructor_id,
+        "recent_orders": orders,
+    })
+
+
+def notebook_detail(request, product_id):
+    product = get_object_or_404(
+        NotebookProduct.objects.select_related("instructor", "course"),
+        id=product_id,
+        is_active=True,
+    )
+    related_products = (
+        NotebookProduct.objects.filter(is_active=True, instructor=product.instructor)
+        .exclude(pk=product.pk)
+        .select_related("instructor")[:3]
+    )
+    return render(request, "dashboard/notebook_detail.html", {
+        "product": product,
+        "related_products": related_products,
+    })
+
+
+@login_required(login_url="dashboard:login")
+def notebook_order(request, product_id):
+    product = get_object_or_404(
+        NotebookProduct.objects.select_related("instructor", "course"),
+        id=product_id,
+        is_active=True,
+    )
+    profile = getattr(request.user, "student_profile", None)
+    initial = {
+        "recipient_name": request.user.get_full_name() or request.user.username,
+        "phone": getattr(profile, "phone", "") or request.user.username,
+        "governorate": getattr(profile, "governorate", ""),
+        "quantity": 1,
+        "payment_method": "shamcash" if request.GET.get("payment") == "shamcash" else "cod",
+    }
+    form = NotebookOrderForm(request.POST or None, initial=initial)
+    if request.method == "POST" and form.is_valid():
+        with transaction.atomic():
+            locked_product = NotebookProduct.objects.select_for_update().get(pk=product.pk)
+            quantity = form.cleaned_data["quantity"]
+            if not locked_product.is_available or locked_product.stock < quantity:
+                form.add_error("quantity", "الكمية المطلوبة غير متوفرة حالياً.")
+            else:
+                order = form.save(commit=False)
+                order.product = locked_product
+                order.student = request.user
+                order.unit_price_syp = locked_product.price_syp
+                order.save()
+                locked_product.stock -= quantity
+                locked_product.save(update_fields=["stock", "updated_at"])
+                StudentNotification.objects.create(
+                    user=request.user,
+                    notification_type="system",
+                    title="تم استلام طلب النوطة",
+                    body=f"استلمنا طلبك رقم {order.id}. ستحدد المنصة موعد التسليم وتعرضه ضمن طلباتك.",
+                    url=reverse("dashboard:notebook_orders"),
+                )
+                messages.success(request, f"تم تسجيل طلبك رقم {order.id}. سنعرض موعد التسليم فور تحديده.")
+                return redirect("dashboard:notebook_orders")
+    return render(request, "dashboard/notebook_order.html", {"product": product, "form": form})
+
+
+@login_required(login_url="dashboard:login")
+def notebook_orders(request):
+    orders = NotebookOrder.objects.filter(student=request.user).select_related("product", "product__instructor")
+    return render(request, "dashboard/notebook_orders.html", {"orders": orders})
+
+
+@admin_required
+def admin_notebooks(request):
+    product_form = NotebookProductForm(prefix="product")
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "create_product":
+            product_form = NotebookProductForm(request.POST, request.FILES, prefix="product")
+            if product_form.is_valid():
+                product_form.save()
+                messages.success(request, "تمت إضافة النوطة إلى السوق.")
+                return redirect("dashboard:admin_notebooks")
+        elif action == "update_inventory":
+            product = get_object_or_404(NotebookProduct, pk=request.POST.get("product_id"))
+            try:
+                stock = int(request.POST.get("stock", ""))
+                price_syp = int(request.POST.get("price_syp", ""))
+                if stock < 0 or price_syp < 0:
+                    raise ValueError
+            except (TypeError, ValueError):
+                messages.error(request, "السعر والمخزون يجب أن يكونا أرقاماً صحيحة غير سالبة.")
+            else:
+                product.stock = stock
+                product.price_syp = price_syp
+                product.is_active = request.POST.get("is_active") == "on"
+                product.save(update_fields=["stock", "price_syp", "is_active", "updated_at"])
+                messages.success(request, f"تم تحديث {product.title}.")
+            return redirect("dashboard:admin_notebooks")
+        elif action == "update_order":
+            order = get_object_or_404(NotebookOrder.objects.select_related("product"), pk=request.POST.get("order_id"))
+            previous_status = order.status
+            previous_schedule = order.delivery_scheduled_at
+            order_form = NotebookOrderAdminForm(request.POST, instance=order, prefix=f"order-{order.id}")
+            if order_form.is_valid():
+                new_status = order_form.cleaned_data["status"]
+                with transaction.atomic():
+                    product = NotebookProduct.objects.select_for_update().get(pk=order.product_id)
+                    if previous_status != "cancelled" and new_status == "cancelled":
+                        product.stock += order.quantity
+                        product.save(update_fields=["stock", "updated_at"])
+                    elif previous_status == "cancelled" and new_status != "cancelled":
+                        if product.stock < order.quantity:
+                            messages.error(request, "لا يمكن إعادة تفعيل الطلب لأن المخزون غير كافٍ.")
+                            return redirect("dashboard:admin_notebooks")
+                        product.stock -= order.quantity
+                        product.save(update_fields=["stock", "updated_at"])
+                    order_form.save()
+                if previous_status != order.status or previous_schedule != order.delivery_scheduled_at:
+                    schedule_text = timezone.localtime(order.delivery_scheduled_at).strftime("%Y/%m/%d - %I:%M %p") if order.delivery_scheduled_at else "لم يحدد بعد"
+                    StudentNotification.objects.create(
+                        user=order.student,
+                        notification_type="system",
+                        title=f"تحديث طلب النوطة #{order.id}",
+                        body=f"الحالة: {order.get_status_display()}، موعد التسليم: {schedule_text}.",
+                        url=reverse("dashboard:notebook_orders"),
+                    )
+                messages.success(request, f"تم تحديث الطلب رقم {order.id}.")
+                return redirect("dashboard:admin_notebooks")
+            messages.error(request, "تعذر تحديث الطلب. تحقق من الحالة وموعد التسليم.")
+
+    products = NotebookProduct.objects.select_related("instructor", "course").annotate(orders_total=Count("orders"))
+    orders = NotebookOrder.objects.select_related("product", "student", "product__instructor")
+    order_rows = [{"order": order, "form": NotebookOrderAdminForm(instance=order, prefix=f"order-{order.id}")} for order in orders]
+    return render(request, "dashboard/admin_notebooks.html", {
+        "product_form": product_form,
+        "products": products,
+        "order_rows": order_rows,
+        "pending_count": orders.filter(status="pending").count(),
+    })
+
+
+@admin_required
+def admin_notebook_order_route(request, order_id):
+    order = get_object_or_404(
+        NotebookOrder.objects.select_related("product", "student", "driver", "product__instructor"),
+        pk=order_id
+    )
+    # Syrian platform hub / warehouse coordinates (Central Damascus HQ)
+    hub_lat = 33.5138
+    hub_lng = 36.2765
+
+    return render(request, "dashboard/admin_notebook_route.html", {
+        "order": order,
+        "hub_lat": hub_lat,
+        "hub_lng": hub_lng,
+    })
+
+
+@delivery_agent_required
+def driver_dashboard(request):
+    """لوحة تحكم السائق / المندوب لعرض الطلبات وحالة التواجد والتتبع المباشر."""
+    delivery_profile = getattr(request.user, "delivery_profile", None)
+    if request.user.is_superuser:
+        active_orders = NotebookOrder.objects.filter(
+            status__in=["confirmed", "preparing", "out_for_delivery"]
+        ).select_related("product", "student", "driver").order_by("-updated_at")
+        delivered_count = NotebookOrder.objects.filter(status="delivered").count()
+    else:
+        active_orders = NotebookOrder.objects.filter(
+            driver=request.user,
+            status__in=["confirmed", "preparing", "out_for_delivery"]
+        ).select_related("product", "student").order_by("-updated_at")
+        delivered_count = NotebookOrder.objects.filter(
+            driver=request.user,
+            status="delivered"
+        ).count()
+
+    return render(request, "dashboard/driver_dashboard.html", {
+        "delivery_profile": delivery_profile,
+        "active_orders": active_orders,
+        "delivered_count": delivered_count,
+        "hub_lat": 33.5138,
+        "hub_lng": 36.2765,
+    })
+
+
+@delivery_agent_required
+def driver_orders(request):
+    """قائمة بكافة الطلبات المسندة للمندوب."""
+    if request.user.is_superuser:
+        orders = NotebookOrder.objects.all().select_related("product", "student", "driver").order_by("-created_at")
+    else:
+        orders = NotebookOrder.objects.filter(
+            driver=request.user
+        ).select_related("product", "student").order_by("-created_at")
+
+    return render(request, "dashboard/driver_orders.html", {
+        "orders": orders,
+    })
+
+
+@delivery_agent_required
+def driver_order_route(request, order_id):
+    """صفحة الخريطة التفاعلية للمندوب وبث الـ GPS الحي وتغيير حالة التوصيل."""
+    if request.user.is_superuser:
+        order = get_object_or_404(
+            NotebookOrder.objects.select_related("product", "student", "product__instructor"),
+            pk=order_id,
+        )
+    else:
+        order = get_object_or_404(
+            NotebookOrder.objects.select_related("product", "student", "product__instructor"),
+            pk=order_id,
+            driver=request.user
+        )
+
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "start_delivery":
+            order.status = "out_for_delivery"
+            order.save(update_fields=["status", "updated_at"])
+            StudentNotification.objects.create(
+                user=order.student,
+                notification_type="system",
+                title=f"🚀 المندوب في الطريق إليك (طلب #{order.id})",
+                body=f"خرجت النوطة ({order.product.title}) مع المندوب الآن. يمكنك تتبع موقعه لحظة بلحظة على الخريطة.",
+                url=reverse("dashboard:student_order_tracking", args=[order.id]),
+            )
+            messages.success(request, "تم بدء رحلة التوصيل بنجاح وتم إشعار الطالب.")
+        elif action == "mark_delivered":
+            order.status = "delivered"
+            order.save(update_fields=["status", "updated_at"])
+            StudentNotification.objects.create(
+                user=order.student,
+                notification_type="system",
+                title=f"✅ تم تسليم النوطة بنجاح (طلب #{order.id})",
+                body=f"نتمنى لك دراسة موفقة وممتعة مع نوطة {order.product.title}!",
+                url=reverse("dashboard:notebook_orders"),
+            )
+            messages.success(request, "تم تأكيد تسليم النوطة بنجاح.")
+        return redirect("dashboard:driver_order_route", order_id=order.id)
+
+    hub_lat = 33.5138
+    hub_lng = 36.2765
+
+    return render(request, "dashboard/driver_order_route.html", {
+        "order": order,
+        "hub_lat": hub_lat,
+        "hub_lng": hub_lng,
+    })
+
+
+@login_required
+def api_update_driver_location(request, order_id=None):
+    """API لاستقبال إحداثيات السائق اللحظية عبر GPS وحفظها في قاعدة البيانات."""
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "POST required"}, status=405)
+
+    from accounts.auth_utils import is_delivery_agent
+    if not (request.user.is_staff or is_delivery_agent(request.user)):
+        return JsonResponse({"status": "error", "message": "غير مصرح"}, status=403)
+
+    try:
+        import json
+        data = json.loads(request.body or "{}") if request.content_type == "application/json" else request.POST
+        lat = float(data.get("latitude") or 0)
+        lng = float(data.get("longitude") or 0)
+        heading = float(data.get("heading") or 0) if data.get("heading") is not None else None
+        speed = float(data.get("speed") or 0) if data.get("speed") is not None else None
+
+        if not (-90 <= lat <= 90 and -180 <= lng <= 180):
+            return JsonResponse({"status": "error", "message": "إحداثيات غير صحيحة"}, status=400)
+
+        now = timezone.now()
+
+        # Update Driver Profile Location
+        if hasattr(request.user, "delivery_profile"):
+            prof = request.user.delivery_profile
+            prof.current_latitude = lat
+            prof.current_longitude = lng
+            prof.last_location_update = now
+            prof.save(update_fields=["current_latitude", "current_longitude", "last_location_update", "updated_at"])
+
+        # If order_id specified or find active order
+        if order_id:
+            order = NotebookOrder.objects.filter(pk=order_id).first()
+            if order and (order.driver_id == request.user.id or request.user.is_superuser):
+                order.driver_latitude = lat
+                order.driver_longitude = lng
+                order.driver_heading = heading
+                order.driver_speed = speed
+                order.driver_updated_at = now
+                order.save(update_fields=["driver_latitude", "driver_longitude", "driver_heading", "driver_speed", "driver_updated_at", "updated_at"])
+
+        return JsonResponse({"status": "ok", "timestamp": now.isoformat()})
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=400)
+
+
+@login_required
+def student_order_tracking(request, order_id):
+    """شاشة تتبع مسار التوصيل الحي الموجهة للطالب."""
+    if request.user.is_staff:
+        order = get_object_or_404(
+            NotebookOrder.objects.select_related("product", "student", "driver", "driver__delivery_profile", "product__instructor"),
+            pk=order_id
+        )
+    else:
+        order = get_object_or_404(
+            NotebookOrder.objects.select_related("product", "student", "driver", "driver__delivery_profile", "product__instructor"),
+            pk=order_id,
+            student=request.user
+        )
+
+    hub_lat = 33.5138
+    hub_lng = 36.2765
+
+    return render(request, "dashboard/student_order_tracking.html", {
+        "order": order,
+        "hub_lat": hub_lat,
+        "hub_lng": hub_lng,
+    })
+
+
+@login_required
+def api_order_live_location(request, order_id):
+    """API للطالب للاستعلام اللحظي كل 3-5 ثوانٍ عن مكان السائق الحالي."""
+    if request.user.is_staff:
+        order = get_object_or_404(NotebookOrder.objects.select_related("driver", "driver__delivery_profile"), pk=order_id)
+    else:
+        order = get_object_or_404(NotebookOrder.objects.select_related("driver", "driver__delivery_profile"), pk=order_id, student=request.user)
+
+    driver_lat = float(order.driver_latitude) if order.driver_latitude is not None else None
+    driver_lng = float(order.driver_longitude) if order.driver_longitude is not None else None
+    
+    # Fallback to driver profile location if order location not updated yet
+    if driver_lat is None and order.driver and hasattr(order.driver, "delivery_profile"):
+        prof = order.driver.delivery_profile
+        if prof.current_latitude and prof.current_longitude:
+            driver_lat = float(prof.current_latitude)
+            driver_lng = float(prof.current_longitude)
+
+    updated_seconds_ago = None
+    if order.driver_updated_at:
+        updated_seconds_ago = int((timezone.now() - order.driver_updated_at).total_seconds())
+
+    driver_info = None
+    if order.driver:
+        prof = getattr(order.driver, "delivery_profile", None)
+        driver_info = {
+            "name": order.driver.get_full_name() or order.driver.username,
+            "phone": getattr(prof, "phone", "") or order.driver.username,
+            "vehicle": prof.get_vehicle_type_display() if prof else "مندوب",
+        }
+
+    return JsonResponse({
+        "status": "ok",
+        "order_id": order.id,
+        "order_status": order.status,
+        "order_status_display": order.get_status_display(),
+        "client": {
+            "lat": float(order.location_latitude),
+            "lng": float(order.location_longitude),
+            "address": order.address,
+        },
+        "driver": {
+            "lat": driver_lat,
+            "lng": driver_lng,
+            "heading": order.driver_heading,
+            "speed": order.driver_speed,
+            "updated_seconds_ago": updated_seconds_ago,
+            "info": driver_info,
+        }
+    })
+
+
+
+@admin_required
+def admin_instructor_notebook_add(request, instructor_id):
+    instructor = get_object_or_404(User, id=instructor_id, instructor_profile__isnull=False)
+    initial_data = {'instructor': instructor}
+    form = NotebookProductForm(request.POST or None, request.FILES or None, initial=initial_data)
+    # Lock instructor field or preselect
+    form.fields['instructor'].initial = instructor.id
+    form.fields['course'].queryset = Course.objects.filter(instructor=instructor).order_by('title')
+    
+    if request.method == 'POST' and form.is_valid():
+        notebook = form.save()
+        messages.success(request, f'تمت إضافة نوطة "{notebook.title}" للمدرس بنجاح.')
+        return redirect('dashboard:admin_instructor_edit', instructor_id=instructor.id)
+        
+    return render(request, 'dashboard/admin_notebook_form.html', {
+        'form': form,
+        'instructor': instructor,
+        'is_new': True,
+        'title': f'إضافة نوطة جديدة للمدرس: {instructor.get_full_name() or instructor.username}',
+    })
+
+
+@admin_required
+def admin_notebook_edit(request, product_id):
+    notebook = get_object_or_404(NotebookProduct.objects.select_related('instructor', 'course'), id=product_id)
+    form = NotebookProductForm(request.POST or None, request.FILES or None, instance=notebook)
+    if notebook.instructor:
+        form.fields['course'].queryset = Course.objects.filter(instructor=notebook.instructor).order_by('title')
+        
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, f'تم تحديث نوطة "{notebook.title}" بنجاح.')
+        if 'next' in request.GET:
+            return redirect(request.GET['next'])
+        return redirect('dashboard:admin_instructor_edit', instructor_id=notebook.instructor_id)
+        
+    return render(request, 'dashboard/admin_notebook_form.html', {
+        'form': form,
+        'notebook': notebook,
+        'instructor': notebook.instructor,
+        'is_new': False,
+        'title': f'تعديل نوطة: {notebook.title}',
+    })
+
+
+@instructor_required
+def instructor_notebooks(request):
+    products = NotebookProduct.objects.filter(instructor=request.user).annotate(orders_total=Count("orders"))
+    orders = NotebookOrder.objects.filter(product__instructor=request.user).select_related("product", "student")
+    return render(request, "dashboard/instructor_notebooks.html", {"products": products, "orders": orders})
 
 
 def device_logged_out_page(request):
@@ -889,6 +1347,10 @@ def password_reset_request_view(request):
         
         # Store in session and send OTP
         request.session["otp_reset_phone"] = phone
+        from .whatsapp_utils import is_2fa_disabled
+        if is_2fa_disabled():
+            request.session["otp_reset_verified"] = True
+            return redirect("dashboard:password_reset_complete")
         otp_result = send_otp(phone, purpose="reset_password", request=request)
         
         if otp_result["success"]:
@@ -1690,6 +2152,7 @@ def admin_instructor_edit(request, instructor_id):
         messages.success(request, "تم تحديث بيانات المدرس بنجاح.")
         return redirect("dashboard:admin_instructors")
     courses = Course.objects.filter(instructor=instructor).select_related("subject").order_by("-created_at")[:12]
+    notebooks = NotebookProduct.objects.filter(instructor=instructor).annotate(orders_total=Count("orders")).order_by("-created_at")
     return render(
         request,
         "dashboard/admin_instructor_edit.html",
@@ -1697,6 +2160,7 @@ def admin_instructor_edit(request, instructor_id):
             "form": form,
             "instructor": instructor,
             "courses": courses,
+            "notebooks": notebooks,
         },
     )
 
@@ -2475,6 +2939,11 @@ def student_dashboard(request):
         
     continue_learning = LessonProgress.objects.filter(user=request.user).select_related("lesson", "lesson__unit", "lesson__unit__course").order_by("-updated_at").first()
 
+    active_notebook_orders = NotebookOrder.objects.filter(
+        student=request.user,
+        status__in=["confirmed", "preparing", "out_for_delivery"]
+    ).select_related("product", "driver", "driver__delivery_profile").order_by("-updated_at")
+
     context = {
         "redeem_form": redeem_form,
         "grants": grants,
@@ -2487,8 +2956,10 @@ def student_dashboard(request):
         "student_profile": student_profile,
         "continue_learning": continue_learning,
         "package_selection": package_selection,
+        "active_notebook_orders": active_notebook_orders,
     }
     return render(request, "dashboard/student_dashboard.html", context)
+
 
 
 @login_required
@@ -2680,13 +3151,18 @@ def contact_page(request):
     return render(request, "dashboard/contact.html")
 
 def instructors_list(request):
-    # Fetching users who are staff and have at least one published course
     from django.contrib.auth.models import User
-    from learning.models import Course
-    
-    # Show all instructors who have a profile, regardless of published courses
-    instructors = User.objects.filter(is_staff=True, instructor_profile__isnull=False).select_related('instructor_profile').distinct()
-    
+    from django.db.models import Count, Q
+
+    instructors = (
+        User.objects.filter(is_staff=True, instructor_profile__isnull=False)
+        .select_related('instructor_profile')
+        .annotate(
+            active_notebooks_count=Count('notebook_products', filter=Q(notebook_products__is_active=True), distinct=True)
+        )
+        .distinct()
+    )
+
     context = {
         "instructors": instructors,
     }

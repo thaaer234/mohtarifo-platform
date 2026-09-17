@@ -1,6 +1,6 @@
 from django.db.utils import OperationalError, ProgrammingError
 
-from accounts.auth_utils import get_instructor_profile
+from accounts.auth_utils import get_instructor_profile, get_delivery_profile
 
 
 def dashboard_user_role(request):
@@ -9,19 +9,25 @@ def dashboard_user_role(request):
         return {
             "user_has_instructor_profile": False,
             "user_is_platform_admin": False,
+            "user_is_delivery_agent": False,
         }
     try:
         profile = get_instructor_profile(request.user)
         has_instructor = profile is not None
+        delivery_prof = get_delivery_profile(request.user)
+        has_delivery = delivery_prof is not None
         return {
             "user_has_instructor_profile": has_instructor,
+            "user_is_delivery_agent": has_delivery,
             "user_is_platform_admin": bool(request.user.is_staff and not has_instructor),
         }
     except (ProgrammingError, OperationalError, AttributeError):
         return {
             "user_has_instructor_profile": False,
+            "user_is_delivery_agent": False,
             "user_is_platform_admin": bool(request.user.is_staff),
         }
+
 
 
 def instructor_password_reminder(request):

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>محاكي اختبار حماية الشاشة - منصة محترفو</title>
+    <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Alexandria', sans-serif; }
+        body { background: #09090b; color: #f8fafc; padding: 30px; text-align: center; }
+        .card { max-width: 700px; margin: 0 auto; background: #18181b; border: 1px solid #27272a; border-radius: 20px; padding: 30px; }
+        h1 { font-size: 24px; margin-bottom: 15px; color: #6366f1; }
+        p { font-size: 14px; color: #94a3b8; line-height: 1.6; margin-bottom: 25px; }
+        .btn-test { background: #ef4444; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; font-size: 15px; margin: 8px; transition: all 0.2s; }
+        .btn-test:hover { background: #dc2626; transform: scale(1.03); }
+        .info-box { background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 15px; margin-top: 25px; text-align: right; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1><i class="fa-solid fa-shield-halved"></i> محاكي اختبار حظر لقطات وتسجيل الشاشة</h1>
+        <p>هذه الصفحة تحاكي سلوك تطبيقات المنصة (Windows, macOS, iOS, Android) عند محاولة تصوير الشاشة أو تسجيل الفيديو.</p>
+
+        <div>
+            <button class="btn-test" onclick="simulateScreenCapture()">
+                <i class="fa-solid fa-camera"></i> محاكاة التقاط شاشة (Screenshot)
+            </button>
+            <button class="btn-test" onclick="simulateRecording()">
+                <i class="fa-solid fa-video"></i> محاكاة بدء تسجيل فيديو (Screen Recording)
+            </button>
+        </div>
+
+        <div class="info-box">
+            <h4 style="color: #818cf8; margin-bottom: 6px;"><i class="fa-solid fa-circle-info"></i> جرب الاختصارات بلوحة المفاتيح:</h4>
+            <ul style="padding-right: 20px; line-height: 1.8;">
+                <li>اضغط على زر <b>PrintScreen</b> في لوحة المفاتيح.</li>
+                <li>اضغط على <b>Win + Shift + S</b> أو <b>Cmd + Shift + 3/4/5</b>.</li>
+                <li>انقل التركيز لنافذة أخرى أو جرب النقر بالزر الأيمن.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- سكريبت الحماية المدمج في كافة النسخ -->
+    <script src="../web_security_layer/anti_capture_guard.js"></script>
+    <script>
+        function simulateScreenCapture() {
+            window.dispatchEvent(new KeyboardEvent('keyup', {'key': 'PrintScreen'}));
+        }
+        function simulateRecording() {
+            window.dispatchEvent(new Event('blur'));
+        }
+    </script>
+</body>
+</html>

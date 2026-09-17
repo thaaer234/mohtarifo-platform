@@ -8,13 +8,30 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.utils import ProgrammingError, OperationalError
 from django.utils.text import slugify
 
-from .models import InstructorProfile, StudentProfile
+from .models import InstructorProfile, StudentProfile, DeliveryAgentProfile
 
 User = get_user_model()
 PHONE_DIGITS_RE = re.compile(r"^09\d{8}$")
 
 
+def get_delivery_profile(user):
+    """يُرجع ملف مندوب التوصيل أو None دون رفع استثناء."""
+    if not user or not getattr(user, "pk", None):
+        return None
+    try:
+        return user.delivery_profile
+    except (ObjectDoesNotExist, DeliveryAgentProfile.DoesNotExist, AttributeError):
+        return None
+
+
+def is_delivery_agent(user) -> bool:
+    if not user or not user.is_active:
+        return False
+    return get_delivery_profile(user) is not None
+
+
 def get_instructor_profile(user):
+
     """يُرجع ملف المدرس أو None دون رفع استثناء."""
     if not user or not getattr(user, "pk", None):
         return None

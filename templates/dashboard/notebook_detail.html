@@ -1,0 +1,1130 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% block title %}{{ product.title }} | سوق نوط محترفو التعليم{% endblock %}
+{% block meta_description %}نوطة {{ product.title }} للأستاذ {{ product.instructor.get_full_name|default:product.instructor.username }} على منصة محترفو التعليم.{% endblock %}
+
+{% block content %}
+<div class="notebook-detail-page reveal-up">
+    <!-- Breadcrumb -->
+    <nav class="notebook-breadcrumb" aria-label="مسار التصفح">
+        <a href="{% url 'dashboard:shop' %}"><i data-lucide="store"></i> المتجر الرئيسي</a>
+        <i data-lucide="chevron-left" class="bc-sep"></i>
+        <a href="{% url 'dashboard:notebook_market' %}">سوق النوط والمطبوعات</a>
+        <i data-lucide="chevron-left" class="bc-sep"></i>
+        <span class="bc-current">{{ product.title }}</span>
+    </nav>
+
+    <!-- Main Product Showcase Grid -->
+    <div class="product-showcase-grid">
+        <!-- 3D Book Stage Section -->
+        <div class="product-gallery-card">
+            <div class="book-showcase-stage">
+                <div class="stage-ambient-glow"></div>
+                <div class="stage-brand-label">
+                    <i data-lucide="crown" class="gold"></i>
+                    <span>سلسلة محترفو التعليم</span>
+                </div>
+
+                <div class="book-3d-scene">
+                    <div class="book-3d-card">
+                        <div class="book-cover-wrap">
+                            {% if product.cover %}
+                                <img src="{{ product.cover.url }}" alt="{{ product.title }}" class="book-cover-graphic">
+                            {% else %}
+                                <img src="{% static 'dashboard/notebooks/social-studies-grade9.png' %}" alt="{{ product.title }}" class="book-cover-graphic">
+                            {% endif %}
+                            <div class="book-cover-sheen"></div>
+                            <div class="book-spine-crease"></div>
+                        </div>
+                        <!-- RTL Book Spine & Geometry -->
+                        <div class="book-side-spine"></div>
+                        <div class="book-bottom-pages"></div>
+                        <div class="book-left-edge"></div>
+                    </div>
+                </div>
+
+                <div class="stage-bottom-meta">
+                    <span class="meta-tag"><i data-lucide="sparkles"></i> الغلاف المعتمد بدقة 1024×1536</span>
+                </div>
+            </div>
+
+            <!-- Features Highlights below cover -->
+            <div class="cover-badges-row">
+                <div class="cbadge"><i data-lucide="printer"></i> طباعة ملونة فاخرة</div>
+                <div class="cbadge"><i data-lucide="shield-check"></i> طبعة رسمية معتمدة</div>
+                <div class="cbadge"><i data-lucide="truck"></i> شحن سريع مع تتبع</div>
+            </div>
+        </div>
+
+        <!-- Details & Order Action Section -->
+        <div class="product-info-column">
+            <div class="header-meta-bar">
+                <div class="author-tag-pill">
+                    <div class="avatar-mini"><i data-lucide="graduation-cap"></i></div>
+                    <div class="author-details-inline">
+                        <span class="author-title">المدرّس:</span>
+                        <strong class="author-name">{{ product.instructor.get_full_name|default:product.instructor.username }}</strong>
+                    </div>
+                </div>
+                <div class="edition-type-badge">
+                    <i data-lucide="book-check"></i>
+                    <span>نسخة ورقية مطبوعة</span>
+                </div>
+            </div>
+
+            <h1 class="product-main-title">{{ product.title }}</h1>
+
+            <div class="product-rating-stats">
+                <div class="stars-list">
+                    <i data-lucide="star" class="star filled"></i>
+                    <i data-lucide="star" class="star filled"></i>
+                    <i data-lucide="star" class="star filled"></i>
+                    <i data-lucide="star" class="star filled"></i>
+                    <i data-lucide="star" class="star filled"></i>
+                </div>
+                <span class="rating-text">طبعة حديثة ومحققة متوافقة مع أحدث نماذج الامتحانات</span>
+            </div>
+
+            <!-- Spec Grid -->
+            <div class="specs-grid-box">
+                <div class="spec-tile">
+                    <div class="tile-icon-box"><i data-lucide="layers"></i></div>
+                    <div class="tile-data">
+                        <span class="spec-label">المادة والمرحلة</span>
+                        <strong class="spec-value">{{ product.course.title|default:"الشهادة الإعدادية / الثانوية" }}</strong>
+                    </div>
+                </div>
+                <div class="spec-tile">
+                    <div class="tile-icon-box"><i data-lucide="file-text"></i></div>
+                    <div class="tile-data">
+                        <span class="spec-label">عدد الصفحات</span>
+                        <strong class="spec-value">{% if product.pages_count %}{{ product.pages_count }} صفحة{% else %}شاملة المنهاج{% endif %}</strong>
+                    </div>
+                </div>
+                <div class="spec-tile">
+                    <div class="tile-icon-box"><i data-lucide="package"></i></div>
+                    <div class="tile-data">
+                        <span class="spec-label">حالة التوفر</span>
+                        {% if product.is_available and product.stock > 0 %}
+                            <strong class="spec-value in-stock"><i data-lucide="check-circle-2"></i> متوفرة ({{ product.stock }} نسخة)</strong>
+                        {% else %}
+                            <strong class="spec-value out-stock"><i data-lucide="clock"></i> قيد التجهيز بالمطبعة</strong>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="spec-tile">
+                    <div class="tile-icon-box"><i data-lucide="map-pin"></i></div>
+                    <div class="tile-data">
+                        <span class="spec-label">التوصيل والاستلام</span>
+                        <strong class="spec-value">توصيل دقيق مع تثبيت اللوكيشن</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Description & Summary Cards -->
+            <div class="product-description-shell">
+                <div class="shell-header">
+                    <i data-lucide="bookmark"></i>
+                    <h3>لمحة ومقدمة النوطة</h3>
+                </div>
+                <p>{{ product.description|default:"النوطة الشاملة والوافية للمنهاج، منظمة بأسلوب علمي مبسّط مع خرائط مفاهيمية، بنوك أسئلة دورات، وحلول نموذجية توافق معايير سلالم التصحيح الوزارية لأعلى الدرجات." }}</p>
+            </div>
+
+            <!-- Material Explanation and Summary -->
+            <div class="content-breakdown-card">
+                <div class="card-section-tag">
+                    <div class="tag-icon"><i data-lucide="compass"></i></div>
+                    <h4>شرح وملخص المادة وأهم المحاور</h4>
+                </div>
+                <div class="card-rich-text">
+                    {% if product.material_summary %}
+                        {{ product.material_summary|linebreaks }}
+                    {% else %}
+                        <p>تتضمن النوطة شرحاً وافياً وموجزاً لأهم القوانين والنظريات وتطبيقاتها العملية، مع تبويب منهجي لأبواب المنهج الوزاري يضمن تركيز الطالب على النقاط المحورية والاستنتاجية دون حشو أو تكرار، بالإضافة إلى ملخصات شاملة في نهاية كل وحدة دراسية لتسهيل المراجعة السريعة قبل الامتحان.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Free Quizzes & Practice Tests Overview -->
+            <div class="free-quizzes-card">
+                <div class="quizzes-badge">
+                    <i data-lucide="gift"></i>
+                    <span>هدية مجانية ملحقة بالنوطة</span>
+                </div>
+                <div class="quizzes-head">
+                    <div class="q-icon-box"><i data-lucide="award"></i></div>
+                    <h4>نماذج الاختبارات وبنوك الأسئلة والسلالم الامتحانية</h4>
+                </div>
+                <div class="card-rich-text">
+                    {% if product.free_quizzes_overview %}
+                        {{ product.free_quizzes_overview|linebreaks }}
+                    {% else %}
+                        <p>تحتوي هذه النسخة المطبوعة على ملحق اختبارات مجانية يشمل: نماذج مؤتمتة وتطبيقية لجميع الوحدات، أسئلة امتحانات الدورات السابقة مع سلالم التصحيح النموذجية المعتمدة، واختبارات تجريبية شاملة تحاكي ورقة الامتحان الوزاري بدقة لتمكين الطالب من تدريب نفسه على إدارة وقت الامتحان وقياس مستواه الحقيقي.</p>
+                    {% endif %}
+                </div>
+                <div class="quizzes-chips-row">
+                    <span><i data-lucide="check-circle-2"></i> بنوك أسئلة دورات سابقة</span>
+                    <span><i data-lucide="check-circle-2"></i> سلالم تصحيح وزارية معتمدة</span>
+                    <span><i data-lucide="check-circle-2"></i> محاكاة الامتحان النهائي</span>
+                </div>
+            </div>
+
+            <!-- Price & Order Action Card -->
+            <div class="action-price-box">
+                <div class="price-side">
+                    <span class="price-hint">السعر النهائي المعتمد</span>
+                    <div class="price-tag">
+                        <strong>{{ product.price_syp|default:"قريباً" }}</strong>
+                        {% if product.price_syp %}<span class="currency">ل.س</span>{% endif %}
+                    </div>
+                </div>
+
+                <div class="cta-side">
+                    {% if product.is_available and product.stock > 0 %}
+                        <a href="{% url 'dashboard:notebook_order' product.id %}" class="btn-primary-order">
+                            <i data-lucide="shopping-bag"></i>
+                            <span>تثبيت طلب الشراء الآن</span>
+                        </a>
+                        <a href="{% url 'dashboard:notebook_order' product.id %}?payment=shamcash" class="btn-shamcash-order">
+                            <div class="shamcash-badge-pill">شام كاش</div>
+                            <span>الدفع الفوري عبر ShamCash</span>
+                            <i data-lucide="arrow-left"></i>
+                        </a>
+                    {% else %}
+                        <button class="btn-disabled-order" disabled>
+                            <i data-lucide="clock"></i>
+                            <span>قيد التجهيز بالمطبعة · قريباً</span>
+                        </button>
+                    {% endif %}
+                    
+                    <a href="{{ CONTACT_WHATSAPP_URL }}?text={{ 'مرحباً، أود الاستفسار عن نوطة: '|urlencode }}{{ product.title|urlencode }}" target="_blank" rel="noopener" class="btn-whatsapp-touch">
+                        <i data-lucide="message-circle"></i>
+                        <span>تواصل معنا عبر واتساب للاستفسار</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Products -->
+    {% if related_products %}
+    <div class="related-products-section">
+        <div class="section-header-row">
+            <h2>نوط أخرى للمدرس</h2>
+            <a href="{% url 'dashboard:notebook_market' %}?instructor={{ product.instructor.id }}" class="view-all-link">عرض الكل <i data-lucide="arrow-left"></i></a>
+        </div>
+        <div class="related-grid">
+            {% for rel in related_products %}
+            <a href="{% url 'dashboard:notebook_detail' rel.id %}" class="rel-notebook-card">
+                <div class="rel-thumb">
+                    {% if rel.cover %}
+                        <img src="{{ rel.cover.url }}" alt="{{ rel.title }}">
+                    {% else %}
+                        <img src="{% static 'dashboard/notebooks/social-studies-grade9.png' %}" alt="{{ rel.title }}">
+                    {% endif %}
+                </div>
+                <div class="rel-info">
+                    <h4>{{ rel.title }}</h4>
+                    <span class="rel-price">{{ rel.price_syp }} ل.س</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Dynamic Cover Color Extraction Script -->
+<script>
+(function() {
+    function extractCoverTheme() {
+        const coverImg = document.querySelector('.book-cover-graphic');
+        const root = document.querySelector('.notebook-detail-page');
+        if (!coverImg || !root) return;
+
+        function applyColors(spineRgb, accentRgb) {
+            const [ar, ag, ab] = accentRgb;
+            // Rich stage background gradient derived from the cover accent color
+            const stageDark = [Math.round(ar * 0.15), Math.round(ag * 0.15), Math.round(ab * 0.15)];
+            const stageMid = [Math.round(ar * 0.35), Math.round(ag * 0.35), Math.round(ab * 0.35)];
+
+            root.style.setProperty('--cover-spine-start', `rgb(${spineRgb[0]}, ${spineRgb[1]}, ${spineRgb[2]})`);
+            root.style.setProperty('--cover-spine-end', `rgb(${Math.max(0, spineRgb[0] - 20)}, ${Math.max(0, spineRgb[1] - 20)}, ${Math.max(0, spineRgb[2] - 20)})`);
+            root.style.setProperty('--cover-accent', `rgb(${ar}, ${ag}, ${ab})`);
+            root.style.setProperty('--cover-accent-glow', `rgba(${ar}, ${ag}, ${ab}, 0.55)`);
+            root.style.setProperty('--cover-accent-light', `rgba(${ar}, ${ag}, ${ab}, 0.18)`);
+            root.style.setProperty('--cover-accent-border', `rgba(${ar}, ${ag}, ${ab}, 0.6)`);
+            root.style.setProperty('--cover-stage-mid', `rgb(${stageMid[0]}, ${stageMid[1]}, ${stageMid[2]})`);
+            root.style.setProperty('--cover-stage-bg', `rgb(${stageDark[0]}, ${stageDark[1]}, ${stageDark[2]})`);
+        }
+
+        function analyze() {
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                canvas.width = 120;
+                canvas.height = 180;
+                ctx.drawImage(coverImg, 0, 0, 120, 180);
+
+                // Sample spine from right edge (Arabic book RTL spine)
+                const spineData = ctx.getImageData(115, 10, 4, 160).data;
+                let sR = 0, sG = 0, sB = 0, sCount = 0;
+                for (let i = 0; i < spineData.length; i += 16) {
+                    sR += spineData[i];
+                    sG += spineData[i+1];
+                    sB += spineData[i+2];
+                    sCount++;
+                }
+                const avgSpine = [
+                    Math.round(sR / (sCount || 1)),
+                    Math.round(sG / (sCount || 1)),
+                    Math.round(sB / (sCount || 1))
+                ];
+
+                // Sample vibrant accent from the central region & text
+                const centerData = ctx.getImageData(10, 10, 100, 160).data;
+                let maxScore = -1;
+                let bestAccent = [185, 45, 45]; // Default rich crimson
+
+                for (let i = 0; i < centerData.length; i += 16) {
+                    const r = centerData[i];
+                    const g = centerData[i+1];
+                    const b = centerData[i+2];
+
+                    const max = Math.max(r, g, b);
+                    const min = Math.min(r, g, b);
+                    const sat = max === 0 ? 0 : (max - min) / max;
+                    const brightness = (r + g + b) / 3;
+
+                    // Score higher for saturated vivid colors like the red/crimson in the cover
+                    if (brightness > 45 && brightness < 220) {
+                        const score = sat * 2 + (r > g + 25 && r > b + 25 ? 1.5 : 0);
+                        if (score > maxScore) {
+                            maxScore = score;
+                            bestAccent = [r, g, b];
+                        }
+                    }
+                }
+
+                applyColors(avgSpine, bestAccent);
+            } catch (err) {
+                // If cross-origin prevents canvas reading, apply the exact cover red
+                root.style.setProperty('--cover-spine-start', '#15171d');
+                root.style.setProperty('--cover-spine-end', '#090b0e');
+                root.style.setProperty('--cover-accent', '#c0392b');
+                root.style.setProperty('--cover-accent-glow', 'rgba(192, 57, 43, 0.55)');
+                root.style.setProperty('--cover-accent-light', 'rgba(192, 57, 43, 0.18)');
+                root.style.setProperty('--cover-accent-border', 'rgba(192, 57, 43, 0.6)');
+                root.style.setProperty('--cover-stage-mid', '#421210');
+                root.style.setProperty('--cover-stage-bg', '#1c0807');
+            }
+        }
+
+        if (coverImg.complete && coverImg.naturalWidth !== 0) {
+            analyze();
+        } else {
+            coverImg.addEventListener('load', analyze);
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', extractCoverTheme);
+    } else {
+        extractCoverTheme();
+    }
+})();
+</script>
+
+<style>
+/* ==========================================================================
+   ULTRA-PREMIUM NOTEBOOK DETAIL DESIGN SYSTEM
+   Seamless Theme Compatibility (Dark / Light) with Luxury Gold Accents
+   ========================================================================== */
+
+.notebook-detail-page {
+    --cover-spine-start: #14171d;
+    --cover-spine-end: #07090c;
+    --cover-accent: var(--brand-gold, #d5a24a);
+    --cover-accent-glow: rgba(var(--brand-gold-rgb), 0.25);
+    --cover-stage-bg: #0b141f;
+
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 1.5rem 1.25rem 5rem;
+}
+
+/* Breadcrumb */
+.notebook-breadcrumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+    padding: 0.75rem 1.4rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: 999px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+.notebook-breadcrumb a {
+    color: var(--text-muted);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-weight: 700;
+    transition: color .2s ease;
+}
+.notebook-breadcrumb a:hover {
+    color: var(--brand-gold);
+}
+.notebook-breadcrumb a i { width: 15px; height: 15px; }
+.notebook-breadcrumb .bc-sep { width: 14px; height: 14px; opacity: 0.4; }
+.notebook-breadcrumb .bc-current {
+    color: var(--text-primary);
+    font-weight: 800;
+}
+
+/* Showcase Grid */
+.product-showcase-grid {
+    display: grid;
+    grid-template-columns: 460px minmax(0, 1fr);
+    gap: 3rem;
+    align-items: start;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: 28px;
+    padding: 2.75rem;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+    position: relative;
+    overflow: hidden;
+}
+
+/* 3D Showcase Stage with Adaptive Cover Atmosphere */
+.product-gallery-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: sticky;
+    top: 2rem;
+}
+.book-showcase-stage {
+    position: relative;
+    width: 100%;
+    padding: 3.5rem 1.5rem 2rem;
+    background: radial-gradient(circle at 50% 30%, var(--cover-accent-light) 0%, var(--cover-stage-mid) 50%, var(--cover-stage-bg) 100%);
+    border: 1.5px solid var(--cover-accent-border);
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.7), 0 20px 45px rgba(0, 0, 0, 0.45), 0 0 35px var(--cover-accent-glow);
+    transition: all 0.5s ease;
+}
+.stage-ambient-glow {
+    position: absolute;
+    top: -20%;
+    left: 15%;
+    width: 300px;
+    height: 300px;
+    background: var(--cover-accent-glow);
+    filter: blur(70px);
+    border-radius: 50%;
+    pointer-events: none;
+    transition: background 0.5s ease;
+}
+.stage-brand-label {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.8rem;
+    font-weight: 900;
+    color: var(--cover-accent);
+    background: rgba(10, 12, 16, 0.85);
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+}
+.stage-brand-label i { width: 14px; height: 14px; }
+
+/* 3D Book Geometry with Dynamic Spine */
+.book-3d-scene {
+    perspective: 1600px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    padding: 1.5rem 0;
+}
+.book-3d-card {
+    position: relative;
+    width: 250px;
+    aspect-ratio: 1024 / 1536;
+    transform-style: preserve-3d;
+    transform: rotateY(-18deg) rotateX(7deg) rotateZ(-1deg);
+    transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+    filter: drop-shadow(-22px 28px 32px rgba(0, 0, 0, 0.8));
+}
+.book-3d-card:hover {
+    transform: rotateY(-6deg) rotateX(3deg) rotateZ(0deg) scale(1.03);
+    filter: drop-shadow(-28px 34px 40px rgba(0, 0, 0, 0.92));
+}
+.book-cover-wrap {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 3px 8px 8px 3px;
+    overflow: hidden;
+    background: #08131e;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+}
+.book-cover-graphic {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.book-cover-sheen {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, rgba(255, 255, 255, 0.24) 0%, rgba(255, 255, 255, 0.05) 30%, transparent 60%);
+    pointer-events: none;
+}
+.book-spine-crease {
+    position: absolute;
+    top: 0;
+    right: 16px;
+    bottom: 0;
+    width: 2px;
+    background: rgba(0, 0, 0, 0.45);
+    box-shadow: 1px 0 3px rgba(255, 255, 255, 0.18);
+    pointer-events: none;
+}
+.book-side-spine {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 20px;
+    background: linear-gradient(90deg, var(--cover-spine-start) 0%, var(--cover-spine-end) 100%);
+    transform-origin: right center;
+    transform: rotateY(90deg);
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: inset 1px 0 3px rgba(255, 255, 255, 0.08);
+}
+.book-bottom-pages {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 20px;
+    background: repeating-linear-gradient(90deg, #e8e4d9 0px, #e8e4d9 2px, #cfc9bc 3px, #cfc9bc 4px);
+    transform-origin: center bottom;
+    transform: rotateX(-90deg);
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+.book-left-edge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 20px;
+    background: repeating-linear-gradient(0deg, #f2eee4 0px, #f2eee4 2px, #ded7c8 3px, #ded7c8 4px);
+    transform-origin: left center;
+    transform: rotateY(-90deg);
+    box-shadow: inset 2px 0 6px rgba(0, 0, 0, 0.35);
+}
+
+.stage-bottom-meta {
+    margin-top: 1.25rem;
+}
+.meta-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.75);
+    background: rgba(0, 0, 0, 0.35);
+    padding: 4px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.meta-tag i { width: 13px; height: 13px; color: var(--brand-gold); }
+
+.cover-badges-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1.4rem;
+    justify-content: center;
+    width: 100%;
+}
+.cbadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-light);
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.cbadge i {
+    width: 15px;
+    height: 15px;
+    color: var(--brand-gold);
+}
+
+/* Product Info Column */
+.product-info-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+}
+
+.header-meta-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.author-tag-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    background: linear-gradient(135deg, rgba(var(--brand-gold-rgb), 0.18), rgba(var(--brand-gold-rgb), 0.06));
+    border: 1px solid rgba(var(--brand-gold-rgb), 0.35);
+    padding: 0.4rem 1.1rem 0.4rem 0.6rem;
+    border-radius: 999px;
+}
+.avatar-mini {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--brand-gold);
+    color: #0c1825;
+    display: grid;
+    place-items: center;
+}
+.avatar-mini i { width: 16px; height: 16px; }
+.author-details-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.88rem;
+}
+.author-title { color: var(--text-muted); }
+.author-name { color: var(--text-primary); font-weight: 900; }
+
+.edition-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-light);
+    padding: 5px 12px;
+    border-radius: 8px;
+}
+.edition-type-badge i { width: 14px; height: 14px; color: var(--brand-gold); }
+
+.product-main-title {
+    font-size: clamp(2rem, 3.2vw, 2.75rem);
+    font-weight: 900;
+    line-height: 1.25;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.5px;
+}
+
+.product-rating-stats {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+}
+.stars-list {
+    display: flex;
+    gap: 0.25rem;
+}
+.star.filled {
+    width: 17px;
+    height: 17px;
+    fill: #f59e0b;
+    color: #f59e0b;
+}
+.rating-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+/* Specs */
+.specs-grid-box {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: 18px;
+    padding: 1.25rem;
+}
+.spec-tile {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.6rem;
+    border-radius: 12px;
+    background: rgba(var(--brand-gold-rgb), 0.03);
+    border: 1px solid rgba(var(--brand-gold-rgb), 0.08);
+}
+.tile-icon-box {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: rgba(var(--brand-gold-rgb), 0.12);
+    border: 1px solid rgba(var(--brand-gold-rgb), 0.25);
+    display: grid;
+    place-items: center;
+    color: var(--brand-gold);
+    flex-shrink: 0;
+}
+.tile-icon-box i { width: 19px; height: 19px; }
+.tile-data { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.spec-label {
+    font-size: 0.76rem;
+    font-weight: 800;
+    color: var(--text-muted);
+}
+.spec-value {
+    font-size: 0.95rem;
+    font-weight: 900;
+    color: var(--text-primary);
+}
+.spec-value.in-stock {
+    color: #10b981;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.spec-value.in-stock i, .spec-value.out-stock i {
+    width: 15px;
+    height: 15px;
+}
+.spec-value.out-stock {
+    color: #f59e0b;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+/* Description Shell */
+.product-description-shell {
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: 18px;
+    padding: 1.4rem;
+}
+.shell-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    color: var(--brand-gold);
+}
+.shell-header i { width: 18px; height: 18px; }
+.shell-header h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: var(--text-primary);
+}
+.product-description-shell p {
+    font-size: 0.96rem;
+    line-height: 1.85;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* Material Explanation & Free Quizzes Cards */
+.content-breakdown-card {
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: 18px;
+    padding: 1.6rem;
+}
+.card-section-tag {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1rem;
+}
+.tag-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(var(--brand-gold-rgb), 0.14);
+    display: grid;
+    place-items: center;
+    color: var(--brand-gold);
+}
+.tag-icon i { width: 18px; height: 18px; }
+.card-section-tag h4 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: var(--text-primary);
+}
+
+.card-rich-text p {
+    font-size: 0.95rem;
+    line-height: 1.9;
+    color: var(--text-muted);
+    margin: 0 0 0.85rem;
+}
+.card-rich-text p:last-child { margin-bottom: 0; }
+
+.free-quizzes-card {
+    position: relative;
+    background: radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.12) 0%, var(--bg-surface-elevated) 80%);
+    border: 1.5px solid rgba(16, 185, 129, 0.4);
+    border-radius: 20px;
+    padding: 1.8rem 1.6rem 1.6rem;
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.08);
+}
+.quizzes-badge {
+    position: absolute;
+    top: 0;
+    left: 2rem;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 900;
+    padding: 0.35rem 0.9rem;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+}
+.quizzes-badge i { width: 14px; height: 14px; }
+.quizzes-head {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1rem;
+}
+.q-icon-box {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    display: grid;
+    place-items: center;
+    color: #10b981;
+}
+.q-icon-box i { width: 19px; height: 19px; }
+.quizzes-head h4 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 900;
+    color: var(--text-primary);
+}
+.quizzes-chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin-top: 1.25rem;
+}
+.quizzes-chips-row span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: #34d399;
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 0.4rem 0.8rem;
+    border-radius: 8px;
+}
+.quizzes-chips-row i { width: 14px; height: 14px; }
+
+/* Price & Action Box */
+.action-price-box {
+    background: linear-gradient(145deg, var(--bg-surface-elevated), var(--bg-surface));
+    border: 1.5px solid rgba(var(--brand-gold-rgb), 0.45);
+    border-radius: 22px;
+    padding: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.12), 0 0 24px rgba(var(--brand-gold-rgb), 0.1);
+}
+.price-side {
+    display: flex;
+    flex-direction: column;
+}
+.price-hint {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+}
+.price-tag {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+.price-tag strong {
+    font-size: 2.6rem;
+    font-weight: 900;
+    color: var(--brand-gold);
+    line-height: 1;
+}
+.price-tag .currency {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: var(--text-muted);
+}
+
+.cta-side {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 280px;
+}
+.btn-primary-order {
+    padding: 1rem 1.6rem;
+    font-size: 1.05rem;
+    font-weight: 900;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    background: linear-gradient(135deg, #f0c56b 0%, #c99337 100%);
+    color: #0a1726 !important;
+    text-decoration: none;
+    border: none;
+    box-shadow: 0 8px 24px rgba(213, 162, 74, 0.38);
+    transition: all .25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.btn-primary-order:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(213, 162, 74, 0.5);
+}
+.btn-primary-order i { width: 20px; height: 20px; }
+
+.btn-shamcash-order {
+    background: #0a111a;
+    border: 1.5px solid #10b981;
+    color: #ffffff !important;
+    padding: 0.85rem 1.4rem;
+    border-radius: 14px;
+    font-size: 0.95rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 18px rgba(16, 185, 129, 0.18);
+}
+.btn-shamcash-order:hover {
+    background: #10b981;
+    color: #06121d !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+}
+.shamcash-badge-pill {
+    background: #10b981;
+    color: #000;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 900;
+}
+.btn-shamcash-order:hover .shamcash-badge-pill {
+    background: #000;
+    color: #10b981;
+}
+.btn-shamcash-order i { width: 16px; height: 16px; }
+
+.btn-disabled-order {
+    padding: 1rem;
+    border-radius: 14px;
+    background: var(--bg-surface);
+    border: 1px dashed var(--border-light);
+    color: var(--text-muted);
+    font-weight: 800;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    cursor: not-allowed;
+}
+.btn-disabled-order i { width: 18px; height: 18px; }
+
+.btn-whatsapp-touch {
+    background: transparent;
+    border: 1px solid rgba(37, 211, 102, 0.35);
+    color: #25d366;
+    padding: 0.65rem 1rem;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+.btn-whatsapp-touch:hover {
+    background: rgba(37, 211, 102, 0.12);
+    border-color: #25d366;
+}
+.btn-whatsapp-touch i { width: 16px; height: 16px; }
+
+/* Related Products */
+.related-products-section {
+    margin-top: 4rem;
+    padding-top: 3rem;
+    border-top: 1px solid var(--border-light);
+}
+.section-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.75rem;
+}
+.section-header-row h2 {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: var(--text-primary);
+    margin: 0;
+}
+.view-all-link {
+    color: var(--brand-gold);
+    text-decoration: none;
+    font-size: 0.92rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: transform .2s ease;
+}
+.view-all-link:hover { transform: translateX(-4px); }
+.view-all-link i { width: 16px; height: 16px; }
+
+.related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.5rem;
+}
+.rel-notebook-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    overflow: hidden;
+    text-decoration: none;
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    display: flex;
+    flex-direction: column;
+}
+.rel-notebook-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--brand-gold);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.15);
+}
+.rel-thumb {
+    height: 240px;
+    background: var(--bg-surface-elevated);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+}
+.rel-thumb img {
+    height: 100%;
+    width: auto;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.rel-info {
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.rel-info h4 {
+    font-size: 0.98rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.4;
+}
+.rel-price {
+    font-size: 0.95rem;
+    color: var(--brand-gold);
+    font-weight: 900;
+}
+
+/* Responsive */
+@media (max-width: 1050px) {
+    .product-showcase-grid {
+        grid-template-columns: 1fr;
+        padding: 2rem;
+        gap: 2.5rem;
+    }
+    .product-gallery-card {
+        position: relative;
+        top: 0;
+    }
+    .book-showcase-stage {
+        padding: 3rem 1rem 1.5rem;
+    }
+}
+@media (max-width: 640px) {
+    .product-showcase-grid {
+        padding: 1.25rem;
+        border-radius: 20px;
+    }
+    .specs-grid-box {
+        grid-template-columns: 1fr;
+    }
+    .action-price-box {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 1.25rem;
+    }
+    .cta-side {
+        min-width: 100%;
+    }
+    .price-tag strong {
+        font-size: 2.2rem;
+    }
+}
+</style>
+{% endblock %}

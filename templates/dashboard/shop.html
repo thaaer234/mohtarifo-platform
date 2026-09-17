@@ -41,6 +41,24 @@
         </div>
     </nav>
 
+    <a href="{% url 'dashboard:notebook_market' %}" class="notebook-market-banner mb-12">
+        <div class="banner-book-mini">
+            <img src="{% static 'dashboard/notebooks/social-studies-grade9.png' %}" alt="نوطة الاجتماعيات">
+        </div>
+        <div class="banner-text-content">
+            <div class="banner-top-tag">
+                <span class="pulse-dot"></span>
+                <span>جديد المطبوعات الورقية 2026</span>
+            </div>
+            <strong>سوق نوط ومكثفات المدرسين المعتمدة</strong>
+            <small>احصل على نسختك المطبوعة ملونة بأعلى دقة مع خدمة التوصيل وتحديد موقعك الجغرافي مباشرة</small>
+        </div>
+        <span class="banner-cta-action">
+            تصفح سوق النوط
+            <i data-lucide="arrow-left"></i>
+        </span>
+    </a>
+
     <section class="shop-course-grid mb-16">
         {% for course in courses %}
             <article class="course-card-premium reveal-up">
@@ -118,6 +136,91 @@
 </div>
 
 <style>
+    .notebook-market-banner {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 1.25rem 1.75rem;
+        border: 1px solid rgba(199, 149, 59, 0.35);
+        border-radius: 16px;
+        background: radial-gradient(circle at 10% 50%, rgba(199, 149, 59, 0.12) 0%, rgba(22, 27, 34, 0.95) 80%);
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        box-shadow: 0 10px 25px -10px rgba(0,0,0,0.5);
+    }
+    .notebook-market-banner:hover {
+        transform: translateY(-3px);
+        border-color: var(--brand-gold);
+        box-shadow: 0 14px 30px -8px rgba(199, 149, 59, 0.2);
+    }
+    .banner-book-mini {
+        width: 55px;
+        height: 80px;
+        flex-shrink: 0;
+        border-radius: 4px 7px 7px 4px;
+        overflow: hidden;
+        box-shadow: -4px 6px 14px rgba(0,0,0,0.6);
+        background: #0f172a;
+    }
+    .banner-book-mini img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .banner-text-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        flex: 1;
+    }
+    .banner-top-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: var(--brand-gold);
+    }
+    .pulse-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #10b981;
+        box-shadow: 0 0 8px #10b981;
+    }
+    .banner-text-content strong {
+        font-size: 1.15rem;
+        font-weight: 900;
+        color: #fff;
+    }
+    .banner-text-content small {
+        color: var(--text-muted);
+        font-size: 0.88rem;
+        line-height: 1.5;
+    }
+    .banner-cta-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: rgba(199, 149, 59, 0.15);
+        border: 1px solid rgba(199, 149, 59, 0.3);
+        color: var(--brand-gold);
+        padding: 0.6rem 1.1rem;
+        border-radius: 10px;
+        font-weight: 800;
+        font-size: 0.88rem;
+        white-space: nowrap;
+        transition: background 0.2s;
+    }
+    .notebook-market-banner:hover .banner-cta-action {
+        background: var(--brand-gold);
+        color: #0f172a;
+    }
+    .banner-cta-action i {
+        width: 16px;
+        height: 16px;
+    }
     .shop-page { padding-bottom: 2rem; }
     .shop-hero {
         display: flex;

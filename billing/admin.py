@@ -230,3 +230,12 @@ class PlatformExpenseAdmin(admin.ModelAdmin):
     autocomplete_fields = ("course",)
     fields = ("title", "amount_syp", "amount_usd", "course", "expense_type", "status", "created_at")
 
+
+from .models import ShamCashInvoice
+
+@admin.register(ShamCashInvoice)
+class ShamCashInvoiceAdmin(admin.ModelAdmin):
+    list_display = ("invoice_number", "user", "course", "package", "amount", "currency", "status", "transaction_ref", "paid_at", "created_at")
+    list_filter = ("status", "currency", "created_at")
+    search_fields = ("invoice_number", "user__username", "user__phone", "transaction_ref", "counterparty")
+    readonly_fields = ("invoice_number", "created_at", "updated_at", "paid_at")

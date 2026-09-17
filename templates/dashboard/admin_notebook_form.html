@@ -1,0 +1,323 @@
+{% extends "dashboard/base.html" %}
+{% load static inline_static %}
+
+{% block title %}{{ title }} | لوحة الإدارة{% endblock %}
+
+{% block content %}
+<div class="admin-notebook-form-page reveal-up">
+    <!-- Breadcrumb & Top Bar -->
+    <div class="top-nav-row mb-6">
+        <a href="{% url 'dashboard:admin_instructor_edit' instructor.id %}" class="btn btn-secondary btn-sm">
+            <i data-lucide="arrow-right"></i>
+            رجوع لملف المدرس ({{ instructor.get_full_name|default:instructor.username }})
+        </a>
+        {% if not is_new and notebook %}
+            <a href="{% url 'dashboard:notebook_detail' notebook.id %}" class="btn btn-secondary btn-sm" target="_blank">
+                <i data-lucide="external-link"></i>
+                معاينة النوطة في السوق (رابط الطالب)
+            </a>
+        {% endif %}
+    </div>
+
+    <div class="form-container-card premium-card">
+        <header class="form-card-head">
+            <div class="head-badge">
+                <i data-lucide="book-plus"></i>
+                <span>إدارة النوط والمطبوعات المدرسية</span>
+            </div>
+            <h1>{{ title }}</h1>
+            <p class="text-muted">
+                أدخل اسم النوطة وسعرها، ثم اكتب الشرح المفصل للمادة والاختبارات المجانية الملحقة لتظهر للطالب في صفحة النوطة المستقلة.
+            </p>
+        </header>
+
+        <form method="post" enctype="multipart/form-data" class="notebook-admin-editor-form">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger mb-6">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="editor-grid">
+                <!-- Main Details Section -->
+                <div class="form-section-box full-width">
+                    <h3 class="section-subtitle"><i data-lucide="tag"></i> المعلومات الأساسية والتسعير</h3>
+                    <div class="fields-subgrid">
+                        <div class="form-field span-2">
+                            <label for="{{ form.title.id_for_label }}">{{ form.title.label }} <span class="req">*</span></label>
+                            {{ form.title }}
+                            {% for err in form.title.errors %}<small class="field-error">{{ err }}</small>{% endfor %}
+                        </div>
+
+                        <div class="form-field">
+                            <label for="{{ form.instructor.id_for_label }}">{{ form.instructor.label }} <span class="req">*</span></label>
+                            {{ form.instructor }}
+                            {% for err in form.instructor.errors %}<small class="field-error">{{ err }}</small>{% endfor %}
+                        </div>
+
+                        <div class="form-field">
+                            <label for="{{ form.course.id_for_label }}">{{ form.course.label }}</label>
+                            {{ form.course }}
+                            {% for err in form.course.errors %}<small class="field-error">{{ err }}</small>{% endfor %}
+                        </div>
+
+                        <div class="form-field">
+                            <label for="{{ form.price_syp.id_for_label }}">{{ form.price_syp.label }} <span class="req">*</span></label>
+                            {{ form.price_syp }}
+                            {% for err in form.price_syp.errors %}<small class="field-error">{{ err }}</small>{% endfor %}
+                        </div>
+
+                        <div class="form-field">
+                            <label for="{{ form.pages_count.id_for_label }}">{{ form.pages_count.label }}</label>
+                            {{ form.pages_count }}
+                            {% for err in form.pages_count.errors %}<small class="field-error">{{ err }}</small>{% endfor %}
+                        </div>
+
+                        <div class="form-field">
+                            <label for="{{ form.stock.id_for_label }}">{{ form.stock.label }} <span class="req">*</span></label>
+                            {{ form.stock }}
+                            {% for err in form.stock.errors %}<small class="field-error">{{ err }}</small>{% endfor %}
+                        </div>
+
+                        <div class="form-field checkbox-field">
+                            <label class="toggle-checkbox-label">
+                                {{ form.is_active }}
+                                <span>{{ form.is_active.label }}</span>
+                            </label>
+                            <small class="text-muted">عند التفعيل تظهر فوراً للطلاب في سوق النوط والموقع</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cover Image Upload -->
+                <div class="form-section-box full-width">
+                    <h3 class="section-subtitle"><i data-lucide="image"></i> غلاف النوطة (نسبة طولية A4 بدقة عالية)</h3>
+                    <div class="cover-upload-flex">
+                        {% if notebook and notebook.cover %}
+                            <div class="current-cover-preview">
+                                <img src="{{ notebook.cover.url }}" alt="الغلاف الحالي">
+                                <span>الغلاف الحالي المعتمد</span>
+                            </div>
+                        {% endif %}
+                        <div class="upload-control-area">
+                            {{ form.cover }}
+                            <small class="text-muted">ارفع صورة الغلاف عالية الدقة (مثل غلاف الاجتماعيات أو أي مادة). يفضل أبعاد 1024×1536 بكسل.</small>
+                            {% for err in form.cover.errors %}<small class="field-error">{{ err }}</small>{% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Text Descriptions & Content Summary -->
+                <div class="form-section-box full-width">
+                    <h3 class="section-subtitle"><i data-lucide="file-text"></i> الشروحات ومحتوى المادة والاختبارات الملحقة</h3>
+                    
+                    <div class="form-field mb-5">
+                        <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+                        {{ form.description }}
+                        <small class="text-muted">المقدمة واللمحة السريعة التي تظهر في بطاقة النوطة وفي بداية الصفحة.</small>
+                        {% for err in form.description.errors %}<small class="field-error">{{ err }}</small>{% endfor %}
+                    </div>
+
+                    <div class="form-field mb-5">
+                        <label for="{{ form.material_summary.id_for_label }}">{{ form.material_summary.label }}</label>
+                        {{ form.material_summary }}
+                        <small class="text-muted">اكتب شرحاً مفصلاً للأبواب والمحاور والوحدات العلمية التي تشملها النوطة.</small>
+                        {% for err in form.material_summary.errors %}<small class="field-error">{{ err }}</small>{% endfor %}
+                    </div>
+
+                    <div class="form-field">
+                        <label for="{{ form.free_quizzes_overview.id_for_label }}">{{ form.free_quizzes_overview.label }}</label>
+                        {{ form.free_quizzes_overview }}
+                        <small class="text-muted">تفاصيل الاختبارات التفاعلية وبنوك الأسئلة والسلالم الامتحانية المجانية المرفقة بالنوطة.</small>
+                        {% for err in form.free_quizzes_overview.errors %}<small class="field-error">{{ err }}</small>{% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Action Bar -->
+            <div class="form-actions-bar mt-8">
+                <button type="submit" class="btn btn-primary btn-glow btn-lg">
+                    <i data-lucide="save"></i>
+                    {% if is_new %}إضافة النوطة إلى السوق وحفظ البيانات{% else %}حفظ كافة التعديلات{% endif %}
+                </button>
+                <a href="{% url 'dashboard:admin_instructor_edit' instructor.id %}" class="btn btn-secondary">إلغاء</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.admin-notebook-form-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem 5rem;
+}
+.top-nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+.form-container-card {
+    padding: 2.5rem !important;
+    border-radius: 20px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+}
+.form-card-head {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-light);
+}
+.head-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .85rem;
+    font-weight: 800;
+    color: var(--brand-gold);
+    background: rgba(199, 149, 59, 0.1);
+    padding: .3rem .8rem;
+    border-radius: 20px;
+    margin-bottom: .6rem;
+}
+.head-badge i { width: 15px; height: 15px; }
+.form-card-head h1 {
+    font-size: 1.9rem;
+    font-weight: 900;
+    color: #fff;
+    margin: 0 0 .5rem;
+}
+
+.form-section-box {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+.section-subtitle {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--brand-gold);
+    margin: 0 0 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+.section-subtitle i { width: 18px; height: 18px; }
+
+.fields-subgrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.2rem;
+}
+.span-2 { grid-column: 1 / -1; }
+.full-width { width: 100%; }
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+}
+.form-field label {
+    font-size: .88rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+.form-field label .req {
+    color: #ef4444;
+}
+.form-field input,
+.form-field select,
+.form-field textarea {
+    width: 100%;
+    padding: .78rem 1rem;
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font: inherit;
+    font-size: .92rem;
+    transition: border-color .2s;
+}
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+    border-color: var(--brand-gold);
+    outline: none;
+}
+.field-error {
+    color: #ef4444;
+    font-size: .8rem;
+    font-weight: 700;
+}
+
+.checkbox-field {
+    justify-content: center;
+    grid-column: 1 / -1;
+    padding: .5rem 0;
+}
+.toggle-checkbox-label {
+    display: inline-flex;
+    align-items: center;
+    gap: .6rem;
+    cursor: pointer;
+    font-weight: 800;
+    color: #fff;
+    font-size: .95rem;
+}
+.toggle-checkbox-label input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--brand-gold);
+}
+
+.cover-upload-flex {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+.current-cover-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .4rem;
+}
+.current-cover-preview img {
+    width: 90px;
+    height: 135px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--border-light);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+.current-cover-preview span {
+    font-size: .75rem;
+    color: var(--text-muted);
+}
+.upload-control-area {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    flex: 1;
+}
+
+.form-actions-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-light);
+}
+.btn-lg {
+    padding: .85rem 1.8rem;
+    font-size: 1.05rem;
+}
+
+@media(max-width: 768px) {
+    .fields-subgrid { grid-template-columns: 1fr; }
+    .form-container-card { padding: 1.5rem !important; }
+    .cover-upload-flex { flex-direction: column; align-items: flex-start; }
+}
+</style>
+{% endblock %}

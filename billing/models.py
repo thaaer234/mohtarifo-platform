@@ -443,3 +443,40 @@ class PlatformExpense(models.Model):
     def __str__(self):
         return f"{self.title}: {self.amount_syp} ل.س / {self.amount_usd} $"
 
+
+
+class ShamCashInvoice(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", "معلقة"
+        PAID = "paid", "مدفوعة"
+        EXPIRED = "expired", "منتهية الصلاحية"
+        FAILED = "failed", "فشلت"
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="shamcash_invoices", verbose_name="الطالب")
+    course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True, blank=True, related_name="shamcash_invoices", verbose_name="الدورة")
+    package = models.ForeignKey("CoursePackage", on_delete=models.SET_NULL, null=True, blank=True, related_name="shamcash_invoices", verbose_name="الباقة")
+    
+    invoice_number = models.CharField(max_length=80, unique=True, verbose_name="رقم الفاتورة")
+    amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name="المبلغ المطلوب")
+    currency = models.CharField(max_length=10, default="SYP", verbose_name="العملة")
+    wallet_address = models.CharField(max_length=120, blank=True, verbose_name="محفظة الاستلام")
+    
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING, verbose_name="حالة الفاتورة")
+    
+    transaction_ref = models.CharField(max_length=100, blank=True, verbose_name="رقم العملية في شام كاش")
+    paid_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="المبلغ المدفوع فعلياً")
+    counterparty = models.CharField(max_length=120, blank=True, verbose_name="المُرسِل")
+    
+    metadata = models.JSONField(default=dict, blank=True, verbose_name="بيانات إضافية")
+    expires_at = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ الانتهاء")
+    paid_at = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ الدفع")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإنشاء")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="آخر تحديث")
+
+    class Meta:
+        verbose_name = "فاتورة شام كاش"
+        verbose_name_plural = "فواتير شام كاش"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.invoice_number} - {self.user.username} ({self.get_status_display()})"

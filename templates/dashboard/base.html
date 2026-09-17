@@ -237,6 +237,11 @@
                         <i data-lucide="shield-check" style="width: 14px;"></i>
                         <span>لوحة الإدارة</span>
                     </div>
+                {% elif user_is_delivery_agent %}
+                    <div class="badge badge-info desktop-only mr-4" style="background: rgba(6, 182, 212, 0.1); color: #06b6d4; border: 1px solid rgba(6, 182, 212, 0.2);">
+                        <i data-lucide="bike" style="width: 14px;"></i>
+                        <span>لوحة المندوب</span>
+                    </div>
                 {% elif user_has_instructor_profile %}
                     <div class="badge badge-success desktop-only mr-4" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);">
                         <i data-lucide="award" style="width: 14px;"></i>
@@ -260,20 +265,29 @@
                         <a href="{% url 'dashboard:admin_sell_codes' %}" class="nav-link {% if 'sell-codes' in request.path %}active{% endif %}" style="color: var(--brand-gold); font-weight: 800; display: flex; align-items: center; gap: 4px;"><i data-lucide="sparkles" style="width: 13px;"></i> بيع أكواد</a>
                         <a href="{% url 'dashboard:admin_partners' %}" class="nav-link {% if 'partners' in request.path %}active{% endif %}">الشركاء</a>
                         <a href="{% url 'dashboard:admin_packages' %}" class="nav-link {% if 'packages' in request.path %}active{% endif %}">الباقات</a>
+                        <a href="{% url 'dashboard:admin_notebooks' %}" class="nav-link {% if 'notebooks' in request.path %}active{% endif %}">سوق النوط</a>
+                    {% elif user_is_delivery_agent %}
+                        <a href="{% url 'dashboard:driver_dashboard' %}" class="nav-link {% if request.path == '/driver/' %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 4px; color: #06b6d4; font-weight: 800;"><i data-lucide="truck" style="width: 15px;"></i> لوحة التوصيل GPS</a>
+                        <a href="{% url 'dashboard:driver_orders' %}" class="nav-link {% if '/driver/orders/' in request.path %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="package-check" style="width: 15px;"></i> طلباتي المكلفة</a>
                     {% elif user_has_instructor_profile %}
                         <a href="{% url 'dashboard:instructor_courses' %}" class="nav-link {% if '/instructor/courses/' in request.path or request.path == '/instructor/' %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="graduation-cap" style="width: 15px;"></i> دوراتي التدريبية</a>
                         <a href="{% url 'dashboard:instructor_students' %}" class="nav-link {% if '/instructor/students/' in request.path %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="users" style="width: 15px;"></i> سجل الطلاب</a>
                         <a href="{% url 'dashboard:instructor_finance' %}" class="nav-link {% if '/instructor/finance/' in request.path %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="wallet" style="width: 15px;"></i> المالية والأرباح</a>
                         <a href="{% url 'dashboard:instructor_announcements' %}" class="nav-link {% if '/instructor/announcements/' in request.path %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="send" style="width: 15px;"></i> إرسال تنبيه للطلاب</a>
                         <a href="{% url 'dashboard:instructor_settings' %}" class="nav-link {% if '/instructor/settings/' in request.path %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="key-round" style="width: 15px;"></i> إعدادات الحساب</a>
+                        <a href="{% url 'dashboard:instructor_notebooks' %}" class="nav-link {% if '/instructor/notebooks/' in request.path %}active{% endif %}" style="display: inline-flex; align-items: center; gap: 4px;"><i data-lucide="notebook-tabs" style="width: 15px;"></i> نوطي</a>
                     {% elif user.is_authenticated %}
                         <a href="{% url 'dashboard:student_dashboard' %}" class="nav-link {% if request.path == '/dashboard/student/' %}active{% endif %}">الرئيسية</a>
                         <a href="{% url 'dashboard:my_courses' %}" class="nav-link {% if 'my-courses' in request.path %}active{% endif %}">مكتبتي</a>
                         <a href="{% url 'dashboard:shop' %}" class="nav-link {% if '/shop/' in request.path %}active{% endif %}">تسوق</a>
+                        <a href="{% url 'dashboard:notebook_market' %}" class="nav-link {% if '/notebooks/' in request.path %}active{% endif %}">سوق النوط</a>
+                        <a href="{% url 'dashboard:notebook_orders' %}" class="nav-link {% if '/student/notebook-orders/' in request.path %}active{% endif %}">طلباتي</a>
                         <a href="{% url 'dashboard:notifications' %}" class="nav-link {% if 'notifications' in request.path %}active{% endif %}">تنبيهات</a>
                     {% else %}
+
                         <a href="{% url 'dashboard:landing' %}" class="nav-link active">الرئيسية</a>
                         <a href="{% url 'dashboard:shop' %}" class="nav-link">تسوق</a>
+                        <a href="{% url 'dashboard:notebook_market' %}" class="nav-link">سوق النوط</a>
                         <a href="{% url 'dashboard:about' %}" class="nav-link">عن المنصة</a>
                         <a href="{% url 'dashboard:contact' %}" class="nav-link">اتصل بنا</a>
                     {% endif %}
@@ -337,6 +351,20 @@
                 <a href="{% url 'dashboard:admin_sell_codes' %}" class="mobile-nav-link gold" style="color: var(--brand-gold) !important; font-weight: 800;"><i data-lucide="sparkles"></i> بيع أكواد</a>
                 <a href="{% url 'dashboard:admin_partners' %}" class="mobile-nav-link"><i data-lucide="users"></i> الشركاء</a>
                 <a href="{% url 'dashboard:admin_packages' %}" class="mobile-nav-link"><i data-lucide="package"></i> الباقات</a>
+                <a href="{% url 'dashboard:admin_notebooks' %}" class="mobile-nav-link"><i data-lucide="notebook-tabs"></i> سوق النوط</a>
+                
+                <div class="mobile-auth-separator"></div>
+                <form action="{% url 'logout' %}" method="post" style="width: 100%;">
+                    {% csrf_token %}
+                    <button type="submit" class="mobile-nav-link text-danger" style="background: none; border: none; width: 100%; text-align: right; display: flex; align-items: center; gap: 8px; padding: 12px 16px;"><i data-lucide="log-out"></i> خروج</button>
+                </form>
+            {% elif user_is_delivery_agent %}
+                <div class="badge badge-info mb-4" style="display: inline-flex; width: 100%; justify-content: center; padding: 10px; border-radius: 8px; background: rgba(6, 182, 212, 0.1); color: #06b6d4; border: 1px solid rgba(6, 182, 212, 0.2);">
+                    <i data-lucide="bike" style="width: 14px; margin-left: 4px;"></i>
+                    <span>لوحة المندوب</span>
+                </div>
+                <a href="{% url 'dashboard:driver_dashboard' %}" class="mobile-nav-link {% if request.path == '/driver/' %}active{% endif %}"><i data-lucide="truck"></i> لوحة التوصيل GPS</a>
+                <a href="{% url 'dashboard:driver_orders' %}" class="mobile-nav-link {% if '/driver/orders/' in request.path %}active{% endif %}"><i data-lucide="package-check"></i> طلباتي المكلفة</a>
                 
                 <div class="mobile-auth-separator"></div>
                 <form action="{% url 'logout' %}" method="post" style="width: 100%;">
@@ -353,6 +381,7 @@
                 <a href="{% url 'dashboard:instructor_finance' %}" class="mobile-nav-link {% if '/instructor/finance/' in request.path %}active{% endif %}"><i data-lucide="wallet"></i> المالية والأرباح</a>
                 <a href="{% url 'dashboard:instructor_announcements' %}" class="mobile-nav-link {% if '/instructor/announcements/' in request.path %}active{% endif %}"><i data-lucide="send"></i> إرسال تنبيه للطلاب</a>
                 <a href="{% url 'dashboard:instructor_settings' %}" class="mobile-nav-link {% if '/instructor/settings/' in request.path %}active{% endif %}"><i data-lucide="key-round"></i> إعدادات الحساب</a>
+                <a href="{% url 'dashboard:instructor_notebooks' %}" class="mobile-nav-link {% if '/instructor/notebooks/' in request.path %}active{% endif %}"><i data-lucide="notebook-tabs"></i> نوطي وطلباتها</a>
                 
                 <div class="mobile-auth-separator"></div>
                 <form action="{% url 'logout' %}" method="post" style="width: 100%;">
@@ -362,6 +391,7 @@
             {% else %}
                 <a href="{% url 'dashboard:landing' %}" class="mobile-nav-link"><i data-lucide="home"></i> الرئيسية</a>
                 <a href="{% url 'dashboard:shop' %}" class="mobile-nav-link"><i data-lucide="shopping-bag"></i> تسوق</a>
+                <a href="{% url 'dashboard:notebook_market' %}" class="mobile-nav-link"><i data-lucide="notebook-tabs"></i> سوق النوط</a>
                 <a href="{% url 'dashboard:about' %}" class="mobile-nav-link"><i data-lucide="info"></i> عن المنصة</a>
                 <a href="{% url 'dashboard:contact' %}" class="mobile-nav-link"><i data-lucide="phone"></i> اتصل بنا</a>
                 <div class="mobile-auth-separator"></div>
@@ -418,7 +448,22 @@
                     <i data-lucide="user"></i>
                     <span>حسابي</span>
                 </a>
+            {% elif user_is_delivery_agent %}
+                <!-- Driver Bottom Nav -->
+                <a href="{% url 'dashboard:driver_dashboard' %}" class="bottom-nav-item {% if request.path == '/driver/' %}active{% endif %}">
+                    <i data-lucide="truck"></i>
+                    <span>التوصيل</span>
+                </a>
+                <a href="{% url 'dashboard:driver_orders' %}" class="bottom-nav-item {% if '/driver/orders/' in request.path %}active{% endif %}">
+                    <i data-lucide="package-check"></i>
+                    <span>الطلبات</span>
+                </a>
+                <a href="{% url 'dashboard:profile' %}" class="bottom-nav-item {% if '/profile/' in request.path %}active{% endif %}">
+                    <i data-lucide="user"></i>
+                    <span>حسابي</span>
+                </a>
             {% elif user_has_instructor_profile %}
+
                 <!-- Instructor Bottom Nav -->
                 <a href="{% url 'dashboard:instructor_courses' %}" class="bottom-nav-item {% if '/instructor/courses/' in request.path or request.path == '/instructor/' %}active{% endif %}">
                     <i data-lucide="graduation-cap"></i>
@@ -436,9 +481,8 @@
                     <i data-lucide="send"></i>
                     <span>إشعار</span>
                 </a>
-            {% else %}
                 <!-- Student Bottom Nav -->
-                <a href="{% url 'dashboard:student_dashboard' %}" class="bottom-nav-item {% if '/student/' in request.path %}active{% endif %}">
+                <a href="{% url 'dashboard:student_dashboard' %}" class="bottom-nav-item {% if '/student/' in request.path and 'notebook-orders' not in request.path and 'my-courses' not in request.path and 'notifications' not in request.path and 'profile' not in request.path %}active{% endif %}">
                     <i data-lucide="home"></i>
                     <span>الرئيسية</span>
                 </a>
@@ -446,13 +490,12 @@
                     <i data-lucide="book-open"></i>
                     <span>دوراتي</span>
                 </a>
-                <a href="{% url 'dashboard:shop' %}" class="bottom-nav-item {% if '/shop/' in request.path %}active{% endif %}">
-                    <i data-lucide="shopping-bag"></i>
-                    <span>تسوق</span>
+                <a href="{% url 'dashboard:notebook_orders' %}" class="bottom-nav-item {% if '/student/notebook-orders/' in request.path %}active{% endif %}">
+                    <i data-lucide="package"></i>
+                    <span>طلباتي</span>
                 </a>
-                <a href="{% url 'dashboard:notifications' %}" class="bottom-nav-item {% if '/notifications/' in request.path %}active{% endif %}">
-                    <i data-lucide="bell"></i>
-                    <span>تنبيهات</span>
+                <a href="{% url 'dashboard:shop' %}" class="bottom-nav-item {% if '/shop/' in request.path %}active{% endif %}">
+                    <i data-lucide="shopping-bag"></i><span>تسوق</span>
                 </a>
                 <a href="{% url 'dashboard:profile' %}" class="bottom-nav-item {% if '/profile/' in request.path %}active{% endif %}">
                     <i data-lucide="user"></i>

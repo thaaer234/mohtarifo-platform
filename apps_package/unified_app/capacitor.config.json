@@ -1,0 +1,27 @@
+{
+  "appId": "pro.academy.app",
+  "appName": "محترفو التعليم",
+  "webDir": "www",
+  "server": {
+    "url": "https://pro-academy.pro/",
+    "cleartext": false,
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "PrivacyScreen": {
+      "enable": true
+    },
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#080808"
+    }
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true
+  },
+  "ios": {
+    "allowsLinkPreview": false,
+    "scrollEnabled": true
+  }
+}

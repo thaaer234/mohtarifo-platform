@@ -1,0 +1,990 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% block title %}طلب نوطة: {{ product.title }} | محترفو التعليم{% endblock %}
+
+{% block extra_css %}
+<!-- Leaflet Map CSS for Interactive In-Page Map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+{% endblock %}
+
+{% block content %}
+<div class="mobile-checkout-head">
+    <a href="{% url 'dashboard:notebook_detail' product.id %}" class="checkout-back" aria-label="العودة لتفاصيل النوطة"><i data-lucide="arrow-right"></i></a>
+    <div>
+        <span>إتمام الطلب</span>
+        <small>بقيت خطوة واحدة وتوصل نوطتك لعندك ✨</small>
+    </div>
+    <span class="secure-dot"><i data-lucide="shield-check"></i></span>
+</div>
+
+<div class="checkout-progress" aria-label="مراحل الطلب">
+    <div class="progress-item done"><span><i data-lucide="check"></i></span><small>النوطة</small></div>
+    <div class="progress-line active"></div>
+    <div class="progress-item active"><span>2</span><small>التوصيل والدفع</small></div>
+    <div class="progress-line"></div>
+    <div class="progress-item"><span>3</span><small>تم الطلب</small></div>
+</div>
+
+<div class="order-layout">
+    <aside class="order-summary">
+        <div class="summary-book-badge">
+            <div class="summary-book-thumb">
+                {% if product.cover %}
+                    <img src="{{ product.cover.url }}" alt="{{ product.title }}" class="order-cover-thumb" id="order-book-cover">
+                {% else %}
+                    <img src="{% static 'dashboard/notebooks/social-studies-grade9.png' %}" alt="{{ product.title }}" class="order-cover-thumb" id="order-book-cover">
+                {% endif %}
+            </div>
+            <div>
+                <span class="step-label"><i data-lucide="sparkles"></i> نسخة ورقية معتمدة</span>
+                <h1>{{ product.title }}</h1>
+                <p class="teacher-sub">إشراف وإعداد: {{ product.instructor.get_full_name|default:product.instructor.username }}</p>
+            </div>
+        </div>
+
+        <div class="summary-pricing-card">
+            <div class="pricing-row">
+                <span>سعر النسخة الواحدة:</span>
+                <strong class="gold-text"><span id="unit-price">{{ product.price_syp }}</span> ل.س</strong>
+            </div>
+            <div class="pricing-row">
+                <span>الكمية المطلوبة:</span>
+                <strong id="display-quantity">1</strong>
+            </div>
+            <div class="pricing-row total-row">
+                <span>المجموع النهائي:</span>
+                <strong class="gold-text"><span id="display-total">{{ product.price_syp }}</span> ل.س</strong>
+            </div>
+            <div class="stock-status-tag">
+                <i data-lucide="check-circle-2"></i>
+                <span>المتوفر بالمستودع: {{ product.stock }} نسخة</span>
+            </div>
+        </div>
+
+        <div class="delivery-note">
+            <i data-lucide="shield-check"></i>
+            <div>
+                <strong>ضمان التوصيل والأمان:</strong>
+                <span>موعد وتكلفة التسليم تثبتها المنصة بدقة بعد فحص إحداثيات موقعك، وتظهر في حسابك مباشرة بدون تأخير.</span>
+            </div>
+        </div>
+        <div class="summary-perks">
+            <span><i data-lucide="package-check"></i> تغليف آمن</span>
+            <span><i data-lucide="map-pin"></i> تتبع الطلب</span>
+        </div>
+    </aside>
+
+    <section class="address-form-shell">
+        <div class="section-title">
+            <div class="st-icon-box"><span>1</span><i data-lucide="map-pinned"></i></div>
+            <div>
+                <h2>عنوان التوصيل وتحديد الموقع</h2>
+                <p>حدد موقعك عبر الخريطة التفاعلية المباشرة أو اضغط "تحديد موقعي التلقائي".</p>
+            </div>
+        </div>
+
+        <form method="post" id="notebook-order-form" novalidate>{% csrf_token %}
+            {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors }}</div>{% endif %}
+
+            <div class="form-grid">
+                {% for field in form.visible_fields %}
+                    {% if field.name != 'payment_method' and field.name != 'payment_reference' and field.name != 'location_latitude' and field.name != 'location_longitude' %}
+                        <div class="field {% if field.name == 'address' %}wide{% endif %}">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% for error in field.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            {{ form.location_latitude }}{{ form.location_longitude }}
+
+            <!-- Interactive In-Page Map Section -->
+            <div class="interactive-map-card" id="map-section-card">
+                <div class="map-card-header">
+                    <div class="map-title-inline">
+                        <i data-lucide="crosshair"></i>
+                        <span>الخريطة التفاعلية (انقر لتثبيت النقطة):</span>
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" id="detect-location">
+                        <i data-lucide="locate-fixed"></i>
+                        <span>تحديد موقعي عبر GPS</span>
+                    </button>
+                </div>
+
+                <div id="interactive-delivery-map" class="leaflet-map-frame"></div>
+
+                <div class="map-status-bar">
+                    <div class="coords-display">
+                        <i data-lucide="map-pin" class="gold"></i>
+                        <span id="coords-text">لم يتم تحديد النقطة بعد (انقر على الخريطة أو استخدم الزر)</span>
+                    </div>
+                    <div class="location-error" id="location-error" role="alert"></div>
+                </div>
+            </div>
+
+            <!-- Payment Method Box -->
+            <div class="payment-method-box">
+                <div class="pm-header">
+                    <span class="section-number">2</span>
+                    <div><strong>كيف بتحب تدفع؟</strong><small>اختر الطريقة الأنسب إلك</small></div>
+                </div>
+
+                <div class="pm-options-row">
+                    <label class="pm-choice" id="choice-cod">
+                        <input type="radio" name="payment_method" value="cod" {% if form.payment_method.value != 'shamcash' %}checked{% endif %} onchange="togglePaymentBox('cod')">
+                        <span class="pm-choice-card">
+                            <span class="pm-icon cod-icon"><i data-lucide="banknote"></i></span>
+                            <span class="pm-title">الدفع عند الاستلام (COD)</span>
+                            <small class="pm-sub">تسليم المبلغ نقداً للمندوب عند استلام النوطة</small>
+                            <span class="choice-check"><i data-lucide="check"></i></span>
+                        </span>
+                    </label>
+
+                    <label class="pm-choice" id="choice-shamcash">
+                        <input type="radio" name="payment_method" value="shamcash" {% if form.payment_method.value == 'shamcash' %}checked{% endif %} onchange="togglePaymentBox('shamcash')">
+                        <span class="pm-choice-card shamcash-card">
+                            <span class="pm-icon sham-icon"><i data-lucide="smartphone"></i></span>
+                            <div class="sc-badge-inline">الأسرع</div>
+                            <span class="pm-title">شام كاش (Sham Cash)</span>
+                            <small class="pm-sub">حوّل مباشرة وأضف رقم العملية</small>
+                            <span class="choice-check"><i data-lucide="check"></i></span>
+                        </span>
+                    </label>
+                </div>
+
+                <!-- ShamCash Instructions (shown when selected) -->
+                <div id="shamcash-instructions" class="shamcash-info-panel" style="display: none;">
+                    <div class="sc-panel-head">
+                        <i data-lucide="qr-code"></i>
+                        <span>امسح الرمز أو انسخ العنوان للتحويل عبر تطبيق شام كاش:</span>
+                    </div>
+                    <div class="sc-flex-row">
+                        <div class="sc-qr-box">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=d00238b8c3dd4dbae2941079461ea2bf" alt="QR شام كاش">
+                        </div>
+                        <div class="sc-wallet-details">
+                            <div class="sc-wallet-code">
+                                <span class="sc-label">عنوان محفظة المنصة المعتمد:</span>
+                                <code>d00238b8c3dd4dbae2941079461ea2bf</code>
+                                <button type="button" class="btn-copy-code" id="btn-copy-wallet" onclick="copyWalletAddress(this)">
+                                    <i data-lucide="copy"></i> نسخ العنوان
+                                </button>
+                            </div>
+                            <div class="sc-ref-input-group">
+                                <label for="id_payment_reference">رقم العملية أو رقم الحساب المحوِّل منه:</label>
+                                <input type="text" name="payment_reference" id="id_payment_reference" class="sc-ref-field" value="{{ form.payment_reference.value|default:'' }}" placeholder="أدخل رقم العملية أو الحوالة من تطبيق شام كاش">
+                                {% for error in form.payment_reference.errors %}<small class="field-error">{{ error }}</small>{% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <label class="confirm-location">
+                <input type="checkbox" required id="confirm-box">
+                <span>تأكدت أن النقطة والعنوان وبيانات الدفع صحيحة ويمكن للمندوب الوصول إليّ.</span>
+            </label>
+
+            <button type="submit" class="btn btn-primary submit-order" id="submit-btn">
+                <i data-lucide="package-plus"></i>
+                <span>تأكيد طلب النوطة الآن</span>
+            </button>
+        </form>
+    </section>
+</div>
+
+<div class="mobile-submit-dock">
+    <div class="dock-total"><small>المجموع</small><strong><span id="mobile-display-total">{{ product.price_syp }}</span> <em>ل.س</em></strong></div>
+    <button type="submit" form="notebook-order-form" class="dock-submit"><span>تأكيد الطلب</span><i data-lucide="arrow-left"></i></button>
+</div>
+
+<!-- Leaflet Map JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+<style>
+/* ========================================================================== 
+   Mobile-First Responsive Checkout & Delivery Address Setup
+   ========================================================================== */
+
+.mobile-checkout-head,
+.checkout-progress,
+.mobile-submit-dock { display: none; }
+
+.order-layout {
+    --order-cover-accent: var(--brand-gold, #d5a24a);
+    --order-cover-glow: rgba(var(--brand-gold-rgb), 0.25);
+    display: grid;
+    grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.3fr);
+    gap: 2.5rem;
+    align-items: start;
+    padding: 1.5rem 0 4rem;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Sidebar Order Summary */
+.order-summary {
+    position: sticky;
+    top: 90px;
+    padding: 1.5rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+.summary-book-badge {
+    display: flex;
+    gap: 1.1rem;
+    align-items: center;
+    margin-bottom: 1.3rem;
+}
+.summary-book-thumb {
+    width: 76px;
+    height: 110px;
+    flex-shrink: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: -4px 8px 20px rgba(0,0,0,0.3);
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-light);
+}
+.summary-book-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.step-label {
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    color: var(--brand-gold);
+    font-weight: 900;
+    font-size: 0.76rem;
+    margin-bottom: 0.2rem;
+}
+.step-label svg { width: 13px; height: 13px; }
+.order-summary h1 {
+    font-size: 1.25rem;
+    margin: 0 0 0.3rem;
+    line-height: 1.3;
+    color: var(--text-primary);
+}
+.teacher-sub {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.summary-pricing-card {
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    padding: 1.1rem;
+    margin-bottom: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+.pricing-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    font-weight: 700;
+}
+.pricing-row.total-row {
+    margin-top: 0.4rem;
+    padding-top: 0.7rem;
+    border-top: 1px dashed var(--border-light);
+    font-size: 1.05rem;
+    color: var(--text-primary);
+    font-weight: 900;
+}
+.gold-text { color: var(--brand-gold); }
+.stock-status-tag {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.76rem;
+    font-weight: 800;
+    color: #10b981;
+    margin-top: 0.3rem;
+}
+.stock-status-tag svg { width: 14px; height: 14px; }
+
+.delivery-note {
+    display: flex;
+    gap: 0.8rem;
+    background: rgba(var(--brand-gold-rgb), 0.06);
+    border: 1px solid rgba(var(--brand-gold-rgb), 0.2);
+    border-radius: 12px;
+    padding: 0.9rem 1rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+.delivery-note i, .delivery-note svg {
+    color: var(--brand-gold);
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin-top: 0.15rem;
+}
+.summary-perks { display: flex; gap: .55rem; margin-top: .85rem; }
+.summary-perks span { flex: 1; display: flex; align-items: center; justify-content: center; gap: .35rem; padding: .55rem; border-radius: 10px; background: var(--bg-surface-elevated); color: var(--text-muted); font-size: .72rem; font-weight: 800; }
+.summary-perks svg { width: 14px; height: 14px; color: var(--brand-gold); }
+
+/* Form section */
+.address-form-shell {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+    padding: 1.8rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+.section-title {
+    display: flex;
+    gap: 0.85rem;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+.st-icon-box {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: rgba(var(--brand-gold-rgb), 0.14);
+    border: 1px solid rgba(var(--brand-gold-rgb), 0.3);
+    display: grid;
+    place-items: center;
+    color: var(--brand-gold);
+    flex-shrink: 0;
+}
+.st-icon-box svg { width: 20px; height: 20px; }
+.st-icon-box span { display: none; }
+.section-title h2 { margin: 0 0 0.2rem; font-size: 1.3rem; color: var(--text-primary); font-weight: 800; }
+.section-title p { color: var(--text-muted); margin: 0; font-size: 0.84rem; }
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.3rem;
+}
+.field { display: flex; flex-direction: column; gap: 0.35rem; }
+.field.wide { grid-column: 1 / -1; }
+.field label { font-weight: 800; font-size: 0.82rem; color: var(--text-secondary); }
+.field input, .field textarea, .field select {
+    width: 100%;
+    padding: 0.75rem 0.95rem;
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    background: var(--bg-surface-elevated);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.92rem;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+.field input:focus, .field textarea:focus, .field select:focus {
+    border-color: var(--brand-gold);
+    box-shadow: 0 0 0 3px rgba(var(--brand-gold-rgb), 0.15);
+    outline: none;
+}
+.field-error, .location-error { color: #ef4444; font-size: 0.8rem; font-weight: 700; margin-top: 0.25rem; }
+
+/* Interactive In-Page Map Section */
+.interactive-map-card {
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 1.1rem;
+    margin-bottom: 1.5rem;
+}
+.map-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+.map-title-inline {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+.map-title-inline svg { width: 16px; height: 16px; color: var(--brand-gold); }
+
+.leaflet-map-frame {
+    width: 100%;
+    height: 300px;
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.12);
+    z-index: 10;
+}
+.map-status-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+.coords-display {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-weight: 700;
+}
+.coords-display svg { width: 15px; height: 15px; }
+
+/* Payment Box */
+.payment-method-box {
+    margin: 1.3rem 0;
+    padding: 1.2rem;
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+}
+.pm-header {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--brand-gold);
+    font-size: 0.9rem;
+    margin-bottom: 0.9rem;
+    font-weight: 800;
+}
+.pm-header > div { display: flex; flex-direction: column; gap: .15rem; }
+.pm-header small { color: var(--text-muted); font-size: .72rem; font-weight: 600; }
+.section-number { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 9px; background: var(--brand-gold); color: #111; font-weight: 900; }
+.pm-header svg { width: 17px; height: 17px; }
+.pm-options-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem; }
+.pm-choice { cursor: pointer; position: relative; }
+.pm-choice input[type="radio"] { position: absolute; opacity: 0; }
+.pm-choice-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.95rem;
+    border: 1.5px solid var(--border-light);
+    border-radius: 12px;
+    background: var(--bg-surface);
+    transition: all 0.2s ease;
+    height: 100%;
+    box-sizing: border-box;
+}
+.pm-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 11px; background: rgba(var(--brand-gold-rgb), .12); }
+.sham-icon { background: rgba(16,185,129,.12); color: #10b981; }
+.choice-check { position: absolute; top: .75rem; left: .75rem; width: 21px; height: 21px; border-radius: 50%; border: 1.5px solid var(--border-light); display: grid; place-items: center; color: transparent; transition: .2s ease; }
+.choice-check svg { width: 13px; height: 13px; }
+.pm-choice input:checked + .pm-choice-card .choice-check { background: var(--brand-gold); border-color: var(--brand-gold); color: #111; }
+.pm-choice input:checked + .shamcash-card .choice-check { background: #10b981; border-color: #10b981; }
+.pm-choice-card svg { width: 20px; height: 20px; color: var(--brand-gold); }
+.pm-title { font-weight: 800; color: var(--text-primary); font-size: 0.9rem; }
+.pm-sub { color: var(--text-muted); font-size: 0.74rem; line-height: 1.4; }
+.sc-badge-inline {
+    background: #10b981;
+    color: #000;
+    font-weight: 900;
+    padding: 2px 6px;
+    border-radius: 5px;
+    font-size: 0.68rem;
+    width: fit-content;
+}
+
+.pm-choice input[type="radio"]:checked + .pm-choice-card {
+    border-color: var(--brand-gold);
+    background: rgba(var(--brand-gold-rgb), 0.08);
+    box-shadow: 0 0 16px rgba(var(--brand-gold-rgb), 0.2);
+}
+.pm-choice input[type="radio"]:checked + .shamcash-card {
+    border-color: #10b981;
+    background: rgba(16, 185, 129, 0.08);
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.2);
+}
+
+.shamcash-info-panel {
+    margin-top: 1.1rem;
+    padding: 1.1rem;
+    background: rgba(16, 185, 129, 0.05);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    border-radius: 12px;
+}
+.sc-panel-head {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: #10b981;
+    font-size: 0.84rem;
+    font-weight: 800;
+    margin-bottom: 0.9rem;
+}
+.sc-panel-head svg { width: 16px; height: 16px; }
+.sc-flex-row { display: flex; gap: 1.2rem; align-items: center; }
+.sc-qr-box {
+    background: #fff;
+    padding: 0.4rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    flex-shrink: 0;
+}
+.sc-qr-box img { display: block; width: 110px; height: 110px; }
+.sc-wallet-details { display: flex; flex-direction: column; gap: 0.75rem; flex: 1; min-width: 0; }
+.sc-wallet-code { display: flex; flex-direction: column; gap: 0.3rem; }
+.sc-label { font-size: 0.76rem; color: var(--text-muted); font-weight: 700; }
+.sc-wallet-code code {
+    background: var(--bg-surface);
+    padding: 0.5rem 0.7rem;
+    border-radius: 8px;
+    font-family: monospace;
+    color: #38bdf8;
+    font-size: 0.8rem;
+    word-break: break-all;
+    border: 1px solid var(--border-light);
+}
+.btn-copy-code {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    width: fit-content;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.76rem;
+    font-weight: 800;
+    background: var(--bg-surface-elevated);
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 0.2rem;
+    transition: all 0.2s ease;
+}
+.btn-copy-code:hover { border-color: #10b981; color: #10b981; }
+.sc-ref-input-group { display: flex; flex-direction: column; gap: 0.35rem; }
+.sc-ref-input-group label { font-size: 0.78rem; font-weight: 800; color: var(--text-secondary); }
+.sc-ref-field {
+    padding: 0.65rem 0.85rem;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    border-radius: 8px;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-size: 0.88rem;
+}
+
+.confirm-location {
+    display: flex;
+    gap: .75rem;
+    align-items: flex-start;
+    line-height: 1.6;
+    font-size: .88rem;
+    margin: 1.5rem 0;
+    color: var(--text-secondary);
+}
+.confirm-location input { margin-top: .35rem; }
+.submit-order {
+    width: 100%;
+    min-height: 52px;
+    font-size: 1.05rem;
+    font-weight: 900;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .6rem;
+}
+
+@media(max-width: 960px) {
+    .order-layout { grid-template-columns: 1fr; gap: 2rem; }
+    .order-summary { position: static; }
+    .form-grid { grid-template-columns: 1fr; }
+    .field.wide { grid-column: auto; }
+    .pm-options-row { grid-template-columns: 1fr; }
+    .sc-flex-row { flex-direction: column; }
+}
+
+@media(max-width: 640px) {
+    body { overflow-x: hidden; }
+    .main-content { padding-inline: 0 !important; padding-bottom: 106px !important; }
+
+    .mobile-checkout-head {
+        display: flex; align-items: center; justify-content: space-between; gap: .8rem;
+        padding: .9rem 1rem .5rem; max-width: 520px; margin: 0 auto;
+    }
+    .mobile-checkout-head > div { flex: 1; display: flex; flex-direction: column; }
+    .mobile-checkout-head > div > span { font-size: 1rem; color: var(--text-primary); font-weight: 900; }
+    .mobile-checkout-head small { color: var(--text-muted); font-size: .68rem; font-weight: 700; }
+    .checkout-back, .secure-dot { width: 39px; height: 39px; border-radius: 12px; display: grid; place-items: center; background: var(--bg-surface); color: var(--text-primary); border: 1px solid var(--border-light); box-shadow: 0 5px 18px rgba(0,0,0,.08); }
+    .checkout-back svg, .secure-dot svg { width: 18px; height: 18px; }
+    .secure-dot { color: #10b981; }
+
+    .checkout-progress { display: flex; align-items: flex-start; padding: .65rem 1.6rem 1rem; max-width: 420px; margin: 0 auto; }
+    .progress-item { display: flex; flex-direction: column; align-items: center; gap: .3rem; color: var(--text-muted); flex-shrink: 0; }
+    .progress-item > span { width: 27px; height: 27px; display: grid; place-items: center; border-radius: 50%; border: 1.5px solid var(--border-light); background: var(--bg-surface); font-size: .72rem; font-weight: 900; }
+    .progress-item small { font-size: .6rem; font-weight: 800; white-space: nowrap; }
+    .progress-item svg { width: 13px; height: 13px; }
+    .progress-item.done > span { background: #10b981; border-color: #10b981; color: white; }
+    .progress-item.active { color: var(--text-primary); }
+    .progress-item.active > span { background: var(--brand-gold); border-color: var(--brand-gold); color: #111; box-shadow: 0 0 0 5px rgba(var(--brand-gold-rgb),.12); }
+    .progress-line { height: 2px; flex: 1; background: var(--border-light); margin: 13px .4rem 0; }
+    .progress-line.active { background: linear-gradient(90deg,var(--brand-gold),#10b981); }
+
+    .order-layout { display: flex; flex-direction: column; gap: .75rem; padding: 0 .7rem 1.25rem; }
+    .order-summary, .address-form-shell { width: 100%; border-radius: 20px; box-sizing: border-box; }
+    .order-summary { padding: .9rem; background: linear-gradient(145deg,rgba(var(--brand-gold-rgb),.09),var(--bg-surface) 55%); }
+    .summary-book-badge { margin-bottom: .8rem; gap: .8rem; }
+    .summary-book-thumb { width: 58px; height: 82px; border-radius: 8px; }
+    .order-summary h1 { font-size: .98rem; max-width: 230px; }
+    .teacher-sub { font-size: .7rem; }
+    .step-label { font-size: .65rem; }
+    .summary-pricing-card { display: grid; grid-template-columns: 1fr 1fr; gap: .45rem 1rem; padding: .75rem; margin: 0; }
+    .pricing-row { font-size: .72rem; }
+    .pricing-row.total-row { grid-column: 1/-1; margin: 0; padding-top: .55rem; font-size: .85rem; }
+    .stock-status-tag { font-size: .67rem; }
+    .delivery-note { display: none; }
+    .summary-perks { margin-top: .6rem; }
+
+    .address-form-shell { padding: 1rem .85rem 1.2rem; box-shadow: none; }
+    .section-title { align-items: flex-start; gap: .7rem; margin-bottom: 1rem; }
+    .section-title h2 { font-size: 1rem; }
+    .section-title p { font-size: .7rem; line-height: 1.55; }
+    .st-icon-box { width: 36px; height: 36px; position: relative; }
+    .st-icon-box span { display: grid; position: absolute; top: -6px; right: -6px; width: 17px; height: 17px; place-items: center; border-radius: 50%; background: var(--brand-gold); color: #111; font-size: .58rem; font-weight: 900; border: 2px solid var(--bg-surface); }
+    .st-icon-box svg { width: 17px; height: 17px; }
+    .form-grid { gap: .75rem; margin-bottom: 1rem; }
+    .field { gap: .3rem; }
+    .field label { font-size: .74rem; }
+    .field input, .field textarea, .field select { min-height: 47px; padding: .7rem .8rem; border-radius: 12px; font-size: 16px; }
+    .field textarea { min-height: 80px; resize: vertical; }
+
+    .interactive-map-card { padding: .7rem; border-radius: 15px; margin-bottom: 1rem; }
+    .map-card-header { align-items: stretch; }
+    .map-title-inline { font-size: .76rem; }
+    #detect-location { width: 100%; min-height: 44px; justify-content: center; border-radius: 11px; }
+    .quick-areas-label { font-size: .67rem; }
+    .quick-pills-list { margin-inline: -.7rem; padding-inline: .7rem; }
+    .area-pill { min-height: 38px; padding-inline: .75rem; }
+    .leaflet-map-frame { height: 235px; border-radius: 11px; }
+    .coords-display { font-size: .68rem; line-height: 1.45; }
+
+    .payment-method-box { margin: .6rem 0 1rem; padding: .8rem; border-radius: 15px; }
+    .pm-header { margin-bottom: .75rem; }
+    .pm-options-row { grid-template-columns: 1fr 1fr; gap: .55rem; }
+    .pm-choice-card { padding: .75rem; min-height: 150px; }
+    .pm-icon { width: 34px; height: 34px; }
+    .pm-title { font-size: .78rem; line-height: 1.5; padding-left: 20px; }
+    .pm-sub { font-size: .64rem; }
+    .sc-badge-inline { position: absolute; top: .78rem; right: 3.2rem; font-size: .56rem; }
+    .choice-check { top: .75rem; left: .65rem; }
+    .sc-flex-row { gap: .8rem; }
+    .sc-qr-box img { width: 124px; height: 124px; }
+    .sc-wallet-code code { direction: ltr; text-align: center; font-size: .7rem; }
+    .btn-copy-code { width: 100%; justify-content: center; min-height: 42px; }
+    .sc-ref-field { min-height: 47px; font-size: 16px; }
+    .confirm-location { font-size: .75rem; margin: 1rem .2rem; }
+    .confirm-location input { width: 20px; height: 20px; flex: 0 0 auto; accent-color: var(--brand-gold); }
+    .submit-order { display: none; }
+
+    .mobile-submit-dock { display: flex; align-items: center; gap: .8rem; position: fixed; z-index: 1000; bottom: 0; left: 0; right: 0; padding: .7rem max(.85rem,env(safe-area-inset-left)) calc(.7rem + env(safe-area-inset-bottom)); background: color-mix(in srgb,var(--bg-surface) 92%,transparent); border-top: 1px solid var(--border-light); backdrop-filter: blur(18px); box-shadow: 0 -8px 30px rgba(0,0,0,.12); }
+    .dock-total { display: flex; flex-direction: column; min-width: 92px; }
+    .dock-total small { color: var(--text-muted); font-size: .65rem; font-weight: 700; }
+    .dock-total strong { color: var(--brand-gold); font-size: .95rem; white-space: nowrap; }
+    .dock-total em { font-style: normal; font-size: .62rem; }
+    .dock-submit { flex: 1; min-height: 50px; border: 0; border-radius: 14px; padding: 0 1.1rem; display: flex; align-items: center; justify-content: center; gap: .6rem; background: linear-gradient(135deg,var(--brand-gold),color-mix(in srgb,var(--brand-gold) 70%,#fff)); color: #111; font: inherit; font-size: .9rem; font-weight: 900; box-shadow: 0 8px 22px var(--order-cover-glow); }
+    .dock-submit svg { width: 18px; height: 18px; }
+}
+
+@media(max-width: 370px) {
+    .pm-options-row { grid-template-columns: 1fr; }
+    .pm-choice-card { min-height: 120px; }
+}
+
+@media(prefers-reduced-motion: reduce) {
+    .pm-choice-card, .area-pill, .dock-submit { transition: none !important; }
+}
+</style>
+
+<script>
+// PWA client-side instant toggle without server requests
+function togglePaymentBox(method) {
+    const box = document.getElementById('shamcash-instructions');
+    if (method === 'shamcash') {
+        box.style.display = 'block';
+        box.setAttribute('aria-hidden', 'false');
+    } else {
+        box.style.display = 'none';
+        box.setAttribute('aria-hidden', 'true');
+    }
+}
+
+async function copyWalletAddress(btn) {
+    const wallet = 'd00238b8c3dd4dbae2941079461ea2bf';
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(wallet);
+        } else {
+            const temp = document.createElement('textarea');
+            temp.value = wallet;
+            temp.style.position = 'fixed';
+            temp.style.opacity = '0';
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            temp.remove();
+        }
+        btn.innerHTML = '<i data-lucide="check"></i> تم النسخ بنجاح!';
+        if (window.lucide) lucide.createIcons();
+        setTimeout(() => {
+            btn.innerHTML = '<i data-lucide="copy"></i> نسخ العنوان';
+            if (window.lucide) lucide.createIcons();
+        }, 2500);
+    } catch (error) {
+        btn.textContent = 'اضغط مطولاً على العنوان لنسخه';
+    }
+}
+
+// Client-side PWA Real-time Calculation & Quantity listener (Zero server requests)
+(function() {
+    const qtyInput = document.getElementById('id_quantity') || document.querySelector('input[name="quantity"]');
+    const unitPriceEl = document.getElementById('unit-price');
+    const displayQty = document.getElementById('display-quantity');
+    const displayTotal = document.getElementById('display-total');
+    const mobileDisplayTotal = document.getElementById('mobile-display-total');
+
+    if (qtyInput && unitPriceEl) {
+        const unitPrice = parseFloat(unitPriceEl.textContent.replace(/[^\d.]/g, '')) || 0;
+        function updateCalc() {
+            const q = Math.max(1, parseInt(qtyInput.value) || 1);
+            if (displayQty) displayQty.textContent = q;
+            const formattedTotal = (q * unitPrice).toLocaleString('en-US');
+            if (displayTotal) displayTotal.textContent = formattedTotal;
+            if (mobileDisplayTotal) mobileDisplayTotal.textContent = formattedTotal;
+        }
+        qtyInput.addEventListener('input', updateCalc);
+        qtyInput.addEventListener('change', updateCalc);
+        updateCalc();
+    }
+})();
+
+// Honor the selected method on first render, including ?payment=shamcash links.
+(function() {
+    const selectedPayment = document.querySelector('input[name="payment_method"]:checked');
+    togglePaymentBox(selectedPayment ? selectedPayment.value : 'cod');
+})();
+
+// Interactive Map initialization (Leaflet) with Syria default center
+(function() {
+    const latInput = document.getElementById('id_location_latitude');
+    const lngInput = document.getElementById('id_location_longitude');
+    const coordsText = document.getElementById('coords-text');
+    const errorEl = document.getElementById('location-error');
+    const detectBtn = document.getElementById('detect-location');
+
+    // Default: Damascus center [33.5138, 36.2765]
+    let initialLat = parseFloat(latInput.value) || 33.5138;
+    let initialLng = parseFloat(lngInput.value) || 36.2765;
+    const hasExisting = Boolean(latInput.value && lngInput.value);
+
+    const map = L.map('interactive-delivery-map', {
+        center: [initialLat, initialLng],
+        zoom: hasExisting ? 15 : 12,
+        attributionControl: false
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19
+    }).addTo(map);
+
+    let marker = null;
+
+    function updateMarker(lat, lng, zoomIn = false) {
+        latInput.value = lat.toFixed(6);
+        lngInput.value = lng.toFixed(6);
+        coordsText.innerHTML = `<strong>تم تثبيت النقطة:</strong> ${lat.toFixed(5)}° N, ${lng.toFixed(5)}° E`;
+
+        if (!marker) {
+            marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+            marker.on('dragend', function(e) {
+                const pos = e.target.getLatLng();
+                updateMarker(pos.lat, pos.lng);
+            });
+        } else {
+            marker.setLatLng([lat, lng]);
+        }
+
+        if (zoomIn) {
+            map.setView([lat, lng], 16);
+        }
+        errorEl.textContent = '';
+    }
+
+    if (hasExisting) {
+        updateMarker(initialLat, initialLng);
+    }
+
+
+    // Map click sets location instantly
+    map.on('click', function(e) {
+        updateMarker(e.latlng.lat, e.latlng.lng);
+    });
+
+    // Core GPS Request Handler
+    function triggerGPS(isAuto = false) {
+        errorEl.textContent = '';
+        if (!navigator.geolocation) {
+            if (!isAuto) {
+                errorEl.textContent = 'المتصفح لا يدعم تحديد الموقع الجغرافي. يرجى النقر على الخريطة مباشرة.';
+            }
+            return;
+        }
+
+        detectBtn.disabled = true;
+        detectBtn.innerHTML = '<span>جارٍ تحديد موقعك عبر الـ GPS...</span>';
+
+        // Check permission state if supported
+        if (navigator.permissions && navigator.permissions.query) {
+            navigator.permissions.query({ name: 'geolocation' }).then(function(result) {
+                if (result.state === 'denied') {
+                    detectBtn.disabled = false;
+                    detectBtn.innerHTML = '<i data-lucide="locate-fixed"></i> <span>تحديد موقعي الحالي بدقة</span>';
+                    if (!isAuto) {
+                        errorEl.innerHTML = '⚠️ <strong>تم حظر إذن الموقع سابقاً في متصفحك.</strong><br>للسماح: اضغط على أيقونة القفل 🔒 بجانب شريط الرابط بالأعلى ⬅️ اختر "أذونات الموقع" ⬅️ ثم اضغط "سماح".';
+                    }
+                    if (window.lucide) lucide.createIcons();
+                    return;
+                }
+                executeGeolocation();
+            }).catch(function() {
+                executeGeolocation();
+            });
+        } else {
+            executeGeolocation();
+        }
+
+        function executeGeolocation() {
+            function requestPosition(highAccuracy) {
+                navigator.geolocation.getCurrentPosition(
+                    function(pos) {
+                        detectBtn.disabled = false;
+                        detectBtn.innerHTML = '<i data-lucide="check"></i> <span>تم تحديد موقعك بدقة!</span>';
+                        updateMarker(pos.coords.latitude, pos.coords.longitude, true);
+                        if (window.lucide) lucide.createIcons();
+                    },
+                    function(err) {
+                        if (highAccuracy && err.code !== 1) {
+                            requestPosition(false);
+                        } else {
+                            detectBtn.disabled = false;
+                            detectBtn.innerHTML = '<i data-lucide="locate-fixed"></i> <span>إعادة المحاولة عبر الـ GPS</span>';
+                            if (!isAuto) {
+                                if (err.code === 1) {
+                                    errorEl.innerHTML = '⚠️ <strong>تم رفض إذن الموقع:</strong> اضغط على أيقونة القفل 🔒 بجانب الرابط ⬅️ غيّر إذن الموقع إلى <strong>سماح (Allow)</strong>، أو انقر على الخريطة مباشرة.';
+                                } else if (err.code === 2) {
+                                    errorEl.textContent = 'تعذر العثور على إشارة GPS. انقر على موقعك على الخريطة لتحديده يدوياً.';
+                                } else {
+                                    errorEl.textContent = 'تعذر التقاط الموقع. انقر على موقعك على الخريطة مباشرة.';
+                                }
+                            }
+                            if (window.lucide) lucide.createIcons();
+                        }
+                    },
+                    { enableHighAccuracy: highAccuracy, timeout: highAccuracy ? 8000 : 15000, maximumAge: 0 }
+                );
+            }
+
+            requestPosition(true);
+        }
+    }
+
+    // Manual Detect location via GPS button click
+    detectBtn.addEventListener('click', function() {
+        triggerGPS(false);
+    });
+
+    // Auto-request GPS on page load if student hasn't pinned a location yet
+    if (!hasExisting) {
+        setTimeout(function() {
+            triggerGPS(true);
+        }, 500);
+    }
+
+    // Form submission validation
+    document.getElementById('notebook-order-form').addEventListener('submit', function(e) {
+        if (!latInput.value || !lngInput.value) {
+            e.preventDefault();
+            errorEl.textContent = '⚠️ يجب تثبيت نقطة التوصيل على الخريطة قبل إتمام الطلب.';
+            document.getElementById('map-section-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
+
+    // Invalidate map size on tab/window resize so tiles render properly
+    setTimeout(() => { map.invalidateSize(); }, 300);
+})();
+
+// PWA Dynamic Cover Accent Extraction (Samples the book's cover directly in the client without server requests)
+(function() {
+    function extractOrderCoverTheme() {
+        const coverImg = document.getElementById('order-book-cover');
+        const layout = document.querySelector('.order-layout');
+        if (!coverImg || !layout) return;
+
+        function applyTheme(spineRgb, accentRgb) {
+            const [r, g, b] = accentRgb;
+            layout.style.setProperty('--order-cover-accent', `rgb(${r}, ${g}, ${b})`);
+            layout.style.setProperty('--order-cover-glow', `rgba(${r}, ${g}, ${b}, 0.25)`);
+            layout.style.setProperty('--brand-gold', `rgb(${r}, ${g}, ${b})`);
+            layout.style.setProperty('--brand-gold-rgb', `${r}, ${g}, ${b}`);
+        }
+
+        function analyze() {
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                canvas.width = 60;
+                canvas.height = 90;
+                ctx.drawImage(coverImg, 0, 0, 60, 90);
+
+                const data = ctx.getImageData(5, 5, 50, 80).data;
+                let maxScore = -1;
+                let bestAccent = [213, 162, 74];
+
+                for (let i = 0; i < data.length; i += 16) {
+                    const cr = data[i], cg = data[i+1], cb = data[i+2];
+                    const max = Math.max(cr, cg, cb);
+                    const min = Math.min(cr, cg, cb);
+                    const sat = max === 0 ? 0 : (max - min) / max;
+                    const brightness = (cr + cg + cb) / 3;
+
+                    if (brightness > 40 && brightness < 220) {
+                        const score = sat * 2 + (cr > cg + 20 && cr > cb + 20 ? 1.5 : 0);
+                        if (score > maxScore) {
+                            maxScore = score;
+                            bestAccent = [cr, cg, cb];
+                        }
+                    }
+                }
+                applyTheme([20, 20, 20], bestAccent);
+            } catch (e) {
+                // Keep default gold if CORS restrictions apply
+            }
+        }
+
+        if (coverImg.complete && coverImg.naturalWidth !== 0) {
+            analyze();
+        } else {
+            coverImg.addEventListener('load', analyze);
+        }
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', extractOrderCoverTheme);
+    } else {
+        extractOrderCoverTheme();
+    }
+})();
+</script>
+{% endblock %}

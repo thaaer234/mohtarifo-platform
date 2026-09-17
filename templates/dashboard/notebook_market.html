@@ -1,0 +1,1240 @@
+{% extends "dashboard/base.html" %}
+{% load static %}
+{% block title %}سوق النوط | محترفو التعليم{% endblock %}
+{% block content %}
+<div class="notes-store">
+  <nav class="store-crumb" aria-label="مسار الصفحة"><a href="{% url 'dashboard:shop' %}">المتجر</a><i data-lucide="chevron-left"></i><span>سوق النوط</span></nav>
+
+  <section class="featured-edition">
+    <div class="featured-copy">
+      <div class="series-badge">
+        <i data-lucide="crown" class="gold"></i>
+        <span>الإصدارات الرسمية المعتمدة 2026 - 2027</span>
+      </div>
+      <p class="edition-subject">الموسوعة المطبوعة للشهادات العامة</p>
+      <h1>سلسلة محترفو التعليم <span>لكافة المناهج الدراسية</span></h1>
+      <p class="edition-description">
+        مجموعة متكاملة من النوط والمطبوعات الأكاديمية التخصصية لصفوف التاسع الأساسي والثالث الثانوي (علمي وأدبي). إعداد نخبة من أمهر مدرسي المنصة، مجهزة وفق أحدث المعايير الوزارية والسلالم الامتحانية مع ملحقات بنوك أسئلة واختبارات مؤتمتة مجانية لضمان الدرجة التامة.
+      </p>
+      
+      <div class="series-curricula-chips">
+        <span class="curr-chip"><i data-lucide="award"></i> شهادة التعليم الأساسي (التاسع)</span>
+        <span class="curr-chip"><i data-lucide="graduation-cap"></i> الثانوية العامة (الفرع العلمي)</span>
+        <span class="curr-chip"><i data-lucide="book-open"></i> الثانوية العامة (الفرع الأدبي)</span>
+        <span class="curr-chip gold-chip"><i data-lucide="sparkles"></i> بنوك أسئلة ونماذج مجانية</span>
+      </div>
+
+      <div class="edition-actions">
+        <a href="#available-notes" class="btn-scroll-catalog btn-glow-gold">
+          <span>تصفح كتالوج السلسلة والنوط المتاحة</span>
+          <i data-lucide="arrow-down"></i>
+        </a>
+        <div class="series-quick-stats">
+          <div><strong>100%</strong><small>مطابقة للمنهاج الحديث</small></div>
+          <div class="stats-sep"></div>
+          <div><strong>+10</strong><small>مدرسين ومؤلفين معتمدين</small></div>
+        </div>
+      </div>
+
+      <div class="service-points">
+        <span><i data-lucide="printer"></i> طباعة فاخرة وملونة على ورق عالي الجودة</span>
+        <span><i data-lucide="truck"></i> شحن سريع وتوصيل لجميع المحافظات</span>
+        <span><i data-lucide="wallet"></i> دفع عند الاستلام أو عبر شام كاش</span>
+      </div>
+    </div>
+
+    <div class="featured-visual">
+      <div class="series-watermark">سلسلة محترفو التعليم</div>
+      
+      <!-- Multi-Book 3D Stack/Showcase of the Series -->
+      <div class="series-3d-stage">
+        <!-- Background Book 1 (Social Studies Grade 9) -->
+        <div class="stacked-book book-back-left">
+          <div class="book-mini-cover">
+            <img src="{% static 'dashboard/notebooks/social-studies-grade9.png' %}" alt="نوطة الاجتماعيات - سلسلة محترفو التعليم">
+          </div>
+        </div>
+
+        <!-- Background Book 2 (Science Grade 12) -->
+        <div class="stacked-book book-back-right">
+          <div class="book-mini-cover">
+            <img src="/media/notebooks/covers/ilm-al-ulum-grade12.jpg" alt="نوطة علم العلوم - سلسلة محترفو التعليم" onerror="this.src='{% static 'dashboard/notebooks/social-studies-grade9.png' %}'">
+          </div>
+        </div>
+
+        <!-- Center Front Book (Featured) -->
+        <div class="stacked-book book-center-hero">
+          <div class="book-3d-card">
+            <div class="book-cover-wrap">
+              <img src="/media/notebooks/covers/ilm-al-ulum-grade12.jpg" alt="سلسلة محترفو التعليم" class="book-cover-graphic" onerror="this.src='{% static 'dashboard/notebooks/social-studies-grade9.png' %}'">
+              <div class="book-cover-sheen"></div>
+              <div class="book-spine-crease"></div>
+            </div>
+            <div class="book-side-spine"></div>
+            <div class="book-bottom-pages"></div>
+            <div class="book-left-edge"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="visual-caption-tag">
+        <i data-lucide="library"></i>
+        <span>إصدارات مطبوعة معتمدة · نوط ومكثفات تخصصية</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="catalog-section" id="available-notes">
+    <header class="catalog-head">
+      <div>
+        <span class="catalog-kicker">المكتبة والمطبوعات المعتمدة</span>
+        <h2>كتالوج النوط المتاحة للطلب</h2>
+        <p>اختر النوطة للاطلاع على الفهرس، الشرح، النماذج المجانية، وتثبيت عنوان التوصيل الفوري.</p>
+      </div>
+      {% if user.is_authenticated %}
+        <a href="{% url 'dashboard:notebook_orders' %}" class="orders-link">
+          <i data-lucide="package-search"></i>
+          متابعة طلباتي
+        </a>
+      {% endif %}
+    </header>
+
+    {% if instructors %}
+      <nav class="teacher-filter" aria-label="تصفية حسب المدرس">
+        <a href="{% url 'dashboard:notebook_market' %}#available-notes" class="filter-pill {% if not selected_instructor %}active{% endif %}">
+          <i data-lucide="layers"></i> جميع المدرسين
+        </a>
+        {% for instructor in instructors %}
+          <a href="?instructor={{ instructor.id }}#available-notes" class="filter-pill {% if selected_instructor == instructor.id|stringformat:'s' %}active{% endif %}">
+            <i data-lucide="user"></i>
+            {{ instructor.get_full_name|default:instructor.username }}
+          </a>
+        {% endfor %}
+      </nav>
+    {% endif %}
+
+    <div class="notebook-grid">
+      {% for product in products %}
+        <article class="notebook-card-pro">
+          <div class="card-media-stage">
+            <div class="card-cover-blur-glow"></div>
+            {% if not product.stock %}
+              <span class="badge-stock-out"><i data-lucide="alert-circle"></i> نفدت الكمية</span>
+            {% else %}
+              <span class="badge-stock-in"><i data-lucide="check-circle-2"></i> متوفر للتوصيل ({{ product.stock }})</span>
+            {% endif %}
+
+            <a href="{% url 'dashboard:notebook_detail' product.id %}" class="book-mock-link">
+              <div class="mini-book-container">
+                <div class="mini-book-3d">
+                  <div class="mini-book-front">
+                    {% if product.cover %}
+                      <img src="{{ product.cover.url }}" alt="غلاف {{ product.title }}" class="market-card-cover-img" crossorigin="anonymous">
+                    {% else %}
+                      <img src="{% static 'dashboard/notebooks/social-studies-grade9.png' %}" alt="غلاف {{ product.title }}" class="market-card-cover-img" crossorigin="anonymous">
+                    {% endif %}
+                    <div class="mini-book-glare"></div>
+                  </div>
+                  <div class="mini-book-spine"></div>
+                  <div class="mini-book-pages"></div>
+                </div>
+              </div>
+            </a>
+          </div>
+
+          <div class="card-content-pro">
+            <div class="card-instructor-header">
+              <div class="instructor-avatar-dot">
+                <i data-lucide="graduation-cap"></i>
+              </div>
+              <div>
+                <span class="instructor-label">المدرّس</span>
+                <strong class="instructor-name">{{ product.instructor.get_full_name|default:product.instructor.username }}</strong>
+              </div>
+            </div>
+
+            <h3 class="card-title">
+              <a href="{% url 'dashboard:notebook_detail' product.id %}">{{ product.title }}</a>
+            </h3>
+
+            {% if product.material_summary %}
+              <p class="card-summary-snippet">{{ product.material_summary|truncatewords:16 }}</p>
+            {% else %}
+              <p class="card-summary-snippet">نوطة دراسية شاملة معدّة بإتقان وفق المنهاج السوري وسلسلة محترفو التعليم.</p>
+            {% endif %}
+
+            <div class="card-features-chips">
+              {% if product.pages_count %}
+                <span class="feature-chip"><i data-lucide="file-text"></i> {{ product.pages_count }} صفحة</span>
+              {% endif %}
+              {% if product.course %}
+                <span class="feature-chip"><i data-lucide="book-open"></i> {{ product.course.title }}</span>
+              {% endif %}
+              {% if product.free_quizzes_overview %}
+                <span class="feature-chip highlight"><i data-lucide="award"></i> نماذج واختبارات</span>
+              {% endif %}
+            </div>
+
+            <div class="card-footer-pro">
+              <div class="price-block">
+                <span class="price-caption">السعر المعتمد</span>
+                <div class="price-value">
+                  <strong>{{ product.price_syp }}</strong>
+                  <small>ل.س</small>
+                </div>
+              </div>
+              <a href="{% url 'dashboard:notebook_detail' product.id %}" class="btn-card-action" aria-label="عرض تفاصيل وشراء {{ product.title }}">
+                <span>عرض التفاصيل</span>
+                <i data-lucide="arrow-left"></i>
+              </a>
+            </div>
+          </div>
+        </article>
+      {% empty %}
+        <div class="catalog-empty">
+          <div class="empty-icon-box">
+            <i data-lucide="book-copy"></i>
+          </div>
+          <h3>المطبوعات قيد الاعتماد</h3>
+          <p>يقوم الكادر التدريسي وإدارة محترفو التعليم بتجهيز وطباعة النوط، وستتاح للطلب المباشر هنا فور جاهزيتها.</p>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+<style>
+.notes-store {
+  --store-ink: var(--bg-surface, #101c28);
+  --store-ink-2: var(--bg-surface-elevated, #162434);
+  --store-card-bg: var(--bg-surface, #ffffff);
+  --store-card-hover: var(--bg-surface-elevated, #f8fafc);
+  --store-gold: var(--brand-gold, #d5a24a);
+  --store-gold-glow: rgba(var(--brand-gold-rgb), 0.28);
+  padding-bottom: 72px;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+}
+.store-crumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+.store-crumb a { color: inherit; text-decoration: none; transition: color .2s; }
+.store-crumb a:hover { color: var(--brand-gold); }
+.store-crumb i { width: 14px; height: 14px; }
+
+/* Featured Hero Section */
+.featured-edition {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(360px, 0.85fr);
+  min-height: 640px;
+  overflow: hidden;
+  border: 1px solid rgba(213, 162, 74, 0.35);
+  border-radius: 20px;
+  background: radial-gradient(circle at 80% 20%, rgba(213, 162, 74, 0.08), transparent 50%), var(--store-ink);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55);
+  direction: ltr;
+}
+.featured-copy, .featured-visual {
+  direction: rtl;
+  min-width: 0;
+}
+.featured-copy {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 56px 64px;
+}
+.series-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  padding: 8px 16px;
+  border: 1px solid rgba(213, 162, 74, 0.5);
+  border-radius: 999px;
+  background: rgba(213, 162, 74, 0.12);
+  color: #f3cf7a;
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow: 0 4px 16px rgba(213, 162, 74, 0.15);
+  margin-bottom: 20px;
+}
+.series-badge i { width: 16px; height: 16px; color: var(--store-gold); }
+.edition-subject {
+  margin: 0 0 8px;
+  color: #aebdca;
+  font-size: 15px;
+  font-weight: 700;
+}
+.featured-copy h1 {
+  margin: 0;
+  font-size: clamp(34px, 4vw, 54px);
+  line-height: 1.2;
+  color: #ffffff !important;
+  font-weight: 900;
+}
+.featured-copy h1 span {
+  display: block;
+  color: #f1c768 !important;
+  font-size: 0.72em;
+  margin-top: 4px;
+}
+.edition-description {
+  max-width: 580px;
+  margin: 20px 0 24px;
+  color: #c5d3df !important;
+  line-height: 1.95;
+  font-size: 15px;
+}
+.series-curricula-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+.curr-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #c9d8e5;
+  font-size: 12px;
+  font-weight: 800;
+  backdrop-filter: blur(6px);
+}
+.curr-chip i { width: 14px; height: 14px; color: var(--store-gold); }
+.curr-chip.gold-chip {
+  background: rgba(213, 162, 74, 0.15);
+  border-color: rgba(213, 162, 74, 0.4);
+  color: #fce293;
+}
+
+.edition-actions {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+.btn-scroll-catalog {
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 24px;
+  border: 1px solid var(--store-gold);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f0c56b, #c99337);
+  color: #0c1825 !important;
+  text-decoration: none;
+  font-weight: 900;
+  font-size: 14px;
+  box-shadow: 0 8px 24px rgba(213, 162, 74, 0.35);
+  transition: all .25s ease;
+}
+.btn-scroll-catalog:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(213, 162, 74, 0.5);
+}
+.btn-scroll-catalog i { width: 18px; height: 18px; }
+
+.series-quick-stats {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.series-quick-stats > div {
+  display: flex;
+  flex-direction: column;
+}
+.series-quick-stats strong {
+  font-size: 20px;
+  color: #ffffff;
+  font-weight: 900;
+  line-height: 1.1;
+}
+.series-quick-stats small {
+  font-size: 11px;
+  color: #8da0b1;
+  font-weight: 700;
+}
+.stats-sep {
+  width: 1px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.service-points {
+  display: flex;
+  gap: 20px;
+  margin-top: 36px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #bdcddb !important;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.service-points span { display: flex; align-items: center; gap: 7px; }
+.service-points i { width: 17px; height: 17px; color: var(--store-gold); }
+
+/* Multi-Book 3D Stack/Showcase */
+.series-3d-stage {
+  position: relative;
+  width: 100%;
+  height: 480px;
+  perspective: 1600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stacked-book {
+  position: absolute;
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.4s ease;
+}
+.book-back-left {
+  left: 10%;
+  width: 180px;
+  height: 270px;
+  transform: rotateY(18deg) rotateX(8deg) rotateZ(6deg) translateY(-20px);
+  z-index: 1;
+  filter: drop-shadow(-14px 18px 22px rgba(0,0,0,0.65)) brightness(0.85);
+}
+.book-back-left:hover {
+  transform: rotateY(10deg) rotateX(4deg) rotateZ(2deg) translateY(-30px);
+  filter: drop-shadow(-18px 22px 28px rgba(0,0,0,0.8)) brightness(1);
+  z-index: 4;
+}
+.book-back-right {
+  right: 10%;
+  width: 180px;
+  height: 270px;
+  transform: rotateY(-22deg) rotateX(8deg) rotateZ(-6deg) translateY(10px);
+  z-index: 2;
+  filter: drop-shadow(-16px 20px 24px rgba(0,0,0,0.7)) brightness(0.9);
+}
+.book-back-right:hover {
+  transform: rotateY(-12deg) rotateX(4deg) rotateZ(-2deg) translateY(0px);
+  filter: drop-shadow(-20px 26px 30px rgba(0,0,0,0.85)) brightness(1);
+  z-index: 4;
+}
+.book-mini-cover {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px 8px 8px 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #08131e;
+}
+.book-mini-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.book-center-hero {
+  position: relative;
+  z-index: 3;
+  width: 230px;
+  transform: translateY(-5px);
+}
+
+/* Visual 3D Stage */
+.featured-visual {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 40px 24px;
+  background: radial-gradient(circle at center, #102438 0%, #081522 100%);
+  border-right: 1px solid rgba(213, 162, 74, 0.2);
+  overflow: hidden;
+}
+.series-watermark {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  font-size: 28px;
+  font-weight: 900;
+  color: rgba(213, 162, 74, 0.08);
+  letter-spacing: 2px;
+  pointer-events: none;
+  user-select: none;
+}
+.visual-caption-tag {
+  position: absolute;
+  z-index: 2;
+  bottom: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #ecc66e;
+  font-size: 12px;
+  font-weight: 800;
+  background: rgba(6, 14, 23, 0.85);
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(213, 162, 74, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+.visual-caption-tag i { width: 15px; height: 15px; color: var(--store-gold); }
+
+/* 3D Book Geometry */
+.book-3d-scene {
+  perspective: 1600px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 10px;
+}
+.book-3d-card {
+  position: relative;
+  width: min(78%, 310px);
+  aspect-ratio: 1024 / 1536;
+  transform-style: preserve-3d;
+  transform: rotateY(-18deg) rotateX(7deg) rotateZ(-1deg);
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  filter: drop-shadow(-22px 26px 30px rgba(0, 0, 0, 0.7));
+}
+.book-3d-card:hover {
+  transform: rotateY(-8deg) rotateX(3deg) rotateZ(0deg) scale(1.02);
+  filter: drop-shadow(-28px 32px 38px rgba(0, 0, 0, 0.85));
+}
+.book-cover-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 4px 10px 10px 4px;
+  overflow: hidden;
+  background: #08131e;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+.book-cover-graphic {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.book-cover-sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.05) 35%, transparent 65%);
+  pointer-events: none;
+}
+.book-spine-crease {
+  position: absolute;
+  top: 0;
+  right: 18px;
+  bottom: 0;
+  width: 2px;
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 1px 0 3px rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+}
+.book-side-spine {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 22px;
+  background: linear-gradient(90deg, #102335 0%, #08131e 100%);
+  transform-origin: right center;
+  transform: rotateY(90deg);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+.book-bottom-pages {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 22px;
+  background: repeating-linear-gradient(90deg, #e8e4d9 0px, #e8e4d9 2px, #cfc9bc 3px, #cfc9bc 4px);
+  transform-origin: center bottom;
+  transform: rotateX(-90deg);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+.book-left-edge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 22px;
+  background: repeating-linear-gradient(0deg, #f2eee4 0px, #f2eee4 2px, #ded7c8 3px, #ded7c8 4px);
+  transform-origin: left center;
+  transform: rotateY(-90deg);
+  box-shadow: inset 2px 0 6px rgba(0, 0, 0, 0.35);
+}
+
+/* Catalog Section */
+.catalog-section {
+  padding-top: 64px;
+}
+.catalog-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border-light);
+}
+.catalog-kicker {
+  display: inline-block;
+  color: var(--brand-gold);
+  font-weight: 900;
+  font-size: 13px;
+  letter-spacing: .5px;
+  margin-bottom: 4px;
+}
+.catalog-head h2 {
+  margin: 0 0 6px;
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 900;
+}
+.catalog-head p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14.5px;
+}
+.orders-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  background: rgba(var(--brand-gold-rgb), 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 800;
+  font-size: 13.5px;
+  transition: all .2s ease;
+}
+.orders-link:hover {
+  background: rgba(var(--brand-gold-rgb), 0.18);
+  border-color: var(--brand-gold);
+}
+.orders-link i { width: 18px; height: 18px; color: var(--brand-gold); }
+
+/* Teacher Filter Pills */
+.teacher-filter {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 20px 0;
+}
+.filter-pill {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 800;
+  transition: all .2s ease;
+}
+.filter-pill i { width: 14px; height: 14px; }
+.filter-pill:hover {
+  border-color: var(--brand-gold-glow);
+  color: var(--text-primary);
+}
+.filter-pill.active {
+  background: linear-gradient(135deg, rgba(var(--brand-gold-rgb), 0.22), rgba(var(--brand-gold-rgb), 0.08));
+  border-color: var(--brand-gold);
+  color: var(--brand-gold);
+  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.15);
+}
+
+/* Grid & Modern Notebook Cards */
+.notebook-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 28px;
+  padding-top: 26px;
+}
+
+.notebook-card-pro {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-surface);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+}
+.notebook-card-pro:hover {
+  transform: translateY(-6px);
+  border-color: var(--brand-gold);
+  background: var(--bg-surface-elevated);
+  box-shadow: 0 20px 36px rgba(0, 0, 0, 0.12), 0 0 20px var(--store-gold-glow);
+}
+
+.card-media-stage {
+  position: relative;
+  width: 100%;
+  padding: 34px 20px 24px;
+  background: var(--bg-surface-elevated);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-bottom: 1px solid var(--border-light);
+  overflow: hidden;
+}
+
+.card-cover-blur-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--card-cover-color, rgba(var(--brand-gold-rgb), 0.28)) 0%, transparent 75%);
+  filter: blur(36px);
+  opacity: 0.7;
+  pointer-events: none;
+  transition: all 0.5s ease;
+  z-index: 0;
+}
+.notebook-card-pro:hover .card-cover-blur-glow {
+  transform: translate(-50%, -50%) scale(1.25);
+  opacity: 0.95;
+  filter: blur(40px);
+}
+
+.badge-stock-out {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 900;
+  box-shadow: 0 3px 10px rgba(220, 38, 38, 0.35);
+}
+.badge-stock-out i { width: 13px; height: 13px; }
+
+.badge-stock-in {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: rgba(16, 185, 129, 0.18);
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  color: #34d399;
+  font-size: 11px;
+  font-weight: 800;
+}
+.badge-stock-in i { width: 13px; height: 13px; }
+
+/* Mini 3D Book in card */
+.book-mock-link {
+  display: block;
+  text-decoration: none;
+}
+.mini-book-container {
+  perspective: 900px;
+  width: 150px;
+  height: 220px;
+}
+.mini-book-3d {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateY(-14deg) rotateX(6deg);
+  transition: transform 0.4s ease;
+  filter: drop-shadow(-10px 14px 16px rgba(0, 0, 0, 0.55));
+}
+.notebook-card-pro:hover .mini-book-3d {
+  transform: rotateY(-4deg) rotateX(2deg) scale(1.05);
+  filter: drop-shadow(-14px 18px 22px rgba(0, 0, 0, 0.7));
+}
+.mini-book-front {
+  position: absolute;
+  inset: 0;
+  border-radius: 2px 6px 6px 2px;
+  overflow: hidden;
+  background: #08131e;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.mini-book-front img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.mini-book-glare {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.2) 0%, transparent 40%);
+  pointer-events: none;
+}
+.mini-book-spine {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 12px;
+  background: linear-gradient(90deg, #102335, #08131e);
+  transform-origin: right center;
+  transform: rotateY(90deg);
+}
+.mini-book-pages {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  height: 10px;
+  background: repeating-linear-gradient(90deg, #eae5d8 0px, #eae5d8 2px, #cfc7b4 3px);
+  transform-origin: bottom center;
+  transform: rotateX(-90deg);
+}
+
+/* Card Content */
+.card-content-pro {
+  padding: 18px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.card-instructor-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.instructor-avatar-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(var(--brand-gold-rgb), 0.15);
+  border: 1px solid rgba(213, 162, 74, 0.3);
+  display: grid;
+  place-items: center;
+  color: var(--brand-gold);
+}
+.instructor-avatar-dot i { width: 14px; height: 14px; }
+.instructor-label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.instructor-name {
+  font-size: 13px;
+  color: #d1dde8;
+  font-weight: 800;
+}
+.card-title {
+  margin: 4px 0 8px;
+  font-size: 17px;
+  line-height: 1.4;
+  font-weight: 800;
+}
+.card-title a {
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: color .2s;
+}
+.card-title a:hover {
+  color: var(--brand-gold);
+}
+.card-summary-snippet {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  min-height: 38px;
+}
+
+.card-features-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.feature-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 11px;
+  font-weight: 700;
+  color: #abbccd;
+}
+.feature-chip i { width: 12px; height: 12px; }
+.feature-chip.highlight {
+  background: rgba(var(--brand-gold-rgb), 0.1);
+  border-color: rgba(212, 175, 55, 0.35);
+  color: var(--brand-gold);
+}
+
+/* Card Footer */
+.card-footer-pro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: auto;
+}
+.price-block {
+  display: flex;
+  flex-direction: column;
+}
+.price-caption {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+.price-value {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.price-value strong {
+  font-size: 20px;
+  color: var(--brand-gold);
+  font-weight: 900;
+}
+.price-value small {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 800;
+}
+
+.btn-card-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(var(--brand-gold-rgb), 0.2), rgba(var(--brand-gold-rgb), 0.08));
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  color: #f7d58b;
+  text-decoration: none;
+  font-size: 12.5px;
+  font-weight: 800;
+  transition: all .2s ease;
+}
+.btn-card-action:hover {
+  background: var(--brand-gold);
+  color: #0d1a29;
+  border-color: var(--brand-gold);
+  transform: translateX(-3px);
+}
+.btn-card-action i { width: 14px; height: 14px; }
+
+/* Empty state */
+.catalog-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  border: 1px dashed rgba(213, 162, 74, 0.3);
+  border-radius: 16px;
+  background: rgba(14, 28, 43, 0.4);
+  text-align: center;
+}
+.empty-icon-box {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: rgba(var(--brand-gold-rgb), 0.12);
+  border: 1px solid rgba(213, 162, 74, 0.3);
+  display: grid;
+  place-items: center;
+  color: var(--brand-gold);
+  margin-bottom: 14px;
+}
+.empty-icon-box i { width: 30px; height: 30px; }
+.catalog-empty h3 { margin: 0 0 6px; font-size: 19px; }
+.catalog-empty p { margin: 0; color: var(--text-muted); font-size: 13.5px; }
+
+/* Responsive adjustments */
+@media (max-width: 1280px) {
+  .notebook-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+}
+@media (max-width: 980px) {
+  .featured-edition {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+  .featured-copy {
+    padding: 36px 24px 28px;
+  }
+  .featured-visual {
+    padding: 30px 16px;
+    min-height: 380px;
+    border-right: none;
+    border-top: 1px solid rgba(213, 162, 74, 0.2);
+  }
+  .series-3d-stage {
+    height: 340px;
+  }
+  .book-back-left, .book-back-right {
+    width: 140px;
+    height: 210px;
+  }
+  .book-center-hero {
+    width: 180px;
+  }
+  .notebook-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+@media (max-width: 640px) {
+  .notes-store {
+    padding-bottom: 50px;
+  }
+  .featured-edition {
+    border-radius: 16px;
+  }
+  .featured-copy {
+    padding: 24px 18px 20px;
+  }
+  .series-badge {
+    font-size: 11px;
+    padding: 6px 12px;
+    margin-bottom: 14px;
+  }
+  .edition-subject {
+    font-size: 13px;
+  }
+  .featured-copy h1 {
+    font-size: 26px;
+  }
+  .featured-copy h1 span {
+    font-size: 0.8em;
+  }
+  .edition-description {
+    font-size: 13.5px;
+    line-height: 1.7;
+    margin: 14px 0 18px;
+  }
+  .series-curricula-chips {
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+  .curr-chip {
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+  .edition-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .btn-scroll-catalog {
+    justify-content: center;
+    width: 100%;
+    height: 48px;
+    font-size: 13.5px;
+  }
+  .series-quick-stats {
+    justify-content: space-around;
+    padding: 10px 0;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  }
+  .service-points {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+    padding-top: 16px;
+    font-size: 12px;
+  }
+  .featured-visual {
+    min-height: 300px;
+    padding: 20px 10px;
+  }
+  .series-3d-stage {
+    height: 280px;
+  }
+  .book-back-left {
+    left: 2%;
+    width: 115px;
+    height: 175px;
+  }
+  .book-back-right {
+    right: 2%;
+    width: 115px;
+    height: 175px;
+  }
+  .book-center-hero {
+    width: 150px;
+  }
+  .visual-caption-tag {
+    font-size: 10.5px;
+    padding: 5px 10px;
+    bottom: 12px;
+  }
+  .catalog-section {
+    padding-top: 36px;
+  }
+  .catalog-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding-bottom: 16px;
+  }
+  .catalog-head h2 {
+    font-size: 20px;
+  }
+  .catalog-head p {
+    font-size: 12.5px;
+  }
+  .orders-link {
+    width: 100%;
+    justify-content: center;
+    padding: 8px 14px;
+    font-size: 12.5px;
+  }
+  .teacher-filter {
+    padding: 14px 0;
+    gap: 6px;
+    scrollbar-width: none;
+  }
+  .teacher-filter::-webkit-scrollbar { display: none; }
+  .filter-pill {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  .notebook-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding-top: 16px;
+  }
+  .notebook-card-pro {
+    border-radius: 16px;
+  }
+  .card-media-stage {
+    padding: 24px 14px 18px;
+  }
+  .mini-book-container {
+    width: 130px;
+    height: 190px;
+  }
+  .card-title {
+    font-size: 16px;
+  }
+  .card-summary-snippet {
+    font-size: 12px;
+    min-height: auto;
+    margin-bottom: 10px;
+  }
+  .price-value strong {
+    font-size: 18px;
+  }
+  .btn-card-action {
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+}
+</style>
+
+<script>
+// Dynamic cover-circle color sampling for marketplace cards
+(function() {
+  function applyCardThemes() {
+    const cards = document.querySelectorAll('.notebook-card-pro');
+    cards.forEach(card => {
+      const img = card.querySelector('.market-card-cover-img');
+      const stage = card.querySelector('.card-media-stage');
+      if (!img || !stage) return;
+
+      function extractCardColor() {
+        try {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d', { willReadFrequently: true });
+          canvas.width = 60;
+          canvas.height = 90;
+          ctx.drawImage(img, 0, 0, 60, 90);
+
+          // Focus sampling on the circular emblem in the upper half of the cover (y: 15% to 45%, x: 25% to 75%)
+          const startX = Math.round(canvas.width * 0.25);
+          const startY = Math.round(canvas.height * 0.15);
+          const sampleW = Math.round(canvas.width * 0.50);
+          const sampleH = Math.round(canvas.height * 0.35);
+
+          const data = ctx.getImageData(startX, startY, sampleW, sampleH).data;
+          let bestColor = null;
+          let maxScore = -1;
+
+          for (let i = 0; i < data.length; i += 16) {
+            const r = data[i], g = data[i+1], b = data[i+2];
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            const sat = max === 0 ? 0 : (max - min) / max;
+            const brightness = (r + g + b) / 3;
+
+            // Prioritize vivid saturated colors (crimson red, deep navy blue, gold)
+            if (brightness > 35 && brightness < 235) {
+              const isRed = (r > g + 25 && r > b + 25);
+              const isBlue = (b > r + 20 && b > g + 15);
+              const score = sat * 2.5 + (isRed ? 2.0 : 0) + (isBlue ? 2.0 : 0);
+              if (score > maxScore) {
+                maxScore = score;
+                bestColor = [r, g, b];
+              }
+            }
+          }
+
+          if (bestColor) {
+            const [r, g, b] = bestColor;
+            stage.style.background = `radial-gradient(circle at 50% 35%, rgba(${r}, ${g}, ${b}, 0.26) 0%, rgba(${r}, ${g}, ${b}, 0.06) 55%, var(--bg-surface-elevated) 100%)`;
+            card.style.setProperty('--card-cover-color', `rgb(${r}, ${g}, ${b})`);
+            card.style.setProperty('--card-cover-glow', `rgba(${r}, ${g}, ${b}, 0.35)`);
+          }
+        } catch (e) {
+          // If cross-origin restrictions apply, fallback to standard gold gradient
+        }
+      }
+
+      if (img.complete && img.naturalWidth !== 0) {
+        extractCardColor();
+      } else {
+        img.addEventListener('load', extractCardColor);
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyCardThemes);
+  } else {
+    applyCardThemes();
+  }
+})();
+</script>
+{% endblock %}

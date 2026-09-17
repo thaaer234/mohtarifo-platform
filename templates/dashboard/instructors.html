@@ -42,12 +42,21 @@
                     </div>
                     <div class="inst-divider"></div>
                     <div class="inst-stat">
+                        <strong>{{ instructor.active_notebooks_count|default:"0" }}</strong>
+                        <span>نوط ومطبوعات</span>
+                    </div>
+                    <div class="inst-divider"></div>
+                    <div class="inst-stat">
                         <strong>100%</strong>
                         <span>التزام</span>
                     </div>
                 </div>
-                <div class="inst-actions mt-8">
+                <div class="inst-actions mt-8 flex flex-col gap-2">
                     <a href="{% url 'dashboard:landing' %}?instructor={{ instructor.id }}" class="btn btn-primary w-full btn-glow">عرض كافة الدورات</a>
+                    <a href="{% url 'dashboard:notebook_market' %}?instructor={{ instructor.id }}" class="btn btn-secondary w-full" style="display:flex;align-items:center;justify-content:center;gap:.4rem;padding:.7rem;font-weight:800;border-color:rgba(199,149,59,0.4);color:var(--brand-gold);">
+                        <i data-lucide="book-marked" style="width:16px;height:16px;"></i>
+                        تصفح نوط المدرس
+                    </a>
                 </div>
             </div>
         </div>

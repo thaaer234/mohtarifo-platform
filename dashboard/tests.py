@@ -1,5 +1,6 @@
 from datetime import timedelta
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -8,6 +9,7 @@ from django.utils import timezone
 from accounts.models import InstructorProfile
 from billing.models import AccessGrant
 from learning.models import Course, Lesson, LessonProgress, OnlineLessonSession, Subject, Unit
+from dashboard.models import NotebookOrder, NotebookProduct
 
 
 class StudentAccessSecurityTests(TestCase):
@@ -114,5 +116,84 @@ class LoginRateLimitTests(TestCase):
 
         response = self.client.post(url, {"username": "student", "password": "wrong"})
         self.assertEqual(response.status_code, 429)
+
+
+@override_settings(MIDDLEWARE=[middleware for middleware in settings.MIDDLEWARE if middleware != "billing.middleware.ActiveDeviceMiddleware"])
+class NotebookStoreTests(TestCase):
+    def setUp(self):
+        user_model = get_user_model()
+        self.instructor = user_model.objects.create_user(username="note-teacher", password="teacher12345")
+        InstructorProfile.objects.create(user=self.instructor, specialty="Physics", status="active")
+        self.student = user_model.objects.create_user(username="0991239876", first_name="Student", password="student12345")
+        self.other_student = user_model.objects.create_user(username="0987654321", password="student12345")
+        self.product = NotebookProduct.objects.create(
+            instructor=self.instructor,
+            title="Physics Notebook",
+            price_syp=50000,
+            pages_count=180,
+            stock=3,
+        )
+
+    def order_data(self, **overrides):
+        data = {
+            "recipient_name": "Student Name",
+            "phone": "0991239876",
+            "governorate": "Damascus",
+            "address": "Street 1, near the school",
+            "location_latitude": "33.513800",
+            "location_longitude": "36.276500",
+            "quantity": "2",
+            "payment_method": "cod",
+            "payment_reference": "",
+        }
+        data.update(overrides)
+        return data
+
+    def test_order_requires_login(self):
+        response = self.client.get(reverse("dashboard:notebook_order", args=[self.product.id]))
+        self.assertRedirects(
+            response,
+            f"{reverse('dashboard:login')}?next={reverse('dashboard:notebook_order', args=[self.product.id])}",
+        )
+
+    def test_order_saves_exact_location_and_reduces_stock(self):
+        self.client.force_login(self.student)
+        response = self.client.post(reverse("dashboard:notebook_order", args=[self.product.id]), self.order_data())
+        self.assertRedirects(response, reverse("dashboard:notebook_orders"))
+        order = NotebookOrder.objects.get(student=self.student)
+        self.assertEqual(str(order.location_latitude), "33.513800")
+        self.assertEqual(order.unit_price_syp, 50000)
+        self.product.refresh_from_db()
+        self.assertEqual(self.product.stock, 1)
+
+    def test_order_without_location_is_rejected(self):
+        self.client.force_login(self.student)
+        response = self.client.post(
+            reverse("dashboard:notebook_order", args=[self.product.id]),
+            self.order_data(location_latitude="", location_longitude=""),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(NotebookOrder.objects.exists())
+
+    def test_student_only_sees_own_orders(self):
+        NotebookOrder.objects.create(
+            product=self.product,
+            student=self.other_student,
+            recipient_name="Other",
+            phone="0988888888",
+            governorate="Damascus",
+            address="Other address",
+            location_latitude="33.500000",
+            location_longitude="36.200000",
+            unit_price_syp=50000,
+        )
+        self.client.force_login(self.student)
+        response = self.client.get(reverse("dashboard:notebook_orders"))
+        self.assertNotContains(response, "Other address")
+
+    def test_student_cannot_open_notebook_admin(self):
+        self.client.force_login(self.student)
+        response = self.client.get(reverse("dashboard:admin_notebooks"))
+        self.assertEqual(response.status_code, 403)
 
 # Create your tests here.

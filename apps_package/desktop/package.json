@@ -1,0 +1,35 @@
+{
+  "name": "mohtarifo-desktop-app",
+  "version": "1.0.0",
+  "description": "تطبيق منصة محترفو التعليم الرسمي - Pro Academy",
+  "main": "electron_main.js",
+  "scripts": {
+    "start": "electron .",
+    "build-win": "electron-builder --win",
+    "build-mac": "electron-builder --mac"
+  },
+  "author": "Pro Academy",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "pro.academy.platform",
+    "productName": "Pro Academy",
+    "directories": {
+      "buildResources": "build"
+    },
+    "mac": {
+      "icon": "build/icon.icns",
+      "category": "public.app-category.education",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "entitlements.mac.plist"
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": ["nsis", "portable"]
+    }
+  }
+}

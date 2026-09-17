@@ -1,0 +1,399 @@
+{% extends "dashboard/base.html" %}
+{% load static l10n %}
+{% block title %}ملاحة وتوصيل الطلب #{{ order.id }} | لوحة المندوب{% endblock %}
+
+{% block extra_css %}
+<!-- Leaflet & Leaflet Routing Machine CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+<style>
+.driver-route-page {
+    padding: 1.5rem 0 4rem;
+}
+.dr-crumb {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    font-size: .88rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+.dr-crumb a {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    color: var(--brand-gold);
+    text-decoration: none;
+    font-weight: 800;
+}
+.dr-crumb i { width: 16px; height: 16px; }
+
+.dr-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: 1.8rem;
+}
+.dr-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    background: rgba(6, 182, 212, 0.12);
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    color: #06b6d4;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: .82rem;
+    margin-bottom: .5rem;
+}
+.dr-header h1 {
+    font-size: 1.85rem;
+    margin: 0 0 .3rem;
+}
+.dr-header h1 span { color: var(--brand-gold); }
+
+.dr-layout {
+    display: grid;
+    grid-template-columns: minmax(320px, .9fr) minmax(0, 1.4fr);
+    gap: 2rem;
+    align-items: start;
+}
+
+/* Sidebar */
+.dr-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+.dr-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+/* Actions Box */
+.dr-actions-box {
+    display: flex;
+    flex-direction: column;
+    gap: .8rem;
+}
+.btn-deliver-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .6rem;
+    width: 100%;
+    padding: .9rem;
+    border-radius: 8px;
+    font-weight: 900;
+    font-size: .95rem;
+    cursor: pointer;
+    border: none;
+    transition: all .2s;
+}
+.btn-deliver-action.start { background: #06b6d4; color: #fff; }
+.btn-deliver-action.start:hover { background: #0891b2; }
+.btn-deliver-action.done { background: #10b981; color: #fff; }
+.btn-deliver-action.done:hover { background: #059669; }
+
+/* Metrics */
+.dr-metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .8rem;
+}
+.dr-metric-item {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: .9rem;
+    text-align: center;
+}
+.dr-metric-item small { color: var(--text-muted); font-size: .75rem; display: block; margin-bottom: .25rem; }
+.dr-metric-item strong { font-size: 1.3rem; color: var(--brand-gold); font-weight: 900; }
+
+/* Map Wrapper */
+.dr-map-wrapper {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.dr-map-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .8rem 1.2rem;
+    background: rgba(0,0,0,0.15);
+    border-bottom: 1px solid var(--border-light);
+}
+#driver-map {
+    width: 100%;
+    height: 520px;
+    background: #1a1a1a;
+}
+.leaflet-routing-container { display: none !important; }
+
+@media (max-width: 960px) {
+    .dr-layout { grid-template-columns: 1fr; }
+    #driver-map { height: 400px; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="driver-route-page">
+    <nav class="dr-crumb">
+        <a href="{% url 'dashboard:driver_dashboard' %}"><i data-lucide="arrow-right"></i> لوحة المندوب</a>
+        <span>/</span>
+        <span>مسار التوصيل للطلب #{{ order.id }}</span>
+    </nav>
+
+    <header class="dr-header">
+        <div>
+            <div class="dr-badge">
+                <i data-lucide="navigation"></i>
+                <span>ملاحة وتوجيه المسار الفعلي</span>
+            </div>
+            <h1>مهمة توصيل: <span>{{ order.product.title }}</span></h1>
+            <p>المستلم: {{ order.recipient_name }} · هاتف: {{ order.phone }}</p>
+        </div>
+        <div style="display:flex;gap:.8rem;flex-wrap:wrap;">
+            <a href="https://www.google.com/maps/dir/?api=1&destination={{ order.location_latitude|unlocalize }},{{ order.location_longitude|unlocalize }}" target="_blank" rel="noopener" class="btn btn-secondary">
+                <i data-lucide="external-link"></i> خرائط Google
+            </a>
+            <a href="tel:{{ order.phone }}" class="btn btn-primary">
+                <i data-lucide="phone-call"></i> اتصال بالعميل
+            </a>
+        </div>
+    </header>
+
+    <div class="dr-layout">
+        <!-- Sidebar Controls -->
+        <aside class="dr-sidebar">
+            <!-- Delivery Status Actions -->
+            <div class="dr-card dr-actions-box">
+                <strong style="font-size:.95rem;margin-bottom:.3rem;display:block;">تحديث حالة المهمة:</strong>
+                
+                {% if order.status != 'out_for_delivery' and order.status != 'delivered' %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="start_delivery">
+                    <button type="submit" class="btn-deliver-action start">
+                        <i data-lucide="send"></i> بدء رحلة التوصيل الآن
+                    </button>
+                </form>
+                {% endif %}
+
+                {% if order.status == 'out_for_delivery' %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="mark_delivered">
+                    <button type="submit" class="btn-deliver-action done">
+                        <i data-lucide="check-circle-2"></i> تم تسليم النوطة وقبض المبلغ بنجاح
+                    </button>
+                </form>
+                {% elif order.status == 'delivered' %}
+                <div style="padding:.8rem;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);border-radius:8px;color:#10b981;font-weight:800;text-align:center;">
+                    <i data-lucide="check-circle" style="width:16px;display:inline-block;vertical-align:middle;"></i> تم تسليم هذا الطلب مسبقاً
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Route Metrics -->
+            <div class="dr-metrics-grid">
+                <div class="dr-metric-item">
+                    <small>المسافة المتبقية للطالب</small>
+                    <strong id="dr-distance">-- كم</strong>
+                </div>
+                <div class="dr-metric-item">
+                    <small>الوقت التقديري</small>
+                    <strong id="dr-eta">-- دقيقة</strong>
+                </div>
+            </div>
+
+            <!-- Client Address Info -->
+            <div class="dr-card">
+                <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;color:var(--brand-gold);">
+                    <i data-lucide="map-pin"></i>
+                    <strong>عنوان العميل المستلم:</strong>
+                </div>
+                <p style="margin:0;line-height:1.6;font-size:.9rem;color:var(--text-secondary);">
+                    {{ order.governorate }}، {{ order.address }}
+                </p>
+                <div style="margin-top:.8rem;padding-top:.8rem;border-top:1px solid var(--border-light);display:flex;justify-content:space-between;align-items:center;font-size:.85rem;">
+                    <span>المطلوب تحصيله:</span>
+                    {% if order.payment_method == 'shamcash' %}
+                        <strong style="color:#10b981;">شام كاش (مدفوع)</strong>
+                    {% else %}
+                        <strong style="color:var(--brand-gold);font-size:1.05rem;">{{ order.total_syp }} ل.س</strong>
+                    {% endif %}
+                </div>
+            </div>
+        </aside>
+
+        <!-- Live Driver Route Map -->
+        <main class="dr-map-wrapper">
+            <div class="dr-map-toolbar">
+                <div style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;color:var(--text-muted);">
+                    <span style="width:8px;height:8px;border-radius:50%;background:#06b6d4;display:inline-block;"></span>
+                    <span>GPS المندوب المباشر متصل</span>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-dr-recenter">
+                    <i data-lucide="scan"></i> ضبط الرؤية
+                </button>
+            </div>
+
+            <div id="driver-map"></div>
+        </main>
+    </div>
+</div>
+
+<!-- Leaflet Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.min.js"></script>
+
+<script>
+(function() {
+    const orderId = "{{ order.id }}";
+    const clientLat = parseFloat("{{ order.location_latitude|unlocalize }}");
+    const clientLng = parseFloat("{{ order.location_longitude|unlocalize }}");
+    const hubLat = parseFloat("{{ hub_lat|unlocalize }}");
+    const hubLng = parseFloat("{{ hub_lng|unlocalize }}");
+
+    let driverLat = {% if order.driver_latitude %}{{ order.driver_latitude|unlocalize }}{% else %}hubLat{% endif %};
+    let driverLng = {% if order.driver_longitude %}{{ order.driver_longitude|unlocalize }}{% else %}hubLng{% endif %};
+
+    const map = L.map('driver-map', {
+        center: [driverLat, driverLng],
+        zoom: 14,
+        attributionControl: false
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19
+    }).addTo(map);
+
+    const driverIcon = L.divIcon({
+        className: 'custom-driver-pin',
+        html: '<div style="background:#06b6d4;width:32px;height:32px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 16px rgba(6,182,212,0.95);display:grid;place-items:center;color:#fff;font-size:14px;">🛵</div>',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+    });
+
+    const homeIcon = L.divIcon({
+        className: 'custom-home-pin',
+        html: '<div style="background:#ef4444;width:28px;height:28px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 14px rgba(239,68,68,0.9);display:grid;place-items:center;color:#fff;font-size:12px;">🏠</div>',
+        iconSize: [28, 28],
+        iconAnchor: [14, 14]
+    });
+
+    const driverMarker = L.marker([driverLat, driverLng], { icon: driverIcon, draggable: true }).addTo(map)
+        .bindPopup('<strong>موقعك الحالي (السائق)</strong>');
+
+    const clientMarker = L.marker([clientLat, clientLng], { icon: homeIcon }).addTo(map)
+        .bindPopup('<strong>منزل العميل المستلم</strong><br>{{ order.address }}');
+
+    const routingControl = L.Routing.control({
+        waypoints: [
+            L.latLng(driverLat, driverLng),
+            L.latLng(clientLat, clientLng)
+        ],
+        lineOptions: {
+            styles: [
+                { color: '#0f172a', opacity: 0.3, weight: 8 },
+                { color: '#06b6d4', opacity: 0.95, weight: 5 }
+            ]
+        },
+        createMarker: function() { return null; },
+        show: false,
+        addWaypoints: false,
+        draggableWaypoints: false,
+        fitSelectedRoutes: true
+    }).addTo(map);
+
+    routingControl.on('routesfound', function(e) {
+        const routes = e.routes;
+        if (routes && routes.length > 0) {
+            const summary = routes[0].summary;
+            const km = (summary.totalDistance / 1000).toFixed(1);
+            const minutes = Math.max(1, Math.round(summary.totalTime / 60));
+
+            document.getElementById('dr-distance').textContent = `${km} كم`;
+            document.getElementById('dr-eta').textContent = `${minutes} دقيقة`;
+        }
+    });
+
+    // Send driver location to API
+    function reportLocation(lat, lng, heading, speed) {
+        fetch(`/api/delivery/driver/update-location/${orderId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                latitude: lat,
+                longitude: lng,
+                heading: heading || null,
+                speed: speed || null
+            })
+        }).catch(err => console.error(err));
+    }
+
+    // Driver Watch Position live GPS
+    if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(
+            function(pos) {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+                driverLat = lat;
+                driverLng = lng;
+
+                driverMarker.setLatLng([lat, lng]);
+                routingControl.setWaypoints([
+                    L.latLng(lat, lng),
+                    L.latLng(clientLat, clientLng)
+                ]);
+
+                reportLocation(lat, lng, pos.coords.heading, pos.coords.speed);
+            },
+            function(err) {
+                console.warn("GPS watch position error:", err);
+            },
+            { enableHighAccuracy: true, maximumAge: 2000, timeout: 10000 }
+        );
+    }
+
+    // Driver manual dragging of pin fallback
+    driverMarker.on('dragend', function(e) {
+        const pos = e.target.getLatLng();
+        driverLat = pos.lat;
+        driverLng = pos.lng;
+        routingControl.setWaypoints([
+            L.latLng(pos.lat, pos.lng),
+            L.latLng(clientLat, clientLng)
+        ]);
+        reportLocation(pos.lat, pos.lng);
+    });
+
+    document.getElementById('btn-dr-recenter').addEventListener('click', function() {
+        const bounds = L.latLngBounds([
+            [driverLat, driverLng],
+            [clientLat, clientLng]
+        ]);
+        map.fitBounds(bounds, { padding: [50, 50] });
+    });
+
+    setTimeout(() => { map.invalidateSize(); }, 300);
+})();
+</script>
+{% endblock %}

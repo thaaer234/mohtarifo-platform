@@ -33,8 +33,41 @@
         </div>
     </section>
 
+    {% if active_notebook_orders %}
+    <!-- Live Order Tracking Banner for Student -->
+    <section class="live-delivery-banner reveal-up" style="margin-bottom: 2rem; background: linear-gradient(135deg, rgba(6, 182, 212, 0.12), rgba(16, 185, 129, 0.08)); border: 1px solid rgba(6, 182, 212, 0.35); border-radius: 16px; padding: 1.4rem; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+        {% for active_order in active_notebook_orders %}
+        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 1.2rem;">
+                <div style="width: 54px; height: 54px; border-radius: 50%; background: rgba(6, 182, 212, 0.2); color: #06b6d4; display: grid; place-items: center; font-size: 1.5rem; flex-shrink: 0; box-shadow: 0 0 15px rgba(6,182,212,0.3);">
+                    🛵
+                </div>
+                <div>
+                    <div style="display: inline-flex; align-items: center; gap: .4rem; background: rgba(16, 185, 129, 0.15); color: #10b981; padding: 2px 8px; border-radius: 999px; font-weight: 800; font-size: .78rem; margin-bottom: .3rem;">
+                        <span style="width: 7px; height: 7px; border-radius: 50%; background: #10b981; animation: livePulseRing 1.6s infinite;"></span>
+                        <span>طلبك قيد المتابعة والتوصيل</span>
+                    </div>
+                    <h3 style="margin: 0 0 .2rem; font-size: 1.15rem;">نوطة: <span style="color: var(--brand-gold);">{{ active_order.product.title }}</span></h3>
+                    <p style="margin: 0; color: var(--text-muted); font-size: .85rem;">
+                        الحالة: <strong>{{ active_order.get_status_display }}</strong>
+                        {% if active_order.driver %} · المندوب: <strong>{{ active_order.driver.get_full_name|default:active_order.driver.username }}</strong>{% endif %}
+                    </p>
+                </div>
+            </div>
+            <div>
+                <a href="{% url 'dashboard:student_order_tracking' active_order.id %}" class="btn btn-primary" style="background: linear-gradient(135deg, #06b6d4, #0ea5e9); border: none; font-weight: 800; padding: .65rem 1.3rem; border-radius: 8px; display: inline-flex; align-items: center; gap: .5rem; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);">
+                    <i data-lucide="navigation"></i>
+                    <span>فتح شاشة التتبع المباشر (GPS)</span>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </section>
+    {% endif %}
+
     <!-- 2. Performance Stats Grid -->
     <div class="stats-grid">
+
         <div class="premium-card stat-card reveal-up" style="animation-delay: 0.1s;">
             <div class="stat-icon"><i data-lucide="zap"></i></div>
             <div class="stat-info w-full">

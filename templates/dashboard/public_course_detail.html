@@ -1,146 +1,101 @@
-{% extends "dashboard/base.html" %}
+{% extends 'dashboard/base.html' %}
 {% load static %}
+{% load dashboard_tags %}
 
-{% block title %}{{ course.title }} | محترفو التعليم{% endblock %}
-
-{% block media_csp %}'self' blob: https: data: mediastream: *{% endblock %}
-{% block meta_description %}{% if course.description %}{{ course.description|striptags|truncatechars:155 }}{% else %}دورة {{ course.title }} على منصة محترفو التعليم بإشراف الأستاذ {{ course.instructor.get_full_name|default:course.instructor.username }}.{% endif %}{% endblock %}
-{% block og_type %}article{% endblock %}
-{% block og_title %}{{ course.title }} | محترفو التعليم{% endblock %}
-{% block og_description %}{% if course.description %}{{ course.description|striptags|truncatechars:155 }}{% else %}دورة {{ course.title }} على منصة محترفو التعليم.{% endif %}{% endblock %}
-{% block twitter_title %}{{ course.title }} | محترفو التعليم{% endblock %}
-{% block twitter_description %}{% if course.description %}{{ course.description|striptags|truncatechars:155 }}{% else %}دورة {{ course.title }} على منصة محترفو التعليم.{% endif %}{% endblock %}
-{% block og_image %}{% if course.cover %}{{ SEO_SITE_URL }}{{ course.cover.url }}{% else %}{{ SEO_SITE_URL }}{% static course.instructor_cover_static_path %}{% endif %}{% endblock %}
-{% block twitter_image %}{% if course.cover %}{{ SEO_SITE_URL }}{{ course.cover.url }}{% else %}{{ SEO_SITE_URL }}{% static course.instructor_cover_static_path %}{% endif %}{% endblock %}
-{% block og_image_alt %}{{ course.title }}{% endblock %}
-
-{% block structured_data %}
-{{ block.super }}
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "Course",
-  "name": "{{ course.title|escapejs }}",
-  "description": "{% if course.description %}{{ course.description|striptags|truncatechars:300|escapejs }}{% else %}دورة {{ course.title|escapejs }} على منصة محترفو التعليم بإشراف الأستاذ {{ course.instructor.get_full_name|default:course.instructor.username|escapejs }}.{% endif %}",
-  "url": "{{ SEO_CANONICAL_URL|escapejs }}",
-  "inLanguage": "ar-SY",
-  "educationalLevel": "{{ course.get_academic_track_display|escapejs }}",
-  "provider": {
-    "@type": "EducationalOrganization",
-    "name": "{{ SEO_SITE_NAME|escapejs }}",
-    "url": "{{ SEO_SITE_URL|escapejs }}"
-  },
-  "about": "{{ course.subject.name|escapejs }}",
-  "creator": {
-    "@type": "Person",
-    "name": "{{ course.instructor.get_full_name|default:course.instructor.username|escapejs }}"
-  },
-  "image": "{% if course.cover %}{{ SEO_SITE_URL|escapejs }}{{ course.cover.url|escapejs }}{% else %}{{ SEO_SITE_URL|escapejs }}{% static course.instructor_cover_static_path %}{% endif %}"{% if course.price_display %},
-  "offers": {
-    "@type": "Offer",
-    "url": "{{ SEO_CANONICAL_URL|escapejs }}",
-    "price": "{{ course.price_display|escapejs }}",
-    "priceCurrency": "SYP",
-    "availability": "https://schema.org/InStock"
-  }{% endif %}
-}
-</script>
-{% endblock %}
-
-{% block breadcrumbs %}
-<div class="flex-center gap-3 reveal-up" style="justify-content: flex-start; font-size: 0.85rem;">
-    <a href="{% url 'dashboard:landing' %}" class="text-muted">الرئيسية</a>
-    <i data-lucide="chevron-left" style="width: 14px; opacity: 0.3;"></i>
-    <a href="{% url 'dashboard:landing' %}#courses-catalog" class="text-muted">الدورات</a>
-    <i data-lucide="chevron-left" style="width: 14px; opacity: 0.3;"></i>
-    <span class="gold font-bold">{{ course.title }}</span>
-</div>
-{% endblock %}
+{% block title %}{{ course.title }} | منصة محترفو التعليم{% endblock %}
 
 {% block content %}
-<div class="public-course-page reveal-up">
-    <!-- Hero Section -->
-    <div class="premium-card mb-12 public-course-hero-card">
+<div class="public-course-page animate-fade-in" style="max-width: 1200px; margin: 0 auto; padding-bottom: 5rem;">
+    <!-- Course Hero Section -->
+    <div class="premium-card public-course-hero mb-8" style="position: relative; overflow: hidden; padding: 3rem 2.5rem !important;">
         <div class="public-course-hero-grid">
-            <div class="hero-text">
-                <div class="flex-center gap-3 mb-6" style="justify-content: flex-start;">
-                    <span class="badge badge-gold"><i data-lucide="bookmark" style="width: 14px;"></i> {{ course.subject.name }}</span>
-                    <span class="badge" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2);"><i data-lucide="layers" style="width: 14px;"></i> {{ course.get_kind_display }}</span>
+            <!-- Left/Main Info -->
+            <div class="flex-column" style="justify-content: center;">
+                <div class="flex-center gap-2 mb-4" style="justify-content: flex-start;">
+                    <span class="badge" style="background: rgba(212, 175, 55, 0.15); color: var(--gold-primary); border: 1px solid rgba(212, 175, 55, 0.3); font-weight: 700;">
+                        {{ course.academic_track_display|default:course.subject.name|default:"الثانوية العامة" }}
+                    </span>
+                    <span class="badge" style="background: var(--bg-surface-elevated); color: var(--text-secondary); border: 1px solid var(--border-light);">
+                        {{ course.subject.name }}
+                    </span>
                 </div>
-                <h1 style="font-size: 3.5rem; line-height: 1.1; font-weight: 900; margin-bottom: 1.5rem;">{{ course.title }}</h1>
-                <p class="text-muted" style="font-size: 1.25rem; margin-bottom: 2rem;">
-                    {{ course.get_academic_track_display }} · بإشراف الأستاذ: <strong class="gold">{{ course.instructor.get_full_name|default:course.instructor.username }}</strong>
-                </p>
                 
-                <div class="flex-center gap-8 mt-10" style="justify-content: flex-start;">
-                    <div class="flex-center gap-2">
-                        <i data-lucide="star" class="gold" fill="var(--brand-gold)" style="width: 20px;"></i>
-                        <span class="font-bold">{{ course.rating|default:"5.0" }}</span>
+                <h1 style="font-size: 2.4rem; font-weight: 800; line-height: 1.25; margin-bottom: 1.25rem; color: var(--text-primary);">
+                    {{ course.title }}
+                </h1>
+                
+                <p style="font-size: 1.1rem; line-height: 1.7; color: var(--text-secondary); margin-bottom: 2rem; max-width: 650px;">
+                    {{ course.summary|default:course.description|default:"دورة متكاملة وشاملة تم إعدادها بعناية لمساعدتك في تحقيق أعلى الدرجات في الامتحانات."|truncatewords:25 }}
+                </p>
+
+                <!-- Instructor Info Row -->
+                <div class="flex-center gap-4 py-4" style="justify-content: flex-start; border-top: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light);">
+                    <div style="width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, var(--gold-primary), #b38f2a); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #111; font-size: 1.2rem; border: 2px solid rgba(255,255,255,0.1);">
+                        {{ course.instructor.get_full_name|default:course.instructor.username|slice:":1" }}
                     </div>
-                    <div class="flex-center gap-2">
-                        <i data-lucide="users" class="gold" style="width: 20px;"></i>
-                        <span class="font-bold">{{ course.students_enrolled }} طالب</span>
+                    <div>
+                        <span class="text-muted block" style="font-size: 0.85rem;">مدرس الدورة</span>
+                        <strong style="font-size: 1.05rem; color: var(--text-primary);">أ. {{ course.instructor.get_full_name|default:course.instructor.username }}</strong>
                     </div>
-                    <div class="flex-center gap-2">
+                </div>
+
+                <!-- Stats Icons -->
+                <div class="grid-3 gap-4 mt-6">
+                    <div class="flex-center gap-3" style="justify-content: flex-start;">
                         <i data-lucide="video" class="gold" style="width: 20px;"></i>
-                        <span class="font-bold">{{ course.total_lessons_count }} جلسة</span>
+                        <div>
+                            <span class="text-muted block" style="font-size: 0.75rem;">إجمالي الدروس</span>
+                            <strong style="font-size: 0.95rem;">{{ course.total_lessons_count }} درساً</strong>
+                        </div>
+                    </div>
+                    <div class="flex-center gap-3" style="justify-content: flex-start;">
+                        <i data-lucide="clock" class="gold" style="width: 20px;"></i>
+                        <div>
+                            <span class="text-muted block" style="font-size: 0.75rem;">المدة الإجمالية</span>
+                            <strong style="font-size: 0.95rem;">{{ course.total_duration|default:"ساعات تدريبية" }}</strong>
+                        </div>
+                    </div>
+                    <div class="flex-center gap-3" style="justify-content: flex-start;">
+                        <i data-lucide="layers" class="gold" style="width: 20px;"></i>
+                        <div>
+                            <span class="text-muted block" style="font-size: 0.75rem;">الوحدات التعليمية</span>
+                            <strong style="font-size: 0.95rem;">{{ course.units.count }} وحدات</strong>
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Floating CTA Card -->
-            <div class="public-course-cta-slot">
-                <div class="premium-card cta-card-floating">
-                    <div class="public-course-cover-container" {% if first_lesson and video_embed_url %}onclick="openDemoVideoModal()"{% endif %} style="position: relative; margin-bottom: 2rem; border-radius: 24px; overflow: hidden; border: 1px solid var(--border-light); aspect-ratio: 16/9; {% if first_lesson and video_embed_url %}cursor: pointer;{% endif %}">
-                        {% if course.cover %}
-                            <img src="{{ course.cover.url }}" alt="{{ course.title }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
-                        {% else %}
-                            <img src="{% static course.instructor_cover_static_path %}" alt="{{ course.title }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
-                        {% endif %}
-                        {% if first_lesson and video_embed_url %}
-                            <div class="video-play-overlay" style="position: absolute; inset: 0; background: rgba(0,0,0,0.45); display: flex; align-items: center; justify-content: center; transition: all 0.3s ease;">
-                                <div class="play-btn-circle" style="width: 64px; height: 64px; background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 2px solid #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 25px rgba(0,0,0,0.4); transition: all 0.3s ease; animation: pulsePlay 2s infinite;">
-                                    <i data-lucide="play" fill="#fff" style="width: 28px; height: 28px; color: #fff; margin-right: -3px;"></i>
-                                </div>
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="text-center mb-8">
-                        {% load inline_static %}
-                        {% course_discount_info course as discount %}
-                        <span class="text-muted block mb-1" style="font-size: 0.85rem;">سعر الدورة</span>
-                        {% if discount.has_discount %}
-                            <div style="font-size: 1.5rem; text-decoration: line-through; color: rgba(255,255,255,0.4); font-weight: 700; margin-bottom: 0.25rem;">
-                                {{ discount.original_price|currency_format }} <small style="font-size: 0.85rem;">ل.س</small>
-                            </div>
-                            <div style="font-size: 2.5rem; font-weight: 900; color: var(--text-primary); line-height: 1.1;">
-                                {{ discount.discounted_price|currency_format }} <small class="gold" style="font-size: 1rem;">ل.س</small>
-                            </div>
-                            <div style="margin-top: 0.5rem;">
-                                <span class="badge" style="background: rgba(197,160,89,0.15); color: var(--brand-gold); font-size: 0.85rem; padding: 0.35rem 0.75rem; border-radius: 8px; font-weight: 700; border: 1px solid rgba(197,160,89,0.25);">
-                                    {{ discount.discount_name }}
-                                </span>
-                            </div>
-                        {% else %}
-                            <div style="font-size: 2.5rem; font-weight: 900; color: var(--text-primary);">
-                                {{ course.price_display }} <small class="gold" style="font-size: 1rem;">ل.س</small>
-                            </div>
-                        {% endif %}
-                    </div>
 
-                    {% if has_access %}
-                        <div class="flex-center gap-3 mb-6" style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 1rem; border-radius: 16px; font-weight: bold; font-size: 0.95rem;">
+            <!-- Right Box: Pricing and Actions -->
+            <div class="public-course-pricing-card flex-column" style="justify-content: center; background: var(--bg-surface-elevated); border: 1px solid var(--border-light); border-radius: 24px; padding: 2.5rem; text-align: center;">
+                <div class="mb-6">
+                    <span class="text-muted block mb-1" style="font-size: 0.85rem;">سعر الدورة</span>
+                    <span style="font-size: 2.2rem; font-weight: 900; color: #10b981;">
+                        {{ course.price_cents|currency_format }}
+                    </span>
+                </div>
+
+                <div class="flex-column gap-3">
+                    {% if user_has_access %}
+                        <div class="flex-center gap-3 mb-4" style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 1rem; border-radius: 16px; font-weight: bold; font-size: 0.95rem;">
                             <i data-lucide="check-circle" style="width: 20px;"></i>
                             <span>أنت مشترك في هذه الدورة بالفعل</span>
                         </div>
                         <a href="{% url 'dashboard:student_course_detail' course.id %}" class="btn btn-primary btn-glow w-full" style="padding: 1.25rem; font-size: 1.1rem;">دخول الدورة الآن</a>
                     {% else %}
-                        <a href="#" class="btn btn-primary btn-glow w-full mb-4 whatsapp-order-btn" 
+                        <!-- زر الشراء المباشر بشام كاش مع اللوغو الرسمي -->
+                        <button type="button" 
+                                onclick="openShamCashModal('{{ course.id }}', '{{ course.title|escapejs }}', '{{ course.price_cents|currency_format }}')"
+                                class="btn w-full mb-3" 
+                                style="background: #000; color: #fff; border: 2px solid #10b981; border-radius: 16px; padding: 0.85rem 1.25rem; font-size: 1.05rem; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 0.75rem; cursor: pointer; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25); transition: all 0.2s ease;">
+                            <img src="https://api-shamcash.com/logo.png" alt="Sham Cash" style="width: 32px; height: 32px; object-fit: contain;" onerror="this.src='/static/images/shamcash_logo.png'">
+                            <span style="color: #fff;">شراء الآن عبر شام كاش</span>
+                        </button>
+
+                        <a href="#" class="btn btn-secondary w-full mb-2 whatsapp-order-btn" 
                            data-title="{{ course.title }}"
                            data-subject="{{ course.subject.name }}"
                            data-instructor="{{ course.instructor.get_full_name|default:course.instructor.username }}"
-                           data-price="{% if discount.has_discount %}{{ discount.discounted_price|currency_format }}{% else %}{{ course.price_display }}{% endif %}"
+                           data-price="{{ course.price_cents|currency_format }}"
                            {% if request.user.is_authenticated %}
                            data-authenticated="true"
                            data-student-name="{{ request.user.get_full_name|default:request.user.username }}"
@@ -150,10 +105,10 @@
                            {% else %}
                            data-authenticated="false"
                            {% endif %}>
-                           التسجيل عبر واتساب
+                           الطلب عبر واتساب
                         </a>
-                        <a href="{% url 'dashboard:shop' %}#sales-centers" class="btn btn-secondary w-full mb-4" style="padding: 1rem;">مراكز البيع وطرق الدفع</a>
-                        <p class="text-muted text-center" style="font-size: 0.8rem;">بعد الحصول على الكود، سجّل الدخول وأدخله من لوحة الطالب.</p>
+                        <a href="{% url 'dashboard:shop' %}#sales-centers" class="btn btn-secondary w-full mb-2" style="padding: 0.85rem; font-size: 0.9rem;">مراكز البيع ونقاط الشراء</a>
+                        <p class="text-muted text-center" style="font-size: 0.8rem;">الدفع والتفعيل فوري عبر شام كاش.</p>
                     {% endif %}
                 </div>
             </div>
@@ -211,419 +166,10 @@
                     {% endfor %}
                 </div>
             </section>
-
-            <section class="mt-12">
-                <h3 class="flex-center gap-3 mb-8" style="justify-content: flex-start; font-size: 1.6rem;">
-                    <i data-lucide="shopping-bag" class="gold"></i>
-                    <span>طرق شراء هذه الدورة</span>
-                </h3>
-                <div class="premium-card" style="padding: 2.5rem !important;">
-                    <div class="grid-3 gap-6">
-                        <a class="premium-card whatsapp-order-btn" href="#" 
-                           data-title="{{ course.title }}"
-                           data-subject="{{ course.subject.name }}"
-                           data-instructor="{{ course.instructor.get_full_name|default:course.instructor.username }}"
-                           data-price="{% if discount.has_discount %}{{ discount.discounted_price|currency_format }}{% else %}{{ course.price_display }}{% endif %}"
-                           {% if request.user.is_authenticated %}
-                           data-authenticated="true"
-                           data-student-name="{{ request.user.get_full_name|default:request.user.username }}"
-                           data-student-phone="{{ request.user.student_profile.phone|default:request.user.username }}"
-                           data-student-track="{{ request.user.student_profile.track|default:'غير محدد' }}"
-                           data-student-gov="{{ request.user.student_profile.governorate|default:'غير محدد' }}"
-                           {% else %}
-                           data-authenticated="false"
-                           {% endif %}
-                           style="padding: 1.5rem; text-decoration:none; background: var(--bg-surface-elevated);">
-                            <i data-lucide="message-circle" class="gold mb-3"></i>
-                            <strong class="block mb-2" style="color: var(--text-primary);">واتساب المنصة</strong>
-                            <span class="text-muted">{{ CONTACT_WHATSAPP_LOCAL }}</span>
-                        </a>
-                        {% for center in sales_centers %}
-                            <div class="premium-card" style="padding: 1.5rem; background: var(--bg-surface-elevated);">
-                                <strong class="block mb-2" style="color: var(--text-primary);">{{ center.name }}</strong>
-                                <div class="text-muted" style="font-size:.9rem; line-height:1.8;">
-                                    {% if center.institute %}<div>{{ center.institute.name }}</div>{% endif %}
-                                    {% if center.address %}<div>{{ center.address }}</div>{% endif %}
-                                    {% if center.phone %}<div>{{ center.phone }}</div>{% endif %}
-                                </div>
-                            </div>
-                        {% empty %}
-                            <div class="premium-card" style="padding: 1.5rem; background: var(--bg-surface-elevated);">
-                                <strong class="block mb-2" style="color: var(--text-primary);">مراكز البيع</strong>
-                                <span class="text-muted">استفسر من واتساب المنصة عن أقرب مركز بيع.</span>
-                            </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </section>
         </div>
     </div>
 </div>
 
-<style>
-    /* Premium Grids and Layouts */
-    .public-course-hero-grid {
-        display: grid;
-        grid-template-columns: 1.6fr 1.4fr;
-        gap: 4rem;
-        align-items: center;
-    }
-
-    .public-course-content-grid {
-        display: grid;
-        grid-template-columns: 1.9fr 1.1fr;
-        gap: 4rem;
-        align-items: start;
-    }
-
-    /* Floating CTA Card Positioning */
-    .public-course-cta-slot {
-        position: sticky;
-        top: 110px;
-        align-self: start;
-        z-index: 100;
-        transition: var(--transition-smooth);
-    }
-
-    .cta-card-floating {
-        background: var(--glass-bg) !important;
-        backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-        -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-        border: 1px solid var(--glass-border) !important;
-        border-radius: 32px !important;
-        padding: 2.5rem !important;
-        box-shadow: var(--shadow-glow) !important;
-        transition: var(--transition-smooth);
-    }
-
-    .cta-card-floating:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 25px 50px rgba(var(--brand-gold-rgb), 0.2) !important;
-        border-color: rgba(var(--brand-gold-rgb), 0.4) !important;
-    }
-
-    /* Course Cover Stylings */
-    .public-course-cover {
-        position: relative;
-        overflow: hidden;
-        aspect-ratio: 16 / 9;
-        border-radius: 24px;
-        margin-bottom: 2rem;
-        border: 1px solid var(--border-light);
-        background: var(--bg-surface-elevated);
-        box-shadow: var(--shadow-soft);
-        transition: var(--transition-smooth);
-    }
-
-    .public-course-cover::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to top, rgba(0,0,0,0.4), transparent);
-        opacity: 0;
-        transition: var(--transition-smooth);
-    }
-
-    .cta-card-floating:hover .public-course-cover::after {
-        opacity: 1;
-    }
-
-    .public-course-cover img {
-        width: 100%;
-        height: 100%;
-        display: block;
-        object-fit: cover;
-        transition: var(--transition-smooth);
-    }
-
-    .cta-card-floating:hover .public-course-cover img {
-        transform: scale(1.05);
-    }
-
-    /* Video Embed Style */
-    iframe {
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        transition: var(--transition-smooth);
-    }
-
-    /* Premium Typography Glares */
-    h1 {
-        background: linear-gradient(135deg, var(--text-primary) 30%, var(--brand-gold) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        animation: fadeUp 1s cubic-bezier(0.16, 1, 0.3, 1) both;
-    }
-
-    /* Custom Accordion (Curriculum) */
-    .premium-accordion {
-        background: var(--bg-surface);
-        transition: var(--transition-smooth);
-    }
-
-    .premium-accordion summary {
-        padding: 1.75rem 2.5rem;
-        cursor: pointer;
-        list-style: none;
-        outline: none;
-        user-select: none;
-        transition: var(--transition-smooth);
-        border-radius: var(--radius-md);
-    }
-
-    .premium-accordion summary:hover {
-        background: rgba(var(--brand-gold-rgb), 0.03);
-    }
-
-    .premium-accordion summary strong {
-        font-size: 1.15rem;
-        color: var(--text-primary);
-        transition: var(--transition-smooth);
-    }
-
-    .premium-accordion summary:hover strong {
-        color: var(--brand-gold);
-    }
-
-    .premium-accordion summary i {
-        color: var(--text-muted);
-        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.3s;
-    }
-
-    .premium-accordion summary:hover i {
-        color: var(--brand-gold);
-    }
-
-    details[open] .premium-accordion summary {
-        background: rgba(var(--brand-gold-rgb), 0.05);
-        border-bottom: 1px solid var(--border-light);
-    }
-
-    details[open] summary strong {
-        color: var(--brand-gold);
-    }
-
-    details[open] summary i {
-        transform: rotate(180deg);
-        color: var(--brand-gold);
-    }
-
-    /* Lesson Items inside Curriculum */
-    .lesson-item-lock {
-        display: flex;
-        align-items: center;
-        gap: 1.25rem;
-        padding: 1rem 2rem;
-        color: var(--text-secondary);
-        font-size: 1.05rem;
-        border-radius: var(--radius-sm);
-        transition: var(--transition-smooth);
-    }
-
-    .lesson-item-lock:hover {
-        background: rgba(255, 255, 255, 0.02);
-        color: var(--text-primary);
-        transform: translateX(-5px);
-    }
-
-    .dark-theme .lesson-item-lock:hover {
-        background: rgba(255, 255, 255, 0.01);
-    }
-
-    .lesson-item-lock i {
-        opacity: 0.5;
-        transition: var(--transition-smooth);
-    }
-
-    .lesson-item-lock:hover i {
-        color: var(--brand-gold);
-        opacity: 1;
-        transform: scale(1.1);
-    }
-
-    /* Glow Badges */
-    .badge-gold {
-        background: linear-gradient(135deg, rgba(var(--brand-gold-rgb), 0.15), rgba(var(--brand-gold-rgb), 0.05)) !important;
-        border: 1px solid rgba(var(--brand-gold-rgb), 0.3) !important;
-        color: var(--brand-gold-light) !important;
-        box-shadow: 0 4px 15px rgba(var(--brand-gold-rgb), 0.1);
-    }
-
-    /* RESPONSIVE BREAKPOINTS & CUSTOM STYLES */
-    .public-course-hero-card {
-        padding: 4rem !important;
-        border-radius: 40px !important;
-        background: linear-gradient(135deg, rgba(var(--brand-gold-rgb), 0.1), rgba(0,0,0,0.4)) !important;
-        position: relative;
-    }
-    
-    @keyframes pulsePlay {
-        0% {
-            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
-            transform: scale(1);
-        }
-        70% {
-            box-shadow: 0 0 0 15px rgba(255, 255, 255, 0);
-            transform: scale(1.05);
-        }
-        100% {
-            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
-            transform: scale(1);
-        }
-    }
-    .video-play-overlay:hover {
-        background: rgba(0,0,0,0.6) !important;
-    }
-    .video-play-overlay:hover .play-btn-circle {
-        background: var(--brand-gold) !important;
-        border-color: var(--brand-gold) !important;
-        transform: scale(1.1) !important;
-    }
-
-    @media (max-width: 1100px) {
-        .public-course-hero-grid,
-        .public-course-content-grid {
-            grid-template-columns: 1fr !important;
-            gap: 3rem !important;
-        }
-        
-        .public-course-cta-slot {
-            position: static !important;
-            margin-top: 0;
-            width: 100%;
-        }
-
-        .cta-card-floating {
-            border-radius: 24px !important;
-            padding: 2rem !important;
-        }
-
-        h1 {
-            font-size: 2.5rem !important;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .public-course-hero-card {
-            padding: 2.5rem 1.5rem !important;
-            border-radius: 24px !important;
-        }
-        h1 {
-            font-size: 2.2rem !important;
-        }
-        .hero-text p {
-            font-size: 1.1rem !important;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .public-course-hero-card {
-            padding: 1.75rem 1rem !important;
-            border-radius: 20px !important;
-        }
-        h1 {
-            font-size: 1.8rem !important;
-            line-height: 1.2 !important;
-        }
-        .hero-text p {
-            font-size: 1rem !important;
-        }
-        .hero-text .flex-center.gap-8 {
-            gap: 1.25rem !important;
-            flex-wrap: wrap;
-        }
-    }
-
-    details summary::-webkit-details-marker {
-        display: none;
-    }
-</style>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const baseUrl = "{{ CONTACT_WHATSAPP_URL }}";
-        
-        const authTemplate = decodeURIComponent("%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%20%D9%85%D9%86%D8%B5%D8%A9%20%D9%85%D8%AD%D8%AA%D8%B1%D9%81%D9%88%20%D8%A7%D9%84%D8%AA%D8%B9%D9%84%D9%8A%D9%85.%0A%D8%A3%D9%88%D8%AF%20%D8%A7%D9%84%D8%AA%D8%B3%D8%AC%D9%8A%D9%84%20%D9%81%D9%8A%20%D9%85%D8%A7%D8%AF%D8%A9%20%D9%85%D9%83%D8%AB%D9%81%D8%A9%20%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9%3A%0A%0A-%20%D8%A7%D8%B3%D9%85%20%D8%A7%D9%84%D9%85%D9%83%D8%AB%D9%81%D8%A9%3A%20%7Btitle%7D%0A-%20%D9%85%D8%A7%D8%AF%D8%A9%3A%20%7Bsubject%7D%0A-%20%D8%A8%D8%A5%D8%B4%D8%B1%D8%A7%D9%81%20%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%3A%20%7Binstructor%7D%0A-%20%D8%A7%D9%84%D8%B3%D8%B9%D8%B1%3A%20%7Bprice%7D%20%D9%84.%D8%B3%0A%0A%D9%85%D8%B9%D9%84%D9%88%D9%85%D8%A7%D8%AA%20%D8%A7%D9%84%D8%B7%D8%A7%D9%84%D8%A8%3A%0A-%20%D8%A7%D9%84%D8%A7%D8%B3%D9%85%3A%20%7Bname%7D%0A-%20%D8%B1%D9%82%D9%85%20%D8%A7%D9%84%D9%87%D8%A7%D8%AA%D9%81%3A%20%7Bphone%7D%0A-%20%D8%A7%D9%84%D9%81%D8%B1%D8%B9%20%D8%A7%D9%84%D8%AF%D8%B1%D8%A7%D8%B3%D9%8A%3A%20%7Btrack%7D%0A-%20%D8%A7%D9%84%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%A9%3A%20%7Bgov%7D");
-        
-        const anonTemplate = decodeURIComponent("%D9%85%D8%B1%D8%AD%D8%A8%D8%A7%D9%8B%20%D9%85%D9%86%D8%B5%D8%A9%20%D9%85%D8%AD%D8%AA%D8%B1%D9%81%D9%88%20%D8%A7%D9%84%D8%AA%D8%B9%D9%84%D9%8A%D9%85.%0A%D8%A3%D9%88%D8%AF%20%D8%A7%D9%84%D8%AA%D8%B3%D8%AC%D9%8A%D9%84%20%D9%81%D9%8A%20%D9%85%D8%A7%D8%AF%D8%A9%20%D9%85%D9%83%D8%AB%D9%81%D8%A9%20%D8%AC%D8%AF%D9%8A%D8%AF%D8%A9%3A%0A%0A-%20%D8%A7%D8%B3%D9%85%20%D8%A7%D9%84%D9%85%D9%83%D8%AB%D9%81%D8%A9%3A%20%7Btitle%7D%0A-%20%D9%85%D8%A7%D8%AF%D8%A9%3A%20%7Bsubject%7D%0A-%20%D8%A8%D8%A5%D8%B4%D8%B1%D8%A7%D9%81%20%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%3A%20%7Binstructor%7D%0A-%20%D8%A7%D9%84%D8%B3%D8%B9%D8%B1%3A%20%7Bprice%7D%20%D9%84.%D8%B3%0A%0A%D9%85%D8%B9%D9%84%D9%88%D9%85%D8%A7%D8%AA%20%D8%A7%D9%84%D8%B7%D8%A7%D9%84%D8%A8%3A%0A-%20%D8%A7%D9%84%D8%A7%D8%B3%D9%85%3A%20%5B%D9%8A%D8%B1%D8%AC%D9%89%20%D9%83%D8%AA%D8%A7%D8%A8%D8%A9%20%D8%A7%D8%B3%D9%85%D9%83%20%D8%A7%D9%84%D8%AB%D9%84%D8%A7%D8%AB%D9%8A%20%D9%87%D9%86%D8%A7%5D%0A-%20%D8%B1%D9%82%D9%85%20%D8%A7%D9%84%D9%87%D8%A7%D8%AA%D9%81%3A%20%5B%D9%8A%D8%B1%D8%AC%D9%89%20%D9%83%D8%AA%D8%A7%D8%A8%D8%A9%20%D8%B1%D9%82%D9%85%20%D9%87%D8%A7%D8%AA%D9%81%D9%83%20%D9%84%D9%84%D8%AA%D9%88%D8%A7%D8%B5%D9%84%5D%0A-%20%D8%A7%D9%84%D9%81%D8%B1%D8%B9%20%D8%A7%D9%84%D8%AF%D8%B1%D8%A7%D8%B3%D9%8A%3A%20%5B%D8%B9%D9%84%D9%85%D9%8A%20%2F%20%D8%A3%D8%AF%D8%A8%D9%8A%5D%0A-%20%D8%A7%D9%84%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%A9%3A%20%5B%D8%A7%D8%B3%D9%85%20%D9%85%D8%AD%D8%A7%D9%81%D8%B8%D8%AA%D9%83%20%D9%87%D9%86%D8%A7%5D");
-
-        document.querySelectorAll(".whatsapp-order-btn").forEach(btn => {
-            btn.addEventListener("click", (e) => {
-                e.preventDefault();
-                
-                const title = btn.getAttribute("data-title") || "";
-                const subject = btn.getAttribute("data-subject") || "";
-                const instructor = btn.getAttribute("data-instructor") || "";
-                const price = btn.getAttribute("data-price") || "";
-                const isAuthenticated = btn.getAttribute("data-authenticated") === "true";
-                
-                let text = "";
-                if (isAuthenticated) {
-                    const name = btn.getAttribute("data-student-name") || "";
-                    const phone = btn.getAttribute("data-student-phone") || "";
-                    const track = btn.getAttribute("data-student-track") || "غير محدد";
-                    const gov = btn.getAttribute("data-student-gov") || "غير محدد";
-                    
-                    text = authTemplate
-                        .replace("{title}", title)
-                        .replace("{subject}", subject)
-                        .replace("{instructor}", instructor)
-                        .replace("{price}", price)
-                        .replace("{name}", name)
-                        .replace("{phone}", phone)
-                        .replace("{track}", track)
-                        .replace("{gov}", gov);
-                } else {
-                    text = anonTemplate
-                        .replace("{title}", title)
-                        .replace("{subject}", subject)
-                        .replace("{instructor}", instructor)
-                        .replace("{price}", price);
-                }
-                
-                const whatsappUrl = `${baseUrl}?text=${encodeURIComponent(text)}`;
-                window.open(whatsappUrl, "_blank", "noopener");
-            });
-        });
-    });
-
-    function openDemoVideoModal() {
-        const modal = document.getElementById("demo-video-modal");
-        const iframe = document.getElementById("demo-video-iframe");
-        if (modal && iframe) {
-            iframe.src = "{{ video_embed_url }}";
-            modal.style.display = "flex";
-            setTimeout(() => {
-                modal.style.opacity = "1";
-            }, 50);
-            document.body.style.overflow = "hidden";
-        }
-    }
-    
-    function closeDemoVideoModal() {
-        const modal = document.getElementById("demo-video-modal");
-        const iframe = document.getElementById("demo-video-iframe");
-        if (modal && iframe) {
-            modal.style.opacity = "0";
-            setTimeout(() => {
-                modal.style.display = "none";
-                iframe.src = "";
-            }, 300);
-            document.body.style.overflow = "";
-        }
-    }
-</script>
-
-{% if first_lesson and video_embed_url %}
-<!-- Demo Video Lightbox Modal -->
-<div id="demo-video-modal" style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 999999; display: none; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s ease;">
-    <div style="position: relative; width: 90%; max-width: 960px; aspect-ratio: 16/9; background: #000; border-radius: 24px; overflow: hidden; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
-        <button onclick="closeDemoVideoModal()" style="position: absolute; top: 15px; left: 15px; background: rgba(255, 255, 255, 0.15); border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; z-index: 10;" onmouseover="this.style.background='rgba(255, 255, 255, 0.3)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.15)'">
-            <i data-lucide="x" style="width: 20px; height: 20px;"></i>
-        </button>
-        <iframe id="demo-video-iframe" src="" allowfullscreen style="width: 100%; height: 100%; border: none;"></iframe>
-    </div>
-</div>
-{% endif %}
+{% include 'dashboard/partials/shamcash_payment_modal.html' %}
 
 {% endblock %}
