@@ -5,15 +5,15 @@
 
 {% block content %}
 <div class="reveal-up">
-    <!-- 1. Header with Stats -->
-    <header class="flex-between mb-12 flex-wrap gap-6">
+    <!-- 1. Header with Stats & Sub-navigation Tabs -->
+    <header class="flex-between mb-8 flex-wrap gap-6">
         <div class="flex-center gap-6">
             <div class="flex-center" style="width: 70px; height: 70px; border-radius: 24px; background: rgba(var(--brand-gold-rgb), 0.1); color: var(--brand-gold); font-size: 2rem;">
                 <i data-lucide="book-marked"></i>
             </div>
             <div>
                 <h1 style="font-size: 2.2rem; margin-bottom: 0.25rem;">مكتبتي التعليمية</h1>
-                <p class="text-muted" style="font-size: 1.1rem; margin-bottom: 0;">واصل رحلتك التعليمية من حيث توقفت</p>
+                <p class="text-muted" style="font-size: 1.1rem; margin-bottom: 0;">دوراتك ونوطك الدراسية في مكان واحد</p>
             </div>
         </div>
         <div class="glass-card" style="padding: 1rem 2.5rem; border-radius: 20px; text-align: center;">
@@ -21,6 +21,19 @@
             <span class="text-muted font-bold" style="font-size: 0.8rem; text-transform: uppercase;">مواد مفعلة</span>
         </div>
     </header>
+
+    <!-- Navigation Tabs between Courses & Notebooks -->
+    <div style="display:flex; gap:1rem; margin-bottom:2rem; border-bottom:1px solid var(--border-light); padding-bottom:1rem; flex-wrap:wrap;">
+        <a href="{% url 'dashboard:my_courses' %}" class="btn btn-primary" style="display:inline-flex; align-items:center; gap:6px; font-weight:800; border-radius:10px;">
+            <i data-lucide="graduation-cap"></i> دوراتي التدريبية ({{ grants.count }})
+        </a>
+        <a href="{% url 'dashboard:notebook_orders' %}" class="btn btn-secondary" style="display:inline-flex; align-items:center; gap:6px; font-weight:800; border-radius:10px;">
+            <i data-lucide="package"></i> نوطاتي وطلبات التوصيل
+        </a>
+        <a href="{% url 'dashboard:notebook_market' %}" class="btn btn-secondary" style="display:inline-flex; align-items:center; gap:6px; font-weight:800; border-radius:10px;">
+            <i data-lucide="shopping-bag"></i> تصفح سوق النوط الورقية
+        </a>
+    </div>
 
     <!-- 2. Course Grid -->
     {% if grants %}

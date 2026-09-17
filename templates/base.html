@@ -246,10 +246,43 @@
                     <button id="theme-toggle" class="nav-icon-link" aria-label="Toggle Theme">
                         <i id="theme-icon" data-lucide="moon"></i>
                     </button>
+                    <button class="mobile-menu-trigger mobile-only" id="menu-toggle" aria-label="Open Menu">
+                        <i data-lucide="menu"></i>
+                    </button>
                 </div>
             </div>
         </div>
     </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="mobile-menu-overlay" id="mobile-menu">
+        <div class="mobile-menu-header">
+            <span class="navbar-brand">
+                <img src="{% static_data_uri 'dashboard/icons/logo2.png' %}" alt="Mohtarifo Logo" class="main-logo">
+            </span>
+            <button class="close-menu" id="menu-close"><i data-lucide="x"></i></button>
+        </div>
+        <div class="mobile-nav-links">
+            <a href="{% url 'dashboard:landing' %}" class="mobile-nav-link"><i data-lucide="home"></i> الرئيسية</a>
+            <a href="{% url 'dashboard:shop' %}" class="mobile-nav-link"><i data-lucide="shopping-bag"></i> المتجر التعليمي</a>
+            <a href="{% url 'dashboard:notebook_market' %}" class="mobile-nav-link"><i data-lucide="notebook-tabs"></i> سوق النوط</a>
+            <a href="{% url 'dashboard:instructors_list' %}" class="mobile-nav-link"><i data-lucide="award"></i> نخبة الأساتذة</a>
+            <a href="{% url 'dashboard:about' %}" class="mobile-nav-link"><i data-lucide="info"></i> من نحن</a>
+            <a href="{% url 'dashboard:contact' %}" class="mobile-nav-link"><i data-lucide="phone"></i> اتصل بنا</a>
+            <div class="mobile-auth-separator"></div>
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard:student_dashboard' %}" class="mobile-nav-link gold"><i data-lucide="layout"></i> لوحة التحكم</a>
+                <a href="{% url 'dashboard:notebook_orders' %}" class="mobile-nav-link"><i data-lucide="package"></i> طلبات النوط</a>
+                <form action="{% url 'logout' %}" method="post" style="width: 100%;">
+                    {% csrf_token %}
+                    <button type="submit" class="mobile-nav-link text-danger" style="background: none; border: none; width: 100%; text-align: right; display: flex; align-items: center; gap: 8px; padding: 12px 16px;"><i data-lucide="log-out"></i> خروج</button>
+                </form>
+            {% else %}
+                <a href="{% url 'dashboard:login' %}" class="mobile-nav-link"><i data-lucide="log-in"></i> تسجيل الدخول</a>
+                <a href="{% url 'dashboard:register' %}" class="mobile-nav-link gold"><i data-lucide="user-plus"></i> إنشاء حساب</a>
+            {% endif %}
+        </div>
+    </div>
 
     <!-- Main Content Wrapper -->
     <main class="container main-content">
@@ -268,6 +301,53 @@
 
         {% block content %}{% endblock %}
     </main>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav class="mobile-bottom-nav mobile-only">
+        {% if user.is_authenticated %}
+            <a href="{% url 'dashboard:student_dashboard' %}" class="bottom-nav-item {% if '/student/' in request.path and 'notebook-orders' not in request.path and 'my-courses' not in request.path and 'profile' not in request.path %}active{% endif %}">
+                <i data-lucide="home"></i>
+                <span>الرئيسية</span>
+            </a>
+            <a href="{% url 'dashboard:my_courses' %}" class="bottom-nav-item {% if '/my-courses/' in request.path %}active{% endif %}">
+                <i data-lucide="book-open"></i>
+                <span>دوراتي</span>
+            </a>
+            <a href="{% url 'dashboard:notebook_orders' %}" class="bottom-nav-item {% if '/student/notebook-orders/' in request.path %}active{% endif %}">
+                <i data-lucide="package"></i>
+                <span>طلباتي</span>
+            </a>
+            <a href="{% url 'dashboard:notebook_market' %}" class="bottom-nav-item {% if '/notebooks/' in request.path %}active{% endif %}">
+                <i data-lucide="notebook-tabs"></i>
+                <span>سوق النوط</span>
+            </a>
+            <a href="{% url 'dashboard:profile' %}" class="bottom-nav-item {% if '/profile/' in request.path %}active{% endif %}">
+                <i data-lucide="user"></i>
+                <span>حسابي</span>
+            </a>
+        {% else %}
+            <a href="{% url 'dashboard:landing' %}" class="bottom-nav-item active">
+                <i data-lucide="home"></i>
+                <span>الرئيسية</span>
+            </a>
+            <a href="{% url 'dashboard:shop' %}" class="bottom-nav-item {% if '/shop/' in request.path %}active{% endif %}">
+                <i data-lucide="shopping-bag"></i>
+                <span>المتجر</span>
+            </a>
+            <a href="{% url 'dashboard:notebook_market' %}" class="bottom-nav-item {% if '/notebooks/' in request.path %}active{% endif %}">
+                <i data-lucide="notebook-tabs"></i>
+                <span>سوق النوط</span>
+            </a>
+            <a href="{% url 'dashboard:login' %}" class="bottom-nav-item">
+                <i data-lucide="log-in"></i>
+                <span>دخول</span>
+            </a>
+            <a href="{% url 'dashboard:register' %}" class="bottom-nav-item gold">
+                <i data-lucide="user-plus"></i>
+                <span>اشتراك</span>
+            </a>
+        {% endif %}
+    </nav>
 
     <!-- Footer -->
     <footer class="main-footer desktop-only">
