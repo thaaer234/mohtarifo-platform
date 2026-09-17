@@ -126,6 +126,56 @@
             .navbar-center {
                 display: none;
             }
+            .mobile-bottom-nav {
+                display: flex !important;
+                position: fixed !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                height: 64px !important;
+                background: rgba(15, 23, 42, 0.96) !important;
+                backdrop-filter: blur(20px) !important;
+                -webkit-backdrop-filter: blur(20px) !important;
+                border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+                z-index: 999999 !important;
+                justify-content: space-around !important;
+                align-items: center !important;
+                padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+                box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5) !important;
+            }
+            .bottom-nav-item {
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 3px !important;
+                color: #94a3b8 !important;
+                text-decoration: none !important;
+                font-size: 0.68rem !important;
+                font-weight: 700 !important;
+                flex: 1 !important;
+                min-width: 0 !important;
+                padding: 4px 0 !important;
+                transition: all 0.2s ease !important;
+            }
+            .bottom-nav-item i,
+            .bottom-nav-item svg {
+                width: 20px !important;
+                height: 20px !important;
+                stroke-width: 2.2 !important;
+            }
+            .bottom-nav-item.active {
+                color: #f59e0b !important;
+            }
+            .bottom-nav-item.gold {
+                color: #f59e0b !important;
+            }
+            body {
+                padding-bottom: 80px !important;
+            }
+            .main-content {
+                padding-bottom: 90px !important;
+            }
         }
     </style>
     

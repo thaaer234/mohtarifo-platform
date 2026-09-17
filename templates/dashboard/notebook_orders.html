@@ -21,10 +21,10 @@
     {% else %}
       <strong>بانتظار تحديد المنصة</strong>
     {% endif %}
-    {% if order.status == 'out_for_delivery' or order.driver %}
+    {% if order.status != 'cancelled' %}
       <a href="{% url 'dashboard:student_order_tracking' order.id %}" class="live-track-badge">
         <span class="live-pulse"></span>
-        <i data-lucide="navigation"></i> تتبع المندوب لحظياً
+        <i data-lucide="navigation"></i> تتبع الطلب والخريطة لحظياً
       </a>
     {% endif %}
   </div>
