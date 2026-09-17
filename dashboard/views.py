@@ -515,7 +515,7 @@ def api_update_driver_location(request, order_id=None):
             prof.last_location_update = now
             prof.save(update_fields=["current_latitude", "current_longitude", "last_location_update", "updated_at"])
 
-        # If order_id specified or find active order
+        # If order_id specified or update all active orders for this driver
         if order_id:
             order = NotebookOrder.objects.filter(pk=order_id).first()
             if order and (order.driver_id == request.user.id or request.user.is_superuser):
@@ -525,6 +525,20 @@ def api_update_driver_location(request, order_id=None):
                 order.driver_speed = speed
                 order.driver_updated_at = now
                 order.save(update_fields=["driver_latitude", "driver_longitude", "driver_heading", "driver_speed", "driver_updated_at", "updated_at"])
+        else:
+            # Update all active orders currently assigned to this driver
+            assigned_orders = NotebookOrder.objects.filter(driver=request.user, status__in=["confirmed", "preparing", "out_for_delivery"])
+            if not assigned_orders.exists() and request.user.is_superuser:
+                # Fallback for admin test broadcasts
+                assigned_orders = NotebookOrder.objects.filter(status__in=["confirmed", "preparing", "out_for_delivery", "pending"])
+            
+            assigned_orders.update(
+                driver_latitude=lat,
+                driver_longitude=lng,
+                driver_heading=heading,
+                driver_speed=speed,
+                driver_updated_at=now
+            )
 
         return JsonResponse({"status": "ok", "timestamp": now.isoformat()})
     except Exception as e:
